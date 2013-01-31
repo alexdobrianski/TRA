@@ -1,0 +1,607 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<CT:data version="1.00" xmlns:CT="http://www.adobri.com/tra">
+<CT:section name="TraInfo">
+
+<!-- starting date (1 jan 2000) = 2451544.5JD -->
+    <CT:setting name="dStartSecond" value="2451544.5" />
+
+    <CT:setting name="RGBImageW" value="1280" />
+    <CT:setting name="RGBImageH" value="720" />
+<!-- int iProfile = 0; 
+              // 0 == XY , 1 == YZ, 2 == XZ 3 == -YZ 4 == -XZ 5==-XY
+              // 0 or XY is a view from North to south, 5 (- XY) is a view from south to north
+              // 1 or YZ is a view to easter -->
+    <CT:setting name="RGBView" value="1" />
+<!--  EARTH 2 MOON  9 -->
+
+    <CT:setting name="RGBReferenceBody" value="2" />
+<!-- max amount of pictures -->
+    <CT:setting name="RGBMaxPictures" value="128" />
+<!-- one picture per sec -->
+    <CT:setting name="RGBSecPerPictures" value="86400" />
+<!-- scale in m -->
+    <CT:setting name="RGBScale" value="900000000" />
+
+    <CT:setting name="IterPerSec" value="1" />
+
+    <CT:setting name="StartLandingIteraPerSec" value="772050" /> 
+
+<!-- next vaue actualy just a reference it will be used in-->
+<!-- GMMoon = MoonM * GBig and GMEarth = EarthM*GBig      -->
+<!-- know GMMoon and GMEarth will give proper value for M -->
+    <CT:setting name="Gbig" value="6.6742799999999995e-011" />
+    <CT:setting name="TotalDays" value="390" />
+    <CT:setting name="EarthCurTime" value="11036.971719672511" />
+    <CT:setting name="AU" value="149597870697.39999" />
+    <CT:setting name="ProbM" value="67.5" />
+    <CT:setting name="ProbKeplerLine1" value="ISS (ZARYA)" />
+    <CT:setting name="ProbKeplerLine2" value="1 25544U 98067A   11062.66968330  .00024457  00000-0  18183-3 0  9357" />
+    <CT:setting name="ProbKeplerLine3" value="2 25544 051.6480 342.0829 0005279 039.9625 033.1957 15.72669582704292" />
+
+<!-- target point on the Moon -->
+    <CT:setting name="Targetlongitude" value="-15" />
+    <CT:setting name="Targetlatitude" value="-2" />
+    <CT:setting name="SunM" value="1.9884158296478392e+030" />
+    <CT:setting name="EarthR" value="6371000" />
+    <CT:setting name="EarthRP" value="6356800" />
+    <CT:setting name="EarthRE" value="6378100" />
+    <CT:setting name="EarthM" value="5.9721863856475894e+024" />
+    <CT:setting name="MassRatioSunToEarthPlusMoon" value="328900.56" />
+    <CT:setting name="EarthTSolSec" value="86164.098903691003" />
+    <CT:setting name="EarthEpoch" value="11036.971719672511" />
+    <CT:setting name="EarthAph" value="152097701000" />
+    <CT:setting name="EarthPer" value="147098074000" />
+    <CT:setting name="EarthSmAx" value="149597887500" />
+    <CT:setting name="EarthSmAxAU" value="1.0000001124" />
+    <CT:setting name="EarthEcc" value="0.016705878169365421" />
+    <CT:setting name="EarthTDays" value="365.25636600000001" />
+    <CT:setting name="EarthIncl" value="0" />
+    <CT:setting name="EarthAscNode" value="348.73936000000003" />
+    <CT:setting name="EarthArgPer" value="114.20783" />
+    <CT:setting name="EarthMeanAnom" value="357.51715999999999" />
+    <CT:setting name="MoonR" value="1737100" />
+    <CT:setting name="MoonRP" value="1735970" />
+    <CT:setting name="MoonRE" value="1738140" />
+    <CT:setting name="MoonM" value="7.3458114403351352e+022" />
+
+<!--next line will force recalculation of SunM based on G constant -->
+    <CT:setting name="GMSun" value="1.327124400350198e+020" />
+    <CT:setting name="GMEarthMoon" value="403503241737999.87" />
+    <CT:setting name="GMEarth" value="398600441499999.87" />
+    <CT:setting name="GMMoon" value="4902800237999.998" />
+
+<!-- next line will force calculation of a Earth and Moon mass -->
+<!-- it is not in use - value just for reference and fo trigger -->
+    <CT:setting name="MassRatioEarthToMoon" value="81.300567461545441" />
+    <CT:setting name="MoonKeplerLine1" value="MOON" />
+    <CT:setting name="MoonKeplerLine2" value="1 MOON00 MOON00   11036.9717196725100000000  00000-0  00000-0 0  0000" />
+    <CT:setting name="MoonKeplerLine3" value="2 MOON0  23.3228 347.3796 0638000 185.7146 173.5436 0.036600996000000" />
+
+    <CT:setting name="MoonEpoch" value="11036.971719672511" />
+    <CT:setting name="MoonAph" value="405696000" />
+    <CT:setting name="MoonPer" value="363104000" />
+    <CT:setting name="MoonSmAx" value="0" />
+    <CT:setting name="MoonEcc" value="0.063799999999999996" />
+    <CT:setting name="MoonTDays" value="27.321660864092333" />
+    <CT:setting name="MoonIncl" value="23.322800000000001" />
+    <CT:setting name="MoonAscNode" value="347.37959999999998" />
+    <CT:setting name="MoonArgPer" value="185.71459999999999" />
+    <CT:setting name="MoonMeanAnom" value="173.5436" />
+
+<!-- next line (value == "1.0") will force calculation
+                         of a Earth kepler position -->
+    <CT:setting name="EarthCalcKepler" value="0.0" />
+
+<!-- next line will force assigning velocities and positions 
+     based on JPL data -->
+
+    <CT:setting name="UseJPLxyz" value="1.0" />
+
+<!-- last used engine (0,1,2,3..) in trajectory optimization or calculations 
+     setting lastengine == -1 disable optimization -->
+
+    <CT:setting name="LastEngine" value="4" />
+
+<!-- do optimization of an engine N... (0,1,2,3...)
+     it is posible to use 4 engines but optimize engine 3-->
+
+    <CT:setting name="EngineOptimization" value="4" />
+
+<!-- Type of optimization
+      1 - search for a minimum by adjusting time of firing
+      2 - search for a maximum by adjusting time of firing
+      3 - search for minimum by adjusting time of firing
+      4 - search fo minimum by adjusting angle of firing
+  initial step and decrease steps for each search specified
+  individualy for each engine -->
+
+    <CT:setting name="TrajectoryOptimizationType" value="1" />
+</CT:section>
+
+            <!--     now all engines    -->
+<CT:section name="Engine" value="0.0" />
+    <CT:setting name="EngineNumber" value="0.0" />
+    <CT:setting name="EngineOnSatellite" value="0" />
+    <!-- convinent coeff - instead of entry real values just assume scaled version-->
+    <CT:setting name="PropCoeff" value="1.0" />
+
+    <CT:setting name="Weight" value="4.28925" />
+    <CT:setting name="TotalWeight" value="5.4989999999999997" />
+
+    <!-- iteration per sec from engine's plot -->
+    <CT:setting name="DeltaT" value="5" />
+
+     <!-- 2- EARTH 9-MOON for calculation distanses-->
+     <CT:setting name="NearBody" value="2" />
+
+     <!-- calculates 
+          0 Perigee to a center of NearBody
+          1 Apogee to a center of NearBody
+          3 taget practice not far then distance earth-moon
+          4 target practice to apoint on a moon's surface -->
+     <CT:setting name="CalculateAP" value="1" />
+
+     <!-- AngleType 0 - tangent line to orbit (elipse) oposit velocity
+                    1 - two angles set with reference to NearBody centre direction
+                    2 - 3 angles set vector fire (constant all fire) 
+                    3 - oposit vector of velocity
+                    4 - same direction as vector of velocity -->
+     <CT:setting name="AngleType" value="0" />
+
+     <!-- 2- EARTH 9-MOON for firing angle -->
+     <CT:setting name="AngleOnBody" value="2" />
+
+    <!-- first angle: in a plane over vector from the center of NearBody and Sat
+         and vector of velocity. Angle: Centre,Sat,Direction 
+         (aggle == 90 degr is a Tangent line to elipse) -->
+         <CT:setting name="FireAng1" value="1" />
+
+     <!-- second angle from projection of a velocity vector to a  
+         plane perpendicular to direction to centre of nearbody -->
+    <CT:setting name="FireAng2" value="1" />
+
+    <CT:setting name="XVector" value="-1" />
+    <CT:setting name="YVector" value="1.1537307924011437" />
+    <CT:setting name="ZVector" value="0.9986199954416527" />
+
+     <CT:setting name="OptimizationInitialStep" value="100" />
+     <CT:setting name="OptimizationDecCoef" value="10" />
+     <CT:setting name="OptimizationStop" value="1" />
+
+    <!-- set impulses in a time -->
+        <CT:setting name="FireTime" value="17435" />
+        <CT:setting name="ImplVal" value="0" /> <!-- 0.000000 -->
+        <CT:setting name="ImplVal" value="850" /> <!-- 0.200000 -->
+        <CT:setting name="ImplVal" value="750" /> <!-- 0.400000 -->
+        <CT:setting name="ImplVal" value="775" /> <!-- 0.600000 -->
+        <CT:setting name="ImplVal" value="875" /> <!-- 0.800000 -->
+        <CT:setting name="ImplVal" value="887.5" /> <!-- 1.000000 -->
+        <CT:setting name="ImplVal" value="900" /> <!-- 1.200000 -->
+        <CT:setting name="ImplVal" value="900" /> <!-- 1.400000 -->
+        <CT:setting name="ImplVal" value="925" /> <!-- 1.600000 -->
+        <CT:setting name="ImplVal" value="937.5" /> <!-- 1.800000 -->
+        <CT:setting name="ImplVal" value="950" /> <!-- 2.000000 -->
+        <CT:setting name="ImplVal" value="962.5" /> <!-- 2.200000 -->
+        <CT:setting name="ImplVal" value="975" /> <!-- 2.400000 -->
+        <CT:setting name="ImplVal" value="987.5" /> <!-- 2.600000 -->
+        <CT:setting name="ImplVal" value="1000" /> <!-- 2.800000 -->
+        <CT:setting name="ImplVal" value="1000" /> <!-- 3.000000 -->
+        <CT:setting name="ImplVal" value="1000" /> <!-- 3.200000 -->
+        <CT:setting name="ImplVal" value="1000" /> <!-- 3.400000 -->
+        <CT:setting name="ImplVal" value="1000" /> <!-- 3.600000 -->
+        <CT:setting name="ImplVal" value="1000" /> <!-- 3.800000 -->
+        <CT:setting name="ImplVal" value="995" /> <!-- 4.000000 -->
+        <CT:setting name="ImplVal" value="990" /> <!-- 4.200000 -->
+        <CT:setting name="ImplVal" value="985" /> <!-- 4.400000 -->
+        <CT:setting name="ImplVal" value="980" /> <!-- 4.600000 -->
+        <CT:setting name="ImplVal" value="975" /> <!-- 4.800000 -->
+        <CT:setting name="ImplVal" value="971.25" /> <!-- 5.000000 -->
+        <CT:setting name="ImplVal" value="962.5" /> <!-- 5.200000 -->
+        <CT:setting name="ImplVal" value="953.75" /> <!-- 5.400000 -->
+        <CT:setting name="ImplVal" value="945" /> <!-- 5.600000 -->
+        <CT:setting name="ImplVal" value="936.25" /> <!-- 5.800000 -->
+        <CT:setting name="ImplVal" value="927.5" /> <!-- 6.000000 -->
+        <CT:setting name="ImplVal" value="923.75" /> <!-- 6.200000 -->
+        <CT:setting name="ImplVal" value="920" /> <!-- 6.400000 -->
+        <CT:setting name="ImplVal" value="916.25" /> <!-- 6.600000 -->
+        <CT:setting name="ImplVal" value="912.5" /> <!-- 6.800000 -->
+        <CT:setting name="ImplVal" value="900" /> <!-- 7.000000 -->
+        <CT:setting name="ImplVal" value="875" /> <!-- 7.200000 -->
+        <CT:setting name="ImplVal" value="875" /> <!-- 7.400000 -->
+        <CT:setting name="ImplVal" value="850" /> <!-- 7.600000 -->
+        <CT:setting name="ImplVal" value="787.5" /> <!-- 7.800000 -->
+        <CT:setting name="ImplVal" value="500" /> <!-- 8.000000 -->
+        <CT:setting name="ImplVal" value="62.5" /> <!-- 8.200000 -->
+        <CT:setting name="ImplVal" value="0" /> <!-- 8.400000 -->
+</CT:section>
+
+
+<CT:section name="Engine" value="1.0" />
+    <CT:setting name="EngineNumber" value="1.0" />
+    <CT:setting name="EngineOnSatellite" value="0" />
+    <!-- convinent coeff - instead of entry real values just assume scaled version-->
+    <CT:setting name="PropCoeff" value="1.0" />
+
+    <CT:setting name="Weight" value="4.28925" />
+    <CT:setting name="TotalWeight" value="4.28925" />
+
+    <!-- iteration per sec from engine's plot -->
+    <CT:setting name="DeltaT" value="5" />
+
+     <!-- 2- EARTH 9-MOON for calculation distanses-->
+     <CT:setting name="NearBody" value="2" />
+
+     <!-- calculates 
+          0 Perigee to a center of NearBody
+          1 Apogee to a center of NearBody
+          3 taget practice not far then distance earth-moon
+          4 target practice to apoint on a moon's surface -->
+     <CT:setting name="CalculateAP" value="0" />
+
+     <!-- AngleType 0 - tangent line to orbit (elipse) oposit velocity
+                    1 - two angles set with reference to NearBody centre direction
+                    2 - 3 angles set vector fire (constant all fire) 
+                    3 - oposit vector of velocity
+                    4 - same direction as vector of velocity -->
+     <CT:setting name="AngleType" value="0" />
+
+     <!-- 2- EARTH 9-MOON for firing angle -->
+     <CT:setting name="AngleOnBody" value="2" />
+
+    <!-- first angle: in a plane over vector from the center of NearBody and Sat
+         and vector of velocity. Angle: Centre,Sat,Direction 
+         (aggle == 90 degr is a Tangent line to elipse) -->
+         <CT:setting name="FireAng1" value="0" />
+
+     <!-- second angle from projection of a velocity vector to a  
+         plane perpendicular to direction to centre of nearbody -->
+    <CT:setting name="FireAng2" value="0" />
+
+    <CT:setting name="XVector" value="1" />
+    <CT:setting name="YVector" value="-1.1714976896575997" />
+    <CT:setting name="ZVector" value="-1.019984486712751" />
+
+     <CT:setting name="OptimizationInitialStep" value="100" />
+     <CT:setting name="OptimizationDecCoef" value="10" />
+     <CT:setting name="OptimizationStop" value="1" />
+
+    <!-- set impulses in a time -->
+        <CT:setting name="FireTime" value="26046" />
+        <CT:setting name="ImplVal" value="0" /> <!-- 0.000000 -->
+        <CT:setting name="ImplVal" value="850" /> <!-- 0.200000 -->
+        <CT:setting name="ImplVal" value="750" /> <!-- 0.400000 -->
+        <CT:setting name="ImplVal" value="775" /> <!-- 0.600000 -->
+        <CT:setting name="ImplVal" value="875" /> <!-- 0.800000 -->
+        <CT:setting name="ImplVal" value="887.5" /> <!-- 1.000000 -->
+        <CT:setting name="ImplVal" value="900" /> <!-- 1.200000 -->
+        <CT:setting name="ImplVal" value="900" /> <!-- 1.400000 -->
+        <CT:setting name="ImplVal" value="925" /> <!-- 1.600000 -->
+        <CT:setting name="ImplVal" value="937.5" /> <!-- 1.800000 -->
+        <CT:setting name="ImplVal" value="950" /> <!-- 2.000000 -->
+        <CT:setting name="ImplVal" value="962.5" /> <!-- 2.200000 -->
+        <CT:setting name="ImplVal" value="975" /> <!-- 2.400000 -->
+        <CT:setting name="ImplVal" value="987.5" /> <!-- 2.600000 -->
+        <CT:setting name="ImplVal" value="1000" /> <!-- 2.800000 -->
+        <CT:setting name="ImplVal" value="1000" /> <!-- 3.000000 -->
+        <CT:setting name="ImplVal" value="1000" /> <!-- 3.200000 -->
+        <CT:setting name="ImplVal" value="1000" /> <!-- 3.400000 -->
+        <CT:setting name="ImplVal" value="1000" /> <!-- 3.600000 -->
+        <CT:setting name="ImplVal" value="1000" /> <!-- 3.800000 -->
+        <CT:setting name="ImplVal" value="995" /> <!-- 4.000000 -->
+        <CT:setting name="ImplVal" value="990" /> <!-- 4.200000 -->
+        <CT:setting name="ImplVal" value="985" /> <!-- 4.400000 -->
+        <CT:setting name="ImplVal" value="980" /> <!-- 4.600000 -->
+        <CT:setting name="ImplVal" value="975" /> <!-- 4.800000 -->
+        <CT:setting name="ImplVal" value="971.25" /> <!-- 5.000000 -->
+        <CT:setting name="ImplVal" value="962.5" /> <!-- 5.200000 -->
+        <CT:setting name="ImplVal" value="953.75" /> <!-- 5.400000 -->
+        <CT:setting name="ImplVal" value="945" /> <!-- 5.600000 -->
+        <CT:setting name="ImplVal" value="936.25" /> <!-- 5.800000 -->
+        <CT:setting name="ImplVal" value="927.5" /> <!-- 6.000000 -->
+        <CT:setting name="ImplVal" value="923.75" /> <!-- 6.200000 -->
+        <CT:setting name="ImplVal" value="920" /> <!-- 6.400000 -->
+        <CT:setting name="ImplVal" value="916.25" /> <!-- 6.600000 -->
+        <CT:setting name="ImplVal" value="912.5" /> <!-- 6.800000 -->
+        <CT:setting name="ImplVal" value="900" /> <!-- 7.000000 -->
+        <CT:setting name="ImplVal" value="875" /> <!-- 7.200000 -->
+        <CT:setting name="ImplVal" value="875" /> <!-- 7.400000 -->
+        <CT:setting name="ImplVal" value="850" /> <!-- 7.600000 -->
+        <CT:setting name="ImplVal" value="787.5" /> <!-- 7.800000 -->
+        <CT:setting name="ImplVal" value="500" /> <!-- 8.000000 -->
+        <CT:setting name="ImplVal" value="62.5" /> <!-- 8.200000 -->
+        <CT:setting name="ImplVal" value="0" /> <!-- 8.400000 -->
+</CT:section>
+
+
+<CT:section name="Engine" value="2.0" />
+    <CT:setting name="EngineNumber" value="2.0" />
+    <CT:setting name="EngineOnSatellite" value="0" />
+    <!-- convinent coeff - instead of entry real values just assume scaled version-->
+    <CT:setting name="PropCoeff" value="1.0" />
+
+    <CT:setting name="Weight" value="49.154805000000003" />
+    <CT:setting name="TotalWeight" value="49.154805000000003" />
+
+    <!-- iteration per sec from engine's plot -->
+    <CT:setting name="DeltaT" value="5" />
+
+     <!-- 2- EARTH 9-MOON for calculation distanses-->
+     <CT:setting name="NearBody" value="9" />
+
+     <!-- calculates 
+          0 Perigee to a center of NearBody
+          1 Apogee to a center of NearBody
+          3 taget practice not far then distance earth-moon
+          4 target practice to apoint on a moon's surface -->
+     <CT:setting name="CalculateAP" value="0" />
+
+     <!-- AngleType 0 - tangent line to orbit (elipse) oposit velocity
+                    1 - two angles set with reference to NearBody centre direction
+                    2 - 3 angles set vector fire (constant all fire) 
+                    3 - oposit vector of velocity
+                    4 - same direction as vector of velocity -->
+     <CT:setting name="AngleType" value="0" />
+
+     <!-- 2- EARTH 9-MOON for firing angle -->
+     <CT:setting name="AngleOnBody" value="2" />
+
+    <!-- first angle: in a plane over vector from the center of NearBody and Sat
+         and vector of velocity. Angle: Centre,Sat,Direction 
+         (aggle == 90 degr is a Tangent line to elipse) -->
+         <CT:setting name="FireAng1" value="0" />
+
+     <!-- second angle from projection of a velocity vector to a  
+         plane perpendicular to direction to centre of nearbody -->
+    <CT:setting name="FireAng2" value="0" />
+
+    <CT:setting name="XVector" value="1" />
+    <CT:setting name="YVector" value="0.85063762129876674" />
+    <CT:setting name="ZVector" value="1.4117704154874764" />
+
+     <CT:setting name="OptimizationInitialStep" value="4" />
+     <CT:setting name="OptimizationDecCoef" value="2" />
+     <CT:setting name="OptimizationStop" value="1" />
+
+    <!-- set impulses in a time -->
+        <CT:setting name="FireTime" value="208702" />
+        <CT:setting name="ImplVal" value="0" /> <!-- 0.000000 -->
+        <CT:setting name="ImplVal" value="9741" /> <!-- 0.200000 -->
+        <CT:setting name="ImplVal" value="8595" /> <!-- 0.400000 -->
+        <CT:setting name="ImplVal" value="8881.5" /> <!-- 0.600000 -->
+        <CT:setting name="ImplVal" value="10027.5" /> <!-- 0.800000 -->
+        <CT:setting name="ImplVal" value="10170.75" /> <!-- 1.000000 -->
+        <CT:setting name="ImplVal" value="10314" /> <!-- 1.200000 -->
+        <CT:setting name="ImplVal" value="10314" /> <!-- 1.400000 -->
+        <CT:setting name="ImplVal" value="10600.5" /> <!-- 1.600000 -->
+        <CT:setting name="ImplVal" value="10743.75" /> <!-- 1.800000 -->
+        <CT:setting name="ImplVal" value="10887" /> <!-- 2.000000 -->
+        <CT:setting name="ImplVal" value="11030.25" /> <!-- 2.200000 -->
+        <CT:setting name="ImplVal" value="11173.5" /> <!-- 2.400000 -->
+        <CT:setting name="ImplVal" value="11316.75" /> <!-- 2.600000 -->
+        <CT:setting name="ImplVal" value="11460" /> <!-- 2.800000 -->
+        <CT:setting name="ImplVal" value="11460" /> <!-- 3.000000 -->
+        <CT:setting name="ImplVal" value="11460" /> <!-- 3.200000 -->
+        <CT:setting name="ImplVal" value="11460" /> <!-- 3.400000 -->
+        <CT:setting name="ImplVal" value="11460" /> <!-- 3.600000 -->
+        <CT:setting name="ImplVal" value="11460" /> <!-- 3.800000 -->
+        <CT:setting name="ImplVal" value="11402.700000000001" /> <!-- 4.000000 -->
+        <CT:setting name="ImplVal" value="11345.400000000001" /> <!-- 4.200000 -->
+        <CT:setting name="ImplVal" value="11288.1" /> <!-- 4.400000 -->
+        <CT:setting name="ImplVal" value="11230.800000000001" /> <!-- 4.600000 -->
+        <CT:setting name="ImplVal" value="11173.5" /> <!-- 4.800000 -->
+        <CT:setting name="ImplVal" value="11130.525000000001" /> <!-- 5.000000 -->
+        <CT:setting name="ImplVal" value="11030.25" /> <!-- 5.200000 -->
+        <CT:setting name="ImplVal" value="10929.975" /> <!-- 5.400000 -->
+        <CT:setting name="ImplVal" value="10829.700000000001" /> <!-- 5.600000 -->
+        <CT:setting name="ImplVal" value="10729.425000000001" /> <!-- 5.800000 -->
+        <CT:setting name="ImplVal" value="10629.150000000001" /> <!-- 6.000000 -->
+        <CT:setting name="ImplVal" value="10586.175000000001" /> <!-- 6.200000 -->
+        <CT:setting name="ImplVal" value="10543.200000000001" /> <!-- 6.400000 -->
+        <CT:setting name="ImplVal" value="10500.225" /> <!-- 6.600000 -->
+        <CT:setting name="ImplVal" value="10457.25" /> <!-- 6.800000 -->
+        <CT:setting name="ImplVal" value="10314" /> <!-- 7.000000 -->
+        <CT:setting name="ImplVal" value="10027.5" /> <!-- 7.200000 -->
+        <CT:setting name="ImplVal" value="10027.5" /> <!-- 7.400000 -->
+        <CT:setting name="ImplVal" value="9741" /> <!-- 7.600000 -->
+        <CT:setting name="ImplVal" value="9024.75" /> <!-- 7.800000 -->
+        <CT:setting name="ImplVal" value="5730" /> <!-- 8.000000 -->
+        <CT:setting name="ImplVal" value="716.25" /> <!-- 8.200000 -->
+        <CT:setting name="ImplVal" value="0" /> <!-- 8.400000 -->
+</CT:section>
+
+
+<CT:section name="Engine" value="3.0" />
+    <CT:setting name="EngineNumber" value="3.0" />
+    <CT:setting name="EngineOnSatellite" value="0" />
+    <!-- convinent coeff - instead of entry real values just assume scaled version-->
+    <CT:setting name="PropCoeff" value="1.0" />
+
+    <CT:setting name="Weight" value="0.17157" />
+    <CT:setting name="TotalWeight" value="0.17157" />
+
+    <!-- iteration per sec from engine's plot -->
+    <CT:setting name="DeltaT" value="5" />
+
+     <!-- 2- EARTH 9-MOON for calculation distanses-->
+     <CT:setting name="NearBody" value="9" />
+
+     <!-- calculates 
+          0 Perigee to a center of NearBody
+          1 Apogee to a center of NearBody
+          3 taget practice not far then distance earth-moon
+          4 target practice to apoint on a moon's surface -->
+     <CT:setting name="CalculateAP" value="5" />
+
+     <!-- AngleType 0 - tangent line to orbit (elipse) oposit velocity
+                    1 - two angles set with reference to NearBody centre direction
+                    2 - 3 angles set vector fire (constant all fire) 
+                    3 - oposit vector of velocity
+                    4 - same direction as vector of velocity -->
+     <CT:setting name="AngleType" value="2" />
+
+     <!-- 2- EARTH 9-MOON for firing angle -->
+     <CT:setting name="AngleOnBody" value="9" />
+
+    <!-- first angle: in a plane over vector from the center of NearBody and Sat
+         and vector of velocity. Angle: Centre,Sat,Direction 
+         (aggle == 90 degr is a Tangent line to elipse) -->
+         <CT:setting name="FireAng1" value="0" />
+
+     <!-- second angle from projection of a velocity vector to a  
+         plane perpendicular to direction to centre of nearbody -->
+    <CT:setting name="FireAng2" value="0" />
+
+    <CT:setting name="XVector" value="1.483789" />
+    <CT:setting name="YVector" value="-0.097251000000000004" />
+    <CT:setting name="ZVector" value="0.56240299999999999" />
+
+     <CT:setting name="OptimizationInitialStep" value="0.25" />
+     <CT:setting name="OptimizationDecCoef" value="2" />
+     <CT:setting name="OptimizationStop" value="1.0000000000000001e-005" />
+
+    <!-- set impulses in a time -->
+        <CT:setting name="FireTime" value="650000" />
+        <CT:setting name="ImplVal" value="0" /> <!-- 0.000000 -->
+        <CT:setting name="ImplVal" value="34" /> <!-- 0.200000 -->
+        <CT:setting name="ImplVal" value="30" /> <!-- 0.400000 -->
+        <CT:setting name="ImplVal" value="31" /> <!-- 0.600000 -->
+        <CT:setting name="ImplVal" value="35" /> <!-- 0.800000 -->
+        <CT:setting name="ImplVal" value="35.5" /> <!-- 1.000000 -->
+        <CT:setting name="ImplVal" value="36" /> <!-- 1.200000 -->
+        <CT:setting name="ImplVal" value="36" /> <!-- 1.400000 -->
+        <CT:setting name="ImplVal" value="37" /> <!-- 1.600000 -->
+        <CT:setting name="ImplVal" value="37.5" /> <!-- 1.800000 -->
+        <CT:setting name="ImplVal" value="38" /> <!-- 2.000000 -->
+        <CT:setting name="ImplVal" value="38.5" /> <!-- 2.200000 -->
+        <CT:setting name="ImplVal" value="39" /> <!-- 2.400000 -->
+        <CT:setting name="ImplVal" value="39.5" /> <!-- 2.600000 -->
+        <CT:setting name="ImplVal" value="40" /> <!-- 2.800000 -->
+        <CT:setting name="ImplVal" value="40" /> <!-- 3.000000 -->
+        <CT:setting name="ImplVal" value="40" /> <!-- 3.200000 -->
+        <CT:setting name="ImplVal" value="40" /> <!-- 3.400000 -->
+        <CT:setting name="ImplVal" value="40" /> <!-- 3.600000 -->
+        <CT:setting name="ImplVal" value="40" /> <!-- 3.800000 -->
+        <CT:setting name="ImplVal" value="39.800000000000004" /> <!-- 4.000000 -->
+        <CT:setting name="ImplVal" value="39.600000000000001" /> <!-- 4.200000 -->
+        <CT:setting name="ImplVal" value="39.399999999999999" /> <!-- 4.400000 -->
+        <CT:setting name="ImplVal" value="39.200000000000003" /> <!-- 4.600000 -->
+        <CT:setting name="ImplVal" value="39" /> <!-- 4.800000 -->
+        <CT:setting name="ImplVal" value="38.850000000000001" /> <!-- 5.000000 -->
+        <CT:setting name="ImplVal" value="38.5" /> <!-- 5.200000 -->
+        <CT:setting name="ImplVal" value="38.149999999999999" /> <!-- 5.400000 -->
+        <CT:setting name="ImplVal" value="37.800000000000004" /> <!-- 5.600000 -->
+        <CT:setting name="ImplVal" value="37.450000000000003" /> <!-- 5.800000 -->
+        <CT:setting name="ImplVal" value="37.100000000000001" /> <!-- 6.000000 -->
+        <CT:setting name="ImplVal" value="36.950000000000003" /> <!-- 6.200000 -->
+        <CT:setting name="ImplVal" value="36.800000000000004" /> <!-- 6.400000 -->
+        <CT:setting name="ImplVal" value="36.649999999999999" /> <!-- 6.600000 -->
+        <CT:setting name="ImplVal" value="36.5" /> <!-- 6.800000 -->
+        <CT:setting name="ImplVal" value="36" /> <!-- 7.000000 -->
+        <CT:setting name="ImplVal" value="35" /> <!-- 7.200000 -->
+        <CT:setting name="ImplVal" value="35" /> <!-- 7.400000 -->
+        <CT:setting name="ImplVal" value="34" /> <!-- 7.600000 -->
+        <CT:setting name="ImplVal" value="31.5" /> <!-- 7.800000 -->
+        <CT:setting name="ImplVal" value="20" /> <!-- 8.000000 -->
+        <CT:setting name="ImplVal" value="2.5" /> <!-- 8.200000 -->
+        <CT:setting name="ImplVal" value="0" /> <!-- 8.400000 -->
+</CT:section>
+
+
+<CT:section name="Engine" value="4.0" />
+    <CT:setting name="EngineNumber" value="4.0" />
+    <CT:setting name="EngineOnSatellite" value="0" />
+    <!-- convinent coeff - instead of entry real values just assume scaled version-->
+    <CT:setting name="PropCoeff" value="0.993" />
+
+    <CT:setting name="Weight" value="7.54908" />
+    <CT:setting name="TotalWeight" value="7.54908" />
+
+    <!-- iteration per sec from engine's plot -->
+    <CT:setting name="DeltaT" value="5" />
+
+     <!-- 2- EARTH 9-MOON for calculation distanses-->
+     <CT:setting name="NearBody" value="9" />
+
+     <!-- calculates 
+          0 Perigee to a center of NearBody
+          1 Apogee to a center of NearBody
+          3 taget practice not far then distance earth-moon
+          4 target practice to apoint on a moon's surface -->
+     <CT:setting name="CalculateAP" value="0" />
+
+     <!-- AngleType 0 - tangent line to orbit (elipse) oposit velocity
+                    1 - two angles set with reference to NearBody centre direction
+                    2 - 3 angles set vector fire (constant all fire) 
+                    3 - oposit vector of velocity
+                    4 - same direction as vector of velocity -->
+     <CT:setting name="AngleType" value="4" />
+
+     <!-- 2- EARTH 9-MOON for firing angle -->
+     <CT:setting name="AngleOnBody" value="9" />
+
+    <!-- first angle: in a plane over vector from the center of NearBody and Sat
+         and vector of velocity. Angle: Centre,Sat,Direction 
+         (aggle == 90 degr is a Tangent line to elipse) -->
+         <CT:setting name="FireAng1" value="0" />
+
+     <!-- second angle from projection of a velocity vector to a  
+         plane perpendicular to direction to centre of nearbody -->
+    <CT:setting name="FireAng2" value="0" />
+
+    <CT:setting name="XVector" value="-779.72452621883713" />
+    <CT:setting name="YVector" value="-2364.2270088089736" />
+    <CT:setting name="ZVector" value="-454.69146717355488" />
+
+     <CT:setting name="OptimizationInitialStep" value="0.1" />
+     <CT:setting name="OptimizationDecCoef" value="2" />
+     <CT:setting name="OptimizationStop" value="0.1" />
+
+    <!-- set impulses in a time -->
+        <CT:setting name="FireTime" value="772052.0" />
+        <CT:setting name="ImplVal" value="0" /> <!-- 0.000000 -->
+        <CT:setting name="ImplVal" value="1496" /> <!-- 0.200000 -->
+        <CT:setting name="ImplVal" value="1320" /> <!-- 0.400000 -->
+        <CT:setting name="ImplVal" value="1364" /> <!-- 0.600000 -->
+        <CT:setting name="ImplVal" value="1540" /> <!-- 0.800000 -->
+        <CT:setting name="ImplVal" value="1562" /> <!-- 1.000000 -->
+        <CT:setting name="ImplVal" value="1584" /> <!-- 1.200000 -->
+        <CT:setting name="ImplVal" value="1584" /> <!-- 1.400000 -->
+        <CT:setting name="ImplVal" value="1628" /> <!-- 1.600000 -->
+        <CT:setting name="ImplVal" value="1650" /> <!-- 1.800000 -->
+        <CT:setting name="ImplVal" value="1672" /> <!-- 2.000000 -->
+        <CT:setting name="ImplVal" value="1694" /> <!-- 2.200000 -->
+        <CT:setting name="ImplVal" value="1716" /> <!-- 2.400000 -->
+        <CT:setting name="ImplVal" value="1738" /> <!-- 2.600000 -->
+        <CT:setting name="ImplVal" value="1760" /> <!-- 2.800000 -->
+        <CT:setting name="ImplVal" value="1760" /> <!-- 3.000000 -->
+        <CT:setting name="ImplVal" value="1760" /> <!-- 3.200000 -->
+        <CT:setting name="ImplVal" value="1760" /> <!-- 3.400000 -->
+        <CT:setting name="ImplVal" value="1760" /> <!-- 3.600000 -->
+        <CT:setting name="ImplVal" value="1760" /> <!-- 3.800000 -->
+        <CT:setting name="ImplVal" value="1751.2" /> <!-- 4.000000 -->
+        <CT:setting name="ImplVal" value="1742.4000000000001" /> <!-- 4.200000 -->
+        <CT:setting name="ImplVal" value="1733.5999999999999" /> <!-- 4.400000 -->
+        <CT:setting name="ImplVal" value="1724.8" /> <!-- 4.600000 -->
+        <CT:setting name="ImplVal" value="1716" /> <!-- 4.800000 -->
+        <CT:setting name="ImplVal" value="1709.4000000000001" /> <!-- 5.000000 -->
+        <CT:setting name="ImplVal" value="1694" /> <!-- 5.200000 -->
+        <CT:setting name="ImplVal" value="1678.5999999999999" /> <!-- 5.400000 -->
+        <CT:setting name="ImplVal" value="1663.2" /> <!-- 5.600000 -->
+        <CT:setting name="ImplVal" value="1647.8" /> <!-- 5.800000 -->
+        <CT:setting name="ImplVal" value="1632.4000000000001" /> <!-- 6.000000 -->
+        <CT:setting name="ImplVal" value="1625.8" /> <!-- 6.200000 -->
+        <CT:setting name="ImplVal" value="1619.2" /> <!-- 6.400000 -->
+        <CT:setting name="ImplVal" value="1612.5999999999999" /> <!-- 6.600000 -->
+        <CT:setting name="ImplVal" value="1606" /> <!-- 6.800000 -->
+        <CT:setting name="ImplVal" value="1584" /> <!-- 7.000000 -->
+        <CT:setting name="ImplVal" value="1540" /> <!-- 7.200000 -->
+        <CT:setting name="ImplVal" value="1540" /> <!-- 7.400000 -->
+        <CT:setting name="ImplVal" value="1496" /> <!-- 7.600000 -->
+        <CT:setting name="ImplVal" value="1386" /> <!-- 7.800000 -->
+        <CT:setting name="ImplVal" value="880" /> <!-- 8.000000 -->
+        <CT:setting name="ImplVal" value="110" /> <!-- 8.200000 -->
+        <CT:setting name="ImplVal" value="0" /> <!-- 8.400000 -->
+</CT:section>
+
+
+</CT:data>
