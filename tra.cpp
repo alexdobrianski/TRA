@@ -247,57 +247,284 @@ typedef struct TraObj
     // satelitte close to body
     // it can be only one body
     int iLeg;
+    int iLeg_longit;
     int LegBody;
     double J[MAX_COEF_J];
     double CNK[MAX_COEF_J][MAX_COEF_J];
     double SNK[MAX_COEF_J][MAX_COEF_J];
-    double LastCosTetta;
-    double LastSinTetta;
-    double LastP[MAX_COEF_J];
-    double LastPNK[MAX_COEF_J][MAX_COEF_J];
+    double CosTetta[MAX_COEF_J];
+    double SinTetta[MAX_COEF_J];
+    double P[MAX_COEF_J];
+    double Rn1divR[MAX_COEF_J];
+    double Ptilda[MAX_COEF_J];
+    double Pnk_tilda[MAX_COEF_J][MAX_COEF_J];
+    //double Pnk[MAX_COEF_J][MAX_COEF_J];
+    double Qnk[MAX_COEF_J][MAX_COEF_J];
     double R0divR[MAX_COEF_J];
     double ForceDD_;
     double Lambda;
     double DeltaVX;
     double DeltaVY;
     double DeltaVZ;
-    void CalcP(double X)
+    double Xk[MAX_COEF_J];
+    double Yk[MAX_COEF_J];
+    double XkDxr[MAX_COEF_J];
+    double YkDxr[MAX_COEF_J];
+    double XkDyr[MAX_COEF_J];
+    double YkDyr[MAX_COEF_J];
+    void CalcCosK(void)
     {
-        for (int i=0;i<iLeg;i++)
+        
+    }
+    void CalcP(double sinTetta, double XdivR, double YdivR)
+    {
+        int n,k;
+        // sinTetta is a Z/R - tetta is Latitude
+        // XdivR, YdivR - must be rotated from original X,Y based on a time (and angle Lambda) 
+        //
+        //
+        Lambda = 0.36;//1.72944494;
+        if (Lambda != -2)
         {
-            switch(i)
-            {
-            case 0:LastP[i] = 1.0;break;
-            case 1:LastP[i] = X;break;
+            XdivR = cos(Lambda) * XdivR - sin(Lambda) * YdivR;
+            YdivR = sin(Lambda) * XdivR + cos(Lambda) * YdivR;
+        }
+
+        SinTetta[1] = sinTetta;
+        CosTetta[1] = cos(asin(sinTetta));
+        // power of a cos
+        for (k = 2; k <= iLeg; k++)
+        {
+            CosTetta[k] = CosTetta[k-1]*CosTetta[1];
+            SinTetta[k] = SinTetta[k-1]*SinTetta[1];
+        }
+        // legandr functions from sinTetta
+        P[0] = 1.0;
+        P[1] = sinTetta;
+        Pnk_tilda[0][0] = P[0];
+        Pnk_tilda[1][0] = P[1];
+        for (n = 2; n <=iLeg; n++)
+        {
+            //switch(n)
+            //{
             // rest can be suspended to recur formula
-            //case 2:P[i] = (-1.0 + 3.0*X*X)/2;break;
+            //case 2:LastP[i] = (-1.0 + 3.0*X*X)/2;break;
             //case 3:P[i] = (-3.0 *X +5.0*X*X*X)/2;break;
             //case 4:P[i] = (3.0 - 30.0 * X*X +35.0*(X*X)*(X*X))/8.0;break;
             //case 5:P[i] = (15.0*X-70.0*(X*X)*X+63.0*(X*X)*(X*X)*X)/8.0;break;
             //case 6:P[i] = (-5 + 105* (X*X) - 315.0*(X*X)*(X*X) + 231.0*(X*X)*(X*X)*(X*X))/16.0;break;
-            default://Pn+1(a) = 1/(n+1) * ((2*n+1)*a*Pn(a) - n* Pn-1(a)
+            //default://Pn+1(a) = 1/(n+1) * ((2*n+1)*a*Pn(a) - n* Pn-1(a)
                     // n= i-1 ; n+1 = (i-1)+1 ; n-1 = (i-1) -1;
-            LastP[i] = ((2.0* (i-1) +1) *X * LastP[i-1] - (i-1)*LastP[i-2])/((i-1)+1);break;
+            P[n] = ((2.0* (n-1) +1) *sinTetta * P[n-1] - (n-1)*P[n-2])/((n-1)+1);
+            Pnk_tilda[n][0] = P[n];
+            //break;
+            //}
+        }
+        // derivetiveas from legandr fucntions
+        Ptilda[0] = 0; // P0 was constant == P0' == 0
+        Ptilda[1] = 1; // P1 was a X == P1' == 1
+
+        Pnk_tilda[0][1] = Ptilda[0];
+        Pnk_tilda[1][1] = Ptilda[1];
+        for (n=2;n<=iLeg;n++)
+        {   // all derivatives
+            // for P2' == 2* P1 + sin(tetta) * 1
+            Ptilda[n] = n * P[n-1] + sinTetta * Ptilda[n-1];
+            Pnk_tilda[n][1] = Ptilda[n];
+        }
+        // derivatives for dK(Pn(sinTetta))/d(sinTetta)**K
+        for (n= 2;n <=iLeg;n++)
+        {
+            for (k = 1; k<=iLeg;k++)
+            {
+                Pnk_tilda[n][k] = (2*n-1) * Pnk_tilda[n-1][k-1] - Pnk_tilda[n-2][k];
             }
         }
+        //for (n= 2;n <=iLeg;n++)
+        //{
+        //    for (k = 1; k<=iLeg;k++)
+        //    {
+        //        //Pnk[n][k] = pow((1 - X*X),k/2)*Pnk_tilda[n][k];
+        //        Pnk[n][k] = CosTetta[k]*Pnk_tilda[n][k];
+        //    }
+        //}
+        //if (iLeg_longit) // this is case when need to acount Longitude
+        Xk[0] = 1; Yk[0] =0; 
+        Xk[1] = XdivR; Yk[1] = YdivR;
+        for (k = 2; k<=iLeg; k++)
+        {
+            Xk[k] = Xk[k-1]*XdivR - Yk[k-1] * YdivR;
+            Yk[k] = Yk[k-1]*XdivR + Xk[k-1] * YdivR;
+        }
+        XkDxr[0] = 0; XkDyr[0] = 0; YkDxr[0] = 0; YkDyr[0] = 0;
+        for (k = 1; k <=iLeg; k++)
+        {
+            XkDxr[k] = XkDxr[k-1]*XdivR + Xk[k-1] - YkDxr[k-1]*YdivR;
+            XkDyr[k] = XkDyr[k-1]*XdivR - YkDyr[k-1]*YdivR - Yk[k-1];
+            YkDxr[k] = YkDxr[k-1]*XdivR + Yk[k-1] + XkDxr[k-1]*YdivR;
+            YkDyr[k] = YkDyr[k-1]*XdivR + XkDyr[k-1]*YdivR+Xk[k-1];
+        }
+        {
+             for (n = 2; n <=iLeg; n++)
+             {
+                 for (k = 0; k <=iLeg; k++)
+                 {
+                     Qnk[n][k] = CNK[n][k] * Xk[k] + SNK[n][k] * Yk[k];
+                 }
+             }
+        }
     }
-    void CalcPNK(double X)
+    //void CalcPNK(double X)
+    //{
+    //    LastPNK[2][1] = 3*X*sqrt(1-X*X);
+    //    LastPNK[2][2] = 3*(1-X*X);
+    //    // rest skiped
+    //}
+    void SummXYZ(double &X, double &Y, double &Z)
     {
-        LastPNK[2][1] = 3*X*sqrt(1-X*X);
-        LastPNK[2][2] = 3*(1-X*X);
-        // rest skiped
+        int n,k;
+        X=0; Y=0; Z=0;
+        for (n= 2;n <=iLeg;n++)
+        {
+            // implementation of derivetive (page 91 on Aksenov lectures)
+            // Potential Unk:
+            // Unk = fm/r (r0/r)**n Pnk(sinTetta) [Cnk*cos(k*lambda) + Snk*sin(k*lambda)
+            // then Unk separated into 3 parts:
+            // (1) Rn(1/r) = fm/r *(r0/r)**n         => Rn(1/r)' = (n+1) * fm * r0**n * (1/r)**n = (n+1) * fm * (r0/r)**n
+            //
+            //  on a page 12 is (kaind hard to write formulas in C code)
+            // Pnk(sinTetta) = (1-sinTetta**2) ** k/2 * dk (Pn(sinTetta))/ d(sinTetta)**k ==
+            //   cosTetta **k * dK(Pn(sinTetta))/ d(sinTtta)**k
+            // now cosTetta**k separated from Pnk(sinTetta) and a second part is:
+            // (2) Znk(z/r) = dK(Pn(sinTetta)/ d(sinTetta)**k == Pnk_tetta[n][k]  => Znk(z/r)' = Pnk_tilda[n][k+1]
+            // also (2) for K == 0 is:
+            // Zn0 = Pn(sinTetta)
+            // and cosTetta goes to a last part:
+            // (3) Qnk(x/r,y/r) = cosTetta**k * [Cnk*cos(k*lambda) + Snk * sin(k*lambda)] ==
+            // [Cnk*cosTetta**k * cos(k*lambda) + Snk * cosTetta**k * sin(k*lambda)] =
+            // [Cnk* Xk + Snk*Yk] and 
+            // Xk = (cosTetta)**k * cos(k*Lambda) 
+            // Yk = (costetta)**k * sin(k*Lambda)
+            // or recurcevly:
+            // X0 =1, Y0 = 0
+            // X1 = cosTeatta * Cos(Lambda) = x/r; Y1 = cosTetta * sin(Lambda) = y/r
+            // X[k+1] = Xk * x/r - Yk* y/r  Y[k+1] = Yk* x/r  + Xk * y/r
+            //  
+            // X2 = X1 * x/r - Y1 * y/r       = (x/r)**2 - (y/r)**2;
+            // Y2 = Y1 *x/r + X1 *y/r         = y/r * x/r + x/r* y/r = 2 (y/r) * (x/r)
+            //
+            // Q20 = C20 (constant) => D(Q20)/D(x/r) = 0 ; D(Q20)/ D (y/r) = 0
+            // Q21 = C21 * (x/r) + S21 (y/r) => 
+            //       D(Q21)/D(x/r) = C21; 
+            //       D(Q21)/D(y/r) = S21
+            // Q22 = C22 * [(x/r)*(x/r) - (y/r)*(y/r)] + S22 * [2*x/r*y/r] 
+            //       D(Q22)/D(x/r) = 2 * C22 * x/r + 2 * S22 * y/r = 2*[C22*x/r + S22*y/r]
+            //       D(Q22)/D(y/r) =-2 * C22 * y/r + 2 * S22 * x/r = 2*[C22*y/r + S22*x/r]
+            // Q30 = C30 (constant) => D(Q30)/D(x/r) = 0; D(Q30)/D(y/r) = 0;
+            // Q31 = C31 * (x/r) + S31 (y/r) => 
+            //       D(Q31)/D(x/r) = C31; 
+            //       D(Q31)/D(y/r) = S31
+            // Q32 = C32 * [(x/r)*(x/r) - (y/r)*(y/r)] + S32 * [2*x/r*y/r] 
+            //       D(Q32)/D(x/r) = 2 * C32 * x/r + 2 * S32 * y/r = 2*[C22*x/r + S22*y/r]
+            //       D(Q32)/D(y/r) =-2 * C32 * y/r + 2 * S32 * x/r = 2*[C22*y/r + S22*x/r]
+            // Q33 = C33 * [(x/r)*(x/r) - (y/r)*(y/r)] + S33 * [2*x/r*y/r] 
+            //       D(Q32)/D(x/r) = 2 * C32 * x/r + 2 * S32 * y/r = 2*[C22*x/r + S22*y/r]
+            //       D(Q32)/D(y/r) =-2 * C32 * y/r + 2 * S32 * x/r = 2*[C22*y/r + S22*x/r]
+            // chastnie proizvodnie (simbol D) :
+            // D(Unk)/D(x) = d(Rn) / d(1/r)    * D(1/r)/D(x)    * Znk    * Qnk +
+            //                 Rn * d(Znk)/d(z/r) * D(z/r)/D(x) * Qnk +
+            //                 Rn * Znk * [D(Qnk)/D(x/r) * D(x/r)/D(x) + D(Qnk)/D(y/r)*D(y/r)/D(x)]
+            //            = (n+1)* fm * (r0/r)**n * (-x/r**3) * Znk * Qnk +
+            //              Rn * d(K+1)(Pn(sinTetta)/d(sintetta)**(k+1) * (-x*z/r**3) * Qnk +
+            //              Rn * Znk * [D(Qnk)/D(x/r) * (1/r - x**2/r**3) + D(Qnk)/D(y/r)*(-x*y/r**3)]
+            //            = (n+1)* fm * (r0/r)**n * (-x/r**3) * Znk * Qnk +
+            //              Rn * d(K+1)(Pn(sinTetta)/d(sintetta)**(k+1) * (-x*z/r**3) * Qnk +
+            //              Rn * Znk * [(Cnk*D(Xk)/D(x/r)+Snk*DYk)/D(x/r)) * (1/r - x**2/r**3) + (Cnk*D(Xk)/D(y/r)+Snk*DYk)/D(y/r))*(-x*y/r**3)]
+            // as a result for example n=2 and k = 0
+            // D(U20)/D(X) = (2+1)* fm * (r0/r)**2 * (-x/r**3) * d(P2(sinTetta))/d(sinTetta) * J2 +
+            //              fm * r0**2 * (1/r)**3 * d(0+1)(P2(sinTetta)/d(sintetta)**(0+1) *(-x*z/r**3) * J2 +
+            //              fm * r0**2 * (1/r)**3 * d(Pn(sinTetta))/d(sinTetta) * [D(Q20)/D(x/r) * (1/r - x**2/r**3) + D(Q20)/D(y/r)*(-x*y/r**3)]
+            //            = - 3 * fm * (ro/r)**2 * (x/r**3) * Pnk_tilda[2][0] * J2 
+            //              -     fm * (r0/r)**2 * (1/r) * Pnk_tilda[2][1] * x*z/r**3 *J2 
+            //                    fm * (r0/r)**2 * (1/r) Pnk_tilda[2][0] * [0*(1/r-x**2/r**3) + 0*(-x*y/r**3)]
+            X += -(n+1) * R0divR[n] * Pnk_tilda[n][0] * Qnk[n][0]//CNK[n][0] 
+                 - R0divR[n] * SinTetta[1] * Pnk_tilda[n][1] * Qnk[n][0];//CNK[n][0]; 
+
+            // D(Unk)/D(y) = d(Rn) / d(1/r)    * D(1/r)/D(y)    * Znk    * Qnk +
+            //                 Rn * d(Znk)/d(z/r) * D(z/r)/D(y) * Qnk +
+            //                 Rn * Znk * [D(Qnk)/D(x/r) * D(x/r)/D(y) + D(Qnk)/D(y/r)*D(y/r)/D(y)]
+            //            = (n+1)* fm * (r0/r)**n * (-y/r**3) * Znk * Qnk +
+            //              Rn * d(K+1)(Pn(sinTetta)/d(sintetta)**(k+1) * (-y*z/r**3) * Qnk +
+            //              Rn * Znk * [D(Qnk)/D(x/r) * (- x*y/r**3) + D(Qnk)/D(y/r)*(1/r-y**2/r**3)]
+            //            = (n+1)* fm * (r0/r)**n * (-y/r**3) * Znk * Qnk +
+            //              Rn * d(K+1)(Pn(sinTetta)/d(sintetta)**(k+1) * (-y*z/r**3) * Qnk +
+            //              Rn * Znk * [(Cnk*D(Xk)/D(x/r)+Snk*DYk)/D(x/r)) * (- x*y/r**3) + (Cnk*D(Xk)/D(y/r)+Snk*DYk)/D(y/r))*(1/r-y**2/r**3)]
+            // as a result for example n=2 and k = 0
+            // D(U20)/D(X) = (2+1)* fm * (r0/r)**2 * (-y/r**3) * d(P2(sinTetta))/d(sinTetta) * J2 +
+            //              fm * r0**2 * (1/r)**3 * d(0+1)(P2(sinTetta)/d(sintetta)**(0+1) * (-y*z/r**3) * J2 +
+            //              fm * r0**2 * (1/r)**3 * d(Pn(sinTetta))/d(sinTetta) * [D(Q20)/D(x/r) * ( - x*y/r**3) + D(Q20)/D(y/r)*(1/r-y**2/r**3)]
+            //            = - 3 * fm * (ro/r)**2 * (y/r**3) * Pnk_tilda[2][0] * J2 
+            //              -     fm * (r0/r)**2 * (1/r) * Pnk_tilda[2][1] * y*z/r**3 *J2 
+            //                    fm * (r0/r)**2 * (1/r) Pnk_tilda[2][0] * [0*(-x*y/r**3) + 0*(1/r-y**2/r**3)]
+            Y += -(n+1) * R0divR[n] * Pnk_tilda[n][0] * Qnk[n][0]//CNK[n][0]
+                 - R0divR[n] * SinTetta[1] * Pnk_tilda[n][1] * Qnk[n][0];//CNK[n][0]; 
+
+            // D(Unk)/D(z) = d(Rn) / d(1/r)    * D(1/r)/D(z)    * Znk    * Qnk +
+            //                 Rn * d(Znk)/d(z/r) * D(z/r)/D(z) * Qnk +
+            //                 Rn * Znk * [D(Qnk)/D(x/r) * D(x/r)/D(z) + D(Qnk)/D(y/r)*D(y/r)/D(z)]
+            //            = (n+1)* fm * (r0/r)**n * (-z/r**3) * Znk * Qnk +
+            //              Rn * d(K+1)(Pn(sinTetta)/d(sintetta)**(k+1) * (1/r-z**2/r**3) * Qnk +
+            //              Rn * Znk * [D(Qnk)/D(x/r) * (- x*z/r**3) + D(Qnk)/D(y/r)*(-y*z/r**3)]
+            //            = (n+1)* fm * (r0/r)**n * (-z/r**3) * Znk * Qnk +
+            //              Rn * d(K+1)(Pn(sinTetta)/d(sintetta)**(k+1) * (1/r-z**2/r**3) * Qnk +
+            //              Rn * Znk * [(Cnk*D(Xk)/D(x/r)+Snk*DYk)/D(x/r)) * (- x*z/r**3) + (Cnk*D(Xk)/D(y/r)+Snk*DYk)/D(y/r))*(-y*z/r**3)]
+            // as a result for example n=2 and k = 0
+            // D(U20)/D(z) = (2+1)* fm * (r0/r)**2 * (-z/r**3) * d(P2(sinTetta))/d(sinTetta) * J2 +
+            //              fm * r0**2 * (1/r)**3 * d(0+1)(P2(sinTetta)/d(sintetta)**(0+1) * (1/r-z**2/r**3) * J2 +
+            //              fm * r0**2 * (1/r)**3 * d(Pn(sinTetta))/d(sinTetta) * [D(Q20)/D(x/r) * ( - x*z/r**3) + D(Q20)/D(y/r)*(-y*z/r**3)]
+            //            = - 3 * fm * (ro/r)**2 * (z/r**3) * Pnk_tilda[2][0] * J2 
+            //                   fm * (r0/r)**2 * (1/r) * Pnk_tilda[2][1] * (1/r - z**2/r**3 *J2 
+            //                    fm * (r0/r)**2 * (1/r) Pnk_tilda[2][0] * [0*(-x*z/r**3) + 0*(-y*z/r**3)]
+            Z += -(n+1) * R0divR[n] * Pnk_tilda[n][0] * Qnk[n][0]//CNK[n][0] 
+            + R0divR[n] * CosTetta[2]/ SinTetta[1] * Pnk_tilda[n][1] * Qnk[n][0];//CNK[n][0]; 
+        }
+        // second round
+        
+        for (n= 2;n <=iLeg;n++)
+        {
+            // k=0 already done
+            for (k = 1; k<=iLeg; k++)
+            {
+                //            = (n+1)* fm * (r0/r)**n * (-x/r**3) * Znk * Qnk +
+                //              Rn * d(K+1)(Pn(sinTetta)/d(sintetta)**(k+1) * (-x*z/r**3) * Qnk +
+                //              Rn * Znk * [(Cnk*D(Xk)/D(x/r)+Snk*DYk)/D(x/r)) * (1/r - x**2/r**3) + (Cnk*D(Xk)/D(y/r)+Snk*DYk)/D(y/r))*(-x*y/r**3)]
+
+                X += -(n+1) * R0divR[n] * Pnk_tilda[n][k] * Qnk[n][k] 
+                    - R0divR[n] * SinTetta[1] * Pnk_tilda[n][k+1] * Qnk[n][k]; 
+                Y += -(n+1) * R0divR[n] * Pnk_tilda[n][k] * Qnk[n][k] 
+                    - R0divR[n] * SinTetta[1] * Pnk_tilda[n][k+1] * Qnk[n][k]; 
+                Z += -(n+1) * R0divR[n] * Pnk_tilda[n][k] * Qnk[n][k] 
+                    + R0divR[n] * CosTetta[2]/ SinTetta[1] * Pnk_tilda[n][k+1] * Qnk[n][k]; 
+
+            }
+        }
+        
     }
     double SummJ(void)
     {
+        // this is a formula for gravitation potential (NOT a force)
+        // to get a force needs to get analiticaly derivitive from Gravitation potencial
+        // page 90 on Aksenov lectures : http://vadimchazov.narod.ru/lepa_zov/lesat.pdf
         //	- J2 * (r0/r)**2 * P2(sinPHI)  
         //	- J3 * (r0/r)**3 * P3(sinPHI) 
         //  - J4 * (r0/r)**4 * P4(sinPHI)
     
         double Summ = 1.0;
-        for (int n = 2; n <iLeg; n++)
+        for (int n = 2; n <=iLeg; n++)
         {
-            Summ -= J[n]*R0divR[n]*LastP[n];
+            Summ -= J[n]*R0divR[n]*P[n];
         }
+        // for now no earth rotation no acounted
         //+ SUM2=( (r0/r)**2 * P21(sinPHI) * (C21 * cos(1*Lambda) + S21*sin(1*Lanbda)) +
         //           (r0/r)**2 * P22(sinPhi) * (C22 *cos(2*Lambda) + S22*sin(2*Lambda))     )
         //Summ += R0divR[2] * LastPNK[2][1] * (CNK[2][1] * cos(Lambda) + SNK[2][1]*sin(Lambda)) +
@@ -412,6 +639,7 @@ double SunY =.0;
 double SunZ = .0;
 double SunM = 1.9891E30;
 double GMSun;
+double SunR;
 double GMEarth;
 double GMEarthMoon;
 double GMMoon;
@@ -674,13 +902,13 @@ void IteraSolarSystem(int TimeDirection, TRAOBJ * SlS)
             continue;
 #if 1
         // this is original formula
-        SlS->X[i] += SlS->VX[i]*TimeSl;
-        SlS->Y[i] += SlS->VY[i]*TimeSl;
-        SlS->Z[i] += SlS->VZ[i]*TimeSl;
-
         SlS->VX[i] += SlS->FX[i] * TimeSl / SlS->M[i];
         SlS->VY[i] += SlS->FY[i] * TimeSl / SlS->M[i];
         SlS->VZ[i] += SlS->FZ[i] * TimeSl / SlS->M[i];
+
+        SlS->X[i] += SlS->VX[i]*TimeSl;
+        SlS->Y[i] += SlS->VY[i]*TimeSl;
+        SlS->Z[i] += SlS->VZ[i]*TimeSl;
 
 #else
         SlS->VX_[i] += SlS->FX[i];
@@ -711,6 +939,8 @@ void IteraSat(int TimeDirection, TRAOBJ * SlS, TRAOBJ * Sat)
     int j;
     double Summ;
     double Temp;
+    double DX,DY,DZ;
+
     // calculation of a forces
     for (i = 0; i < Sat->Elem; i++)
     {
@@ -736,7 +966,7 @@ void IteraSat(int TimeDirection, TRAOBJ * SlS, TRAOBJ * Sat)
                     if (j == Sat->LegBody)
                     {
                         Sat->R0divR[1] = R0_MODEL/tD_;
-                        for (int n = 2; n < Sat->iLeg; n++)
+                        for (int n = 2; n <= (Sat->iLeg); n++)
                         {
                             Sat->R0divR[n] = Sat->R0divR[1]*Sat->R0divR[n-1];
                         }
@@ -752,26 +982,27 @@ void IteraSat(int TimeDirection, TRAOBJ * SlS, TRAOBJ * Sat)
                     // sin Tetta(colatitude) = Z/R
                     // and tetta(Latitude) btw equator and vector
                     // this means that sinTetta(colatitude) equal cosTetta(latitude)
-                    Sat->LastSinTetta = ((Sat->Z[i] - SlS->Z[j]) /Sat->Distance[i][j]);
+                    Sat->SinTetta[1] = ((Sat->Z[i] - SlS->Z[j]) /Sat->Distance[i][j]);
                     
                     //if (Sat->LastSinTetta <0)
                     //    Sat->LastCosTetta = cos(asin(Sat->LastSinTetta)-M_PI/2.0);
                     //else
-                    Sat->LastCosTetta = cos(asin(Sat->LastSinTetta));
+                    //Sat->CosTetta[1] = cos(asin(Sat->LastSinTetta[1]));
 
                     //Sat->LastCosTetta = sin(acos(Sat->LastSinTetta));
                     //Sat->LastCosTetta = sqrt(Sat->Distance[i][j]*Sat->Distance[i][j] - (Sat->Z[i] - SlS->Z[j])*(Sat->Z[i] - SlS->Z[j]))/Sat->Distance[i][j];
                     // first just use only J
-                    Sat->CalcP(Sat->LastSinTetta);//>LastCosTetta);
+                    Sat->CalcP(Sat->SinTetta[1],((Sat->X[i] - SlS->X[j]) /Sat->Distance[i][j]),((Sat->Y[i] - SlS->Y[j]) /Sat->Distance[i][j]));//>LastCosTetta);
                     //Sat->CalcPNK(Sat->LastCosTetta);
                     Summ = Sat->SummJ();
+                    Sat->SummXYZ(DX,DY,DZ);
                     
                     //Summ *=1.0001;//0.999905;
 
-                    Sat->ForceDD[i][j] = Sat->ForceDD_ * Summ;
-                    Sat->DeltaVX =1;
-                    Sat->DeltaVY =1;
-                    Sat->DeltaVZ = 1;
+                    Sat->ForceDD[i][j] = Sat->ForceDD_;// * Summ;
+                    Sat->DeltaVX =1-DX;
+                    Sat->DeltaVY =1-DY;
+                    Sat->DeltaVZ = 1-DZ;
                     /*
                     if (abs(Sat->LastSinTetta) < 0.1)
                     {
@@ -875,7 +1106,7 @@ void IteraSat(int TimeDirection, TRAOBJ * SlS, TRAOBJ * Sat)
                         Sat->DeltaVY =0.9960;
                         Sat->DeltaVZ = 0.999525;
                     }
-                    */
+                   */
 
                     // is this a WGS84??:
                     //Temp = SlS->GM[j] / (R0_MODEL*R0_MODEL);
@@ -930,13 +1161,14 @@ void IteraSat(int TimeDirection, TRAOBJ * SlS, TRAOBJ * Sat)
     {
 #if 1
         // this is original formula
+        Sat->VX[i] += Sat->FX[i] * TimeSl /* Sat->M[i]*/;
+        Sat->VY[i] += Sat->FY[i] * TimeSl /* Sat->M[i]*/;
+        Sat->VZ[i] += Sat->FZ[i] * TimeSl /* Sat->M[i]*/;
+
         Sat->X[i] += Sat->VX[i]*TimeSl;
         Sat->Y[i] += Sat->VY[i]*TimeSl;
         Sat->Z[i] += Sat->VZ[i]*TimeSl;
 
-        Sat->VX[i] += Sat->FX[i] * TimeSl /* Sat->M[i]*/;
-        Sat->VY[i] += Sat->FY[i] * TimeSl /* Sat->M[i]*/;
-        Sat->VZ[i] += Sat->FZ[i] * TimeSl /* Sat->M[i]*/;
 
 #else
         Sat->VX_[i] += Sat->FX[i];
@@ -946,17 +1178,17 @@ void IteraSat(int TimeDirection, TRAOBJ * SlS, TRAOBJ * Sat)
         // this can be skipped to make calculation faster
         // VX is different from VX_ by coef = TimeS1*Mass
         // 
-        Sat->VX[i] = Sat->VX_[i]*TimeSl / Sat->M[i];
-        Sat->VY[i] = Sat->VY_[i]*TimeSl / Sat->M[i];
-        Sat->VZ[i] = Sat->VZ_[i]*TimeSl / Sat->M[i];
+        Sat->VX[i] = Sat->VX_[i]*TimeSl /* Sat->M[i]*/;
+        Sat->VY[i] = Sat->VY_[i]*TimeSl /* Sat->M[i]*/;
+        Sat->VZ[i] = Sat->VZ_[i]*TimeSl /* Sat->M[i]*/;
 //#endif
         Sat->X_[i] += Sat->VX_[i];
         Sat->Y_[i] += Sat->VY_[i];
         Sat->Z_[i] += Sat->VZ_[i];
 
-        Sat->X[i] = Sat->X_[i]*TimeSl*TimeSl / Sat->M[i];
-        Sat->Y[i] = Sat->Y_[i]*TimeSl*TimeSl / Sat->M[i];
-        Sat->Z[i] = Sat->Z_[i]*TimeSl*TimeSl / Sat->M[i];
+        Sat->X[i] = Sat->X_[i]*TimeSl*TimeSl /* Sat->M[i]*/;
+        Sat->Y[i] = Sat->Y_[i]*TimeSl*TimeSl /* Sat->M[i]*/;
+        Sat->Z[i] = Sat->Z_[i]*TimeSl*TimeSl /* Sat->M[i]*/;
 #endif
     }
 }
@@ -2633,6 +2865,11 @@ int CallXMLPars(char *szString, char *XML_Params)
         return 0;
 
 }
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+//
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void ParamCommon(char *szString)
 {
     XML_BEGIN;
@@ -2640,15 +2877,65 @@ void ParamCommon(char *szString)
         IF_XML_READ(dStartJD) 
         {
             dStartJD = atof(pszQuo);    // format: <CT:setting name="dStartJD0" value="2455625.1696833" />
-            int iYear = dStartJD/1000;
-            if ((iYear > 0) && (iYear < 24)) // this is a <CT:setting name="dStartJD" value="11291.79166666" />
-            {
-                dStartJD = ConverEpochDate2JulianDay(dStartJD);
-            }
-            else
-            {
+			if (dStartJD <0) // negativge value set current date
+			{
+				int iYear;
+				int iDays;
+				int iCurSec;
+				SYSTEMTIME MyTime;
+                GetSystemTime(&MyTime);
 
-            }
+                iYear = MyTime.wYear-2000;
+				iDays=MyTime.wDay;
+
+				switch(MyTime.wMonth-1)
+				{
+				case 11:// november
+					iDays+=30;
+				case 10:// october
+					iDays+=31;
+				case 9:// september
+					iDays+=30;
+				case 8://august
+					iDays+=31;
+				case 7:// july
+					iDays+=31;
+				case 6:// june
+					iDays+=30;
+				case 5:// may
+					iDays+=31;
+				case 4:// april
+					iDays+=30;
+				case 3:// march
+					iDays+=31;
+				case 2:// february
+					if ((iYear %4) ==0) // leap year
+						iDays+=29;
+					else
+						iDays+=28;
+				case 1:iDays+=31; // january
+				case 0:iDays+=0;
+					break;
+				}
+				iCurSec = MyTime.wHour * 60*60;
+				iCurSec += MyTime.wMinute *60;
+				iCurSec += MyTime.wSecond;
+				dStartJD = iYear *1000.0 + iDays;
+				dStartJD += (((double)iCurSec)+ ((double)MyTime.wMilliseconds/1000.))/ (24.0*60.0*60.0);
+				dStartJD = ConverEpochDate2JulianDay(dStartJD);
+			}
+			else
+			{
+				int iYear = dStartJD/1000;
+				if ((iYear > 0) && (iYear < 24)) // this is a <CT:setting name="dStartJD" value="11291.79166666" />
+				{
+					dStartJD = ConverEpochDate2JulianDay(dStartJD);
+				}
+				else
+				{
+
+				}
+			}
         }
         XML_READ(TimeSl);
         XML_READ(Gbig);
@@ -3134,7 +3421,7 @@ void SGP4(long double TSINCE,/*double EPOCH,*/
 //1 XNDD6O,BSTAR,X,Y,Z,XDOT,YDOT,ZDOT,EPOCH,DS50
 //COMMON/C1/CK2,CK4,E6A,QOMS2T,S,TOTHRD,
 //1 XJ3,XKE,XKMPER,XMNPDA,AE
-	long double /*EPOCH,*/ DS50;
+	//long double /*EPOCH,*/ DS50;
 	long double XKE = BIG_XKE;//.743669161E-1;
 	long double XKMPER = 6378.1350;
 	//IF (IFLAG .EQ. 0) GO TO 100
@@ -3144,7 +3431,7 @@ void SGP4(long double TSINCE,/*double EPOCH,*/
 	long double XJ2 = 1.082616E-3; //the second gravitational zonal harmonic of the Earth
 	long double XJ3 = -.253881E-5; // the third gravitational zonal harmonic of the Earth
 	long double XJ4 = -1.65597E-6; // the fourth gravitational zonal harmonic of the Earth
-	long double AE = 1.0;          // the equatorial radius of the Earth - actualy it is not true it is one == everuthing measuared in that radiuses
+	long double AE = 1.0;          // the equatorial radius of the Earth - actualy it is not true it is one == everything measuared in that radiuses
 	long double QO =120.0;         // parameter for the SGP4/SGP8 density function
 	long double SO = 78.0;         // parameter for the SGP4/SGP8 density function
 
@@ -3387,6 +3674,12 @@ M_19:
 //RETURN
 //END
 }
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+//
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void ParamMoon(char *szString)
 {
     XML_BEGIN;
@@ -3560,6 +3853,11 @@ void MoonXYZCalc(double &flX, double &flY, double &flZ, double tsec)
              3.0*sin(  104.881*tsec + 2.555)+
              1.8*sin( 8399.116*tsec + 6.248))*1.0E6;
 }
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+//
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void ParamSun(char *szString)
 {
     XML_BEGIN;
@@ -3568,6 +3866,7 @@ void ParamSun(char *szString)
         XML_READ(SunX);
         XML_READ(SunY);
         XML_READ(SunZ);
+		XML_READ(SunR);
         XML_READ(SunM);
         IF_XML_READ(GMSun) 
         {
@@ -3579,6 +3878,10 @@ void ParamSun(char *szString)
     XML_SECTION_END;
     XML_END;
 }
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+//
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void ParamEarth(char *szString)
 {
     XML_BEGIN;
@@ -3728,6 +4031,10 @@ void ParamEarth(char *szString)
 }
 // just for convinience to proper orbit clculation
 double EngCoeff = 1.0;
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+//
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void ParamProb(char *szString)
 {
     
@@ -4037,6 +4344,109 @@ void ParamProb(char *szString)
 			long double tVY = tempProbVY;
 			long double tVZ = tempProbVZ;
 			{
+#if 1
+
+                //01234567890123456789012345678901234567890123456789012345678901234567890
+//1 25544U 98067A   04236.56031392  .00020137  00000-0  16538-3 0  5135\
+//2 25544  51.6335 341.7760 0007976 126.2523 325.9359 15.70406856328903"
+//    };
+    // "ISS (ZARYA)"    The common name for the object based on information from the SatCat.
+    // "1"              Line Number
+    // "25544"          Object Identification Number
+    // "U"              Elset Classification
+    // "98067A"         International Designator
+    //  98                   - designate the launch year of the object
+    //    067                - launch number, starting from the beginning of the year
+    //       A               - indicates the piece of the launch: "A" is a payload 
+    // "04236.56031392" Element Set Epoch (UTC)
+    //  04                   - year
+    //    236.56031392       - day
+    // "_.00020137"      1st Derivative of the Mean Motion with respect to Time
+    // "_00000-0"        2nd Derivative of the Mean Motion with respect to Time (decimal point assumed)
+    // "_16538-3"        B* Drag Term
+    // "0"              Element Set Type
+    // "_513"            Element Number
+    // "5"              Checksum
+    //                        The checksum is the sum of all of the character in the data line, modulo 10. 
+    //                        In this formula, the following non-numeric characters are assigned the indicated values: 
+    //                        Blanks, periods, letters, '+' signs -> 0
+    //                        '-' signs -> 1
+    // "2"             Line Number
+    // "25544"         Object Identification Number
+    // "_51.6335"       Orbit Inclination (degrees)
+    // "341.7760"      Right Ascension of Ascending Node (degrees)
+    // "0007976"       Eccentricity (decimal point assumed)
+    // "126.2523"      Argument of Perigee (degrees)
+    // "325.9359"      Mean Anomaly (degrees)
+    // "15.70406856"    Mean Motion (revolutions/day)
+    // "328903"        Revolution Number at Epoch
+
+                // NAVSTAR 54 (USA 177)
+                // 1 28190U 04009A   12103.48551084  .00000032  00000-0  10000-3 0  3101
+                // 2 28190 055.0111 121.3785 0080561 006.7787 353.3670 02.00552748 59113
+                //
+                //         orbit inclanation
+                //                  Right Ascension of Ascending Node
+
+
+
+                // testing GPS sattelite #0x13=19 on UTC= 492765.99999995105 week: 1683 time 16:52:46
+                long double m1ProbTSec, m1ProbEcc, m1ProbIncl, m1ProbAscNode, m1ProbArgPer, m1ProbMeanAnom;
+                long double m2ProbTSec, m2ProbEcc, m2ProbIncl, m2ProbAscNode, m2ProbArgPer, m2ProbMeanAnom;
+                tProbX = -24891582.164414;
+                tProbY = -6179787.716544;
+                tProbZ = 7602393.375224;
+                tProbVX = -760.24581128329362;
+                tProbVY = -633.026865;
+                tProbVZ = -2950.637702;
+                DumpKeplers(m1ProbTSec, // - orbit period in sec
+				    m1ProbEcc,             // - Eccentricity
+                    m1ProbIncl,            // - Inclination
+                    m1ProbAscNode,         // - Longitude of ascending node
+                    m1ProbArgPer,          // - Argument of perihelion
+                    m1ProbMeanAnom,        // - Mean Anomaly (degrees)
+                    SolarSystem.M[EARTH],0.0,
+                    tProbX,tProbY,tProbZ,tProbVX,tProbVY,tProbVZ);
+				m1ProbIncl = m1ProbIncl / M_PI * 180;
+				m1ProbAscNode = m1ProbAscNode / M_PI * 180;
+				m1ProbArgPer = m1ProbArgPer / M_PI * 180;
+				m1ProbMeanAnom = m1ProbMeanAnom / M_PI * 180;
+                // tProbArgPer	6.0013685480087604	double 343.85308910345697
+		        // tProbAscNode	0.28308821186056238	double 16.219759769515520
+		        // tProbEcc	0.35006709180942119	double
+		        // tProbIncl	1.4375592933975376	double 82.366080311487735
+		        // tProbMeanAnom	3.1240698993743474	double 178.99602013800990
+		        // tProbTSec	27757.763563012952	double
+		        
+
+
+                // testing GPS sattelite #13 on UTC= 492841.99999994022 (75.99999998917 sec later)
+                tProbX = -24948509.734849;
+                tProbY = -6227303.238357;
+                tProbZ = 7377692.112397;
+                tProbVX = -737.80818258029888;
+                tProbVY = -617.413576;
+                tProbVZ = -2962.493300;
+                DumpKeplers(m2ProbTSec, // - orbit period in sec
+				    m2ProbEcc,             // - Eccentricity
+                    m2ProbIncl,            // - Inclination
+                    m2ProbAscNode,         // - Longitude of ascending node
+                    m2ProbArgPer,          // - Argument of perihelion
+                    m2ProbMeanAnom,        // - Mean Anomaly (degrees)
+                    SolarSystem.M[EARTH],0.0,
+                    tProbX,tProbY,tProbZ,tProbVX,tProbVY,tProbVZ);
+				m2ProbIncl = m2ProbIncl / M_PI * 180;
+				m2ProbAscNode = m2ProbAscNode / M_PI * 180;
+				m2ProbArgPer = m2ProbArgPer / M_PI * 180;
+				m2ProbMeanAnom = m2ProbMeanAnom / M_PI * 180;
+                // tProbArgPer	6.0101929578191724	double 344.35869054228738
+		        // tProbAscNode	0.28215312764826711	double 16.166183390661683
+		        // tProbEcc	0.34889965261994360	double
+		        // tProbIncl	1.4407074570581755	double 82.546456802458735
+		        // tProbMeanAnom	3.1243871650157362	double 179.01419812024599
+		        // tProbTSec	27795.543500545853	double
+                // position and Keplers does not match == something wrong - also wrong inclanation that sattelite must be 55 degree
+#endif
 				// mean amomaly on curent time
 				DumpKeplers(tProbTSec, // - orbit period in sec
 				    tProbEcc,             // - Eccentricity
@@ -4113,13 +4523,13 @@ void ParamProb(char *szString)
             // temporary X_, VX_ will just added (in paralel calculations can be done actualy faster) 
             for (int i = 0; i <Sat.Elem; i++)
             {
-                Sat.VX_[i] = Sat.VX[i]* Sat.M[i] /TimeSl ;
-                Sat.VY_[i] = Sat.VY[i]* Sat.M[i] /TimeSl;
-                Sat.VZ_[i] = Sat.VZ[i]* Sat.M[i] /TimeSl;
+                Sat.VX_[i] = Sat.VX[i]/* Sat.M[i]*/ /TimeSl ;
+                Sat.VY_[i] = Sat.VY[i]/* Sat.M[i]*/ /TimeSl;
+                Sat.VZ_[i] = Sat.VZ[i]/* Sat.M[i]*/ /TimeSl;
 
-                Sat.X_[i] = Sat.X[i]* Sat.M[i] /TimeSl/TimeSl ;
-                Sat.Y_[i] = Sat.Y[i]* Sat.M[i] /TimeSl/TimeSl ;
-                Sat.Z_[i] = Sat.Z[i]* Sat.M[i] /TimeSl/TimeSl ;
+                Sat.X_[i] = Sat.X[i]/* Sat.M[i]*/ /TimeSl/TimeSl ;
+                Sat.Y_[i] = Sat.Y[i]/* Sat.M[i]*/ /TimeSl/TimeSl ;
+                Sat.Z_[i] = Sat.Z[i]/* Sat.M[i]*/ /TimeSl/TimeSl ;
             }
             for (int n = 0 ; n < MAX_COEF_J; n++)
             {
@@ -4137,7 +4547,9 @@ void ParamProb(char *szString)
                 }
             }
             // amount of J coeff used in calcualtion
-            Sat.iLeg = 9;
+            Sat.iLeg = 4;
+            Sat.iLeg_longit = 0; // no longitude in calculation
+            Sat.Lambda = -2;
             Sat.LegBody = EARTH;
             
         }
@@ -4449,6 +4861,38 @@ void makeExplanationText(char*szText, int iCalc, int iTraj, int iBody)
 
     }
 
+}
+void dumpTRAvisual(void)
+{
+	FILE *VisualFile = fopen("travisual.xml", "w");
+	if (VisualFile)
+	{
+		fprintf(VisualFile,"<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n\r");
+		fprintf(VisualFile,"<Universe>\n\r");
+		fprintf(VisualFile,"	<Object>\n\r");
+		fprintf(VisualFile,"		<type>Earth</type>\n\r");
+		fprintf(VisualFile,"		<X>%.18g</X>\n\r",SolarSystem.X[EARTH]);
+		fprintf(VisualFile,"		<Y>%.18g</Y>\n\r",SolarSystem.Y[EARTH]);
+		fprintf(VisualFile,"		<Z>%.18g</Z>\n\r",SolarSystem.Z[EARTH]);
+		fprintf(VisualFile,"		<R>%.18g</R>\n\r",EarthR);
+		fprintf(VisualFile,"	</Object>\n\r");
+		fprintf(VisualFile,"	<Object>\n\r");
+		fprintf(VisualFile,"		<type>Sun</type>\n\r");
+		fprintf(VisualFile,"		<X>%.18g</X>\n\r",SolarSystem.X[SUN]);
+		fprintf(VisualFile,"		<Y>%.18g</Y>\n\r",SolarSystem.Y[SUN]);
+		fprintf(VisualFile,"		<Z>%.18g</Z>\n\r",SolarSystem.Z[SUN]);
+		fprintf(VisualFile,"                <R>%.18g</R>\n\r",SunR);
+		fprintf(VisualFile,"	</Object>\n\r");
+		fprintf(VisualFile,"	<Object>\n\r");
+		fprintf(VisualFile,"		<type>Moon</type>\n\r");
+		fprintf(VisualFile,"		<X>%.18g</X>\n\r",SolarSystem.X[MOON]);
+		fprintf(VisualFile,"		<Y>%.18g</Y>\n\r",SolarSystem.Y[MOON]);
+		fprintf(VisualFile,"		<Z>%.18g</Z>\n\r",SolarSystem.Z[MOON]);
+		fprintf(VisualFile,"                <R>%.18g</R>\n\r",MoonR);
+		fprintf(VisualFile,"	</Object>\n\r");
+		fprintf(VisualFile,"</Universe>\n\r");
+		fclose(VisualFile);
+	}
 }
 void dumpXMLParam(TRAOBJ *Sat, TRAIMPLOBJ *MyEngine, int iNumbOfEng)
 {
@@ -5592,7 +6036,7 @@ int _tmain(int argc, _TCHAR* argv[])
             double errAngle =  acos(errorCos);
             double errorD = sqrt(tVX*tVX + tVY*tVY + tVZ*tVZ)/sqrt(tProbVX*tProbVX + tProbVY*tProbVY + tProbVZ*tProbVZ);
             double cosCoLAtitude = tZ / sqrt(tX*tX + tY*tY + tZ*tZ);
-            if (i%64 == 0)
+            if (i%128 == 0)
             {
                 //if (abs(cosCoLAtitude) >0.35)
                 //    printf("\n%3d=%f err(%f)V=%f angle=%f d=%f ",(int)(acos(cosCoLAtitude)*180/M_PI),cosCoLAtitude,tttX,tttVX,errAngle*1000.0,(errorD-1.0)*1000.0);
@@ -5604,9 +6048,15 @@ int _tmain(int argc, _TCHAR* argv[])
             // and  best results == 17 km in 5000 seconds does on sin(CoLAtitude) (or in russian's pdf == cos(Latitude) )
             // all another usees does bigger error 
             // for now Plan B - use SPG4 as a backup
+            // alex == idiot !!! read carefully page 90
             //Sat.X[0] = tProbX + SolarSystem.X[EARTH]; Sat.Y[0] = tProbY + SolarSystem.Y[EARTH]; Sat.Z[0] = tProbZ + SolarSystem.Z[EARTH];
             //Sat.VX[0] = tProbVX + SolarSystem.VX[EARTH]; Sat.VY[0] = tProbVY + SolarSystem.VY[EARTH]; Sat.VZ[0] = tProbVZ + SolarSystem.VZ[EARTH];
 
+			// needs to dump data for visualization each XX sec
+			if (i%10 == 0)
+			{
+				dumpTRAvisual();
+			}
 		}
 		printf("\n iteration done");
 		tProbTSec = 0;
@@ -5644,12 +6094,12 @@ int _tmain(int argc, _TCHAR* argv[])
         ttProbVZ	= tVZ - (-7098.2955155539603);
 
         // no drug 1 day atget:
-        //double ttProbX	= tX - (2734383.4756962131);
-        //double ttProbY	= tY - (-6085363.2719152933);
-        //double ttProbZ	= tZ - (-294685.77944232832);
-        //double ttProbVX	= tVX - (1964.3006721124766);
-        //double ttProbVY	= tVY - (1175.6494914836899);
-        //double ttProbVZ	= tVZ - (-7357.5774951035146);
+        //ttProbX	= tX - (2734383.4756962131);
+        //ttProbY	= tY - (-6085363.2719152933);
+        //ttProbZ	= tZ - (-294685.77944232832);
+        //ttProbVX	= tVX - (1964.3006721124766);
+        //ttProbVY	= tVY - (1175.6494914836899);
+        //ttProbVZ	= tVZ - (-7357.5774951035146);
 
         tttX = sqrt(ttProbX*ttProbX + ttProbY*ttProbY + ttProbZ*ttProbZ);
         tttVX = sqrt(ttProbVX*ttProbVX + ttProbVY*ttProbVY + ttProbVZ*ttProbVZ);

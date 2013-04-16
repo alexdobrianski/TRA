@@ -1,185 +1,835 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <CT:data version="1.00" xmlns:CT="http://www.adobri.com/tra">
-  <CT:section name="TraInfo">
+<CT:section name="TraInfo">
 
-    <CT:setting name="IterPerSec" value="1024.0" />
-    <CT:setting name="GWikiEn" value="6.67428E-11" />
-    <CT:setting name="Gmax"    value="6.67495E-11" />
-    <CT:setting name="Gmin"    value="6.67361E-11" />
-    <CT:setting name="GNASA"   value="6.67259E-11" />
-    <CT:setting name="Gbig"    value="6.67428E-11" />
+<!-- starting date (1 jan 2000) = 2451544.5JD 
+    2001 == 2451910.5 2002 =  2452275.5 2003 == 2452640.5 2004 == 2453005.5
+    2005 == 2453371.5 2006 == 2453736.5 2007 == 2454101.5 2008 == 2454466.5
+    2009 == 2454832.5 2010 == 2455197.5 2011 == 2455562.5 2012 == 2455927.5
+    2013 == 2456293.5 2014 == 2456658.5 2015 == 2457023.5 
+    or set as in keplers epoch: 11291.79166666
+    or set as normal date and time DD/MM/YY HH:MM:SS:MLS-->
+    <CT:setting name="dStartJD0" value="2451544.5" />
+    <CT:setting name="dStartSecond" value="2451544.5" />
+    <CT:setting name="dStartJD0" value="2455625.1696833" />
+    <CT:setting name="dStartJD" value="11291.79166666" />
+    <CT:setting name="dStartJD0" value="11291.854004622962962962962962963" />
+    <CT:setting name="dStartJD0" value="11292.79166666" />
 
-    <CT:setting name="TotalDays" value="366.0" />
-    <CT:setting name="EarthCurTime" value="2000.0" />
-    <CT:setting name="AU" value="1.49597870691E11" /> 
-    <CT:setting name="qGMMoon" value="4902.7779E9" />
-    <CT:setting name="qGMEarth"  value="398600.4418E9" />
+    <CT:setting name="RGBImageW" value="1280" />
+    <CT:setting name="RGBImageH" value="720" />
+<!-- int iProfile = 0; 
+              // 0 == XY , 1 == YZ, 2 == XZ 3 == -YZ 4 == -XZ 5==-XY
+              // 0 or XY is a view from North to south, 5 (- XY) is a view from south to north
+              // 1 or YZ is a view to easter -->
+    <CT:setting name="RGBView" value="0" />
+<!--  EARTH 2 MOON  9 -->
+
+    <CT:setting name="RGBReferenceBody" value="2" />
+<!-- max amount of pictures -->
+    <CT:setting name="RGBMaxPictures" value="128" />
+<!-- one picture per sec -->
+    <CT:setting name="RGBSecPerPictures" value="8640" />
+<!-- scale in m -->
+    <CT:setting name="RGBScale" value="90000000" />
+
+    <CT:setting name="IterPerSec" value="32" />
+    <CT:setting name="StartLandingIteraPerSec" value="772050" />
+<!-- next vaue actualy just a reference it will be used in-->
+<!-- GMMoon = MoonM * GBig and GMEarth = EarthM*GBig      -->
+<!-- know GMMoon and GMEarth will give proper value for M -->
+    <CT:setting name="Gbig" value="6.6742799999999995e-011" />
+    <CT:setting name="TotalDays0" value="1" />
+    <CT:setting name="TotalDays" value="0.062337962962962962962962962962963" />
+    <CT:setting name="TotalDays0" value="0.124675925925925925925925925924" />
 
 
-    <CT:setting name="ProbX" value="0.0" />
-    <CT:setting name="ProbY" value="0.0" />
-    <CT:setting name="ProbZ" value="0.0" />
-    <CT:setting name="ProbVX" value="0.0" />
-    <CT:setting name="ProbVY" value="0.0" />
-    <CT:setting name="ProbVZ" value="0.0" />
-
-
-    <CT:setting name="ProbM" value="150.0" />
+    <CT:setting name="EarthCurTime" value="11036.971719672511" />
+    <CT:setting name="AU" value="149597870697.39999" />
+    <CT:setting name="ProbM" value="67.5" />
     <CT:setting name="ProbKeplerLine1" value="ISS (ZARYA)" />
-    <CT:setting name="ProbKeplerLine2" value="1 25544U 98067A   04236.56031392  .00020137  00000-0  16538-3 0  5135" />
-    <CT:setting name="ProbKeplerLine3" value="2 25544  51.6335 341.7760 0007976 126.2523 325.9359 15.70406856328903" />
+    <CT:setting name="@ProbKeplerLine2" value="1 25544U 98067A   11062.66968330  .00024457  00000-0  18183-3 0  9357" />
+    <CT:setting name="@ProbKeplerLine3" value="2 25544 051.6480 342.0829 0005279 039.9625 033.1957 15.72669582704292" />
+    <CT:setting name="@ProbKeplerLine2" value="1 25544U 98067A   11291.79166666  .00024457  00000-0  18183-3 0  9357" />
+    <CT:setting name="@ProbKeplerLine3" value="2 25544 051.6480 342.0829 0005279 039.9625 033.1957 15.72669582704292" />
 
-    <CT:setting name="ProbM" value="150.0" />
-    <CT:setting name="ProbKeplerLine1" value="ISS (ZARYA)" />
-    <CT:setting name="ProbKeplerLine2" value="1 25544U 98067A   04236.56031392  .00020137  00000-0  16538-3 0  5135" />
-    <CT:setting name="ProbKeplerLine3" value="2 25544  00.0000 000.0000 0007976 090.0000 000.0000 15.70406856328903" />
-
-
-    <CT:setting name="SunX" value="0.0" />
-    <CT:setting name="SunY" value="0.0" />
-    <CT:setting name="SunZ" value="0.0" />
-    <CT:setting name="SunVX" value="0.0" />
-    <CT:setting name="SunVY" value="0.0" />
-    <CT:setting name="SunVZ" value="0.0" />
-    <CT:setting name="SunM1"      value="1.9891E30" />
-    <CT:setting name="SunM"       value="1.9818E30" />
-
-    <CT:setting name="SunMCorr"  value="1.9884163239675713E30" />
-    <!-- next line will force recalculation of SunM based on G constant -->
-    <CT:setting name="GMSun"  value="1.32712440018E20" />
+     <CT:setting name="ProbKeplerLine2" value="1 88888U 98067A   11291.79166666  .00073094  13844-3  66816-4 0  8" />
+     <CT:setting name="ProbKeplerLine3" value="2 88888 072.8435 115.9689 0086731 052.6988 110.5714 16.05824518704292" />
 
 
-    <CT:setting name="EarthX" value="0.0" />
-    <CT:setting name="EarthY" value="0.0" />
-    <CT:setting name="EarthZ" value="0.0" />
-    <CT:setting name="EarthVX" value="0.0" />
-    <CT:setting name="EarthVY" value="0.0" />
-    <CT:setting name="EarthVZ" value="0.0" />
-
-    <CT:setting name="EarthR"  value="6371000.0" />
-    <CT:setting name="EarthRP" value="6356800.0" />
-    <CT:setting name="EarthRE" value="6378100.0" />
-
-    <CT:setting name="EarthM"  value="5.9736E24" />
-    <CT:setting name="EarthMCorr"   value="5.9715468065218864E24" />
-    <CT:setting name="MassRatioSunToEarthPlusMoon0"  value="328900.56" />
-    <CT:setting name="MassRatioSunToEarthPlusMoon1"  value="328900.561400" />
-    <CT:setting name="MassRatioSunToEarthPlusMoon2"  value="328900.5577" />
-    <CT:setting name="MassRatioSunToEarthPlusMoon"  value="328900.56" />
-
-
-    <CT:setting name="EarthTSolSec" value="86164.098903691" />
-
-    <CT:setting name="EarthEpoch" value="2000.0" />
-    <CT:setting name="EarthAph" value="152097701000.0" />
-    <CT:setting name="EarthPer" value="147098074000.0" />
-    <CT:setting name="EarthSmAx" value="149597887500.0" />
+<!-- target point on the Moon -->
+    <CT:setting name="Targetlongitude" value="-15" />
+    <CT:setting name="Targetlatitude" value="-2" />
+    <CT:setting name="SunM" value="1.9884158296478392e+030" />
+    <CT:setting name="EarthR" value="6371000" />
+    <CT:setting name="EarthRP" value="6356800" />
+    <CT:setting name="EarthRE" value="6378100" />
+    <CT:setting name="EarthM" value="5.9721863856475894e+024" />
+    <CT:setting name="MassRatioSunToEarthPlusMoon" value="328900.56" />
+    <CT:setting name="EarthTSolSec" value="86164.098903691003" />
+    <CT:setting name="EarthEpoch" value="11036.971719672511" />
+    <CT:setting name="EarthAph" value="152097701000" />
+    <CT:setting name="EarthPer" value="147098074000" />
+    <CT:setting name="EarthSmAx" value="149597887500" />
     <CT:setting name="EarthSmAxAU" value="1.0000001124" />
-    <CT:setting name="EarthEcc1"     value="0.016710219" />
-    <CT:setting name="EarthEcc2000"  value="0.016709955647252264" />
-    <CT:setting name="EarthEcc2001"  value="0.01670954801721887" />
-    <CT:setting name="EarthEcc2002"  value="0.01670914036101472" />
+    <CT:setting name="EarthEcc" value="0.016705878169365421" />
+    <CT:setting name="EarthTDays" value="365.25636600000001" />
+    <CT:setting name="EarthIncl" value="0" />
+    <CT:setting name="EarthAscNode" value="348.73936000000003" />
+    <CT:setting name="EarthArgPer" value="114.20783" />
+    <CT:setting name="EarthMeanAnom" value="357.51715999999999" />
+    <CT:setting name="MoonR" value="1737100" />
+    <CT:setting name="MoonRP" value="1735970" />
+    <CT:setting name="MoonRE" value="1738140" />
+    <CT:setting name="MoonM" value="7.3458114403351352e+022" />
 
-    <CT:setting name="EarthEcc2003"  value="0.016708732678640932" />
-    <CT:setting name="EarthEcc2004"  value="0.016708324970098564" />
-    <CT:setting name="EarthEcc2005"  value="0.016707917235388718" />
-    <CT:setting name="EarthEcc2006"  value="0.016707509474512487" />
-    <CT:setting name="EarthEcc2007"  value="0.016707101687470964" />
-    <CT:setting name="EarthEcc2008"  value="0.016706693874265214" />
-    <CT:setting name="EarthEcc2009"  value="0.016706286034896347" />
-    <CT:setting name="EarthEcc2010"  value="0.01670587816936542" />
-    <CT:setting name="EarthEcc2011"  value="0.01670547027767358" />
-    <CT:setting name="EarthEcc2012"  value="0.01670506235982186" />
-    <CT:setting name="EarthEcc2013"  value="0.016704654415811367" />
-    <CT:setting name="EarthEccCalc"  value="0.01670915340101472" />
-    <CT:setting name="EarthEcc"      value="0.01670914036101472" />
+<!--next line will force recalculation of SunM based on G constant -->
+    <CT:setting name="GMSun" value="1.327124400350198e+020" />
+    <CT:setting name="SunR" value="696342000" />
+    <CT:setting name="GMEarthMoon" value="403503241737999.87" />
+    <CT:setting name="GMEarth" value="398600441499999.87" />
+    <CT:setting name="GMMoon" value="4902800237999.998" />
 
-    <CT:setting name="EarthTDays1"           value="365.2563835" />
-    <CT:setting name="EarthTDaysKulikovski"  value="365.242190" />
-    <CT:setting name="EarthTDaysMaia"        value="365.242203" />
-    <CT:setting name="EarthTDays1900"        value="365.24219879" />
-    <CT:setting name="EarthTDays1901"        value="365.2421987286" />
-    <CT:setting name="EarthTDays1900"        value="365.24219879" />
-    <CT:setting name="EarthTDays2010"        value="365.242192036" />
-    <CT:setting name="EarthTDaysOficial"     value="365.256366" />
-    <CT:setting name="EarthTDays"            value="365.256366" />
+<!-- next line will force calculation of a Earth and Moon mass -->
+<!-- it is not in use - value just for reference and fo trigger -->
+    <CT:setting name="MassRatioEarthToMoon" value="81.300567461545441" />
+    <CT:setting name="MoonKeplerLine1" value="MOON" />
+    <CT:setting name="MoonKeplerLine2" value="1 MOON00 MOON00   11036.9717196725100000000  00000-0  00000-0 0  0000" />
+    <CT:setting name="MoonKeplerLine3" value="2 MOON0  23.3228 347.3796 0638000 185.7146 173.5436 0.036600996000000" />
 
+    <CT:setting name="MoonEpoch" value="11036.971719672511" />
+    <CT:setting name="MoonAph" value="405696000" />
+    <CT:setting name="MoonPer" value="363104000" />
+    <CT:setting name="MoonSmAx" value="0" />
+    <CT:setting name="MoonEcc" value="0.063799999999999996" />
+    <CT:setting name="MoonTDays" value="27.321660864092333" />
+    <CT:setting name="MoonIncl" value="23.322800000000001" />
+    <CT:setting name="MoonAscNode" value="347.37959999999998" />
+    <CT:setting name="MoonArgPer" value="185.71459999999999" />
+    <CT:setting name="MoonMeanAnom" value="173.5436" />
 
-    <CT:setting name="EarthIncl" value="0.0" />
-    <CT:setting name="EarthIncl0" value="1.57869" />
+<!-- next line (value == "1.0") will force calculation
+                         of a Earth kepler position -->
+    <CT:setting name="EarthCalcKepler" value="0.0" />
 
-    <CT:setting name="EarthAscNode" value="0" />
-    <CT:setting name="EarthAscNode1" value="348.73936" />
+<!-- next line will force assigning velocities and positions 
+     based on JPL data -->
 
-    <CT:setting name="EarthArgPer" value="90.0" />
-    <CT:setting name="EarthArgPer1" value="114.20783" />
-
-    <CT:setting name="EarthMeanAnom" value="0.0" />
-    <CT:setting name="EarthMeanAnom1" value="294.20783" />
-
-
-    <CT:setting name="EarthAxT" value="23.439281" />
-
-
-
-    <CT:setting name="MoonX" value="363104000.0" />
-    <CT:setting name="MoonY" value="0.0" />
-    <CT:setting name="MoonZ" value="0.0" />
-    <CT:setting name="MoonVX" value="0.0" />
-    <CT:setting name="MoonVY" value="1022.0" />
-    <CT:setting name="MoonVZ" value="0.0" />
-
-    <CT:setting name="MoonR"  value="1737100.0" />
-    <CT:setting name="MoonRP" value="1735970.0" />
-    <CT:setting name="MoonRE" value="1738140.0" />
-    <CT:setting name="MoonM" value="7.3477E22" />
-
-   <!-- next line will force calculation of a Earth and Moon mass -->
-    <CT:setting name="MassRatioEarthToMoon"  value="81.30059" />
-    <CT:setting name="MassRatioEarthToMoon2"   value="81.30056" />
-    <CT:setting name="MassRatioEarthToMoon3"  value="81.300680811901118859969333383198" />
-    <CT:setting name="MassRatioEarthToMoon4"  value="81.30061" />
+    <CT:setting name="UseJPLxyz" value="1.0" />
+    <CT:setting name="StartOptim" value="0" />
+   <CT:setting name="MaxOptim" value="8" />
 
 
-    <CT:setting name="MoonEpoch" value="2000.0" />
-    <CT:setting name="MoonEpoch1" value="TBD" />
-    <CT:setting name="MoonAph"  value="405696000.0" />
-    <CT:setting name="MoonPer"  value="363104000.0" />
-    <CT:setting name="MoonSmAx" value="384399000.0" />
-    <CT:setting name="MoonEcc" value="0.0549" />
-    <CT:setting name="MoonTDays1" value="27.554551" />
+</CT:section>
 
-    <CT:setting name="MoonTDays" value="27.321582" />
-    <CT:setting name="MoonTDays" value="27.554551" />
-    <CT:setting name="MoonIncl1" value="5.145" />
-    <CT:setting name="MoonIncl" value="5.145" />
+            <!--     now all engines    -->
+<CT:section name="Engine" value="0.0" />
+    <CT:setting name="EngineNumber" value="0" />
+    <CT:setting name="EngineOnSatellite" value="0" />
+    <!-- convinent coeff - instead of entry real values just assume scaled version-->
 
-    <CT:setting name="MoonAscNode" value="0.0" />
-    <CT:setting name="MoonAscNode1" value="TBD" />
-    <CT:setting name="MoonArgPer" value="90.0" />
-    <CT:setting name="MoonArgPer1" value="TBD" />
-    <CT:setting name="MoonMeanAnom" value="0.0" />
-    <CT:setting name="MoonhMeanAnom1" value="TBD" />
+     <CT:setting name="PropCoeff" value="0.05" />
 
+     <CT:setting name="Weight" value="17.157" />
+     <CT:setting name="TotalWeight" value="21.996" />
 
+    <!-- iteration per sec from engine's plot -->
+    <CT:setting name="DeltaT" value="5" />
 
-    <CT:setting name="MoonAxTEcl" value="1.5424" />
-    <CT:setting name="MoonTSolDay" value="27.321582" />
-    <CT:setting name="MoonTSolDay2" value="27.321661" />
+     <!-- 2- EARTH 9-MOON for calculation distanses-->
+     <CT:setting name="NearBody" value="2" />
 
-    <!-- next line will force calculation of a Earth kepler position -->
+     <!-- calculates 
+          0 Perigee to a center of NearBody
+          1 Apogee to a center of NearBody
+          3 taget practice not far then distance earth-moon
+          4 target practice to apoint on a moon's surface 
+          8 intial period
+     <CT:setting name="Calculate" value="8" />
 
-    <CT:setting name="EarthCalcKepler" value="1.0" />
+     <!-- AngleType 0 - tangent line to orbit (elipse) oposit velocity
+                    1 - two angles set with reference to NearBody centre direction
+                    2 - 3 angles set vector fire (constant all fire) 
+                    3 - oposit vector of velocity
+                    4 - same direction as vector of velocity -->
+     <CT:setting name="AngleType" value="0" />
 
-  </CT:section>
-  <CT:section name="TraiImpuses">
+     <!-- 2- EARTH 9-MOON for firing angle -->
+     <CT:setting name="AngleOnBody" value="2" />
+
+    <!-- first angle: in a plane over vector from the center of NearBody and Sat
+         and vector of velocity. Angle: Centre,Sat,Direction 
+         (aggle == 90 degr is a Tangent line to elipse) -->
+         <CT:setting name="FireAng1" value="1" />
+
+     <!-- second angle from projection of a velocity vector to a  
+         plane perpendicular to direction to centre of nearbody -->
+    <CT:setting name="FireAng2" value="1" />
+
+    <CT:setting name="XVector" value="-1" />
+    <CT:setting name="YVector" value="1.1537307924011437" />
+    <CT:setting name="ZVector" value="0.9986199954416527" />
+
+     <CT:setting name="OptimizationInitialStep" value="10" />
+     <CT:setting name="OptimizationDecCoef" value="10" />
+     <CT:setting name="OptimizationStop" value="1" />
+
+        <CT:setting name="Period" value="5494.000000" />
+
     <!-- set impulses in a time -->
+        <CT:setting name="FireTime" value="11944" />
 
-    <CT:setting name="TimeOffset" value="0.0" />
-    <CT:setting name="TimeOffset" value="0.0" />
+     <CT:setting name="ImplVal" value="0.0" />
+     <CT:setting name="ImplVal" value="3400.0" />
+     <CT:setting name="ImplVal" value="3000.0" />
+     <CT:setting name="ImplVal" value="3100.0" />
+     <CT:setting name="ImplVal" value="3500.0" />
+
+     <CT:setting name="ImplVal" value="3550.0" />
+     <CT:setting name="ImplVal" value="3600.0" />
+     <CT:setting name="ImplVal" value="3600.0" />
+     <CT:setting name="ImplVal" value="3700.0" />
+     <CT:setting name="ImplVal" value="3750.0" />
+
+     <CT:setting name="ImplVal" value="3800.0" />
+     <CT:setting name="ImplVal" value="3850.0" />
+     <CT:setting name="ImplVal" value="3900.0" />                                      
+     <CT:setting name="ImplVal" value="3950.0" />
+     <CT:setting name="ImplVal" value="4000.0" />
+
+     <CT:setting name="ImplVal" value="4000.0" />
+     <CT:setting name="ImplVal" value="4000.0" />
+     <CT:setting name="ImplVal" value="4000.0" />
+     <CT:setting name="ImplVal" value="4000.0" />
+     <CT:setting name="ImplVal" value="4000.0" />
+       
+     <CT:setting name="ImplVal" value="3980.0" />
+     <CT:setting name="ImplVal" value="3960.0" />
+     <CT:setting name="ImplVal" value="3940.0" />
+     <CT:setting name="ImplVal" value="3920.0" />
+     <CT:setting name="ImplVal" value="3900.0" />
+
+     <CT:setting name="ImplVal" value="3885.0" />
+     <CT:setting name="ImplVal" value="3850.0" />
+     <CT:setting name="ImplVal" value="3815.0" />
+     <CT:setting name="ImplVal" value="3780.0" />
+     <CT:setting name="ImplVal" value="3745.0" />
+
+     <CT:setting name="ImplVal" value="3710.0" />
+     <CT:setting name="ImplVal" value="3695.0" />
+     <CT:setting name="ImplVal" value="3680.0" />
+     <CT:setting name="ImplVal" value="3665.0" />
+     <CT:setting name="ImplVal" value="3650.0" />
+
+     <CT:setting name="ImplVal" value="3600.0" />
+     <CT:setting name="ImplVal" value="3500.0" />
+     <CT:setting name="ImplVal" value="3500.0" />
+     <CT:setting name="ImplVal" value="3400.0" />
+     <CT:setting name="ImplVal" value="3150.0" />
+
+     <CT:setting name="ImplVal" value="2000.0" />
+     <CT:setting name="ImplVal" value="250.0" />
+     <CT:setting name="ImplVal" value="0.0" />
+
+</CT:section>
 
 
+<CT:section name="Engine" value="1" />
+    <CT:setting name="EngineNumber" value="1" />
+    <CT:setting name="EngineOnSatellite" value="0" />
+    <!-- convinent coeff - instead of entry real values just assume scaled version-->
+     <CT:setting name="PropCoeff" value="0.05" />
 
-  </CT:section>
+     <CT:setting name="Weight" value="17.157" />
+     <CT:setting name="TotalWeight" value="21.996" />
+
+
+    <!-- iteration per sec from engine's plot -->
+    <CT:setting name="DeltaT" value="5" />
+
+     <!-- 2- EARTH 9-MOON for calculation distanses-->
+     <CT:setting name="NearBody" value="2" />
+
+     <!-- calculates 
+          0 Perigee to a center of NearBody
+          1 Apogee to a center of NearBody
+          3 taget practice not far then distance earth-moon
+          4 target practice to apoint on a moon's surface -->
+     <CT:setting name="Calculate" value="0" />
+
+     <!-- AngleType 0 - tangent line to orbit (elipse) oposit velocity
+                    1 - two angles set with reference to NearBody centre direction
+                    2 - 3 angles set vector fire (constant all fire) 
+                    3 - oposit vector of velocity
+                    4 - same direction as vector of velocity -->
+     <CT:setting name="AngleType" value="0" />
+
+     <!-- 2- EARTH 9-MOON for firing angle -->
+     <CT:setting name="AngleOnBody" value="2" />
+
+    <!-- first angle: in a plane over vector from the center of NearBody and Sat
+         and vector of velocity. Angle: Centre,Sat,Direction 
+         (aggle == 90 degr is a Tangent line to elipse) -->
+         <CT:setting name="FireAng1" value="0" />
+
+     <!-- second angle from projection of a velocity vector to a  
+         plane perpendicular to direction to centre of nearbody -->
+    <CT:setting name="FireAng2" value="0" />
+
+    <CT:setting name="XVector" value="1" />
+    <CT:setting name="YVector" value="-1.1714976896575997" />
+    <CT:setting name="ZVector" value="-1.019984486712751" />
+
+     <CT:setting name="OptimizationInitialStep" value="100" />
+     <CT:setting name="OptimizationDecCoef" value="10" />
+     <CT:setting name="OptimizationStop" value="1" />
+
+        <CT:setting name="Period" value="5542.000000" />
+
+    <!-- set impulses in a time -->
+        <CT:setting name="FireTime" value="25788" />
+        <CT:setting name="FireTime" value="28626" />
+
+     <CT:setting name="ImplVal" value="0.0" />
+     <CT:setting name="ImplVal" value="3400.0" />
+     <CT:setting name="ImplVal" value="3000.0" />
+     <CT:setting name="ImplVal" value="3100.0" />
+     <CT:setting name="ImplVal" value="3500.0" />
+
+     <CT:setting name="ImplVal" value="3550.0" />
+     <CT:setting name="ImplVal" value="3600.0" />
+     <CT:setting name="ImplVal" value="3600.0" />
+     <CT:setting name="ImplVal" value="3700.0" />
+     <CT:setting name="ImplVal" value="3750.0" />
+
+     <CT:setting name="ImplVal" value="3800.0" />
+     <CT:setting name="ImplVal" value="3850.0" />
+     <CT:setting name="ImplVal" value="3900.0" />                                      
+     <CT:setting name="ImplVal" value="3950.0" />
+     <CT:setting name="ImplVal" value="4000.0" />
+
+     <CT:setting name="ImplVal" value="4000.0" />
+     <CT:setting name="ImplVal" value="4000.0" />
+     <CT:setting name="ImplVal" value="4000.0" />
+     <CT:setting name="ImplVal" value="4000.0" />
+     <CT:setting name="ImplVal" value="4000.0" />
+       
+     <CT:setting name="ImplVal" value="3980.0" />
+     <CT:setting name="ImplVal" value="3960.0" />
+     <CT:setting name="ImplVal" value="3940.0" />
+     <CT:setting name="ImplVal" value="3920.0" />
+     <CT:setting name="ImplVal" value="3900.0" />
+
+     <CT:setting name="ImplVal" value="3885.0" />
+     <CT:setting name="ImplVal" value="3850.0" />
+     <CT:setting name="ImplVal" value="3815.0" />
+     <CT:setting name="ImplVal" value="3780.0" />
+     <CT:setting name="ImplVal" value="3745.0" />
+
+     <CT:setting name="ImplVal" value="3710.0" />
+     <CT:setting name="ImplVal" value="3695.0" />
+     <CT:setting name="ImplVal" value="3680.0" />
+     <CT:setting name="ImplVal" value="3665.0" />
+     <CT:setting name="ImplVal" value="3650.0" />
+
+     <CT:setting name="ImplVal" value="3600.0" />
+     <CT:setting name="ImplVal" value="3500.0" />
+     <CT:setting name="ImplVal" value="3500.0" />
+     <CT:setting name="ImplVal" value="3400.0" />
+     <CT:setting name="ImplVal" value="3150.0" />
+
+     <CT:setting name="ImplVal" value="2000.0" />
+     <CT:setting name="ImplVal" value="250.0" />
+     <CT:setting name="ImplVal" value="0.0" />
+
+</CT:section>
+
+
+<CT:section name="Engine" value="2" />
+    <CT:setting name="EngineNumber" value="2" />
+    <CT:setting name="EngineOnSatellite" value="0" />
+    <!-- convinent coeff - instead of entry real values just assume scaled version-->
+
+     <CT:setting name="PropCoeff" value="3.0" />
+
+     <CT:setting name="Weight" value="17.157" />
+     <CT:setting name="TotalWeight" value="21.996" />
+
+
+    <!-- iteration per sec from engine's plot -->
+    <CT:setting name="DeltaT" value="5" />
+
+     <!-- 2- EARTH 9-MOON for calculation distanses-->
+     <CT:setting name="NearBody" value="2" />
+
+     <!-- calculates 
+          0 Perigee to a center of NearBody
+          1 Apogee to a center of NearBody
+          3 taget practice not far then distance earth-moon
+          4 target practice to apoint on a moon's surface -->
+     <CT:setting name="Calculate" value="1" />
+
+     <!-- AngleType 0 - tangent line to orbit (elipse) oposit velocity
+                    1 - two angles set with reference to NearBody centre direction
+                    2 - 3 angles set vector fire (constant all fire) 
+                    3 - oposit vector of velocity
+                    4 - same direction as vector of velocity -->
+     <CT:setting name="AngleType" value="0" />
+
+     <!-- 2- EARTH 9-MOON for firing angle -->
+     <CT:setting name="AngleOnBody" value="2" />
+
+    <!-- first angle: in a plane over vector from the center of NearBody and Sat
+         and vector of velocity. Angle: Centre,Sat,Direction 
+         (aggle == 90 degr is a Tangent line to elipse) -->
+         <CT:setting name="FireAng1" value="0" />
+
+     <!-- second angle from projection of a velocity vector to a  
+         plane perpendicular to direction to centre of nearbody -->
+    <CT:setting name="FireAng2" value="0" />
+
+    <CT:setting name="XVector" value="1" />
+    <CT:setting name="YVector" value="0.85063762129876674" />
+    <CT:setting name="ZVector" value="1.4117704154874764" />
+
+     <CT:setting name="OptimizationInitialStep" value="100" />
+     <CT:setting name="OptimizationDecCoef" value="10" />
+     <CT:setting name="OptimizationStop" value="1" />
+
+        <CT:setting name="Period" value="5590.000000" />
+
+    <!-- set impulses in a time -->
+        <CT:setting name="FireTime" value="39810" />
+
+     <CT:setting name="ImplVal" value="0.0" />
+     <CT:setting name="ImplVal" value="3400.0" />
+     <CT:setting name="ImplVal" value="3000.0" />
+     <CT:setting name="ImplVal" value="3100.0" />
+     <CT:setting name="ImplVal" value="3500.0" />
+
+     <CT:setting name="ImplVal" value="3550.0" />
+     <CT:setting name="ImplVal" value="3600.0" />
+     <CT:setting name="ImplVal" value="3600.0" />
+     <CT:setting name="ImplVal" value="3700.0" />
+     <CT:setting name="ImplVal" value="3750.0" />
+
+     <CT:setting name="ImplVal" value="3800.0" />
+     <CT:setting name="ImplVal" value="3850.0" />
+     <CT:setting name="ImplVal" value="3900.0" />                                      
+     <CT:setting name="ImplVal" value="3950.0" />
+     <CT:setting name="ImplVal" value="4000.0" />
+
+     <CT:setting name="ImplVal" value="4000.0" />
+     <CT:setting name="ImplVal" value="4000.0" />
+     <CT:setting name="ImplVal" value="4000.0" />
+     <CT:setting name="ImplVal" value="4000.0" />
+     <CT:setting name="ImplVal" value="4000.0" />
+       
+     <CT:setting name="ImplVal" value="3980.0" />
+     <CT:setting name="ImplVal" value="3960.0" />
+     <CT:setting name="ImplVal" value="3940.0" />
+     <CT:setting name="ImplVal" value="3920.0" />
+     <CT:setting name="ImplVal" value="3900.0" />
+
+     <CT:setting name="ImplVal" value="3885.0" />
+     <CT:setting name="ImplVal" value="3850.0" />
+     <CT:setting name="ImplVal" value="3815.0" />
+     <CT:setting name="ImplVal" value="3780.0" />
+     <CT:setting name="ImplVal" value="3745.0" />
+
+     <CT:setting name="ImplVal" value="3710.0" />
+     <CT:setting name="ImplVal" value="3695.0" />
+     <CT:setting name="ImplVal" value="3680.0" />
+     <CT:setting name="ImplVal" value="3665.0" />
+     <CT:setting name="ImplVal" value="3650.0" />
+
+     <CT:setting name="ImplVal" value="3600.0" />
+     <CT:setting name="ImplVal" value="3500.0" />
+     <CT:setting name="ImplVal" value="3500.0" />
+     <CT:setting name="ImplVal" value="3400.0" />
+     <CT:setting name="ImplVal" value="3150.0" />
+
+     <CT:setting name="ImplVal" value="2000.0" />
+     <CT:setting name="ImplVal" value="250.0" />
+     <CT:setting name="ImplVal" value="0.0" />
+</CT:section>
+
+
+<CT:section name="Engine" value="3" />
+    <CT:setting name="EngineNumber" value="3" />
+    <CT:setting name="EngineOnSatellite" value="0" />
+    <!-- convinent coeff - instead of entry real values just assume scaled version-->
+
+     <CT:setting name="PropCoeff" value="0.1" />
+
+     <CT:setting name="Weight" value="17.157" />
+     <CT:setting name="TotalWeight" value="21.996" />
+
+    <!-- iteration per sec from engine's plot -->
+    <CT:setting name="DeltaT" value="5" />
+
+     <!-- 2- EARTH 9-MOON for calculation distanses-->
+     <CT:setting name="NearBody" value="9" />
+
+     <!-- calculates 
+          0 Perigee to a center of NearBody
+          1 Apogee to a center of NearBody
+          3 taget practice not far then distance earth-moon
+          4 target practice to apoint on a moon's surface -->
+     <CT:setting name="CalculateAP" value="5" />
+
+     <!-- AngleType 0 - tangent line to orbit (elipse) oposit velocity
+                    1 - two angles set with reference to NearBody centre direction
+                    2 - 3 angles set vector fire (constant all fire) 
+                    3 - oposit vector of velocity
+                    4 - same direction as vector of velocity -->
+     <CT:setting name="AngleType" value="2" />
+
+     <!-- 2- EARTH 9-MOON for firing angle -->
+     <CT:setting name="AngleOnBody" value="9" />
+
+    <!-- first angle: in a plane over vector from the center of NearBody and Sat
+         and vector of velocity. Angle: Centre,Sat,Direction 
+         (aggle == 90 degr is a Tangent line to elipse) -->
+         <CT:setting name="FireAng1" value="0" />
+
+     <!-- second angle from projection of a velocity vector to a  
+         plane perpendicular to direction to centre of nearbody -->
+    <CT:setting name="FireAng2" value="0" />
+
+    <CT:setting name="XVector" value="1.483789" />
+    <CT:setting name="YVector" value="-0.097251000000000004" />
+    <CT:setting name="ZVector" value="0.56240299999999999" />
+
+     <CT:setting name="OptimizationInitialStep" value="0.25" />
+     <CT:setting name="OptimizationDecCoef" value="2" />
+     <CT:setting name="OptimizationStop" value="1.0000000000000001e-005" />
+
+    <!-- set impulses in a time -->
+        <CT:setting name="FireTime" value="650000" />
+
+     <CT:setting name="ImplVal" value="0.0" />
+     <CT:setting name="ImplVal" value="3400.0" />
+     <CT:setting name="ImplVal" value="3000.0" />
+     <CT:setting name="ImplVal" value="3100.0" />
+     <CT:setting name="ImplVal" value="3500.0" />
+
+     <CT:setting name="ImplVal" value="3550.0" />
+     <CT:setting name="ImplVal" value="3600.0" />
+     <CT:setting name="ImplVal" value="3600.0" />
+     <CT:setting name="ImplVal" value="3700.0" />
+     <CT:setting name="ImplVal" value="3750.0" />
+
+     <CT:setting name="ImplVal" value="3800.0" />
+     <CT:setting name="ImplVal" value="3850.0" />
+     <CT:setting name="ImplVal" value="3900.0" />                                      
+     <CT:setting name="ImplVal" value="3950.0" />
+     <CT:setting name="ImplVal" value="4000.0" />
+
+     <CT:setting name="ImplVal" value="4000.0" />
+     <CT:setting name="ImplVal" value="4000.0" />
+     <CT:setting name="ImplVal" value="4000.0" />
+     <CT:setting name="ImplVal" value="4000.0" />
+     <CT:setting name="ImplVal" value="4000.0" />
+       
+     <CT:setting name="ImplVal" value="3980.0" />
+     <CT:setting name="ImplVal" value="3960.0" />
+     <CT:setting name="ImplVal" value="3940.0" />
+     <CT:setting name="ImplVal" value="3920.0" />
+     <CT:setting name="ImplVal" value="3900.0" />
+
+     <CT:setting name="ImplVal" value="3885.0" />
+     <CT:setting name="ImplVal" value="3850.0" />
+     <CT:setting name="ImplVal" value="3815.0" />
+     <CT:setting name="ImplVal" value="3780.0" />
+     <CT:setting name="ImplVal" value="3745.0" />
+
+     <CT:setting name="ImplVal" value="3710.0" />
+     <CT:setting name="ImplVal" value="3695.0" />
+     <CT:setting name="ImplVal" value="3680.0" />
+     <CT:setting name="ImplVal" value="3665.0" />
+     <CT:setting name="ImplVal" value="3650.0" />
+
+     <CT:setting name="ImplVal" value="3600.0" />
+     <CT:setting name="ImplVal" value="3500.0" />
+     <CT:setting name="ImplVal" value="3500.0" />
+     <CT:setting name="ImplVal" value="3400.0" />
+     <CT:setting name="ImplVal" value="3150.0" />
+
+     <CT:setting name="ImplVal" value="2000.0" />
+     <CT:setting name="ImplVal" value="250.0" />
+     <CT:setting name="ImplVal" value="0.0" />
+
+</CT:section>
+
+
+<CT:section name="Engine" value="4" />
+    <CT:setting name="EngineNumber" value="4" />
+    <CT:setting name="EngineOnSatellite" value="0" />
+    <!-- convinent coeff - instead of entry real values just assume scaled version-->
+
+     <CT:setting name="PropCoeff" value="0.25" />
+
+     <CT:setting name="Weight" value="17.157" />
+     <CT:setting name="TotalWeight" value="21.996" />
+
+
+    <!-- iteration per sec from engine's plot -->
+    <CT:setting name="DeltaT" value="5" />
+
+     <!-- 2- EARTH 9-MOON for calculation distanses-->
+     <CT:setting name="NearBody" value="9" />
+
+     <!-- calculates 
+          0 Perigee to a center of NearBody
+          1 Apogee to a center of NearBody
+          3 taget practice not far then distance earth-moon
+          4 target practice to apoint on a moon's surface -->
+     <CT:setting name="CalculateAP" value="0" />
+
+     <!-- AngleType 0 - tangent line to orbit (elipse) oposit velocity
+                    1 - two angles set with reference to NearBody centre direction
+                    2 - 3 angles set vector fire (constant all fire) 
+                    3 - oposit vector of velocity
+                    4 - same direction as vector of velocity -->
+     <CT:setting name="AngleType" value="4" />
+
+     <!-- 2- EARTH 9-MOON for firing angle -->
+     <CT:setting name="AngleOnBody" value="9" />
+
+    <!-- first angle: in a plane over vector from the center of NearBody and Sat
+         and vector of velocity. Angle: Centre,Sat,Direction 
+         (aggle == 90 degr is a Tangent line to elipse) -->
+         <CT:setting name="FireAng1" value="0" />
+
+     <!-- second angle from projection of a velocity vector to a  
+         plane perpendicular to direction to centre of nearbody -->
+    <CT:setting name="FireAng2" value="0" />
+
+    <CT:setting name="XVector" value="-780.76188869660473" />
+    <CT:setting name="YVector" value="-2363.0551757693047" />
+    <CT:setting name="ZVector" value="-454.32231393279926" />
+
+     <CT:setting name="OptimizationInitialStep" value="0.10000000000000001" />
+     <CT:setting name="OptimizationDecCoef" value="2" />
+     <CT:setting name="OptimizationStop" value="0.10000000000000001" />
+
+    <!-- set impulses in a time -->
+        <CT:setting name="FireTime" value="772052" />
+
+     <CT:setting name="ImplVal" value="0.0" />
+     <CT:setting name="ImplVal" value="3400.0" />
+     <CT:setting name="ImplVal" value="3000.0" />
+     <CT:setting name="ImplVal" value="3100.0" />
+     <CT:setting name="ImplVal" value="3500.0" />
+
+     <CT:setting name="ImplVal" value="3550.0" />
+     <CT:setting name="ImplVal" value="3600.0" />
+     <CT:setting name="ImplVal" value="3600.0" />
+     <CT:setting name="ImplVal" value="3700.0" />
+     <CT:setting name="ImplVal" value="3750.0" />
+
+     <CT:setting name="ImplVal" value="3800.0" />
+     <CT:setting name="ImplVal" value="3850.0" />
+     <CT:setting name="ImplVal" value="3900.0" />                                      
+     <CT:setting name="ImplVal" value="3950.0" />
+     <CT:setting name="ImplVal" value="4000.0" />
+
+     <CT:setting name="ImplVal" value="4000.0" />
+     <CT:setting name="ImplVal" value="4000.0" />
+     <CT:setting name="ImplVal" value="4000.0" />
+     <CT:setting name="ImplVal" value="4000.0" />
+     <CT:setting name="ImplVal" value="4000.0" />
+       
+     <CT:setting name="ImplVal" value="3980.0" />
+     <CT:setting name="ImplVal" value="3960.0" />
+     <CT:setting name="ImplVal" value="3940.0" />
+     <CT:setting name="ImplVal" value="3920.0" />
+     <CT:setting name="ImplVal" value="3900.0" />
+
+     <CT:setting name="ImplVal" value="3885.0" />
+     <CT:setting name="ImplVal" value="3850.0" />
+     <CT:setting name="ImplVal" value="3815.0" />
+     <CT:setting name="ImplVal" value="3780.0" />
+     <CT:setting name="ImplVal" value="3745.0" />
+
+     <CT:setting name="ImplVal" value="3710.0" />
+     <CT:setting name="ImplVal" value="3695.0" />
+     <CT:setting name="ImplVal" value="3680.0" />
+     <CT:setting name="ImplVal" value="3665.0" />
+     <CT:setting name="ImplVal" value="3650.0" />
+
+     <CT:setting name="ImplVal" value="3600.0" />
+     <CT:setting name="ImplVal" value="3500.0" />
+     <CT:setting name="ImplVal" value="3500.0" />
+     <CT:setting name="ImplVal" value="3400.0" />
+     <CT:setting name="ImplVal" value="3150.0" />
+
+     <CT:setting name="ImplVal" value="2000.0" />
+     <CT:setting name="ImplVal" value="250.0" />
+     <CT:setting name="ImplVal" value="0.0" />
+
+</CT:section>
+<CT:section name="Optim" value="0" />
+<!-- do optimization of an engine N... (0,1,2,3...)
+     it is posible to use 4 engines but optimize engine 3-->
+
+    <CT:setting name="EngineToOptimize" value="0" />
+
+<!-- Type of optimization
+      1 - search for a minimum by adjusting time of firing
+      2 - search for a maximum by adjusting time of firing
+      3 - search for minimum by adjusting time of firing
+      4 - search fo minimum by adjusting angle of firing
+  initial step and decrease steps for each search specified
+  individualy for each engine -->
+
+    <CT:setting name="TrajectoryOptimizationType" value="2" />
+     <!-- 2- EARTH 9-MOON for calculation distanses-->
+     <CT:setting name="NearBody" value="2" />
+
+     <!-- calculates 
+          0 Perigee to a center of NearBody
+          1 Apogee to a center of NearBody
+          3 taget practice not far then distance earth-moon
+          4 target practice to a point on a moon's surface 
+          8 intial period
+     <CT:setting name="Calculate" value="8" />
+
+<!-- last used engine (0,1,2,3..) in trajectory optimization or calculations 
+     setting lastengine == -1 disable optimization -->
+
+    <CT:setting name="LastEngine" value="-1" />
+
+</CT:section>
+
+<CT:section name="Optim" value="1" />
+        <CT:setting name="EngineToOptimize" value="0" />
+        <CT:setting name="TrajectoryOptimizationType" value="2" />
+        <CT:setting name="NearBody" value="2" />
+        <CT:setting name="Calculate" value="9" />
+     <CT:setting name="OptimizationInitialStep" value="10" />
+     <CT:setting name="OptimizationDecCoef" value="10" />
+     <CT:setting name="OptimizationStop" value="1" />
+        <CT:setting name="LastEngine" value="0" />
+</CT:section>
+
+<CT:section name="Optim" value="2" />
+        <CT:setting name="EngineToOptimize" value="0" />
+        <CT:setting name="TrajectoryOptimizationType" value="2" />
+        <CT:setting name="NearBody" value="2" />
+        <CT:setting name="Calculate" value="1" />
+        <CT:setting name="OptimizationInitialStep" value="10" />
+        <CT:setting name="OptimizationDecCoef" value="10" />
+        <CT:setting name="OptimizationStop" value="1" />
+        <CT:setting name="LastEngine" value="0" />
+</CT:section>
+
+<CT:section name="Optim" value="3" />
+        <CT:setting name="EngineToOptimize" value="1" />
+        <CT:setting name="TrajectoryOptimizationType" value="2" />
+        <CT:setting name="NearBody" value="2" />
+        <CT:setting name="Calculate" value="8" />
+     <CT:setting name="OptimizationInitialStep" value="10" />
+     <CT:setting name="OptimizationDecCoef" value="10" />
+     <CT:setting name="OptimizationStop" value="1" />
+        <CT:setting name="LastEngine" value="1" />
+</CT:section>
+
+<CT:section name="Optim" value="4" />
+        <CT:setting name="EngineToOptimize" value="1" />
+        <CT:setting name="TrajectoryOptimizationType" value="2" />
+        <CT:setting name="NearBody" value="2" />
+        <CT:setting name="Calculate" value="10" />
+     <CT:setting name="OptimizationInitialStep" value="100" />
+     <CT:setting name="OptimizationDecCoef" value="10" />
+     <CT:setting name="OptimizationStop" value="1" />
+        <CT:setting name="LastEngine" value="1" />
+</CT:section>
+
+<CT:section name="Optim" value="5" />
+        <CT:setting name="EngineToOptimize" value="1" />
+        <CT:setting name="TrajectoryOptimizationType" value="2" />
+        <CT:setting name="NearBody" value="2" />
+        <CT:setting name="Calculate" value="0" />
+     <CT:setting name="OptimizationInitialStep" value="100" />
+     <CT:setting name="OptimizationDecCoef" value="10" />
+     <CT:setting name="OptimizationStop" value="1" />
+        <CT:setting name="LastEngine" value="1" />
+</CT:section>
+
+<CT:section name="Optim" value="6" />
+        <CT:setting name="EngineToOptimize" value="2" />
+        <CT:setting name="TrajectoryOptimizationType" value="2" />
+        <CT:setting name="NearBody" value="2" />
+        <CT:setting name="Calculate" value="8" />
+     <CT:setting name="OptimizationInitialStep" value="100" />
+     <CT:setting name="OptimizationDecCoef" value="10" />
+     <CT:setting name="OptimizationStop" value="1" />
+        <CT:setting name="LastEngine" value="2" />
+</CT:section>
+
+<CT:section name="Optim" value="7" />
+        <CT:setting name="EngineToOptimize" value="2" />
+        <CT:setting name="TrajectoryOptimizationType" value="2" />
+        <CT:setting name="NearBody" value="2" />
+        <CT:setting name="Calculate" value="11" />
+     <CT:setting name="OptimizationInitialStep" value="0.01" />
+     <CT:setting name="OptimizationDecCoef" value="10" />
+     <CT:setting name="OptimizationStop" value="0.0001" />
+        <CT:setting name="LastEngine" value="2" />
+</CT:section>
+
+
+<CT:section name="Optim" value="8" />
+        <CT:setting name="EngineToOptimize" value="2" />
+        <CT:setting name="TrajectoryOptimizationType" value="6" />
+        <CT:setting name="NearBody" value="2" />
+        <CT:setting name="Calculate" value="12" />
+     <CT:setting name="OptimizationInitialStep" value="0.01" />
+     <CT:setting name="OptimizationDecCoef" value="10" />
+     <CT:setting name="OptimizationStop" value="0.0001" />
+        <CT:setting name="LastEngine" value="2" />
+</CT:section>
+
+<CT:section name="Optim" value="9" />
+        <CT:setting name="EngineToOptimize" value="2" />
+        <CT:setting name="TrajectoryOptimizationType" value="1" />
+        <CT:setting name="NearBody" value="9" />
+        <CT:setting name="Calculate" value="0" />
+     <CT:setting name="OptimizationInitialStep" value="100" />
+     <CT:setting name="OptimizationDecCoef" value="10" />
+     <CT:setting name="OptimizationStop" value="1" />
+        <CT:setting name="LastEngine" value="2" />
+</CT:section>
+
+<CT:section name="Optim" value="10" />
+<!-- calculates perigee to the Moon, search for minimum by adjusting time -->
+           <CT:setting name="EngineToOptimize" value="2" />
+           <CT:setting name="TrajectoryOptimizationType" value="6" />
+           <CT:setting name="NearBody" value="9" />
+           <CT:setting name="Calculate" value="0" />
+           <CT:setting name="OptimizationInitialStep" value="0.01" />
+           <CT:setting name="OptimizationDecCoef" value="10" />
+           <CT:setting name="OptimizationStop" value="0.0001" />
+           <CT:setting name="LastEngine" value="2" />
+
+        <CT:setting name="Period" value="5358.000000" />
+</CT:section>
+
+<CT:section name="Optim" value="10" />
+<!-- calculates perigee to the Moon, search for minimum by adjusting time -->
+           <CT:setting name="EngineToOptimize" value="2" />
+           <CT:setting name="TrajectoryOptimizationType" value="6" />
+           <CT:setting name="NearBody" value="9" />
+           <CT:setting name="Calculate" value="0" />
+           <CT:setting name="OptimizationInitialStep" value="0.01" />
+           <CT:setting name="OptimizationDecCoef" value="10" />
+           <CT:setting name="OptimizationStop" value="0.0001" />
+           <CT:setting name="LastEngine" value="2" />
+
+        <CT:setting name="Period" value="5358.000000" />
+</CT:section>
+
 
 </CT:data>
