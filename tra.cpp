@@ -2865,7 +2865,40 @@ int CallXMLPars(char *szString, char *XML_Params)
         return 0;
 
 }
-
+int iDayOfTheYear(int iDay, int iMonth, int iYear)
+{
+	int iDays = iDay;
+	switch(iMonth-1)
+	{
+	case 11:// november
+		iDays+=30;
+	case 10:// october
+		iDays+=31;
+	case 9:// september
+		iDays+=30;
+	case 8://august
+		iDays+=31;
+	case 7:// july
+		iDays+=31;
+	case 6:// june
+		iDays+=30;
+	case 5:// may
+		iDays+=31;
+	case 4:// april
+		iDays+=30;
+	case 3:// march
+		iDays+=31;
+	case 2:// february
+		if ((iYear %4) ==0) // leap year
+			iDays+=29;
+		else
+			iDays+=28;
+	case 1:iDays+=31; // january
+	case 0:iDays+=0;
+		break;
+	}
+	return iDays;
+}
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 //
@@ -2886,37 +2919,7 @@ void ParamCommon(char *szString)
                 GetSystemTime(&MyTime);
 
                 iYear = MyTime.wYear-2000;
-				iDays=MyTime.wDay;
-
-				switch(MyTime.wMonth-1)
-				{
-				case 11:// november
-					iDays+=30;
-				case 10:// october
-					iDays+=31;
-				case 9:// september
-					iDays+=30;
-				case 8://august
-					iDays+=31;
-				case 7:// july
-					iDays+=31;
-				case 6:// june
-					iDays+=30;
-				case 5:// may
-					iDays+=31;
-				case 4:// april
-					iDays+=30;
-				case 3:// march
-					iDays+=31;
-				case 2:// february
-					if ((iYear %4) ==0) // leap year
-						iDays+=29;
-					else
-						iDays+=28;
-				case 1:iDays+=31; // january
-				case 0:iDays+=0;
-					break;
-				}
+				iDays = iDayOfTheYear(MyTime.wDay, MyTime.wMonth, MyTime.wYear);
 				iCurSec = MyTime.wHour * 60*60;
 				iCurSec += MyTime.wMinute *60;
 				iCurSec += MyTime.wSecond;
@@ -2932,7 +2935,27 @@ void ParamCommon(char *szString)
 					dStartJD = ConverEpochDate2JulianDay(dStartJD);
 				}
 				else
-				{
+				{                     // 012345678901234567890
+					if (dStartJD<=31) // DD/MM/YY HH:MM:SS:MLS format
+					{
+						int iDD = atoi(&pszQuo[0]);
+						int iMO = atoi(&pszQuo[3]);
+						int iYY = atoi(&pszQuo[6]);
+						int iHH = atoi(&pszQuo[9]);
+						int iMM = atoi(&pszQuo[12]);
+						int iSS = atoi(&pszQuo[15]);
+						int iMLS = atoi(&pszQuo[18]);
+						int iDays = iDayOfTheYear(iDD, iMO, iYY+2000);
+						int iCurSec = iHH * 60*60;
+						iCurSec += iMM *60;
+				        iCurSec += iSS;
+				        dStartJD = iYY *1000.0 + iDays;
+				        dStartJD += (((double)iCurSec)+ ((double)iMLS/1000.))/ (24.0*60.0*60.0);
+				        dStartJD = ConverEpochDate2JulianDay(dStartJD);
+					}
+                    else // in a normal format
+                    {
+                    }
 
 				}
 			}
