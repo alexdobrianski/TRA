@@ -4885,14 +4885,15 @@ void makeExplanationText(char*szText, int iCalc, int iTraj, int iBody)
     }
 
 }
-void dumpTRAvisual(void)
+void dumpTRAvisual(long i)
 {
 	FILE *VisualFile = fopen("travisual.xml", "w");
 	if (VisualFile)
 	{
 		fprintf(VisualFile,"<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n\r");
 		fprintf(VisualFile,"<Universe>\n\r");
-		fprintf(VisualFile,"	<Object>\n\r");
+        fprintf(VisualFile,"	<Object>\n\r");
+		fprintf(VisualFile,"	<time>%.18g</time>\n\r", dStartJD + ((double)i)/(24.0*60.0*60.0));
 		fprintf(VisualFile,"		<type>Earth</type>\n\r");
 		fprintf(VisualFile,"		<X>%.18g</X>\n\r",SolarSystem.X[EARTH]);
 		fprintf(VisualFile,"		<Y>%.18g</Y>\n\r",SolarSystem.Y[EARTH]);
@@ -6078,7 +6079,7 @@ int _tmain(int argc, _TCHAR* argv[])
 			// needs to dump data for visualization each XX sec
 			if (i%10 == 0)
 			{
-				dumpTRAvisual();
+				dumpTRAvisual(i);
 			}
 		}
 		printf("\n iteration done");
