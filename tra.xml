@@ -9,10 +9,15 @@
     2013 == 2456293.5 2014 == 2456658.5 2015 == 2457023.5 
     or set as in keplers epoch: 11291.79166666
     or set as normal date and time DD/MM/YY HH:MM:SS:MLS-->
+    or negativge value set current date
+    or (not implemented et) set as normal date and time DD/MM/YY HH:MM:SS:MLS-->
     <CT:setting name="dStartJD0" value="2451544.5" />
     <CT:setting name="dStartSecond" value="2451544.5" />
     <CT:setting name="dStartJD0" value="2455625.1696833" />
-    <CT:setting name="dStartJD" value="11291.79166666" />
+    <CT:setting name="dStartJD0" value="11291.79166666" />
+    <CT:setting name="dStartJD0" value="13075.0" />
+    <CT:setting name="dStartJD" value="-60" />
+    <CT:setting name="dStartJD0" value="21/03/13 11:02:03:004" />
     <CT:setting name="dStartJD0" value="11291.854004622962962962962962963" />
     <CT:setting name="dStartJD0" value="11292.79166666" />
 

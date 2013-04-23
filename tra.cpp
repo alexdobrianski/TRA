@@ -811,6 +811,7 @@ int iStartLandingIteraPerSec = 0;
 
 double Gbig = 0;//6.6725E-11;
 
+BOOL OutLast = FALSE;
 double TotalDays;
 long iTotalSec;
 double IterPerSec;
@@ -2909,13 +2910,15 @@ void ParamCommon(char *szString)
     XML_SECTION(TraInfo);
         IF_XML_READ(dStartJD) 
         {
+			TotalDays = 0;
             dStartJD = atof(pszQuo);    // format: <CT:setting name="dStartJD0" value="2455625.1696833" />
-			if (dStartJD <0) // negativge value set current date
+			if (dStartJD <=0) // negativge value set current date munis amount of the minutes (negative -1 mean = 1 minute)
 			{
 				int iYear;
 				int iDays;
 				int iCurSec;
 				SYSTEMTIME MyTime;
+				
                 GetSystemTime(&MyTime);
 
                 iYear = MyTime.wYear-2000;
@@ -2925,7 +2928,9 @@ void ParamCommon(char *szString)
 				iCurSec += MyTime.wSecond;
 				dStartJD = iYear *1000.0 + iDays;
 				dStartJD += (((double)iCurSec)+ ((double)MyTime.wMilliseconds/1000.))/ (24.0*60.0*60.0);
+                dStartJD -= atof(pszQuo)/(24.0*60.0);
 				dStartJD = ConverEpochDate2JulianDay(dStartJD);
+				TotalDays = atof(pszQuo)/(24.0*60.0);
 			}
 			else
 			{
@@ -2966,9 +2971,13 @@ void ParamCommon(char *szString)
         XML_READ(StartLandingIteraPerSec);
         IF_XML_READ(TotalDays) 
         {
-            TotalDays = atof(pszQuo);
-            iTotalSec = (int)(TotalDays * 24.0 * 60.0 * 60.0);
-        }
+			if (TotalDays<0)
+				TotalDays = -TotalDays;
+			else
+				TotalDays = atof(pszQuo);
+			iTotalSec = (int)(TotalDays * 24.0 * 60.0 * 60.0);
+
+		}
         IF_XML_READ(EarthCurTime)  
         {
             EarthCurTime  = atof(pszQuo);
@@ -4885,37 +4894,64 @@ void makeExplanationText(char*szText, int iCalc, int iTraj, int iBody)
     }
 
 }
+FILE *VisualFile = NULL;
 void dumpTRAvisual(long i)
 {
-	FILE *VisualFile = fopen("travisual.xml", "w");
-	if (VisualFile)
+    if (VisualFile == NULL)
+    {
+		VisualFile = fopen("travisual.xml", "w");
+        if (VisualFile)
+        {
+		    fprintf(VisualFile,"<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n\r");
+		    fprintf(VisualFile,"<Universe>\n\r");
+        }
+    }
+
+	if (OutLast == FALSE)
 	{
-		fprintf(VisualFile,"<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n\r");
-		fprintf(VisualFile,"<Universe>\n\r");
-        fprintf(VisualFile,"	<Object>\n\r");
-		fprintf(VisualFile,"	<time>%.18g</time>\n\r", dStartJD + ((double)i)/(24.0*60.0*60.0));
-		fprintf(VisualFile,"		<type>Earth</type>\n\r");
-		fprintf(VisualFile,"		<X>%.18g</X>\n\r",SolarSystem.X[EARTH]);
-		fprintf(VisualFile,"		<Y>%.18g</Y>\n\r",SolarSystem.Y[EARTH]);
-		fprintf(VisualFile,"		<Z>%.18g</Z>\n\r",SolarSystem.Z[EARTH]);
-		fprintf(VisualFile,"		<R>%.18g</R>\n\r",EarthR);
-		fprintf(VisualFile,"	</Object>\n\r");
-		fprintf(VisualFile,"	<Object>\n\r");
-		fprintf(VisualFile,"		<type>Sun</type>\n\r");
-		fprintf(VisualFile,"		<X>%.18g</X>\n\r",SolarSystem.X[SUN]);
-		fprintf(VisualFile,"		<Y>%.18g</Y>\n\r",SolarSystem.Y[SUN]);
-		fprintf(VisualFile,"		<Z>%.18g</Z>\n\r",SolarSystem.Z[SUN]);
-		fprintf(VisualFile,"                <R>%.18g</R>\n\r",SunR);
-		fprintf(VisualFile,"	</Object>\n\r");
-		fprintf(VisualFile,"	<Object>\n\r");
-		fprintf(VisualFile,"		<type>Moon</type>\n\r");
-		fprintf(VisualFile,"		<X>%.18g</X>\n\r",SolarSystem.X[MOON]);
-		fprintf(VisualFile,"		<Y>%.18g</Y>\n\r",SolarSystem.Y[MOON]);
-		fprintf(VisualFile,"		<Z>%.18g</Z>\n\r",SolarSystem.Z[MOON]);
-		fprintf(VisualFile,"                <R>%.18g</R>\n\r",MoonR);
-		fprintf(VisualFile,"	</Object>\n\r");
-		fprintf(VisualFile,"</Universe>\n\r");
-		fclose(VisualFile);
+		if (VisualFile)
+		{
+		    fprintf(VisualFile,"	<MoonObject>\n\r");
+            fprintf(VisualFile,"		<type>MoonTra</type>\n\r");
+		    fprintf(VisualFile,"	    <time>%.18g</time>\n\r", dStartJD + ((double)i)/(24.0*60.0*60.0));
+			fprintf(VisualFile,"		<X>%.18g</X>\n\r",SolarSystem.X[MOON]-SolarSystem.X[EARTH]);
+			fprintf(VisualFile,"		<Y>%.18g</Y>\n\r",SolarSystem.Y[MOON]-SolarSystem.Y[EARTH]);
+			fprintf(VisualFile,"		<Z>%.18g</Z>\n\r",SolarSystem.Z[MOON]-SolarSystem.Z[EARTH]);
+			fprintf(VisualFile,"		<R>%.18g</R>\n\r",EarthR);
+			fprintf(VisualFile,"	</MoonObject>\n\r");
+        }
+    }
+	else
+	{
+
+		if (VisualFile)
+		{
+		    fprintf(VisualFile,"	<Object>\n\r");
+            fprintf(VisualFile,"		<type>Earth</type>\n\r");
+			fprintf(VisualFile,"		<X>%.18g</X>\n\r",SolarSystem.X[EARTH]);
+			fprintf(VisualFile,"		<Y>%.18g</Y>\n\r",SolarSystem.Y[EARTH]);
+			fprintf(VisualFile,"		<Z>%.18g</Z>\n\r",SolarSystem.Z[EARTH]);
+			fprintf(VisualFile,"		<R>%.18g</R>\n\r",EarthR);
+			fprintf(VisualFile,"	</Object>\n\r");
+			fprintf(VisualFile,"	<Object>\n\r");
+			fprintf(VisualFile,"		<type>Sun</type>\n\r");
+			fprintf(VisualFile,"		<X>%.18g</X>\n\r",SolarSystem.X[SUN]);
+			fprintf(VisualFile,"		<Y>%.18g</Y>\n\r",SolarSystem.Y[SUN]);
+			fprintf(VisualFile,"		<Z>%.18g</Z>\n\r",SolarSystem.Z[SUN]);
+			fprintf(VisualFile,"                <R>%.18g</R>\n\r",SunR);
+			fprintf(VisualFile,"	</Object>\n\r");
+			fprintf(VisualFile,"	<Object>\n\r");
+			fprintf(VisualFile,"		<type>Moon</type>\n\r");
+			fprintf(VisualFile,"		<X>%.18g</X>\n\r",SolarSystem.X[MOON]);
+			fprintf(VisualFile,"		<Y>%.18g</Y>\n\r",SolarSystem.Y[MOON]);
+			fprintf(VisualFile,"		<Z>%.18g</Z>\n\r",SolarSystem.Z[MOON]);
+			fprintf(VisualFile,"                <R>%.18g</R>\n\r",MoonR);
+			fprintf(VisualFile,"	</Object>\n\r");
+		    fprintf(VisualFile,"	<time>%.18g</time>\n\r", dStartJD + ((double)i)/(24.0*60.0*60.0));
+            fprintf(VisualFile,"</Universe>\n\r");
+			fclose(VisualFile);
+            VisualFile = NULL;
+		}
 	}
 }
 void dumpXMLParam(TRAOBJ *Sat, TRAIMPLOBJ *MyEngine, int iNumbOfEng)
@@ -6077,11 +6113,11 @@ int _tmain(int argc, _TCHAR* argv[])
             //Sat.VX[0] = tProbVX + SolarSystem.VX[EARTH]; Sat.VY[0] = tProbVY + SolarSystem.VY[EARTH]; Sat.VZ[0] = tProbVZ + SolarSystem.VZ[EARTH];
 
 			// needs to dump data for visualization each XX sec
-			if (i%10 == 0)
-			{
-				dumpTRAvisual(i);
-			}
+            if (i%60 == 0) // each min output data to XML file
+			    dumpTRAvisual(i);
 		}
+		OutLast = TRUE;
+		dumpTRAvisual(i);
 		printf("\n iteration done");
 		tProbTSec = 0;
 		tProbEcc = 0;
