@@ -4376,7 +4376,8 @@ void ParamProb(char *szString)
 			long double tVY = tempProbVY;
 			long double tVZ = tempProbVZ;
 			{
-#if 1
+// that is for debugging GPS sattelites only
+#if 0
 
                 //01234567890123456789012345678901234567890123456789012345678901234567890
 //1 25544U 98067A   04236.56031392  .00020137  00000-0  16538-3 0  5135\
@@ -4917,8 +4918,17 @@ void dumpTRAvisual(long i)
 			fprintf(VisualFile,"		<X>%.18g</X>\n\r",SolarSystem.X[MOON]-SolarSystem.X[EARTH]);
 			fprintf(VisualFile,"		<Y>%.18g</Y>\n\r",SolarSystem.Y[MOON]-SolarSystem.Y[EARTH]);
 			fprintf(VisualFile,"		<Z>%.18g</Z>\n\r",SolarSystem.Z[MOON]-SolarSystem.Z[EARTH]);
-			fprintf(VisualFile,"		<R>%.18g</R>\n\r",EarthR);
 			fprintf(VisualFile,"	</MoonObject>\n\r");
+            for (int iSat = 0; iSat < Sat.Elem; iSat++)
+            {
+                fprintf(VisualFile,"	<Sat%dObject>\n\r",iSat);
+                fprintf(VisualFile,"		<type>SatTra</type>\n\r");
+		        fprintf(VisualFile,"	    <time>%.18g</time>\n\r", dStartJD + ((double)i)/(24.0*60.0*60.0));
+			    fprintf(VisualFile,"		<X>%.18g</X>\n\r",Sat.X[iSat]-SolarSystem.X[EARTH]);
+			    fprintf(VisualFile,"		<Y>%.18g</Y>\n\r",Sat.Y[iSat]-SolarSystem.Y[EARTH]);
+			    fprintf(VisualFile,"		<Z>%.18g</Z>\n\r",Sat.Z[iSat]-SolarSystem.Z[EARTH]);
+			    fprintf(VisualFile,"	</Sat%dObject>\n\r",iSat);
+            }
         }
     }
 	else
