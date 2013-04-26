@@ -4912,13 +4912,13 @@ void dumpTRAvisual(long i)
 	{
 		if (VisualFile)
 		{
-		    fprintf(VisualFile,"	<MoonObject>\n\r");
-            fprintf(VisualFile,"		<type>MoonTra</type>\n\r");
-		    fprintf(VisualFile,"	    <time>%.18g</time>\n\r", dStartJD + ((double)i)/(24.0*60.0*60.0));
-			fprintf(VisualFile,"		<X>%.18g</X>\n\r",SolarSystem.X[MOON]-SolarSystem.X[EARTH]);
-			fprintf(VisualFile,"		<Y>%.18g</Y>\n\r",SolarSystem.Y[MOON]-SolarSystem.Y[EARTH]);
-			fprintf(VisualFile,"		<Z>%.18g</Z>\n\r",SolarSystem.Z[MOON]-SolarSystem.Z[EARTH]);
-			fprintf(VisualFile,"	</MoonObject>\n\r");
+		    //fprintf(VisualFile,"	<MoonObject>\n\r");
+            //fprintf(VisualFile,"		<type>MoonTra</type>\n\r");
+		    //fprintf(VisualFile,"	    <time>%.18g</time>\n\r", dStartJD + ((double)i)/(24.0*60.0*60.0));
+			//fprintf(VisualFile,"		<X>%.18g</X>\n\r",SolarSystem.X[MOON]-SolarSystem.X[EARTH]);
+			//fprintf(VisualFile,"		<Y>%.18g</Y>\n\r",SolarSystem.Y[MOON]-SolarSystem.Y[EARTH]);
+			//fprintf(VisualFile,"		<Z>%.18g</Z>\n\r",SolarSystem.Z[MOON]-SolarSystem.Z[EARTH]);
+			//fprintf(VisualFile,"	</MoonObject>\n\r");
             for (int iSat = 0; iSat < Sat.Elem; iSat++)
             {
                 fprintf(VisualFile,"	<Sat%dObject>\n\r",iSat);
