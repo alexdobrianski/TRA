@@ -632,8 +632,10 @@ int TrajectoryOptimizationType = 0;
 long OldCurentTimeSec;
 int OldCurentTimeTD;
 int OldCurentIteraPerSec;
+
 double dStartJD = 0.0;//2451544.5; // if value dStartJD not set (==0.0) then use value from keplers elements of a satelite 0
 // if it will be more then one satellite needs to set this value to a last epoch of all satellites
+
 double SunX =.0;
 double SunY =.0;
 double SunZ = .0;
@@ -684,23 +686,19 @@ double MassRatioSunToEarthPlusMoon;
 double EarthTSolSec;
 double EarthCurTime;
 double EarthCurTimeS;
-double EarthEpoch;
-double EarthEpochS;
-double EarthAph;
-double EarthPer;
 double EarthSmAx;
-double EarthEcc;
 double EarthTDays;
 double EarthTSec;
-double EarthIncl;
-double EarthAscNode;
-double EarthArgPer;
 double EarthCalcKepler;
-double EarthMeanAnom;
 
 double EarthVX = .0;
 double EarthVY = .0;
 double EarthVZ = .0;
+
+long double GST,SLONG,SRASN, SDEC;
+long double GreenwichA = 0.0;
+
+
 
 double MoonX = 363104000.0;
 double MoonY = .0;
@@ -716,20 +714,9 @@ double MoonVX = .0;
 double MoonVY = 1022.0;
 double MoonVZ = .0;
 double MoonTSec;
-double MoonTDays;
-double MoonAph;
-double MoonPer;
-double MoonSmAx;
-double MoonEcc;
-double MoonIncl;
-double MoonAscNode;
-double MoonArgPer;
-double MoonMeanAnom;
 double MoonCurTime;
 double MoonCurTimeS;
-double MoonEpoch;
 
-double MoonEpochS;
 double MoonTPeriod;
 int MoonKeplerDone = 0;
 
@@ -834,6 +821,9 @@ void IteraSolarSystem(int TimeDirection, TRAOBJ * SlS)
 {
     int i;
     int j;
+	//SUN_08 (1950,1,0,0,0,GST,SLONG,SRASN,SDEC);
+	//GreenwichA = GreenwichAscension(50001.0);
+
 #define PlanetsCount SlS->Elem
 //#define PlanetsCount PLANET_COUNT
     // calculation of a forces
@@ -2911,7 +2901,7 @@ void ParamCommon(char *szString)
         IF_XML_READ(dStartJD) 
         {
 			TotalDays = 0;
-            dStartJD = atof(pszQuo);    // format: <CT:setting name="dStartJD0" value="2455625.1696833" />
+            dStartJD = atof(pszQuo);    // format: <TRA:setting name="dStartJD0" value="2455625.1696833" />
 			if (dStartJD <=0) // negativge value set current date munis amount of the minutes (negative -1 mean = 1 minute)
 			{
 				int iYear;
@@ -2935,7 +2925,7 @@ void ParamCommon(char *szString)
 			else
 			{
 				int iYear = dStartJD/1000;
-				if ((iYear > 0) && (iYear < 24)) // this is a <CT:setting name="dStartJD" value="11291.79166666" />
+				if ((iYear > 0) && (iYear < 24)) // this is a <TRA:setting name="dStartJD" value="11291.79166666" />
 				{
 					dStartJD = ConverEpochDate2JulianDay(dStartJD);
 				}
@@ -3193,7 +3183,7 @@ long double GreenwichAscension(long double EP)
 	YR=JY;
 	D=EP-YR*1.e3;
 	//IF(JY.LT.10) JY=JY+80
-	if(JY < 10) 
+	if(JY < 20) 
 		JY=JY+80;
 	int N=(JY-69)/4;
 	//IF(JY.LT.70) N=(JY-72)/4
@@ -3727,69 +3717,9 @@ void ParamMoon(char *szString)
         XML_READ(MoonRP);
         XML_READ(MoonRE);
         XML_READ(MoonM);
-        XML_READ(MoonAph);
-        XML_READ(MoonPer);
         XML_READ(GMMoon);
         XML_READ(GMEarthMoon);
 
-        IF_XML_READ(MoonKeplerLine1)
-        {
-            strcpy(szMoonKeplerLine1, pszQuo);
-        }
-        IF_XML_READ(MoonKeplerLine2)
-        {
-            strcpy(szMoonKeplerLine2, pszQuo);
-        }
-        IF_XML_READ(MoonKeplerLine3)
-        {
-            // better to use JPL - left just for some old verification
-            // not used - left for verification in debug mode only            
-            char szTempo[1024];
-            int iYear;
-            int iDays;
-            double dflTemp;
-            strcpy(szMoonKeplerLine3, pszQuo);
-//0         1         2         3         4         5         6         7
-//01234567890123456789012345678901234567890123456789012345678901234567890
-//1 25544U 98067A   04236.56031392  .00020137  00000-0  16538-3 0  5135\
-//2 25544  51.6335 341.7760 0007976 126.2523 325.9359 15.70406856328903"
-            COPYKEPLER(MoonTPeriod,&szMoonKeplerLine3[52],11);
-            printf("\n calc from Kepler MoonTPeriod=%f ", MoonTPeriod);
-            MoonTDays = 1.0/MoonTPeriod;
-            printf("\n calc  from Kepler MoonTDays=%f ", MoonTDays);
-            MoonTSec = MoonTDays * 24. * 60. * 60.;
-            printf("\n calc  from Kepler MoonTSec=%f ", MoonTSec);
-            COPYKEPLER(MoonIncl,&szMoonKeplerLine3[8],8);
-            MoonIncl = M_PI * MoonIncl/180.0;
-            memset(szTempo, 0, sizeof(szTempo)); szTempo[0] = '.'; memcpy(&szTempo[1], &szMoonKeplerLine3[26], 7);
-            MoonEcc = atof(szTempo);
-            // TBD -year first two chars
-            MoonEpoch = atof(&szMoonKeplerLine2[18]);
-            iYear = (int)MoonEpoch;
-            iDays = iYear - ((iYear/1000)*1000);
-            iYear -= iDays;
-            dflTemp = (MoonEpoch - ((double)iYear));
-            MoonEpochS =  dflTemp*60*60*24;
-            MoonAscNode = M_PI * atof(&szMoonKeplerLine3[17])/180.0;
-            MoonArgPer = M_PI * atof(&szMoonKeplerLine3[34])/180.0;
-            MoonMeanAnom = M_PI * atof(&szMoonKeplerLine3[43])/180.0;
-            MoonKeplerDone = 1;
-        }
-
-        IF_XML_READ(MoonTDays)  
-        {
-            if (MoonKeplerDone == 0)
-            {
-                MoonTDays  = atof(pszQuo);
-                printf("\n calc MoonTDays=%f ", MoonTDays);
-                MoonTSec = MoonTDays * 24.0*60.0*60.0;
-                printf("\n calc MoonTSec =%f ", MoonTSec);
-            }
-            else
-            {
-                printf("\n MoonTDays ignored Kepler 2 lines used instead");
-            }
-        }
 
         IF_XML_READ(MassRatioEarthToMoon)
         {
@@ -3825,37 +3755,6 @@ void ParamMoon(char *szString)
                 }
             }
         }
-        IF_XML_READ(MoonIncl)
-        {
-            if (MoonKeplerDone == 0)
-                MoonIncl = M_PI * atof(pszQuo)/180.0;
-            else
-                printf("\n MoonIncl ignored Kepler 2 lines used instead");
-
-        }
-        IF_XML_READ(MoonAscNode)
-        {
-            if (MoonKeplerDone == 0)
-                MoonAscNode = M_PI * atof(pszQuo)/180.0;
-            else
-                printf("\n MoonAscNode ignored Kepler 2 lines used instead");
-        }
-        IF_XML_READ(MoonArgPer)
-        {
-            if (MoonKeplerDone == 0)
-                MoonArgPer = M_PI * atof(pszQuo)/180.0;
-            else
-                printf("\n MoonArgPer ignored Kepler 2 lines used instead");
-        }
-        IF_XML_READ(MoonMeanAnom)
-        {
-            if (MoonKeplerDone == 0)
-                MoonMeanAnom = M_PI * atof(pszQuo)/180.0;
-            else
-                printf("\n MoonMeanAnom ignored Kepler 2 lines used instead");
-        }
-        XML_READ(MoonEcc);
-        XML_READ(MoonSmAx);
     XML_SECTION_END;
     XML_END;
 }
@@ -3930,16 +3829,7 @@ void ParamEarth(char *szString)
         XML_READ(EarthM);
         XML_READ(AU);
         XML_READ(EarthTSolSec);
-        IF_XML_READ(EarthEpoch)  
-        {
-            EarthEpoch  = atof(pszQuo);
-            // TBD
-            EarthEpochS  = 0;
-        }
-        XML_READ(EarthAph);
-        XML_READ(EarthPer);
         XML_READ(EarthSmAx);
-        XML_READ(EarthEcc);
         double Temp = 0.0;
         IF_XML_READ(EarthTDays)  
         {
@@ -3950,22 +3840,6 @@ void ParamEarth(char *szString)
             printf("\n calc EarthTSec =%f ", EarthTSec);
             Temp = EarthTSec / EarthTSolSec;
 
-        }
-        IF_XML_READ(EarthIncl)
-        {
-            EarthIncl = M_PI * atof(pszQuo)/180.0;
-        }
-        IF_XML_READ(EarthAscNode)
-        {
-            EarthAscNode = M_PI * atof(pszQuo)/180.0;
-        }
-        IF_XML_READ(EarthArgPer)
-        {
-            EarthArgPer = M_PI * atof(pszQuo)/180.0;
-        }
-        IF_XML_READ(EarthMeanAnom)
-        {
-            EarthMeanAnom = M_PI * atof(pszQuo)/180.0;
         }
 
         XML_READ(GMEarth);
@@ -3989,12 +3863,6 @@ void ParamEarth(char *szString)
                 double tempCenterEarthMoonVY;
                 double tempCenterEarthMoonVZ;
 
-                //double tempProbX;
-                //double tempProbY;
-                //double tempProbZ;
-                //double tempProbVX;
-                //double tempProbVY;
-                //double tempProbVZ;
 
                 printf("\n GMSun = %f", GMSun);
                 printf("\n GMEarth = %f", GMEarth);
@@ -4003,36 +3871,9 @@ void ParamEarth(char *szString)
                 printf("\n GMMoon = %f", GMMoon);
                 GMMoon = Gbig * MoonM;
                 printf("\n GMMoon = %f", GMMoon);
-                //AjustKeplerPosition(EarthTSec,EarthAph,EarthPer,EarthSmAx,EarthEcc, EarthIncl, EarthAscNode, EarthArgPer, EarthEpochS, EarthCurTimeS);
 
                 printf("\n Was  A Earth= %f", EarthSmAx);
-                //KeplerPosition(EarthEpochS,
-				//	EarthTSec, // - orbit period in sec
-                //    EarthEcc,             // - Eccentricity
-                //    EarthIncl,            // - Inclination
-                //    EarthAscNode,//0.0,                  // - Longitude of ascending node
-                //    EarthArgPer,//M_PI/2.0,             // - Argument of perihelion
-                //    EarthMeanAnom,//0,                    // - Mean Anomaly (degrees)
-                //    SunM*Gbig,0.0,
-                //    EarthX,EarthY,EarthZ,EarthVX,EarthVY,EarthVZ);
                 printf("\n Was AU      = %f", AU);
-
-                printf("\n Was EarthPer= %f", EarthPer);
-                printf("\n Was EarthAph= %f", EarthAph);
-
-                //AjustKeplerPosition(MoonTSec,MoonAph,MoonPer,MoonSmAx,MoonEcc, MoonIncl, MoonAscNode, MoonArgPer, MoonEpochS, MoonCurTimeS);
-                printf("\n Was  A Moon = %f", MoonSmAx);
-                //KeplerPosition(MoonEpochS,          // moon epoch
-				//	MoonTSec, // - orbit period in sec
-                //    MoonEcc,             // - Eccentricity
-                //    MoonIncl,            // - Inclination
-                //    MoonAscNode,         // - Longitude of ascending node
-                //    MoonArgPer,          // - Argument of perihelion
-                //    MoonMeanAnom,        // - Mean Anomaly (degrees)
-                //    EarthM*Gbig,0.0,//MoonM,
-                //    tempMoonX,tempMoonY,tempMoonZ,tempMoonVX,tempMoonVY,tempMoonVZ);
-                printf("\n Was MoonPer = %f", MoonPer);
-                printf("\n Was MoonAph = %f", MoonAph);
 
                 // adjust Moon + earth position at a point of a centre of gravity
                 tempCenterEarthMoonX = EarthX;
@@ -4073,6 +3914,7 @@ void ParamProb(char *szString)
     char szTemp[128] = {"0."};;
     XML_BEGIN;
     XML_SECTION(TraInfo);
+    // pisition of the prob (active by firing engines) can be set by X,Y,Z   VX,VY,VZ
         XML_READ(ProbX);
         XML_READ(ProbY);
         XML_READ(ProbZ);
@@ -4080,6 +3922,7 @@ void ParamProb(char *szString)
         XML_READ(ProbVY);
         XML_READ(ProbVZ);
         XML_READ(ProbM);
+        // or by 3 punch card
         IF_XML_READ(ProbKeplerLine1)
         {
             strcpy(szProbKeplerLine1, pszQuo);
@@ -4253,10 +4096,8 @@ void ParamProb(char *szString)
 			//double ProbRevAtEpoch;
 			
 			
-			long double GST,SLONG,SRASN, SDEC;
-			long double GreenwichA = 0.0;
 			SUN_08 (1950,1,0,0,0,GST,SLONG,SRASN,SDEC);
-			GreenwichA = GreenwichAscension(50000.0);
+			GreenwichA = GreenwichAscension(50001.0);
             // GreenwichA == GST but SUN_08 works for 2011
 			//SRASN = SRASN * 180/ M_PI;
 
@@ -4847,7 +4688,7 @@ void ParamDoAll(FILE *fInput)
     char *pszQuo2;
     while(fgets(szString, sizeof(szString) -1, fInput))
     {
-        if (strstr(szString, "CT:section") != NULL)
+        if (strstr(szString, "TRA:section") != NULL)
         {
             if ((pszQuo = strstr(szString, "name=\"")) != NULL)
             {
@@ -4971,31 +4812,31 @@ void dumpXMLParam(TRAOBJ *Sat, TRAIMPLOBJ *MyEngine, int iNumbOfEng)
     int i,j;
     if (EnginesFile)
     {
-#define XML_DUMPF(XML_PARAM) fprintf(EnginesFile,"\n    <CT:setting name=\"%s\" value=\"%.18g\" />",#XML_PARAM,XML_PARAM);
-#define XML_DUMPI(XML_PARAM) fprintf(EnginesFile,"\n    <CT:setting name=\"%s\" value=\"%d\" />",#XML_PARAM,XML_PARAM);
+#define XML_DUMPF(XML_PARAM) fprintf(EnginesFile,"\n    <TRA:setting name=\"%s\" value=\"%.18g\" />",#XML_PARAM,XML_PARAM);
+#define XML_DUMPI(XML_PARAM) fprintf(EnginesFile,"\n    <TRA:setting name=\"%s\" value=\"%d\" />",#XML_PARAM,XML_PARAM);
         fprintf(EnginesFile,"<?xml version=\"1.0\" encoding=\"UTF-8\" ?>");
-        fprintf(EnginesFile,"\n<CT:data version=\"1.00\" xmlns:CT=\"http://www.adobri.com/tra\">");
-        fprintf(EnginesFile,"\n<CT:section name=\"TraInfo\">\n");
+        fprintf(EnginesFile,"\n<TRA:data version=\"1.00\" xmlns:CT=\"http://www.adobri.com/tra\">");
+        fprintf(EnginesFile,"\n<TRA:section name=\"TraInfo\">\n");
         fprintf(EnginesFile,"\n<!-- starting date (1 jan 2000) = 2451544.5JD ");
         fprintf(EnginesFile,"\n     if this is not set then use keplers elements from a satelite 0 -->");
         XML_DUMPF(dStartJD);
-        fprintf(EnginesFile,"\n\n    <CT:setting name=\"RGBImageW\" value=\"%d\" />",bRGBImageW);
-        fprintf(EnginesFile,"\n    <CT:setting name=\"RGBImageH\" value=\"%d\" />",bRGBImageH);
+        fprintf(EnginesFile,"\n\n    <TRA:setting name=\"RGBImageW\" value=\"%d\" />",bRGBImageW);
+        fprintf(EnginesFile,"\n    <TRA:setting name=\"RGBImageH\" value=\"%d\" />",bRGBImageH);
 
         fprintf(EnginesFile,"\n<!-- int iProfile = 0; ");
         fprintf(EnginesFile,"\n              // 0 == XY , 1 == YZ, 2 == XZ 3 == -YZ 4 == -XZ 5==-XY");
         fprintf(EnginesFile,"\n              // 0 or XY is a view from North to south, 5 (- XY) is a view from south to north");
         fprintf(EnginesFile,"\n              // 1 or YZ is a view to easter -->");
-        fprintf(EnginesFile,"\n    <CT:setting name=\"RGBView\" value=\"%d\" />", iProfile);
+        fprintf(EnginesFile,"\n    <TRA:setting name=\"RGBView\" value=\"%d\" />", iProfile);
 
         fprintf(EnginesFile,"\n<!--  EARTH 2 MOON  9 -->\n");
         XML_DUMPI(RGBReferenceBody);
         fprintf(EnginesFile,"\n<!-- max amount of pictures -->");
-        fprintf(EnginesFile,"\n    <CT:setting name=\"RGBMaxPictures\" value=\"%d\" />",iMaxSeq);
+        fprintf(EnginesFile,"\n    <TRA:setting name=\"RGBMaxPictures\" value=\"%d\" />",iMaxSeq);
         fprintf(EnginesFile,"\n<!-- one picture per sec -->");
-        fprintf(EnginesFile,"\n    <CT:setting name=\"RGBSecPerPictures\" value=\"%d\" />", iMaxCounter);
+        fprintf(EnginesFile,"\n    <TRA:setting name=\"RGBSecPerPictures\" value=\"%d\" />", iMaxCounter);
         fprintf(EnginesFile,"\n<!-- scale in m -->");
-        fprintf(EnginesFile,"\n    <CT:setting name=\"RGBScale\" value=\"%.18g\" />\n",dRGBScale);
+        fprintf(EnginesFile,"\n    <TRA:setting name=\"RGBScale\" value=\"%.18g\" />\n",dRGBScale);
         XML_DUMPF(IterPerSec);
         XML_DUMPF(StartLandingIteraPerSec);
 
@@ -5009,11 +4850,11 @@ void dumpXMLParam(TRAOBJ *Sat, TRAIMPLOBJ *MyEngine, int iNumbOfEng)
         for (i = 0; i < Sat->Elem; i++)
         {
             //XML_DUMPF(ProbM);
-            fprintf(EnginesFile,"\n    <CT:setting name=\"ProbM\" value=\"%.18g\" />",Sat->M[i]);
+            fprintf(EnginesFile,"\n    <TRA:setting name=\"ProbM\" value=\"%.18g\" />",Sat->M[i]);
 
-            fprintf(EnginesFile,"\n    <CT:setting name=\"ProbKeplerLine1\" value=\"%s",Sat->Kepler1);
-            fprintf(EnginesFile,"    <CT:setting name=\"ProbKeplerLine2\" value=\"%s",Sat->Kepler2);
-            fprintf(EnginesFile,"    <CT:setting name=\"ProbKeplerLine3\" value=\"%s",Sat->Kepler3);
+            fprintf(EnginesFile,"\n    <TRA:setting name=\"ProbKeplerLine1\" value=\"%s",Sat->Kepler1);
+            fprintf(EnginesFile,"    <TRA:setting name=\"ProbKeplerLine2\" value=\"%s",Sat->Kepler2);
+            fprintf(EnginesFile,"    <TRA:setting name=\"ProbKeplerLine3\" value=\"%s",Sat->Kepler3);
         }
         fprintf(EnginesFile,"\n<!-- target point on the Moon -->");
         XML_DUMPF(Targetlongitude);
@@ -5025,21 +4866,9 @@ void dumpXMLParam(TRAOBJ *Sat, TRAIMPLOBJ *MyEngine, int iNumbOfEng)
         XML_DUMPF(EarthM);
         XML_DUMPF(MassRatioSunToEarthPlusMoon);
         XML_DUMPF(EarthTSolSec);
-        XML_DUMPF(EarthEpoch);
-        XML_DUMPF(EarthAph);
-        XML_DUMPF(EarthPer);
         XML_DUMPF(EarthSmAx);
         XML_DUMPF(EarthSmAxAU);
-        XML_DUMPF(EarthEcc);
         XML_DUMPF(EarthTDays);
-        fprintf(EnginesFile,"\n    <CT:setting name=\"EarthIncl\" value=\"%.18g\" />",EarthIncl * 180.0/M_PI);
-        //XML_DUMPF(EarthIncl);
-        fprintf(EnginesFile,"\n    <CT:setting name=\"EarthAscNode\" value=\"%.18g\" />",EarthAscNode * 180.0/M_PI);
-        //XML_DUMPF(EarthAscNode);
-        fprintf(EnginesFile,"\n    <CT:setting name=\"EarthArgPer\" value=\"%.18g\" />",EarthArgPer * 180.0/M_PI);
-        //XML_DUMPF(EarthArgPer);
-        fprintf(EnginesFile,"\n    <CT:setting name=\"EarthMeanAnom\" value=\"%.18g\" />",EarthMeanAnom * 180.0/M_PI);
-        //XML_DUMPF(EarthMeanAnom);
 
         XML_DUMPF(MoonR);
         XML_DUMPF(MoonRP);
@@ -5053,29 +4882,15 @@ void dumpXMLParam(TRAOBJ *Sat, TRAIMPLOBJ *MyEngine, int iNumbOfEng)
         fprintf(EnginesFile,"\n\n<!-- next line will force calculation of a Earth and Moon mass -->");
         fprintf(EnginesFile,"\n<!-- it is not in use - value just for reference and fo trigger -->");
         XML_DUMPF(MassRatioEarthToMoon);
-        fprintf(EnginesFile,"\n    <CT:setting name=\"MoonKeplerLine1\" value=\"%s",szMoonKeplerLine1);
-        fprintf(EnginesFile,"    <CT:setting name=\"MoonKeplerLine2\" value=\"%s",szMoonKeplerLine2);
-        fprintf(EnginesFile,"    <CT:setting name=\"MoonKeplerLine3\" value=\"%s",szMoonKeplerLine3);
-        XML_DUMPF(MoonEpoch);
-        XML_DUMPF(MoonAph);
-        XML_DUMPF(MoonPer);
-        XML_DUMPF(MoonSmAx);
-        XML_DUMPF(MoonEcc);
-        XML_DUMPF(MoonTDays);
-        fprintf(EnginesFile,"\n    <CT:setting name=\"MoonIncl\" value=\"%.18g\" />",MoonIncl * 180.0/M_PI);
-        //XML_DUMPF(MoonIncl);
-        fprintf(EnginesFile,"\n    <CT:setting name=\"MoonAscNode\" value=\"%.18g\" />",MoonAscNode * 180.0/M_PI);
-        //XML_DUMPF(MoonAscNode);
-        fprintf(EnginesFile,"\n    <CT:setting name=\"MoonArgPer\" value=\"%.18g\" />",MoonArgPer * 180.0/M_PI);
-        //XML_DUMPF(MoonArgPer);
-        fprintf(EnginesFile,"\n    <CT:setting name=\"MoonMeanAnom\" value=\"%.18g\" />",MoonMeanAnom * 180.0/M_PI);
-        //XML_DUMPF(MoonMeanAnom);
+        fprintf(EnginesFile,"\n    <TRA:setting name=\"MoonKeplerLine1\" value=\"%s",szMoonKeplerLine1);
+        fprintf(EnginesFile,"    <TRA:setting name=\"MoonKeplerLine2\" value=\"%s",szMoonKeplerLine2);
+        fprintf(EnginesFile,"    <TRA:setting name=\"MoonKeplerLine3\" value=\"%s",szMoonKeplerLine3);
         fprintf(EnginesFile,"\n\n<!-- next line (value == \"1.0\") will force calculation"); 
         fprintf(EnginesFile,"\n                         of a Earth kepler position -->");
-        fprintf(EnginesFile,"\n    <CT:setting name=\"EarthCalcKepler\" value=\"0.0\" />");
+        fprintf(EnginesFile,"\n    <TRA:setting name=\"EarthCalcKepler\" value=\"0.0\" />");
         fprintf(EnginesFile,"\n\n<!-- next line will force assigning velocities and positions ");
         fprintf(EnginesFile,"\n     based on JPL data -->\n");
-        fprintf(EnginesFile,"\n    <CT:setting name=\"UseJPLxyz\" value=\"1.0\" />");
+        fprintf(EnginesFile,"\n    <TRA:setting name=\"UseJPLxyz\" value=\"1.0\" />");
         XML_DUMPI(StartOptim);
         XML_DUMPI(MaxOptim);
         fprintf(EnginesFile,"\n\n<!-- last used engine (0,1,2,3..) in trajectory optimization or calculations ");
@@ -5097,72 +4912,72 @@ void dumpXMLParam(TRAOBJ *Sat, TRAIMPLOBJ *MyEngine, int iNumbOfEng)
 
         XML_DUMPI(TrajectoryOptimizationType);
 
-        fprintf(EnginesFile,"\n</CT:section>\n\n            <!--     now all engines    -->");
+        fprintf(EnginesFile,"\n</TRA:section>\n\n            <!--     now all engines    -->");
 
         for (i = 0; i < iNumbOfEng; i++)
         {
-            fprintf(EnginesFile,"\n<CT:section name=\"Engine\" value=\"%d\" />", i);
-            fprintf(EnginesFile,"\n    <CT:setting name=\"EngineNumber\" value=\"%d\" />", i);
-            fprintf(EnginesFile,"\n    <CT:setting name=\"EngineOnSatellite\" value=\"%d\" />",MyEngine[i].iEngineOnSatellite);
+            fprintf(EnginesFile,"\n<TRA:section name=\"Engine\" value=\"%d\" />", i);
+            fprintf(EnginesFile,"\n    <TRA:setting name=\"EngineNumber\" value=\"%d\" />", i);
+            fprintf(EnginesFile,"\n    <TRA:setting name=\"EngineOnSatellite\" value=\"%d\" />",MyEngine[i].iEngineOnSatellite);
             fprintf(EnginesFile,"\n    <!-- convinent coeff - instead of entry real values just assume scaled version-->");
-            fprintf(EnginesFile,"\n    <CT:setting name=\"PropCoeff\" value=\"1.0\" />");
-            fprintf(EnginesFile,"\n\n    <CT:setting name=\"Weight\" value=\"%.18g\" />",MyEngine[i].Weight);
-            fprintf(EnginesFile,"\n    <CT:setting name=\"TotalWeight\" value=\"%.18g\" />",MyEngine[i].TotalWeight);
+            fprintf(EnginesFile,"\n    <TRA:setting name=\"PropCoeff\" value=\"1.0\" />");
+            fprintf(EnginesFile,"\n\n    <TRA:setting name=\"Weight\" value=\"%.18g\" />",MyEngine[i].Weight);
+            fprintf(EnginesFile,"\n    <TRA:setting name=\"TotalWeight\" value=\"%.18g\" />",MyEngine[i].TotalWeight);
             fprintf(EnginesFile,"\n\n    <!-- iteration per sec from engine's plot -->");
-            fprintf(EnginesFile,"\n    <CT:setting name=\"DeltaT\" value=\"%.18g\" />",1.0/MyEngine[i].DeltaTime);
+            fprintf(EnginesFile,"\n    <TRA:setting name=\"DeltaT\" value=\"%.18g\" />",1.0/MyEngine[i].DeltaTime);
 
             fprintf(EnginesFile,"\n\n     <!-- 2- EARTH 9-MOON for calculation distanses-->");
-            fprintf(EnginesFile,"\n           <CT:setting name=\"NearBody\" value=\"%d\" />",MyEngine[i].NearBody);
+            fprintf(EnginesFile,"\n           <TRA:setting name=\"NearBody\" value=\"%d\" />",MyEngine[i].NearBody);
 
             fprintf(EnginesFile,"\n\n     <!-- AngleType 0 - tangent line to orbit (elipse) oposit velocity");
             fprintf(EnginesFile,"\n                    1 - two angles set with reference to NearBody centre direction");
             fprintf(EnginesFile,"\n                    2 - 3 angles set vector fire (constant all fire) ");
             fprintf(EnginesFile,"\n                    3 - oposit vector of velocity");
             fprintf(EnginesFile,"\n                    4 - same direction as vector of velocity -->");
-            fprintf(EnginesFile,"\n     <CT:setting name=\"AngleType\" value=\"%d\" />",MyEngine[i].AngleType);
+            fprintf(EnginesFile,"\n     <TRA:setting name=\"AngleType\" value=\"%d\" />",MyEngine[i].AngleType);
             fprintf(EnginesFile,"\n\n     <!-- 2- EARTH 9-MOON for firing angle -->");
-            fprintf(EnginesFile,"\n     <CT:setting name=\"AngleOnBody\" value=\"%d\" />",MyEngine[i].AngleOnBody);
+            fprintf(EnginesFile,"\n     <TRA:setting name=\"AngleOnBody\" value=\"%d\" />",MyEngine[i].AngleOnBody);
             fprintf(EnginesFile,"\n\n    <!-- first angle: in a plane over vector from the center of NearBody and Sat"); 
             fprintf(EnginesFile,"\n         and vector of velocity. Angle: Centre,Sat,Direction ");
             fprintf(EnginesFile,"\n         (aggle == 90 degr is a Tangent line to elipse) -->");
-            fprintf(EnginesFile,"\n         <CT:setting name=\"FireAng1\" value=\"%.18g\" />",MyEngine[i].Ang1);
+            fprintf(EnginesFile,"\n         <TRA:setting name=\"FireAng1\" value=\"%.18g\" />",MyEngine[i].Ang1);
             fprintf(EnginesFile,"\n\n     <!-- second angle from projection of a velocity vector to a  ");
             fprintf(EnginesFile,"\n         plane perpendicular to direction to centre of nearbody -->");
-            fprintf(EnginesFile,"\n    <CT:setting name=\"FireAng2\" value=\"%.18g\" />",MyEngine[i].Ang2);
-            fprintf(EnginesFile,"\n\n    <CT:setting name=\"XVector\" value=\"%.18g\" />",MyEngine[i].XVec);
-            fprintf(EnginesFile,"\n    <CT:setting name=\"YVector\" value=\"%.18g\" />",MyEngine[i].YVec);
-            fprintf(EnginesFile,"\n    <CT:setting name=\"ZVector\" value=\"%.18g\" />\n",MyEngine[i].ZVec);
-            fprintf(EnginesFile,"\n\n     <CT:setting name=\"OptimizationInitialStep\" value=\"%.18g\" />",MyEngine[i].OptimizationInitialStepCopy);
-            fprintf(EnginesFile,"\n     <CT:setting name=\"OptimizationDecCoef\" value=\"%.18g\" />" ,MyEngine[i].OptimizationDecCoefCopy);
-            fprintf(EnginesFile,"\n     <CT:setting name=\"OptimizationStop\" value=\"%.18g\" />\n",MyEngine[i].OptimizationStop);
-            //fprintf(EnginesFile,"\n        <CT:setting name=\"Period\" value=\"%f\" />",MyEngine[i].Period);
+            fprintf(EnginesFile,"\n    <TRA:setting name=\"FireAng2\" value=\"%.18g\" />",MyEngine[i].Ang2);
+            fprintf(EnginesFile,"\n\n    <TRA:setting name=\"XVector\" value=\"%.18g\" />",MyEngine[i].XVec);
+            fprintf(EnginesFile,"\n    <TRA:setting name=\"YVector\" value=\"%.18g\" />",MyEngine[i].YVec);
+            fprintf(EnginesFile,"\n    <TRA:setting name=\"ZVector\" value=\"%.18g\" />\n",MyEngine[i].ZVec);
+            fprintf(EnginesFile,"\n\n     <TRA:setting name=\"OptimizationInitialStep\" value=\"%.18g\" />",MyEngine[i].OptimizationInitialStepCopy);
+            fprintf(EnginesFile,"\n     <TRA:setting name=\"OptimizationDecCoef\" value=\"%.18g\" />" ,MyEngine[i].OptimizationDecCoefCopy);
+            fprintf(EnginesFile,"\n     <TRA:setting name=\"OptimizationStop\" value=\"%.18g\" />\n",MyEngine[i].OptimizationStop);
+            //fprintf(EnginesFile,"\n        <TRA:setting name=\"Period\" value=\"%f\" />",MyEngine[i].Period);
             
             //if (MyEngine[i].iNumberOfTryValues)
             //{
             //    for (j = 0; j < MyEngine[i].iNumberOfTryValues; j++)
             //    {
-            //        fprintf(EnginesFile,"\n        <CT:setting name=\"TryVal\" value=\"%.24g\" /> <!-- %f -->",MyEngine[i].dValTry[j],MyEngine[i].dValTryMaxMin);
+            //        fprintf(EnginesFile,"\n        <TRA:setting name=\"TryVal\" value=\"%.24g\" /> <!-- %f -->",MyEngine[i].dValTry[j],MyEngine[i].dValTryMaxMin);
             //    }
             //}
 
             fprintf(EnginesFile,"\n\n    <!-- set impulses in a time -->");
-            fprintf(EnginesFile,"\n        <CT:setting name=\"FireTime\" value=\"%.18g\" />",MyEngine[i].FireTime);
+            fprintf(EnginesFile,"\n        <TRA:setting name=\"FireTime\" value=\"%.18g\" />",MyEngine[i].FireTime);
 
             for (j = 0; j < MyEngine[i].iLine; j++)
             {
-                fprintf(EnginesFile,"\n        <CT:setting name=\"ImplVal\" value=\"%.24g\" /> <!-- %f -->",MyEngine[i].ValImpl[j], j*MyEngine[i].DeltaTime );
+                fprintf(EnginesFile,"\n        <TRA:setting name=\"ImplVal\" value=\"%.24g\" /> <!-- %f -->",MyEngine[i].ValImpl[j], j*MyEngine[i].DeltaTime );
             }
-            fprintf(EnginesFile,"\n</CT:section>");
+            fprintf(EnginesFile,"\n</TRA:section>");
             fprintf(EnginesFile,"\n\n");
         }
         for (j=0; j < iOptPtr; j++)
         {
-            fprintf(EnginesFile,"\n<CT:section name=\"Optim\" value=\"%d\" />", j);
+            fprintf(EnginesFile,"\n<TRA:section name=\"Optim\" value=\"%d\" />", j);
             makeExplanationText(szText, Opt[j].Calculate,
                     Opt[j].TrajectoryOptimizationType, 
                     Opt[j].NearBody);
             fprintf(EnginesFile,szText);
-            fprintf(EnginesFile,"\n           <CT:setting name=\"EngineToOptimize\" value=\"%d\" />",Opt[j].EngineToOptimize);
+            fprintf(EnginesFile,"\n           <TRA:setting name=\"EngineToOptimize\" value=\"%d\" />",Opt[j].EngineToOptimize);
             if (j == 0)
             {
                 fprintf(EnginesFile,"\n\n<!-- Type of optimization");
@@ -5175,10 +4990,10 @@ void dumpXMLParam(TRAOBJ *Sat, TRAIMPLOBJ *MyEngine, int iNumbOfEng)
                 fprintf(EnginesFile,"\n  individualy for each engine -->\n");
             }
 
-            fprintf(EnginesFile,"\n           <CT:setting name=\"TrajectoryOptimizationType\" value=\"%d\" />",Opt[j].TrajectoryOptimizationType);
+            fprintf(EnginesFile,"\n           <TRA:setting name=\"TrajectoryOptimizationType\" value=\"%d\" />",Opt[j].TrajectoryOptimizationType);
             if (j == 0)
                 fprintf(EnginesFile,"\n\n     <!-- 2- EARTH 9-MOON for calculation distanses-->");
-            fprintf(EnginesFile,"\n           <CT:setting name=\"NearBody\" value=\"%d\" />",Opt[j].NearBody);
+            fprintf(EnginesFile,"\n           <TRA:setting name=\"NearBody\" value=\"%d\" />",Opt[j].NearBody);
             if (j == 0)
             {
                 fprintf(EnginesFile,"\n\n     <!-- calculates ");
@@ -5194,19 +5009,19 @@ void dumpXMLParam(TRAOBJ *Sat, TRAIMPLOBJ *MyEngine, int iNumbOfEng)
                 fprintf(EnginesFile,"\n          (12) at apogee difference from 3/4 of a earth-moon distance");
                 fprintf(EnginesFile,"\n               --> ");
             }
-            fprintf(EnginesFile,"\n           <CT:setting name=\"Calculate\" value=\"%d\" />",Opt[j].Calculate);
-            fprintf(EnginesFile,"\n           <CT:setting name=\"OptimizationInitialStep\" value=\"%.18g\" />",Opt[j].OptimizationInitialStep);
-            fprintf(EnginesFile,"\n           <CT:setting name=\"OptimizationDecCoef\" value=\"%.18g\" />",Opt[j].OptimizationDecCoef);
-            fprintf(EnginesFile,"\n           <CT:setting name=\"OptimizationStop\" value=\"%.18g\" />",Opt[j].OptimizationStop);
-            fprintf(EnginesFile,"\n           <CT:setting name=\"LastEngine\" value=\"%d\" />\n",Opt[j].LastEngine);
-            fprintf(EnginesFile,"\n        <CT:setting name=\"Period\" value=\"%f\" />",Opt[j].Period);
-            fprintf(EnginesFile,"\n</CT:section>");
+            fprintf(EnginesFile,"\n           <TRA:setting name=\"Calculate\" value=\"%d\" />",Opt[j].Calculate);
+            fprintf(EnginesFile,"\n           <TRA:setting name=\"OptimizationInitialStep\" value=\"%.18g\" />",Opt[j].OptimizationInitialStep);
+            fprintf(EnginesFile,"\n           <TRA:setting name=\"OptimizationDecCoef\" value=\"%.18g\" />",Opt[j].OptimizationDecCoef);
+            fprintf(EnginesFile,"\n           <TRA:setting name=\"OptimizationStop\" value=\"%.18g\" />",Opt[j].OptimizationStop);
+            fprintf(EnginesFile,"\n           <TRA:setting name=\"LastEngine\" value=\"%d\" />\n",Opt[j].LastEngine);
+            fprintf(EnginesFile,"\n        <TRA:setting name=\"Period\" value=\"%f\" />",Opt[j].Period);
+            fprintf(EnginesFile,"\n</TRA:section>");
             fprintf(EnginesFile,"\n\n");
         }
 
-        fprintf(EnginesFile,"\n</CT:section>\n\n");
+        fprintf(EnginesFile,"\n</TRA:section>\n\n");
 
-        fprintf(EnginesFile,"\n</CT:data>");
+        fprintf(EnginesFile,"\n</TRA:data>");
         fclose(EnginesFile);
     }
 }
@@ -6393,11 +6208,11 @@ NextTry:
 							if (iFindMin == 0)
 							{
                                 newTryAnglesDirDelta = TryAnglesDirDelta/Engine[EngineToOptimize].OptimizationDecCoef;
-                                printf("\n<CT:setting name=\"FireAng1\" value=\"0.0\" />");
-                                printf("\n<CT:setting name=\"FireAng2\" value=\"0.0\" />");
-                                printf("\n    <CT:setting name=\"XVector\" value=\"%f\" />",(LastStepTryAnglesDirValuesX+ TryAnglesDir[iFindMin][0]*TryAnglesDirDelta));
-                                printf("\n    <CT:setting name=\"YVector\" value=\"%f\" />",(LastStepTryAnglesDirValuesY+ TryAnglesDir[iFindMin][1]*TryAnglesDirDelta));
-                                printf("\n    <CT:setting name=\"ZVector\" value=\"%f\" />",(LastStepTryAnglesDirValuesZ+ TryAnglesDir[iFindMin][2]*TryAnglesDirDelta));
+                                printf("\n<TRA:setting name=\"FireAng1\" value=\"0.0\" />");
+                                printf("\n<TRA:setting name=\"FireAng2\" value=\"0.0\" />");
+                                printf("\n    <TRA:setting name=\"XVector\" value=\"%f\" />",(LastStepTryAnglesDirValuesX+ TryAnglesDir[iFindMin][0]*TryAnglesDirDelta));
+                                printf("\n    <TRA:setting name=\"YVector\" value=\"%f\" />",(LastStepTryAnglesDirValuesY+ TryAnglesDir[iFindMin][1]*TryAnglesDirDelta));
+                                printf("\n    <TRA:setting name=\"ZVector\" value=\"%f\" />",(LastStepTryAnglesDirValuesZ+ TryAnglesDir[iFindMin][2]*TryAnglesDirDelta));
 
                                 if (newTryAnglesDirDelta < Engine[EngineToOptimize].OptimizationStop)
                                 {
@@ -6421,11 +6236,11 @@ NextTry:
 										(LastStepHistZ[iHistS] == (LastStepTryAnglesDirValuesZ+ TryAnglesDir[iFindMin][2]*TryAnglesDirDelta)))
 									{
                                         newTryAnglesDirDelta = TryAnglesDirDelta/Engine[EngineToOptimize].OptimizationDecCoef;
-										printf("\n<CT:setting name=\"FireAng1\" value=\"0.0\" />");
-										printf("\n<CT:setting name=\"FireAng2\" value=\"0.0\" />");
-										printf("\n    <CT:setting name=\"XVector\" value=\"%f\" />",(LastStepTryAnglesDirValuesX+ TryAnglesDir[iFindMin][0]*TryAnglesDirDelta));
-										printf("\n    <CT:setting name=\"YVector\" value=\"%f\" />",(LastStepTryAnglesDirValuesY+ TryAnglesDir[iFindMin][1]*TryAnglesDirDelta));
-										printf("\n    <CT:setting name=\"ZVector\" value=\"%f\" />",(LastStepTryAnglesDirValuesZ+ TryAnglesDir[iFindMin][2]*TryAnglesDirDelta));
+										printf("\n<TRA:setting name=\"FireAng1\" value=\"0.0\" />");
+										printf("\n<TRA:setting name=\"FireAng2\" value=\"0.0\" />");
+										printf("\n    <TRA:setting name=\"XVector\" value=\"%f\" />",(LastStepTryAnglesDirValuesX+ TryAnglesDir[iFindMin][0]*TryAnglesDirDelta));
+										printf("\n    <TRA:setting name=\"YVector\" value=\"%f\" />",(LastStepTryAnglesDirValuesY+ TryAnglesDir[iFindMin][1]*TryAnglesDirDelta));
+										printf("\n    <TRA:setting name=\"ZVector\" value=\"%f\" />",(LastStepTryAnglesDirValuesZ+ TryAnglesDir[iFindMin][2]*TryAnglesDirDelta));
 
 										if (newTryAnglesDirDelta < Engine[EngineToOptimize].OptimizationStop)
 										{
