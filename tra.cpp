@@ -244,6 +244,15 @@ typedef struct TraObj
     char Kepler1[PLANET_COUNT][100];
     char Kepler2[PLANET_COUNT][100];
     char Kepler3[PLANET_COUNT][100];
+    // 3 punch card calculation helper vars
+    //
+    long double ProbEpoch[PLANET_COUNT];
+    long double ProbEpochS[PLANET_COUNT];
+    long double ProbMeanMotion[PLANET_COUNT];
+    long double ProbFirstDervMeanMotion[PLANET_COUNT];
+    long double ProbSecondDervmeanMotion[PLANET_COUNT];
+    long double ProbDragterm[PLANET_COUNT];
+    unsigned char ProbElementSetType[PLANET_COUNT];
     // satelitte close to body
     // it can be only one body
     int iLeg;
@@ -736,17 +745,17 @@ int MoonKeplerDone = 0;
     // "04236.56031392" Element Set Epoch (UTC)
     //  04                   - year
     //    236.56031392       - day
-long double ProbEpoch;
-long double ProbEpochS;
+//long double ProbEpoch;
+//long double ProbEpochS;
 
 	// "_.00020137"      1st Derivative of the Mean Motion with respect to Time
-long double ProbFirstDervMeanMotion;
+//long double ProbFirstDervMeanMotion;
     // "_00000-0"        2nd Derivative of the Mean Motion with respect to Time (decimal point assumed)
-long double ProbSecondDervmeanMotion;
+//long double ProbSecondDervmeanMotion;
     // "_16538-3"        B* Drag Term
-long double ProbDragterm;
+//long double ProbDragterm;
     // "0"              Element Set Type
-unsigned char ProbElementSetType;
+//unsigned char ProbElementSetType;
     // "_513"            Element Number
     // "5"              Checksum
     //                        The checksum is the sum of all of the character in the data line, modulo 10. 
@@ -767,7 +776,7 @@ long double ProbPer;
     // "325.9359"      Mean Anomaly (degrees)
 long double ProbMeanAnom;
 	// "15.70406856"    Mean Motion (revolutions/day)
-long double ProbMeanMotion;
+//long double ProbMeanMotion;
     // "328903"        Revolution Number at Epoch
 long double ProbRevAtEpoch;
 
@@ -802,9 +811,9 @@ BOOL OutLast = FALSE;
 double TotalDays;
 long iTotalSec;
 double IterPerSec;
-char szProbKeplerLine1[1024];
-char szProbKeplerLine2[1024];
-char szProbKeplerLine3[1024];
+//char szProbKeplerLine1[1024];
+//char szProbKeplerLine2[1024];
+//char szProbKeplerLine3[1024];
 
 char szMoonKeplerLine1[1024];
 char szMoonKeplerLine2[1024];
@@ -2477,7 +2486,7 @@ int posn_and_vel( long double &e_epoch, long double &e_ecc, long double &e_incl,
 // plane (the plane of the Earth's orbit around the Sun). In both cases X points to easter/
 // this function now does not care about drag - which is bad 
 void KeplerPosition(long double SatEpoch, long double CurTime, long double T,long double Ecc, long double Incl, long double AssNode, long double ArgPer, long double MeanAnm, long double BSTAR, long double GM, int doCorrection, 
-                    long double &Xm, long double &Ym, long double &Zm, long double &VX, long double &VY, long double &VZ)
+                    long double &Xm, long double &Ym, long double &Zm, long double &VX, long double &VY, long double &VZ, long double ProbMeanMotion)
 {
     long double XMNPDA_XMNPDA = 24.0*60.0*60.0;//1440.0; // XMNPDA time units(minutes) /day 1440.0
 	long double XMNPDA = 24.0*60.0;//1440.0; // XMNPDA time units(minutes) /day 1440.0
@@ -2790,12 +2799,96 @@ void AjustKeplerPosition(long double &T,long double &Ap, long double &Ph, long d
     // may be is there another formula to calculate? then just original model
     // just simulation sun-earth-mooon with 1/8 sec delta time gives error 1km per 1 month
 }
+void ConvertJulianDayToDateAndTime(long double JulianDay, SYSTEMTIME *ThatTime)
+{
+    long daysfrom2000 = JulianDay - 2451544.5;
+    double flInDay = (JulianDay - 2451544.5) - (double)daysfrom2000; 
+    int iYear = 0;
+    while (daysfrom2000 > 366)
+    {
+        switch(iYear)
+        {
+        case 24:daysfrom2000-=366;break;
+        case 23:daysfrom2000-=365;break;
+        case 22:daysfrom2000-=365;break;
+        case 21:daysfrom2000-=365;break;
+        case 20:daysfrom2000-=366;break;
+        case 19:daysfrom2000-=365;break;
+        case 18:daysfrom2000-=365;break;
+        case 17:daysfrom2000-=365;break;
+        case 16:daysfrom2000-=366;break;
+        case 15:daysfrom2000-=365;break;
+        case 14:daysfrom2000-=365;break;
+        case 13:daysfrom2000-=365;break;
+        case 12:daysfrom2000-=366;break;
+        case 11:daysfrom2000-=365;break;
+        case 10:daysfrom2000-=365;break;
+        case 9:daysfrom2000-=365;break;
+        case 8:daysfrom2000-=366;break;
+        case 7:daysfrom2000-=365;break;
+        case 6:daysfrom2000-=365;break;
+        case 5:daysfrom2000-=365;break;
+        case 4:daysfrom2000-=366;break;
+        case 3:daysfrom2000-=365;break;
+        case 2:daysfrom2000-=365;break;
+        case 1:daysfrom2000-=365;break;
+        case 0:daysfrom2000-=366;break;
+        }
+        iYear++;
+    }
+    ThatTime->wYear = iYear+2000;
+    int iMonth =1;
+    int iComp, iDecr;
+    while(1)
+    {
+        switch(iMonth)
+        {
+        case 1: iComp = 31; iDecr = 31; break; // jan
+        case 2: if (iYear%4 ==0) //leap year    //feb
+                {
+                    iComp = 29; iDecr = 29;
+                }
+                else
+                {
+                    iComp = 28; iDecr = 28;
+                }
+                break;
+        case 3: iComp = 31; iDecr = 31; break; // mar
+        case 4: iComp = 30; iDecr = 30; break; // apr
+        case 5: iComp = 31; iDecr = 31; break; // may
+        case 6: iComp = 30; iDecr = 30; break; // jun
+        case 7: iComp = 31; iDecr = 31; break; //jul
+        case 8: iComp = 31; iDecr = 31; break; // aug
+        case 9: iComp = 30; iDecr = 30; break; //sep
+        case 10: iComp = 31; iDecr = 31; break; // oct
+        case 11: iComp = 30; iDecr = 30; break; // nov
+        }
+        if (daysfrom2000 < iComp)
+                break;
+        daysfrom2000 -=iDecr;
+        if (++iMonth == 12) // what ?? getout!!!
+            break;
+    }
+    int iDay  = daysfrom2000+1;
+    
+    int iHour = flInDay*24;
+    int iMinutes = ((flInDay - ((double)iHour)/24.0))*(24.0*60.0);
+    int iSec = ((flInDay - ((double)iHour)/24.0) - ((double)iMinutes)/(24.0*60.0))*(24.0*60.0*60.0);
+    ThatTime->wMonth = iMonth;
+    ThatTime->wDay = iDay;
+    ThatTime->wHour = iHour;
+    ThatTime->wMinute = iMinutes;
+    ThatTime->wSecond = iSec;
+    ThatTime->wMilliseconds = 0;
+    ThatTime->wDayOfWeek = 0;
+}
 long double ConverEpochDate2JulianDay(long double KeplerDate)
 {
     int iYear = KeplerDate /1000;
     double t2000_01_01_01 = 2451544.5;
     switch(iYear)
     {
+        // add years = if you still alive !!! or just put formula if ((iYear-1)%4 == 0) t2000_01_01_01+=366; else t2000_01_01_01+=365;
     case 24:t2000_01_01_01+=365;
     case 23:t2000_01_01_01+=365;
     case 22:t2000_01_01_01+=365;
@@ -2821,6 +2914,7 @@ long double ConverEpochDate2JulianDay(long double KeplerDate)
     case  2:t2000_01_01_01+=365;
     case  1:t2000_01_01_01+=366;
     case  0:;
+        // minus years = if you interesting in anything from last century or use formala!!
     }
     return t2000_01_01_01+KeplerDate - ((long double)(iYear*1000));
 }
@@ -2856,9 +2950,9 @@ int CallXMLPars(char *szString, char *XML_Params)
         return 0;
 
 }
-int iDayOfTheYear(int iDay, int iMonth, int iYear)
+int iDayOfTheYearZeroBase(int iDay, int iMonth, int iYear)
 {
-	int iDays = iDay;
+	int iDays = iDay-1;
 	switch(iMonth-1)
 	{
 	case 11:// november
@@ -2904,15 +2998,20 @@ void ParamCommon(char *szString)
             dStartJD = atof(pszQuo);    // format: <TRA:setting name="dStartJD0" value="2455625.1696833" />
 			if (dStartJD <=0) // negativge value set current date munis amount of the minutes (negative -1 mean = 1 minute)
 			{
-				int iYear;
+            	SYSTEMTIME MyTime;
+                TIME_ZONE_INFORMATION tmzone;
+                //SYSTEMTIME ThatTime;
+
+                int iYear;
 				int iDays;
 				int iCurSec;
-				SYSTEMTIME MyTime;
-				
+                int Iret = GetTimeZoneInformation(&tmzone); 
                 GetSystemTime(&MyTime);
+                if (Iret == TIME_ZONE_ID_DAYLIGHT)
+                    MyTime.wHour--;
 
                 iYear = MyTime.wYear-2000;
-				iDays = iDayOfTheYear(MyTime.wDay, MyTime.wMonth, MyTime.wYear);
+				iDays = iDayOfTheYearZeroBase(MyTime.wDay, MyTime.wMonth, MyTime.wYear);
 				iCurSec = MyTime.wHour * 60*60;
 				iCurSec += MyTime.wMinute *60;
 				iCurSec += MyTime.wSecond;
@@ -2920,7 +3019,9 @@ void ParamCommon(char *szString)
 				dStartJD += (((double)iCurSec)+ ((double)MyTime.wMilliseconds/1000.))/ (24.0*60.0*60.0);
                 dStartJD -= atof(pszQuo)/(24.0*60.0);
 				dStartJD = ConverEpochDate2JulianDay(dStartJD);
-				TotalDays = atof(pszQuo)/(24.0*60.0);
+				TotalDays = (60.0*atof(pszQuo))/(24.0*60.0*60);
+                dStartJD +=TotalDays; // negative value !!!
+                //ConvertJulianDayToDateAndTime(dStartJD, &ThatTime);
 			}
 			else
 			{
@@ -2940,7 +3041,7 @@ void ParamCommon(char *szString)
 						int iMM = atoi(&pszQuo[12]);
 						int iSS = atoi(&pszQuo[15]);
 						int iMLS = atoi(&pszQuo[18]);
-						int iDays = iDayOfTheYear(iDD, iMO, iYY+2000);
+						int iDays = iDayOfTheYearZeroBase(iDD, iMO, iYY+2000);
 						int iCurSec = iHH * 60*60;
 						iCurSec += iMM *60;
 				        iCurSec += iSS;
@@ -3925,11 +4026,11 @@ void ParamProb(char *szString)
         // or by 3 punch card
         IF_XML_READ(ProbKeplerLine1)
         {
-            strcpy(szProbKeplerLine1, pszQuo);
+            strcpy(Sat.Kepler1[Sat.Elem], pszQuo);
         }
         IF_XML_READ(ProbKeplerLine2)
         {
-            strcpy(szProbKeplerLine2, pszQuo);
+            strcpy(Sat.Kepler2[Sat.Elem], pszQuo);
         }
         IF_XML_READ(ProbKeplerLine3)
         {
@@ -3938,10 +4039,10 @@ void ParamProb(char *szString)
             int iDays;
             double dflTemp;
 
-            strcpy(szProbKeplerLine3, pszQuo);
-            strcpy(Sat.Kepler1[0], szProbKeplerLine1);
-            strcpy(Sat.Kepler2[0], szProbKeplerLine2);
-            strcpy(Sat.Kepler3[0], szProbKeplerLine3);
+            strcpy(Sat.Kepler3[Sat.Elem], pszQuo);
+            //strcpy(Sat.Kepler1[0], szProbKeplerLine1);
+            //strcpy(Sat.Kepler2[0], szProbKeplerLine2);
+            //strcpy(Sat.Kepler3[0], szProbKeplerLine3);
 			//0         1         2         3         4         5         6         7
 			//01234567890123456789012345678901234567890123456789012345678901234567890
 			//1 25544U 98067A   04236.56031392  .00020137  00000-0  16538-3 0  5135\
@@ -3952,40 +4053,40 @@ void ParamProb(char *szString)
 		    // "04236.56031392" Element Set Epoch (UTC) D14.8
 			//  04                   - year
 			//    236.56031392       - day
-            ProbEpoch = atof(&szProbKeplerLine2[18]);
-            ProbEpochS = ProbEpoch =ConverEpochDate2JulianDay(ProbEpoch);
-			ProbEpochS *=  60*60*24;
+            Sat.ProbEpoch[Sat.Elem] = atof(&Sat.Kepler2[Sat.Elem][18]);
+            Sat.ProbEpochS[Sat.Elem] = Sat.ProbEpoch[Sat.Elem] =ConverEpochDate2JulianDay(Sat.ProbEpoch[Sat.Elem]);
+			Sat.ProbEpochS[Sat.Elem] *=  60*60*24;
             // now for initial step asign emulation starting time:
 			// if nothing is set then starting point is a last satellite epoch
             if (dStartJD == 0.0)
             {
-                dStartJD = ConverEpochDate2JulianDay(ProbEpoch);
+                dStartJD = ConverEpochDate2JulianDay(Sat.ProbEpoch[Sat.Elem]);
             }
 			//  "_.00020137"      1st Derivative of the Mean Motion with respect to Time F10.8
 			//double ProbFirstDervMeanMotion; XNDT2O
-			COPYKEPLER(ProbFirstDervMeanMotion,&szProbKeplerLine2[33],10);
+			COPYKEPLER(Sat.ProbFirstDervMeanMotion[Sat.Elem],&Sat.Kepler2[Sat.Elem][33],10);
 			// "_00000-0"        2nd Derivative of the Mean Motion with respect to Time (decimal point assumed) 1X,F6.5,I2
 			//double ProbSecondDervmeanMotion;,XNDD6O,IEXP
 			memset(szTempo, 0, sizeof(szTempo)); 
-            szTempo[0] = szProbKeplerLine2[44]; if (szTempo[0]==' ') szTempo[0] = '0';
+            szTempo[0] = Sat.Kepler2[Sat.Elem][44]; if (szTempo[0]==' ') szTempo[0] = '0';
 			szTempo[1] = '.'; 
-            memcpy(&szTempo[2], &szProbKeplerLine2[45], 5);
-            ProbSecondDervmeanMotion = atof(szTempo);
-			if (szProbKeplerLine2[50] == '-')
-				ProbSecondDervmeanMotion *= pow(10., - (szProbKeplerLine2[51] - '0'));
-			else //if (szProbKeplerLine2[50] == '+') //is it corect ??
-				ProbSecondDervmeanMotion *= pow(10., (szProbKeplerLine2[51] - '0'));
+            memcpy(&szTempo[2], &Sat.Kepler2[Sat.Elem][45], 5);
+            Sat.ProbSecondDervmeanMotion[Sat.Elem] = atof(szTempo);
+			if (Sat.Kepler2[Sat.Elem][50] == '-')
+				Sat.ProbSecondDervmeanMotion[Sat.Elem] *= pow(10., - (Sat.Kepler2[Sat.Elem][51] - '0'));
+			else //if (Sat.Kepler2[Sat.Elem][50] == '+') //is it corect ??
+				Sat.ProbSecondDervmeanMotion[Sat.Elem] *= pow(10., (Sat.Kepler2[Sat.Elem][51] - '0'));
 			//// "_16538-3"        B* Drag Term 1X,F6.5,I2
 			//double ProbDragterm; ,BSTAR,IBEXP
 			memset(szTempo, 0, sizeof(szTempo)); 
-            szTempo[0] = szProbKeplerLine2[53]; if (szTempo[0]==' ') szTempo[0] = '0';
+            szTempo[0] = Sat.Kepler2[Sat.Elem][53]; if (szTempo[0]==' ') szTempo[0] = '0';
 			szTempo[1] = '.'; 
-            memcpy(&szTempo[2], &szProbKeplerLine2[54], 5);
-            ProbDragterm = atof(szTempo);
-			if (szProbKeplerLine2[59] == '-')
-				ProbDragterm *= pow(10., - (szProbKeplerLine2[60] - '0'));
+            memcpy(&szTempo[2], &Sat.Kepler2[Sat.Elem][54], 5);
+            Sat.ProbDragterm[Sat.Elem] = atof(szTempo);
+			if (Sat.Kepler2[Sat.Elem][59] == '-')
+				Sat.ProbDragterm[Sat.Elem] *= pow(10., - (Sat.Kepler2[Sat.Elem][60] - '0'));
 			// "0"              Element Set Type
-			ProbElementSetType = szProbKeplerLine2[62];
+			Sat.ProbElementSetType[Sat.Elem] = Sat.Kepler2[Sat.Elem][62];
 			// "_513"            Element Number
 			// "5"              Checksum
 			//                        The checksum is the sum of all of the character in the data line, modulo 10. 
@@ -3995,25 +4096,25 @@ void ParamProb(char *szString)
 			// "2"             Line Number
 			// "25544"         Object Identification Number
 			// "_51.6335"       Orbit Inclination (degrees) 1X,F8.4
-			COPYKEPLER(ProbIncl,&szProbKeplerLine3[8],8);
+			COPYKEPLER(ProbIncl,&Sat.Kepler3[Sat.Elem][8],8);
             ProbIncl = M_PI * ProbIncl/180.0;
 			// "341.7760"      Right Ascension of Ascending Node (degrees) 1X,F8.4
-			COPYKEPLER(ProbAscNode,&szProbKeplerLine3[17],8);
+			COPYKEPLER(ProbAscNode,&Sat.Kepler3[Sat.Elem][17],8);
 			ProbAscNode = M_PI * ProbAscNode/180.0;
 			// "0007976"       Eccentricity (decimal point assumed) F7.7
 			memset(szTempo, 0, sizeof(szTempo)); 
             szTempo[0] = '.'; 
-            memcpy(&szTempo[1], &szProbKeplerLine3[26], 7);
+            memcpy(&szTempo[1], &Sat.Kepler3[Sat.Elem][26], 7);
             ProbEcc = atof(szTempo);
 			// "126.2523"      Argument of Perigee (degrees) 1X,F8.4
-			COPYKEPLER(ProbArgPer,&szProbKeplerLine3[34],8);
+			COPYKEPLER(ProbArgPer,&Sat.Kepler3[Sat.Elem][34],8);
 			ProbArgPer = M_PI * ProbArgPer/180.0;
 			// "325.9359"      Mean Anomaly (degrees) 1X,F8.4
-			COPYKEPLER(ProbMeanAnom,&szProbKeplerLine3[43],8);
+			COPYKEPLER(ProbMeanAnom,&Sat.Kepler3[Sat.Elem][43],8);
 			ProbMeanAnom = M_PI * ProbMeanAnom/180.0;
 			// "15.70406856"    Mean Motion (revolutions/day)F11.8
-			COPYKEPLER(ProbTPeriod,&szProbKeplerLine3[52],11);
-			ProbMeanMotion = ProbTPeriod;
+			COPYKEPLER(ProbTPeriod,&Sat.Kepler3[Sat.Elem][52],11);
+			Sat.ProbMeanMotion[Sat.Elem] = ProbTPeriod;
 			
             printf("\n calc ProbTPeriod=%f ", ProbTPeriod);
             ProbTDays = 1.0/ProbTPeriod;
@@ -4021,7 +4122,7 @@ void ParamProb(char *szString)
             ProbTSec = ProbTDays * 24. * 60. * 60.;
             printf("\n calc ProbTSec=%f ", ProbTSec);
 			// "328903"        Revolution Number at Epoch
-			COPYKEPLER(ProbRevAtEpoch,&szProbKeplerLine3[63],6);
+			COPYKEPLER(ProbRevAtEpoch,&Sat.Kepler3[Sat.Elem][63],6);
         }
         IF_XML_READ(UseJPLxyz)
         {
@@ -4056,7 +4157,7 @@ void ParamProb(char *szString)
        
             printf("\n uses JPL coordinates and velocities");
             
-            //AjustKeplerPosition(ProbTSec,ProbAph,ProbPer,ProbSmAx,ProbEcc, ProbIncl, ProbAscNode, ProbArgPer, ProbEpochS, ProbCurTimeS);
+            //AjustKeplerPosition(ProbTSec,ProbAph,ProbPer,ProbSmAx,ProbEcc, ProbIncl, ProbAscNode, ProbArgPer, Sat.ProbEpochS[Sat.Elem], ProbCurTimeS);
             printf("\n Was  A Prob = %f", ProbSmAx);
 			//0         1         2         3         4         5         6         7
 			//01234567890123456789012345678901234567890123456789012345678901234567890
@@ -4114,9 +4215,9 @@ void ParamProb(char *szString)
 
 			long double XMNPDA = 1440.0; // XMNPDA time units(minutes) /day 1440.0
 			long double TEMP=2*M_PI/XMNPDA/XMNPDA; // 2*pi / (1440 **2)
-			long double XNO=ProbMeanMotion*TEMP*XMNPDA; // rotation per day * 2*pi /1440 == rotation per day on 1 unit (1 min)
-			long double XNDT2O=ProbFirstDervMeanMotion*TEMP;
-			long double XNDD6O=ProbSecondDervmeanMotion*TEMP/XMNPDA;
+			long double XNO=Sat.ProbMeanMotion[Sat.Elem]*TEMP*XMNPDA; // rotation per day * 2*pi /1440 == rotation per day on 1 unit (1 min)
+			long double XNDT2O=Sat.ProbFirstDervMeanMotion[Sat.Elem]*TEMP;
+			long double XNDD6O=Sat.ProbSecondDervmeanMotion[Sat.Elem]*TEMP/XMNPDA;
 
 			/*
 			long double A1=pow((XKE/XNO),(long double)2.0/(long double)3.0);
@@ -4127,11 +4228,11 @@ void ParamProb(char *szString)
 			long double XNODP=XNO/(1.+DELO);
 			//IF((TWOPI/XNODP/XMNPDA) .GE. .15625) IDEEP=1
             */
-			long double BSTAR=ProbDragterm/AE;
+			long double BSTAR=Sat.ProbDragterm[Sat.Elem]/AE;
 			//TSINCE=TS
 			//IFLAG=1
 			// first one does not use BSTAR
-			//SGP((dStartJD - ProbEpoch)*XMNPDA, XNDT2O,XNDD6O,BSTAR,ProbIncl, ProbAscNode,ProbEcc, ProbArgPer, ProbMeanAnom,XNO, 
+			//SGP((dStartJD - Sat.ProbEpoch[Sat.Elem])*XMNPDA, XNDT2O,XNDD6O,BSTAR,ProbIncl, ProbAscNode,ProbEcc, ProbArgPer, ProbMeanAnom,XNO, 
 			//	tProbX,tProbY,tProbZ,tProbVX,tProbVY,tProbVZ);
 			//tProbX=tProbX*XKMPER/AE*1000.0;
 			//tProbY=tProbY*XKMPER/AE*1000.0;
@@ -4141,11 +4242,11 @@ void ParamProb(char *szString)
 			//tProbVZ=tProbVZ*XKMPER/AE*XMNPDA/86400.*1000.0;
 			// second one does not use XNDT2O,XNDD6O
             // in next call XN0 and ProbMeanMotion connected by a formula:
-            // ProbMeanMotion = XNO / (2*pi) * 1440.0
+            // Sat.ProbMeanMotion[Sat.Elem] = XNO / (2*pi) * 1440.0
             BSTAR = 0.0;
             XNDD6O = 0.0;
             XNDT2O =0.0;
-			SGP4((dStartJD - ProbEpoch)*XMNPDA, XNDT2O,XNDD6O,BSTAR,ProbIncl, ProbAscNode,ProbEcc, ProbArgPer, ProbMeanAnom,XNO, 
+			SGP4((dStartJD - Sat.ProbEpoch[Sat.Elem])*XMNPDA, XNDT2O,XNDD6O,BSTAR,ProbIncl, ProbAscNode,ProbEcc, ProbArgPer, ProbMeanAnom,XNO, 
 				tProbX,tProbY,tProbZ,tProbVX,tProbVY,tProbVZ);
 			tProbX=tProbX*XKMPER/AE*1000.0;
 			tProbY=tProbY*XKMPER/AE*1000.0;
@@ -4154,7 +4255,7 @@ void ParamProb(char *szString)
 			tProbVY=tProbVY*XKMPER/AE*XMNPDA/86400.*1000.0;
 			tProbVZ=tProbVZ*XKMPER/AE*XMNPDA/86400.*1000.0;
 
-            KeplerPosition(ProbEpoch,dStartJD,      // prob epoch, and curent time
+            KeplerPosition(Sat.ProbEpoch[Sat.Elem],dStartJD,      // prob epoch, and curent time
 				    ProbTSec, // - orbit period in sec
 				    ProbEcc,             // - Eccentricity
                     ProbIncl,            // - Inclination
@@ -4163,7 +4264,7 @@ void ParamProb(char *szString)
                     ProbMeanAnom,        // - Mean Anomaly (degrees)
                     BSTAR,
                     Gbig *SolarSystem.M[EARTH],0,
-                    tempProbX,tempProbY,tempProbZ,tempProbVX,tempProbVY,tempProbVZ);
+                    tempProbX,tempProbY,tempProbZ,tempProbVX,tempProbVY,tempProbVZ, Sat.ProbMeanMotion[Sat.Elem]);
 
 			long double tProbTSec = 0;
 			long double tProbEcc = 0;
@@ -4198,7 +4299,7 @@ void ParamProb(char *szString)
 			// first (mass) from NASA and second is just convinient constant
 			long double gm = SolarSystem.M[EARTH] * Gbig;
 
-			long double e_epoch = ProbEpoch*24.0*60.0*60.0;
+			long double e_epoch = Sat.ProbEpoch[Sat.Elem]*24.0*60.0*60.0;
 
 			do_element_setup( e_epoch, ProbEcc, ProbIncl, ProbAscNode, ProbArgPer,ProbMeanAnom,
 								e_q, e_major_axis,e_t0,e_w0,e_angular_momentum,e_perih_time,
@@ -4744,8 +4845,8 @@ void dumpTRAvisual(long i)
 		VisualFile = fopen("travisual.xml", "w");
         if (VisualFile)
         {
-		    fprintf(VisualFile,"<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n\r");
-		    fprintf(VisualFile,"<Universe>\n\r");
+		    fprintf(VisualFile,"<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n");
+		    fprintf(VisualFile,"<Universe>\n");
         }
     }
 
@@ -4762,13 +4863,13 @@ void dumpTRAvisual(long i)
 			//fprintf(VisualFile,"	</MoonObject>\n\r");
             for (int iSat = 0; iSat < Sat.Elem; iSat++)
             {
-                fprintf(VisualFile,"	<Sat%dObject>\n\r",iSat);
-                fprintf(VisualFile,"		<type>SatTra</type>\n\r");
-		        fprintf(VisualFile,"	    <time>%.18g</time>\n\r", dStartJD + ((double)i)/(24.0*60.0*60.0));
-			    fprintf(VisualFile,"		<X>%.18g</X>\n\r",Sat.X[iSat]-SolarSystem.X[EARTH]);
-			    fprintf(VisualFile,"		<Y>%.18g</Y>\n\r",Sat.Y[iSat]-SolarSystem.Y[EARTH]);
-			    fprintf(VisualFile,"		<Z>%.18g</Z>\n\r",Sat.Z[iSat]-SolarSystem.Z[EARTH]);
-			    fprintf(VisualFile,"	</Sat%dObject>\n\r",iSat);
+                fprintf(VisualFile,"	<Sat%dObject>\n",iSat);
+                fprintf(VisualFile,"		<type>SatTra</type>\n");
+		        fprintf(VisualFile,"		<time>%.18g</time>\n", dStartJD + ((double)i)/(24.0*60.0*60.0));
+			    fprintf(VisualFile,"		<X>%.18g</X>\n",Sat.X[iSat]-SolarSystem.X[EARTH]);
+			    fprintf(VisualFile,"		<Y>%.18g</Y>\n",Sat.Y[iSat]-SolarSystem.Y[EARTH]);
+			    fprintf(VisualFile,"		<Z>%.18g</Z>\n",Sat.Z[iSat]-SolarSystem.Z[EARTH]);
+			    fprintf(VisualFile,"	</Sat%dObject>\n",iSat);
             }
         }
     }
@@ -4777,29 +4878,34 @@ void dumpTRAvisual(long i)
 
 		if (VisualFile)
 		{
-		    fprintf(VisualFile,"	<Object>\n\r");
-            fprintf(VisualFile,"		<type>Earth</type>\n\r");
-			fprintf(VisualFile,"		<X>%.18g</X>\n\r",SolarSystem.X[EARTH]);
-			fprintf(VisualFile,"		<Y>%.18g</Y>\n\r",SolarSystem.Y[EARTH]);
-			fprintf(VisualFile,"		<Z>%.18g</Z>\n\r",SolarSystem.Z[EARTH]);
-			fprintf(VisualFile,"		<R>%.18g</R>\n\r",EarthR);
-			fprintf(VisualFile,"	</Object>\n\r");
-			fprintf(VisualFile,"	<Object>\n\r");
-			fprintf(VisualFile,"		<type>Sun</type>\n\r");
-			fprintf(VisualFile,"		<X>%.18g</X>\n\r",SolarSystem.X[SUN]);
-			fprintf(VisualFile,"		<Y>%.18g</Y>\n\r",SolarSystem.Y[SUN]);
-			fprintf(VisualFile,"		<Z>%.18g</Z>\n\r",SolarSystem.Z[SUN]);
-			fprintf(VisualFile,"                <R>%.18g</R>\n\r",SunR);
-			fprintf(VisualFile,"	</Object>\n\r");
-			fprintf(VisualFile,"	<Object>\n\r");
-			fprintf(VisualFile,"		<type>Moon</type>\n\r");
-			fprintf(VisualFile,"		<X>%.18g</X>\n\r",SolarSystem.X[MOON]);
-			fprintf(VisualFile,"		<Y>%.18g</Y>\n\r",SolarSystem.Y[MOON]);
-			fprintf(VisualFile,"		<Z>%.18g</Z>\n\r",SolarSystem.Z[MOON]);
-			fprintf(VisualFile,"                <R>%.18g</R>\n\r",MoonR);
-			fprintf(VisualFile,"	</Object>\n\r");
-		    fprintf(VisualFile,"	<time>%.18g</time>\n\r", dStartJD + ((double)i)/(24.0*60.0*60.0));
-            fprintf(VisualFile,"</Universe>\n\r");
+		    fprintf(VisualFile,"	<Object>\n");
+            fprintf(VisualFile,"		<type>Earth</type>\n");
+			fprintf(VisualFile,"		<X>%.18g</X>\n",SolarSystem.X[EARTH]);
+			fprintf(VisualFile,"		<Y>%.18g</Y>\n",SolarSystem.Y[EARTH]);
+			fprintf(VisualFile,"		<Z>%.18g</Z>\n",SolarSystem.Z[EARTH]);
+			fprintf(VisualFile,"		<R>%.18g</R>\n",EarthR);
+			fprintf(VisualFile,"	</Object>\n");
+			fprintf(VisualFile,"	<Object>\n");
+			fprintf(VisualFile,"		<type>Sun</type>\n");
+			fprintf(VisualFile,"		<X>%.18g</X>\n",SolarSystem.X[SUN]);
+			fprintf(VisualFile,"		<Y>%.18g</Y>\n",SolarSystem.Y[SUN]);
+			fprintf(VisualFile,"		<Z>%.18g</Z>\n",SolarSystem.Z[SUN]);
+			fprintf(VisualFile,"		<R>%.18g</R>\n",SunR);
+			fprintf(VisualFile,"	</Object>\n");
+			fprintf(VisualFile,"	<Object>\n");
+			fprintf(VisualFile,"		<type>Moon</type>\n");
+			fprintf(VisualFile,"		<X>%.18g</X>\n",SolarSystem.X[MOON]);
+			fprintf(VisualFile,"		<Y>%.18g</Y>\n",SolarSystem.Y[MOON]);
+			fprintf(VisualFile,"		<Z>%.18g</Z>\n",SolarSystem.Z[MOON]);
+			fprintf(VisualFile,"		<R>%.18g</R>\n",MoonR);
+			fprintf(VisualFile,"	</Object>\n");
+            fprintf(VisualFile,"	<ObjectTime>\n");
+		    fprintf(VisualFile,"		<timeJD>%.18g</timeJD>\n", dStartJD + ((double)i)/(24.0*60.0*60.0));
+            SYSTEMTIME ThatTime; 
+            ConvertJulianDayToDateAndTime(dStartJD + ((double)i)/(24.0*60.0*60.0), &ThatTime);
+            fprintf(VisualFile,"		<timeYYDDMMHHMMSS>%02d/%02d/%02d %02d:%02d:%02d</timeYYDDMMHHMMSS>\n", ThatTime.wYear-2000,ThatTime.wMonth,ThatTime.wDay,ThatTime.wHour,ThatTime.wMinute,ThatTime.wSecond);
+            fprintf(VisualFile,"	</ObjectTime>\n");
+            fprintf(VisualFile,"</Universe>\n");
 			fclose(VisualFile);
             VisualFile = NULL;
 		}
@@ -5226,6 +5332,7 @@ int _tmain(int argc, _TCHAR* argv[])
     flFindFirst1KmError = 0;
 #endif
     //InitTraMap(&CurTraMap);
+    Sat.Elem = 0;  // zero asatelites at the begining
     Initialize_Ephemeris("bin410.bin");
     FILE *fInput = fopen("tra.xml", "r");
     if (fInput != NULL)
@@ -5893,15 +6000,16 @@ int _tmain(int argc, _TCHAR* argv[])
 
 			long double XMNPDA = 1440.0; // XMNPDA time units(minutes) /day 1440.0
 			long double TEMP=2*M_PI/XMNPDA/XMNPDA; // 2*pi / (1440 **2)
+            long double ProbMeanMotion = Sat.ProbMeanMotion[0];
 			long double XNO=ProbMeanMotion*TEMP*XMNPDA; // rotation per day * 2*pi /1440 == rotation per day on 1 unit (1 min)
-			long double XNDT2O=ProbFirstDervMeanMotion*TEMP;
-			long double XNDD6O=ProbSecondDervmeanMotion*TEMP/XMNPDA;
-			long double BSTAR=ProbDragterm/AE;
+			long double XNDT2O=Sat.ProbFirstDervMeanMotion[0]*TEMP;
+			long double XNDD6O=Sat.ProbSecondDervmeanMotion[0]*TEMP/XMNPDA;
+			long double BSTAR=Sat.ProbDragterm[0]/AE;
             long double tProbX,tProbY,tProbZ,tProbVX,tProbVY,tProbVZ;
             BSTAR = 0.0;
             XNDD6O = 0.0;
             XNDT2O =0.0;
-			SGP4(TimeFEpoch/60.0,//(dStartJD + (TimeFEpoch/24.0/60.0/60.0)- ProbEpoch)*XMNPDA, 
+			SGP4(TimeFEpoch/60.0,//(dStartJD + (TimeFEpoch/24.0/60.0/60.0)- Sat.ProbEpoch[Sat.Elem])*XMNPDA, 
                 XNDT2O,XNDD6O,BSTAR,ProbIncl, ProbAscNode,ProbEcc, ProbArgPer, ProbMeanAnom,XNO, 
 				tProbX,tProbY,tProbZ,tProbVX,tProbVY,tProbVZ);
 			tProbX=tProbX*XKMPER/AE*1000.0;                 tProbY=tProbY*XKMPER/AE*1000.0;                 tProbZ=tProbZ*XKMPER/AE*1000.0;
