@@ -253,6 +253,15 @@ typedef struct TraObj
     long double ProbSecondDervmeanMotion[PLANET_COUNT];
     long double ProbDragterm[PLANET_COUNT];
     unsigned char ProbElementSetType[PLANET_COUNT];
+    long double ProbIncl[PLANET_COUNT];
+    long double ProbAscNode[PLANET_COUNT];
+    long double ProbEcc[PLANET_COUNT];
+    long double ProbArgPer[PLANET_COUNT];
+    long double ProbMeanAnom[PLANET_COUNT];
+    long double ProbTPeriod[PLANET_COUNT];
+    long double ProbTDays[PLANET_COUNT];
+    long double ProbTSec[PLANET_COUNT];
+    long double ProbRevAtEpoch[PLANET_COUNT];
     // satelitte close to body
     // it can be only one body
     int iLeg;
@@ -765,36 +774,36 @@ int MoonKeplerDone = 0;
     // "2"             Line Number
     // "25544"         Object Identification Number
     // "_51.6335"       Orbit Inclination (degrees)
-long double ProbIncl;
+//long double ProbIncl;
     // "341.7760"      Right Ascension of Ascending Node (degrees)
-long double ProbAscNode;
+//long double ProbAscNode;
 	// "0007976"       Eccentricity (decimal point assumed)
-long double ProbEcc;
+//long double ProbEcc;
     // "126.2523"      Argument of Perigee (degrees)
-long double ProbArgPer;
-long double ProbPer;
+//long double ProbArgPer;
+//long double ProbPer;
     // "325.9359"      Mean Anomaly (degrees)
-long double ProbMeanAnom;
+//long double ProbMeanAnom;
 	// "15.70406856"    Mean Motion (revolutions/day)
 //long double ProbMeanMotion;
     // "328903"        Revolution Number at Epoch
-long double ProbRevAtEpoch;
+//long double ProbRevAtEpoch;
 
-
-double ProbVX = .0;
-double ProbVY = 10000.;
-double ProbVZ = 0;
-double ProbX = 6371000.0 + 200.;
-double ProbY = .0;
-double ProbZ = .0;
-double ProbM = 150.;
-double ProbTSec;
-double ProbTDays;
-double ProbTPeriod;
-double ProbAph;
-double ProbSmAx;
-double ProbCurTime;
-double ProbCurTimeS;
+// XML read vars
+//double ProbVX = .0;
+//double ProbVY = 10000.;
+//double ProbVZ = 0;
+//double ProbX = 6371000.0 + 200.;
+//double ProbY = .0;
+//double ProbZ = .0;
+//double ProbM = 150.;
+//double ProbTSec;
+//double ProbTDays;
+//long double ProbTPeriod;
+//double ProbAph;
+//double ProbSmAx;
+//double ProbCurTime;
+//double ProbCurTimeS;
 
 
 
@@ -4016,13 +4025,34 @@ void ParamProb(char *szString)
     XML_BEGIN;
     XML_SECTION(TraInfo);
     // pisition of the prob (active by firing engines) can be set by X,Y,Z   VX,VY,VZ
-        XML_READ(ProbX);
-        XML_READ(ProbY);
-        XML_READ(ProbZ);
-        XML_READ(ProbVX);
-        XML_READ(ProbVY);
-        XML_READ(ProbVZ);
-        XML_READ(ProbM);
+        IF_XML_READ(ProbX)
+        {
+            Sat.X[Sat.Elem] = atof(pszQuo);
+        }
+        IF_XML_READ(ProbY)
+        {
+            Sat.Y[Sat.Elem] = atof(pszQuo);
+        }
+        IF_XML_READ(ProbZ)
+        {
+            Sat.Z[Sat.Elem] = atof(pszQuo);
+        }
+        IF_XML_READ(ProbVX)
+        {
+            Sat.VX[Sat.Elem] = atof(pszQuo);
+        }
+        IF_XML_READ(ProbVY)
+        {
+            Sat.VY[Sat.Elem] = atof(pszQuo);
+        }
+        IF_XML_READ(ProbVZ)
+        {
+            Sat.VZ[Sat.Elem] = atof(pszQuo);
+        }
+        IF_XML_READ(ProbM)
+        {
+            Sat.M[Sat.Elem] = atof(pszQuo);
+        }
         // or by 3 punch card
         IF_XML_READ(ProbKeplerLine1)
         {
@@ -4096,33 +4126,34 @@ void ParamProb(char *szString)
 			// "2"             Line Number
 			// "25544"         Object Identification Number
 			// "_51.6335"       Orbit Inclination (degrees) 1X,F8.4
-			COPYKEPLER(ProbIncl,&Sat.Kepler3[Sat.Elem][8],8);
-            ProbIncl = M_PI * ProbIncl/180.0;
+			COPYKEPLER(Sat.ProbIncl[Sat.Elem],&Sat.Kepler3[Sat.Elem][8],8);
+            Sat.ProbIncl[Sat.Elem] = M_PI * Sat.ProbIncl[Sat.Elem]/180.0;
 			// "341.7760"      Right Ascension of Ascending Node (degrees) 1X,F8.4
-			COPYKEPLER(ProbAscNode,&Sat.Kepler3[Sat.Elem][17],8);
-			ProbAscNode = M_PI * ProbAscNode/180.0;
+			COPYKEPLER(Sat.ProbAscNode[Sat.Elem],&Sat.Kepler3[Sat.Elem][17],8);
+			Sat.ProbAscNode[Sat.Elem] = M_PI * Sat.ProbAscNode[Sat.Elem]/180.0;
 			// "0007976"       Eccentricity (decimal point assumed) F7.7
 			memset(szTempo, 0, sizeof(szTempo)); 
             szTempo[0] = '.'; 
             memcpy(&szTempo[1], &Sat.Kepler3[Sat.Elem][26], 7);
-            ProbEcc = atof(szTempo);
+            Sat.ProbEcc[Sat.Elem] = atof(szTempo);
 			// "126.2523"      Argument of Perigee (degrees) 1X,F8.4
-			COPYKEPLER(ProbArgPer,&Sat.Kepler3[Sat.Elem][34],8);
-			ProbArgPer = M_PI * ProbArgPer/180.0;
+			COPYKEPLER(Sat.ProbArgPer[Sat.Elem],&Sat.Kepler3[Sat.Elem][34],8);
+			Sat.ProbArgPer[Sat.Elem] = M_PI * Sat.ProbArgPer[Sat.Elem]/180.0;
 			// "325.9359"      Mean Anomaly (degrees) 1X,F8.4
-			COPYKEPLER(ProbMeanAnom,&Sat.Kepler3[Sat.Elem][43],8);
-			ProbMeanAnom = M_PI * ProbMeanAnom/180.0;
+			COPYKEPLER(Sat.ProbMeanAnom[Sat.Elem],&Sat.Kepler3[Sat.Elem][43],8);
+			Sat.ProbMeanAnom[Sat.Elem] = M_PI * Sat.ProbMeanAnom[Sat.Elem]/180.0;
 			// "15.70406856"    Mean Motion (revolutions/day)F11.8
-			COPYKEPLER(ProbTPeriod,&Sat.Kepler3[Sat.Elem][52],11);
-			Sat.ProbMeanMotion[Sat.Elem] = ProbTPeriod;
+			COPYKEPLER(Sat.ProbTPeriod[Sat.Elem],&Sat.Kepler3[Sat.Elem][52],11);
+			Sat.ProbMeanMotion[Sat.Elem] = Sat.ProbTPeriod[Sat.Elem];
 			
-            printf("\n calc ProbTPeriod=%f ", ProbTPeriod);
-            ProbTDays = 1.0/ProbTPeriod;
-            printf("\n calc ProbTDays=%f ", ProbTDays);
-            ProbTSec = ProbTDays * 24. * 60. * 60.;
-            printf("\n calc ProbTSec=%f ", ProbTSec);
+            printf("\n calc ProbTPeriod=%f ", Sat.ProbTPeriod[Sat.Elem]);
+            Sat.ProbTDays[Sat.Elem] = 1.0/Sat.ProbTPeriod[Sat.Elem];
+            printf("\n calc ProbTDays=%f ", Sat.ProbTDays[Sat.Elem]);
+            Sat.ProbTSec[Sat.Elem] = Sat.ProbTDays[Sat.Elem] * 24. * 60. * 60.;
+            printf("\n calc ProbTSec=%f ", Sat.ProbTSec[Sat.Elem]);
 			// "328903"        Revolution Number at Epoch
-			COPYKEPLER(ProbRevAtEpoch,&Sat.Kepler3[Sat.Elem][63],6);
+			COPYKEPLER(Sat.ProbRevAtEpoch[Sat.Elem],&Sat.Kepler3[Sat.Elem][63],6);
+            Sat.Elem++;  // next satellite
         }
         IF_XML_READ(UseJPLxyz)
         {
@@ -4157,8 +4188,9 @@ void ParamProb(char *szString)
        
             printf("\n uses JPL coordinates and velocities");
             
-            //AjustKeplerPosition(ProbTSec,ProbAph,ProbPer,ProbSmAx,ProbEcc, ProbIncl, ProbAscNode, ProbArgPer, Sat.ProbEpochS[Sat.Elem], ProbCurTimeS);
-            printf("\n Was  A Prob = %f", ProbSmAx);
+            //AjustKeplerPosition(Sat.ProbTSec[Sat.Elem],ProbAph,ProbPer,ProbSmAx,Sat.ProbEcc[Sat.Elem], 
+            //       Sat.ProbIncl[Sat.Elem], Sat.ProbAscNode[Sat.Elem], Sat.ProbArgPer[Sat.Elem], Sat.ProbEpochS[Sat.Elem], ProbCurTimeS);
+            //printf("\n Was  A Prob = %f", ProbSmAx);
 			//0         1         2         3         4         5         6         7
 			//01234567890123456789012345678901234567890123456789012345678901234567890
 			//1 25544U 98067A   04236.56031392  .00020137  00000-0  16538-3 0  5135\
@@ -4201,299 +4233,300 @@ void ParamProb(char *szString)
 			GreenwichA = GreenwichAscension(50001.0);
             // GreenwichA == GST but SUN_08 works for 2011
 			//SRASN = SRASN * 180/ M_PI;
+            for (int nSat = 0; nSat <Sat.Elem; nSat++)
+            {
+			    
+			    long double AE = 1.0;
+			    long double XKMPER = 6378.1350; //XKMPER kilometers/Earth radii 6378.135
+			    long double XKE = BIG_XKE;//.743669161E-1;
+                //XKE = sqrt(Gbig * SolarSystem.M[EARTH])*pow(AE/*(long double)6378.1350*//(long double)1440.0, (long double)3.0/(long double)2.0);;
+			    long double XJ2 = 1.082616E-3;
+			    long double CK2=.5*XJ2*AE*AE;
+			    //double XMNPDA = 1440.0;
+			    //double TEMP=2.0*M_PI/XMNPDA/XMNPDA;
+			    //double XNO=ProbMeanMotion*TEMP*XMNPDA;
 
-			
-			long double AE = 1.0;
-			long double XKMPER = 6378.1350; //XKMPER kilometers/Earth radii 6378.135
-			long double XKE = BIG_XKE;//.743669161E-1;
-            //XKE = sqrt(Gbig * SolarSystem.M[EARTH])*pow(AE/*(long double)6378.1350*//(long double)1440.0, (long double)3.0/(long double)2.0);;
-			long double XJ2 = 1.082616E-3;
-			long double CK2=.5*XJ2*AE*AE;
-			//double XMNPDA = 1440.0;
-			//double TEMP=2.0*M_PI/XMNPDA/XMNPDA;
-			//double XNO=ProbMeanMotion*TEMP*XMNPDA;
+    			long double XMNPDA = 1440.0; // XMNPDA time units(minutes) /day 1440.0
+	    		long double TEMP=2*M_PI/XMNPDA/XMNPDA; // 2*pi / (1440 **2)
+		    	long double XNO=Sat.ProbMeanMotion[nSat]*TEMP*XMNPDA; // rotation per day * 2*pi /1440 == rotation per day on 1 unit (1 min)
+			    long double XNDT2O=Sat.ProbFirstDervMeanMotion[nSat]*TEMP;
+			    long double XNDD6O=Sat.ProbSecondDervmeanMotion[nSat]*TEMP/XMNPDA;
 
-			long double XMNPDA = 1440.0; // XMNPDA time units(minutes) /day 1440.0
-			long double TEMP=2*M_PI/XMNPDA/XMNPDA; // 2*pi / (1440 **2)
-			long double XNO=Sat.ProbMeanMotion[Sat.Elem]*TEMP*XMNPDA; // rotation per day * 2*pi /1440 == rotation per day on 1 unit (1 min)
-			long double XNDT2O=Sat.ProbFirstDervMeanMotion[Sat.Elem]*TEMP;
-			long double XNDD6O=Sat.ProbSecondDervmeanMotion[Sat.Elem]*TEMP/XMNPDA;
+			    /*
+			    long double A1=pow((XKE/XNO),(long double)2.0/(long double)3.0);
+			    TEMP=1.5*CK2*(3.*cos(Sat.ProbIncl[nSat])*cos(ProbIncl)-1.)/pow((1.-Sat.ProbEcc[nSat]*Sat.ProbEcc[nSat]),(long double)1.5);
+			    long double DEL1=TEMP/(A1*A1);
+			    long double AO=A1*(1.-DEL1*(.5*(2.0/3.0)+DEL1*(1.+134./81.*DEL1)));
+			    long double DELO=TEMP/(AO*AO);
+			    long double XNODP=XNO/(1.+DELO);
+			    //IF((TWOPI/XNODP/XMNPDA) .GE. .15625) IDEEP=1
+                */
+			    long double BSTAR=Sat.ProbDragterm[nSat]/AE;
+			    //TSINCE=TS
+			    //IFLAG=1
+			    // first one does not use BSTAR
+			    //SGP((dStartJD - Sat.ProbEpoch[nSat])*XMNPDA, XNDT2O,XNDD6O,BSTAR,Sat.ProbIncl[nSat], Sat.ProbAscNode[nSat],Sat.ProbEcc[nSat], 
+                //               Sat.ProbArgPer[nSat], Sat.ProbMeanAnom[nSat],XNO, 
+			    //	tProbX,tProbY,tProbZ,tProbVX,tProbVY,tProbVZ);
+			    //tProbX=tProbX*XKMPER/AE*1000.0;
+			    //tProbY=tProbY*XKMPER/AE*1000.0;
+			    //tProbZ=tProbZ*XKMPER/AE*1000.0;
+			    //tProbVX=tProbVX*XKMPER/AE*XMNPDA/86400.*1000.0;
+			    //tProbVY=tProbVY*XKMPER/AE*XMNPDA/86400.*1000.0;
+			    //tProbVZ=tProbVZ*XKMPER/AE*XMNPDA/86400.*1000.0;
+			    // second one does not use XNDT2O,XNDD6O
+                // in next call XN0 and ProbMeanMotion connected by a formula:
+                // Sat.ProbMeanMotion[nSat] = XNO / (2*pi) * 1440.0
+                BSTAR = 0.0;
+                XNDD6O = 0.0;
+                XNDT2O =0.0;
+			    SGP4((dStartJD - Sat.ProbEpoch[nSat])*XMNPDA, XNDT2O,XNDD6O,BSTAR,Sat.ProbIncl[nSat], Sat.ProbAscNode[nSat],Sat.ProbEcc[nSat], 
+                    Sat.ProbArgPer[nSat], Sat.ProbMeanAnom[nSat],XNO, 
+				    tProbX,tProbY,tProbZ,tProbVX,tProbVY,tProbVZ);
+			    tProbX=tProbX*XKMPER/AE*1000.0;
+			    tProbY=tProbY*XKMPER/AE*1000.0;
+			    tProbZ=tProbZ*XKMPER/AE*1000.0;
+			    tProbVX=tProbVX*XKMPER/AE*XMNPDA/86400.*1000.0;
+			    tProbVY=tProbVY*XKMPER/AE*XMNPDA/86400.*1000.0;
+			    tProbVZ=tProbVZ*XKMPER/AE*XMNPDA/86400.*1000.0;
 
-			/*
-			long double A1=pow((XKE/XNO),(long double)2.0/(long double)3.0);
-			TEMP=1.5*CK2*(3.*cos(ProbIncl)*cos(ProbIncl)-1.)/pow((1.-ProbEcc*ProbEcc),(long double)1.5);
-			long double DEL1=TEMP/(A1*A1);
-			long double AO=A1*(1.-DEL1*(.5*(2.0/3.0)+DEL1*(1.+134./81.*DEL1)));
-			long double DELO=TEMP/(AO*AO);
-			long double XNODP=XNO/(1.+DELO);
-			//IF((TWOPI/XNODP/XMNPDA) .GE. .15625) IDEEP=1
-            */
-			long double BSTAR=Sat.ProbDragterm[Sat.Elem]/AE;
-			//TSINCE=TS
-			//IFLAG=1
-			// first one does not use BSTAR
-			//SGP((dStartJD - Sat.ProbEpoch[Sat.Elem])*XMNPDA, XNDT2O,XNDD6O,BSTAR,ProbIncl, ProbAscNode,ProbEcc, ProbArgPer, ProbMeanAnom,XNO, 
-			//	tProbX,tProbY,tProbZ,tProbVX,tProbVY,tProbVZ);
-			//tProbX=tProbX*XKMPER/AE*1000.0;
-			//tProbY=tProbY*XKMPER/AE*1000.0;
-			//tProbZ=tProbZ*XKMPER/AE*1000.0;
-			//tProbVX=tProbVX*XKMPER/AE*XMNPDA/86400.*1000.0;
-			//tProbVY=tProbVY*XKMPER/AE*XMNPDA/86400.*1000.0;
-			//tProbVZ=tProbVZ*XKMPER/AE*XMNPDA/86400.*1000.0;
-			// second one does not use XNDT2O,XNDD6O
-            // in next call XN0 and ProbMeanMotion connected by a formula:
-            // Sat.ProbMeanMotion[Sat.Elem] = XNO / (2*pi) * 1440.0
-            BSTAR = 0.0;
-            XNDD6O = 0.0;
-            XNDT2O =0.0;
-			SGP4((dStartJD - Sat.ProbEpoch[Sat.Elem])*XMNPDA, XNDT2O,XNDD6O,BSTAR,ProbIncl, ProbAscNode,ProbEcc, ProbArgPer, ProbMeanAnom,XNO, 
-				tProbX,tProbY,tProbZ,tProbVX,tProbVY,tProbVZ);
-			tProbX=tProbX*XKMPER/AE*1000.0;
-			tProbY=tProbY*XKMPER/AE*1000.0;
-			tProbZ=tProbZ*XKMPER/AE*1000.0;
-			tProbVX=tProbVX*XKMPER/AE*XMNPDA/86400.*1000.0;
-			tProbVY=tProbVY*XKMPER/AE*XMNPDA/86400.*1000.0;
-			tProbVZ=tProbVZ*XKMPER/AE*XMNPDA/86400.*1000.0;
+                KeplerPosition(Sat.ProbEpoch[nSat],dStartJD,      // prob epoch, and curent time
+	    			    Sat.ProbTSec[nSat], // - orbit period in sec
+		    		    Sat.ProbEcc[nSat],             // - Eccentricity
+                        Sat.ProbIncl[nSat],            // - Inclination
+                        Sat.ProbAscNode[nSat],         // - Longitude of ascending node
+                        Sat.ProbArgPer[nSat],          // - Argument of perihelion
+                        Sat.ProbMeanAnom[nSat],        // - Mean Anomaly (degrees)
+                        BSTAR,
+                        Gbig *SolarSystem.M[EARTH],0,
+                        tempProbX,tempProbY,tempProbZ,tempProbVX,tempProbVY,tempProbVZ, Sat.ProbMeanMotion[nSat]);
 
-            KeplerPosition(Sat.ProbEpoch[Sat.Elem],dStartJD,      // prob epoch, and curent time
-				    ProbTSec, // - orbit period in sec
-				    ProbEcc,             // - Eccentricity
-                    ProbIncl,            // - Inclination
-                    ProbAscNode,         // - Longitude of ascending node
-                    ProbArgPer,          // - Argument of perihelion
-                    ProbMeanAnom,        // - Mean Anomaly (degrees)
-                    BSTAR,
-                    Gbig *SolarSystem.M[EARTH],0,
-                    tempProbX,tempProbY,tempProbZ,tempProbVX,tempProbVY,tempProbVZ, Sat.ProbMeanMotion[Sat.Elem]);
-
-			long double tProbTSec = 0;
-			long double tProbEcc = 0;
-            long double tProbIncl = 0;
-            long double tProbAscNode = 0;
-            long double tProbArgPer = 0;
-            long double tProbMeanAnom = 0;
+			    long double tProbTSec = 0;
+			    long double tProbEcc = 0;
+                long double tProbIncl = 0;
+                long double tProbAscNode = 0;
+                long double tProbArgPer = 0;
+                long double tProbMeanAnom = 0;
             
-			/*
-			//long double e_ecc = ProbEcc;
-			//long double e_incl = ProbIncl;
-			//long double e_asc_node = ProbAscNode;
-			//long double e_arg_per = ProbArgPer;
-			//long double e_mean_anomaly = ProbMeanAnom;
-			long double e_q=0.0;
-			long double e_major_axis=0.0;
-			long double e_t0=0.0;
-			long double e_w0=0.0;
-			long double e_angular_momentum=0.0;
-			long double e_perih_time=0.0;
-			long double e_minor_to_major=0.0;
-			long double e_lon_per=0.0;
-			long double e_sideways_x=0.0;
-			long double e_sideways_y=0.0;
-			long double e_sideways_z=0.0;
-			long double vec_x=0.0;
-			long double vec_y=0.0;
-			long double vec_z=0.0;
-			long double e_perih_vec_x=0.0,e_perih_vec_y=0.0,e_perih_vec_z=0.0;
-			long double loc_x=0.0, loc_y=0.0, loc_z=0.0, loc_r=0.0,vel_x=0.0,vel_y=0.0,vel_z=0.0,t=0.0;
+    			/*
+	    		//long double e_ecc = Sat.ProbEcc[nSat];
+		    	//long double e_incl = Sat.ProbIncl[nSat];
+			    //long double e_asc_node = Sat.ProbAscNode[nSat];
+			    //long double e_arg_per = Sat.ProbArgPer[nSat];
+			    //long double e_mean_anomaly = Sat.ProbMeanAnom[nSat];
+			    long double e_q=0.0;
+			    long double e_major_axis=0.0;
+			    long double e_t0=0.0;
+			    long double e_w0=0.0;
+			    long double e_angular_momentum=0.0;
+			    long double e_perih_time=0.0;
+			    long double e_minor_to_major=0.0;
+			    long double e_lon_per=0.0;
+			    long double e_sideways_x=0.0;
+			    long double e_sideways_y=0.0;
+			    long double e_sideways_z=0.0;
+			    long double vec_x=0.0;
+			    long double vec_y=0.0;
+			    long double vec_z=0.0;
+			    long double e_perih_vec_x=0.0,e_perih_vec_y=0.0,e_perih_vec_z=0.0;
+			    long double loc_x=0.0, loc_y=0.0, loc_z=0.0, loc_r=0.0,vel_x=0.0,vel_y=0.0,vel_z=0.0,t=0.0;
+    
+	    		// first (mass) from NASA and second is just convinient constant
+		    	long double gm = SolarSystem.M[EARTH] * Gbig;
 
-			// first (mass) from NASA and second is just convinient constant
-			long double gm = SolarSystem.M[EARTH] * Gbig;
-
-			long double e_epoch = Sat.ProbEpoch[Sat.Elem]*24.0*60.0*60.0;
-
-			do_element_setup( e_epoch, ProbEcc, ProbIncl, ProbAscNode, ProbArgPer,ProbMeanAnom,
+    			long double e_epoch = Sat.ProbEpoch[Sat.Elem]*24.0*60.0*60.0;
+                    
+			    do_element_setup( e_epoch, Sat.ProbEcc[nSat], Sat.ProbIncl[nSat], Sat.ProbAscNode[nSat], Sat.ProbArgPer[nSat],Sat.ProbMeanAnom[nSat],
 								e_q, e_major_axis,e_t0,e_w0,e_angular_momentum,e_perih_time,
 								e_minor_to_major, e_lon_per,
 								e_sideways_x, e_sideways_y, e_sideways_z,
-								vec_x, vec_y,vec_z, gm, ProbTSec);
-			// this will reset mean anomaly to time == dStartJD*24.0*60.0*60.0
-			posn_and_vel( e_epoch, ProbEcc, ProbIncl, ProbAscNode, ProbArgPer,ProbMeanAnom,
+								vec_x, vec_y,vec_z, gm, Sat.ProbTSec[Sat.Elem]);
+			    // this will reset mean anomaly to time == dStartJD*24.0*60.0*60.0
+			    posn_and_vel( e_epoch, Sat.ProbEcc[nSat], Sat.ProbIncl[nSat], Sat.ProbAscNode[nSat], Sat.ProbArgPer[nSat],Sat.ProbMeanAnom[nSat],
 						e_q, e_major_axis,e_t0,e_w0,e_angular_momentum,e_perih_time,
 						e_minor_to_major, e_lon_per,
 						e_sideways_x, e_sideways_y, e_sideways_z,
 						vec_x,vec_y,vec_z,
 						loc_x, loc_y, loc_z, loc_r,vel_x,vel_y,vel_z,dStartJD*24.0*60.0*60.0, gm);
 						*/
-			long double tVX = tempProbVX;
-			long double tVY = tempProbVY;
-			long double tVZ = tempProbVZ;
-			{
+			    long double tVX = tempProbVX;
+			    long double tVY = tempProbVY;
+			    long double tVZ = tempProbVZ;
+			    {
 // that is for debugging GPS sattelites only
 #if 0
 
-                //01234567890123456789012345678901234567890123456789012345678901234567890
-//1 25544U 98067A   04236.56031392  .00020137  00000-0  16538-3 0  5135\
-//2 25544  51.6335 341.7760 0007976 126.2523 325.9359 15.70406856328903"
-//    };
-    // "ISS (ZARYA)"    The common name for the object based on information from the SatCat.
-    // "1"              Line Number
-    // "25544"          Object Identification Number
-    // "U"              Elset Classification
-    // "98067A"         International Designator
-    //  98                   - designate the launch year of the object
-    //    067                - launch number, starting from the beginning of the year
-    //       A               - indicates the piece of the launch: "A" is a payload 
-    // "04236.56031392" Element Set Epoch (UTC)
-    //  04                   - year
-    //    236.56031392       - day
-    // "_.00020137"      1st Derivative of the Mean Motion with respect to Time
-    // "_00000-0"        2nd Derivative of the Mean Motion with respect to Time (decimal point assumed)
-    // "_16538-3"        B* Drag Term
-    // "0"              Element Set Type
-    // "_513"            Element Number
-    // "5"              Checksum
-    //                        The checksum is the sum of all of the character in the data line, modulo 10. 
-    //                        In this formula, the following non-numeric characters are assigned the indicated values: 
-    //                        Blanks, periods, letters, '+' signs -> 0
-    //                        '-' signs -> 1
-    // "2"             Line Number
-    // "25544"         Object Identification Number
-    // "_51.6335"       Orbit Inclination (degrees)
-    // "341.7760"      Right Ascension of Ascending Node (degrees)
-    // "0007976"       Eccentricity (decimal point assumed)
-    // "126.2523"      Argument of Perigee (degrees)
-    // "325.9359"      Mean Anomaly (degrees)
-    // "15.70406856"    Mean Motion (revolutions/day)
-    // "328903"        Revolution Number at Epoch
+                    //01234567890123456789012345678901234567890123456789012345678901234567890
+                    //1 25544U 98067A   04236.56031392  .00020137  00000-0  16538-3 0  5135\
+                    //2 25544  51.6335 341.7760 0007976 126.2523 325.9359 15.70406856328903"
+                    //    };
+                    // "ISS (ZARYA)"    The common name for the object based on information from the SatCat.
+                    // "1"              Line Number
+                    // "25544"          Object Identification Number
+                    // "U"              Elset Classification
+                    // "98067A"         International Designator
+                    //  98                   - designate the launch year of the object
+                    //    067                - launch number, starting from the beginning of the year
+                    //       A               - indicates the piece of the launch: "A" is a payload 
+                    // "04236.56031392" Element Set Epoch (UTC)
+                    //  04                   - year
+                    //    236.56031392       - day
+                    // "_.00020137"      1st Derivative of the Mean Motion with respect to Time
+                    // "_00000-0"        2nd Derivative of the Mean Motion with respect to Time (decimal point assumed)
+                    // "_16538-3"        B* Drag Term
+                    // "0"              Element Set Type
+                    // "_513"            Element Number
+                    // "5"              Checksum
+                    //                        The checksum is the sum of all of the character in the data line, modulo 10. 
+                    //                        In this formula, the following non-numeric characters are assigned the indicated values: 
+                    //                        Blanks, periods, letters, '+' signs -> 0
+                    //                        '-' signs -> 1
+                    // "2"             Line Number
+                    // "25544"         Object Identification Number
+                    // "_51.6335"       Orbit Inclination (degrees)
+                    // "341.7760"      Right Ascension of Ascending Node (degrees)
+                    // "0007976"       Eccentricity (decimal point assumed)
+                    // "126.2523"      Argument of Perigee (degrees)
+                    // "325.9359"      Mean Anomaly (degrees)
+                    // "15.70406856"    Mean Motion (revolutions/day)
+                    // "328903"        Revolution Number at Epoch
 
-                // NAVSTAR 54 (USA 177)
-                // 1 28190U 04009A   12103.48551084  .00000032  00000-0  10000-3 0  3101
-                // 2 28190 055.0111 121.3785 0080561 006.7787 353.3670 02.00552748 59113
-                //
-                //         orbit inclanation
-                //                  Right Ascension of Ascending Node
+                    // NAVSTAR 54 (USA 177)
+                    // 1 28190U 04009A   12103.48551084  .00000032  00000-0  10000-3 0  3101
+                    // 2 28190 055.0111 121.3785 0080561 006.7787 353.3670 02.00552748 59113
+                    //
+                    //         orbit inclanation
+                    //                  Right Ascension of Ascending Node
 
 
 
-                // testing GPS sattelite #0x13=19 on UTC= 492765.99999995105 week: 1683 time 16:52:46
-                long double m1ProbTSec, m1ProbEcc, m1ProbIncl, m1ProbAscNode, m1ProbArgPer, m1ProbMeanAnom;
-                long double m2ProbTSec, m2ProbEcc, m2ProbIncl, m2ProbAscNode, m2ProbArgPer, m2ProbMeanAnom;
-                tProbX = -24891582.164414;
-                tProbY = -6179787.716544;
-                tProbZ = 7602393.375224;
-                tProbVX = -760.24581128329362;
-                tProbVY = -633.026865;
-                tProbVZ = -2950.637702;
-                DumpKeplers(m1ProbTSec, // - orbit period in sec
-				    m1ProbEcc,             // - Eccentricity
-                    m1ProbIncl,            // - Inclination
-                    m1ProbAscNode,         // - Longitude of ascending node
-                    m1ProbArgPer,          // - Argument of perihelion
-                    m1ProbMeanAnom,        // - Mean Anomaly (degrees)
-                    SolarSystem.M[EARTH],0.0,
-                    tProbX,tProbY,tProbZ,tProbVX,tProbVY,tProbVZ);
-				m1ProbIncl = m1ProbIncl / M_PI * 180;
-				m1ProbAscNode = m1ProbAscNode / M_PI * 180;
-				m1ProbArgPer = m1ProbArgPer / M_PI * 180;
-				m1ProbMeanAnom = m1ProbMeanAnom / M_PI * 180;
-                // tProbArgPer	6.0013685480087604	double 343.85308910345697
-		        // tProbAscNode	0.28308821186056238	double 16.219759769515520
-		        // tProbEcc	0.35006709180942119	double
-		        // tProbIncl	1.4375592933975376	double 82.366080311487735
-		        // tProbMeanAnom	3.1240698993743474	double 178.99602013800990
-		        // tProbTSec	27757.763563012952	double
+                    // testing GPS sattelite #0x13=19 on UTC= 492765.99999995105 week: 1683 time 16:52:46
+                    long double m1ProbTSec, m1ProbEcc, m1ProbIncl, m1ProbAscNode, m1ProbArgPer, m1ProbMeanAnom;
+                    long double m2ProbTSec, m2ProbEcc, m2ProbIncl, m2ProbAscNode, m2ProbArgPer, m2ProbMeanAnom;
+                    tProbX = -24891582.164414;
+                    tProbY = -6179787.716544;
+                    tProbZ = 7602393.375224;
+                    tProbVX = -760.24581128329362;
+                    tProbVY = -633.026865;
+                    tProbVZ = -2950.637702;
+                    DumpKeplers(m1ProbTSec, // - orbit period in sec
+		    		    m1ProbEcc,             // - Eccentricity
+                        m1ProbIncl,            // - Inclination
+                        m1ProbAscNode,         // - Longitude of ascending node
+                        m1ProbArgPer,          // - Argument of perihelion
+                        m1ProbMeanAnom,        // - Mean Anomaly (degrees)
+                        SolarSystem.M[EARTH],0.0,
+                        tProbX,tProbY,tProbZ,tProbVX,tProbVY,tProbVZ);
+				    m1ProbIncl = m1ProbIncl / M_PI * 180;
+				    m1ProbAscNode = m1ProbAscNode / M_PI * 180;
+				    m1ProbArgPer = m1ProbArgPer / M_PI * 180;
+				    m1ProbMeanAnom = m1ProbMeanAnom / M_PI * 180;
+                    // tProbArgPer	6.0013685480087604	double 343.85308910345697
+		            // tProbAscNode	0.28308821186056238	double 16.219759769515520
+		            // tProbEcc	0.35006709180942119	double
+		            // tProbIncl	1.4375592933975376	double 82.366080311487735
+		            // tProbMeanAnom	3.1240698993743474	double 178.99602013800990
+		            // tProbTSec	27757.763563012952	double
 		        
-
-
-                // testing GPS sattelite #13 on UTC= 492841.99999994022 (75.99999998917 sec later)
-                tProbX = -24948509.734849;
-                tProbY = -6227303.238357;
-                tProbZ = 7377692.112397;
-                tProbVX = -737.80818258029888;
-                tProbVY = -617.413576;
-                tProbVZ = -2962.493300;
-                DumpKeplers(m2ProbTSec, // - orbit period in sec
-				    m2ProbEcc,             // - Eccentricity
-                    m2ProbIncl,            // - Inclination
-                    m2ProbAscNode,         // - Longitude of ascending node
-                    m2ProbArgPer,          // - Argument of perihelion
-                    m2ProbMeanAnom,        // - Mean Anomaly (degrees)
-                    SolarSystem.M[EARTH],0.0,
-                    tProbX,tProbY,tProbZ,tProbVX,tProbVY,tProbVZ);
-				m2ProbIncl = m2ProbIncl / M_PI * 180;
-				m2ProbAscNode = m2ProbAscNode / M_PI * 180;
-				m2ProbArgPer = m2ProbArgPer / M_PI * 180;
-				m2ProbMeanAnom = m2ProbMeanAnom / M_PI * 180;
-                // tProbArgPer	6.0101929578191724	double 344.35869054228738
-		        // tProbAscNode	0.28215312764826711	double 16.166183390661683
-		        // tProbEcc	0.34889965261994360	double
-		        // tProbIncl	1.4407074570581755	double 82.546456802458735
-		        // tProbMeanAnom	3.1243871650157362	double 179.01419812024599
-		        // tProbTSec	27795.543500545853	double
-                // position and Keplers does not match == something wrong - also wrong inclanation that sattelite must be 55 degree
+                    // testing GPS sattelite #13 on UTC= 492841.99999994022 (75.99999998917 sec later)
+                    tProbX = -24948509.734849;
+                    tProbY = -6227303.238357;
+                    tProbZ = 7377692.112397;
+                    tProbVX = -737.80818258029888;
+                    tProbVY = -617.413576;
+                    tProbVZ = -2962.493300;
+                    DumpKeplers(m2ProbTSec, // - orbit period in sec
+				        m2ProbEcc,             // - Eccentricity
+                        m2ProbIncl,            // - Inclination
+                        m2ProbAscNode,         // - Longitude of ascending node
+                        m2ProbArgPer,          // - Argument of perihelion
+                        m2ProbMeanAnom,        // - Mean Anomaly (degrees)
+                        SolarSystem.M[EARTH],0.0,
+                        tProbX,tProbY,tProbZ,tProbVX,tProbVY,tProbVZ);
+				    m2ProbIncl = m2ProbIncl / M_PI * 180;
+				    m2ProbAscNode = m2ProbAscNode / M_PI * 180;
+				    m2ProbArgPer = m2ProbArgPer / M_PI * 180;
+				    m2ProbMeanAnom = m2ProbMeanAnom / M_PI * 180;
+                    // tProbArgPer	6.0101929578191724	double 344.35869054228738
+		            // tProbAscNode	0.28215312764826711	double 16.166183390661683
+		            // tProbEcc	0.34889965261994360	double
+		            // tProbIncl	1.4407074570581755	double 82.546456802458735
+		            // tProbMeanAnom	3.1243871650157362	double 179.01419812024599
+		            // tProbTSec	27795.543500545853	double
+                    // position and Keplers does not match == something wrong - also wrong inclanation that sattelite must be 55 degree
 #endif
-				// mean amomaly on curent time
-				DumpKeplers(tProbTSec, // - orbit period in sec
-				    tProbEcc,             // - Eccentricity
-                    tProbIncl,            // - Inclination
-                    tProbAscNode,         // - Longitude of ascending node
-                    tProbArgPer,          // - Argument of perihelion
-                    tProbMeanAnom,        // - Mean Anomaly (degrees)
-                    SolarSystem.M[EARTH],0.0,
-                    tProbX,tProbY,tProbZ,tProbVX,tProbVY,tProbVZ);
-				tProbIncl = tProbIncl / M_PI * 180;
-				tProbAscNode = tProbAscNode / M_PI * 180;
-				tProbArgPer = tProbArgPer / M_PI * 180;
-				tProbMeanAnom = tProbMeanAnom / M_PI * 180;
-                // mean amomaly on curent time
-				DumpKeplers(tProbTSec, // - orbit period in sec
-				    tProbEcc,             // - Eccentricity
-                    tProbIncl,            // - Inclination
-                    tProbAscNode,         // - Longitude of ascending node
-                    tProbArgPer,          // - Argument of perihelion
-                    tProbMeanAnom,        // - Mean Anomaly (degrees)
-                    SolarSystem.M[EARTH],0.0,
-                    tempProbX,tempProbY,tempProbZ,tempProbVX,tempProbVY,tempProbVZ);
-				tProbIncl = tProbIncl / M_PI * 180;
-				tProbAscNode = tProbAscNode / M_PI * 180;
-				tProbArgPer = tProbArgPer / M_PI * 180;
-				tProbMeanAnom = tProbMeanAnom / M_PI * 180;
-                // mean amomaly on curent time
-				/*DumpKeplers(tProbTSec, // - orbit period in sec
-				    tProbEcc,             // - Eccentricity
-                    tProbIncl,            // - Inclination
-                    tProbAscNode,         // - Longitude of ascending node
-                    tProbArgPer,          // - Argument of perihelion
-                    tProbMeanAnom,        // - Mean Anomaly (degrees)
-                    SolarSystem.M[EARTH],0.0,
-                    tempProbX,tempProbY,tempProbZ,vel_x,vel_y,vel_z);
-				tProbIncl = tProbIncl / M_PI * 180;
-				tProbAscNode = tProbAscNode / M_PI * 180;
-				tProbArgPer = tProbArgPer / M_PI * 180;
-				tProbMeanAnom = tProbMeanAnom / M_PI * 180;
+    				// mean amomaly on curent time
+	    			DumpKeplers(tProbTSec, // - orbit period in sec
+		    		    tProbEcc,             // - Eccentricity
+                        tProbIncl,            // - Inclination
+                        tProbAscNode,         // - Longitude of ascending node
+                        tProbArgPer,          // - Argument of perihelion
+                        tProbMeanAnom,        // - Mean Anomaly (degrees)
+                        SolarSystem.M[EARTH],0.0,
+                        tProbX,tProbY,tProbZ,tProbVX,tProbVY,tProbVZ);
+			    	tProbIncl = tProbIncl / M_PI * 180;
+				    tProbAscNode = tProbAscNode / M_PI * 180;
+    				tProbArgPer = tProbArgPer / M_PI * 180;
+	    			tProbMeanAnom = tProbMeanAnom / M_PI * 180;
+                    // mean amomaly on curent time
+			    	DumpKeplers(tProbTSec, // - orbit period in sec
+				        tProbEcc,             // - Eccentricity
+                        tProbIncl,            // - Inclination
+                        tProbAscNode,         // - Longitude of ascending node
+                        tProbArgPer,          // - Argument of perihelion
+                        tProbMeanAnom,        // - Mean Anomaly (degrees)
+                        SolarSystem.M[EARTH],0.0,
+                        tempProbX,tempProbY,tempProbZ,tempProbVX,tempProbVY,tempProbVZ);
+	    			tProbIncl = tProbIncl / M_PI * 180;
+		    		tProbAscNode = tProbAscNode / M_PI * 180;
+			    	tProbArgPer = tProbArgPer / M_PI * 180;
+				    tProbMeanAnom = tProbMeanAnom / M_PI * 180;
+                    // mean amomaly on curent time
+	    			/*DumpKeplers(tProbTSec, // - orbit period in sec
+		    		    tProbEcc,             // - Eccentricity
+                        tProbIncl,            // - Inclination
+                        tProbAscNode,         // - Longitude of ascending node
+                        tProbArgPer,          // - Argument of perihelion
+                        tProbMeanAnom,        // - Mean Anomaly (degrees)
+                        SolarSystem.M[EARTH],0.0,
+                        tempProbX,tempProbY,tempProbZ,vel_x,vel_y,vel_z);
+				    tProbIncl = tProbIncl / M_PI * 180;
+				    tProbAscNode = tProbAscNode / M_PI * 180;
+				    tProbArgPer = tProbArgPer / M_PI * 180;
+				    tProbMeanAnom = tProbMeanAnom / M_PI * 180;
 
-				long double VecAngle = AngleBtw(tempProbVX,tempProbVY,tempProbVZ,vel_x,vel_y,vel_z);
-				printf("\n angle =%f",VecAngle);
-				*/
-				//printf(" 
-			}
+    				long double VecAngle = AngleBtw(tempProbVX,tempProbVY,tempProbVZ,vel_x,vel_y,vel_z);
+	    			printf("\n angle =%f",VecAngle);
+		    		*/
+			    	//printf(" 
+			    }
 
-            printf("\n Was ProbPer = %f", ProbPer);
-            printf("\n Was ProbAph = %f", ProbAph);
+                //printf("\n Was ProbPer = %f", ProbPer);
+                //printf("\n Was ProbAph = %f", ProbAph);
 
-            // adjust Prob + earth position and speed based on a point of a centre of gravity
-            // for today only one sattelite
-            Sat.Elem = 1;
-            Sat.flInUse[0] = 1;
-            Sat.Lambda = GreenwichA;
-            //Sat.Lambda  = M_PI * 15.0 / 8.0; //3.0 / 8.0; 11.0 / 8.0;
-            Sat.M[0] = ProbM;
-            Sat.X[0] = tempProbX + SolarSystem.X[EARTH];
-            Sat.Y[0] = tempProbY + SolarSystem.Y[EARTH];
-            Sat.Z[0] = tempProbZ + SolarSystem.Z[EARTH];
-            Sat.VX[0] = tempProbVX + SolarSystem.VX[EARTH];
-            Sat.VY[0] = tempProbVY + SolarSystem.VY[EARTH];
-            Sat.VZ[0] = tempProbVZ + SolarSystem.VZ[EARTH];
-            // SGP4
-            Sat.X[0] = tProbX + SolarSystem.X[EARTH];
-            Sat.Y[0] = tProbY + SolarSystem.Y[EARTH];
-            Sat.Z[0] = tProbZ + SolarSystem.Z[EARTH];
-            Sat.VX[0] = tProbVX + SolarSystem.VX[EARTH];
-            Sat.VY[0] = tProbVY + SolarSystem.VY[EARTH];
-            Sat.VZ[0] = tProbVZ + SolarSystem.VZ[EARTH];
-            // this has to be set to properly calc helper variables
-            TimeSl = 1.0 / IterPerSec;
-            
+                // adjust Prob + earth position and speed based on a point of a centre of gravity
+                // for today only one sattelite
+                //Sat.Elem = 1;
+                Sat.flInUse[nSat] = 1;
+                Sat.Lambda = GreenwichA;
+                //Sat.Lambda  = M_PI * 15.0 / 8.0; //3.0 / 8.0; 11.0 / 8.0;
+                //Sat.M[0] = ProbM;
+                Sat.X[nSat] = tempProbX + SolarSystem.X[EARTH];
+                Sat.Y[nSat] = tempProbY + SolarSystem.Y[EARTH];
+                Sat.Z[nSat] = tempProbZ + SolarSystem.Z[EARTH];
+                Sat.VX[nSat] = tempProbVX + SolarSystem.VX[EARTH];
+                Sat.VY[nSat] = tempProbVY + SolarSystem.VY[EARTH];
+                Sat.VZ[nSat] = tempProbVZ + SolarSystem.VZ[EARTH];
+                // SGP4
+                Sat.X[nSat] = tProbX + SolarSystem.X[EARTH];
+                Sat.Y[nSat] = tProbY + SolarSystem.Y[EARTH];
+                Sat.Z[nSat] = tProbZ + SolarSystem.Z[EARTH];
+                Sat.VX[nSat] = tProbVX + SolarSystem.VX[EARTH];
+                Sat.VY[nSat] = tProbVY + SolarSystem.VY[EARTH];
+                Sat.VZ[nSat] = tProbVZ + SolarSystem.VZ[EARTH];
+                // this has to be set to properly calc helper variables
+                TimeSl = 1.0 / IterPerSec;
+            }    
             // this is done to reduce errors and avoid unnessary 5 mul/div operations
             // temporary X_, VX_ will just added (in paralel calculations can be done actualy faster) 
             for (int i = 0; i <Sat.Elem; i++)
@@ -5407,7 +5440,7 @@ int _tmain(int argc, _TCHAR* argv[])
                  EarthY, 
                  EarthZ,                  
             MoonX - EarthX, MoonY - EarthY, MoonZ - EarthZ, 
-            ProbX - EarthX, ProbY - EarthY, ProbZ - EarthZ, iTotalSec);
+            Sat.X[0] - EarthX, Sat.Y[0] - EarthY, Sat.Z[0] - EarthZ, iTotalSec);
         
         double tDeltaEarthN = (( EarthX - StateEarth.Position[0]*1000.0)*( EarthX - StateEarth.Position[0]*1000.0) +
                                              ( EarthY - StateEarth.Position[1]*1000.0)*( EarthY - StateEarth.Position[1]*1000.0) +
@@ -5467,9 +5500,9 @@ int _tmain(int argc, _TCHAR* argv[])
                 MoonX = SolarSystem.X[MOON];
                 MoonY = SolarSystem.Y[MOON];
                 MoonZ = SolarSystem.Z[MOON];
-                ProbX = Sat.X[0];
-                ProbY = Sat.Y[0];
-                ProbZ = Sat.Z[0];
+                double ProbX = Sat.X[0];
+                double ProbY = Sat.Y[0];
+                double ProbZ = Sat.Z[0];
                 {
                     dRE = sqrt(
                         (ProbX - EarthX)*(ProbX - EarthX)+
@@ -6010,7 +6043,7 @@ int _tmain(int argc, _TCHAR* argv[])
             XNDD6O = 0.0;
             XNDT2O =0.0;
 			SGP4(TimeFEpoch/60.0,//(dStartJD + (TimeFEpoch/24.0/60.0/60.0)- Sat.ProbEpoch[Sat.Elem])*XMNPDA, 
-                XNDT2O,XNDD6O,BSTAR,ProbIncl, ProbAscNode,ProbEcc, ProbArgPer, ProbMeanAnom,XNO, 
+                XNDT2O,XNDD6O,BSTAR,Sat.ProbIncl[Sat.Elem], Sat.ProbAscNode[Sat.Elem],Sat.ProbEcc[Sat.Elem], Sat.ProbArgPer[Sat.Elem], Sat.ProbMeanAnom[Sat.Elem],XNO, 
 				tProbX,tProbY,tProbZ,tProbVX,tProbVY,tProbVZ);
 			tProbX=tProbX*XKMPER/AE*1000.0;                 tProbY=tProbY*XKMPER/AE*1000.0;                 tProbZ=tProbZ*XKMPER/AE*1000.0;
 			tProbVX=tProbVX*XKMPER/AE*XMNPDA/86400.*1000.0;	tProbVY=tProbVY*XKMPER/AE*XMNPDA/86400.*1000.0;	tProbVZ=tProbVZ*XKMPER/AE*XMNPDA/86400.*1000.0;
