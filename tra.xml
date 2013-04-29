@@ -21,6 +21,9 @@
     <TRA:setting name="dStartJD0" value="11291.854004622962962962962962963" />
     <TRA:setting name="dStartJD0" value="11292.79166666" />
 
+    <TRA:setting name="TRAVisual" value="travisual.xml" />
+
+
     <TRA:setting name="RGBImageW" value="1280" />
     <TRA:setting name="RGBImageH" value="720" />
 <!-- int iProfile = 0; 
@@ -128,10 +131,10 @@
    <TRA:setting name="MaxOptim" value="0" />
 
 
-</section>
+</TRA:section>
 
             <!--     now all engines    -->
-<section name="Engine" value="0.0" />
+<TRA:section name="Engine" value="0.0" >
     <TRA:setting name="EngineNumber" value="0" />
     <TRA:setting name="EngineOnSatellite" value="0" />
     <!-- convinent coeff - instead of entry real values just assume scaled version-->
@@ -239,10 +242,10 @@
      <TRA:setting name="ImplVal" value="250.0" />
      <TRA:setting name="ImplVal" value="0.0" />
 
-</section>
+</TRA:section>
 
 
-<section name="Engine" value="1" />
+<TRA:section name="Engine" value="1" >
     <TRA:setting name="EngineNumber" value="1" />
     <TRA:setting name="EngineOnSatellite" value="0" />
     <!-- convinent coeff - instead of entry real values just assume scaled version-->
@@ -350,10 +353,10 @@
      <TRA:setting name="ImplVal" value="250.0" />
      <TRA:setting name="ImplVal" value="0.0" />
 
-</section>
+</TRA:section>
 
 
-<section name="Engine" value="2" />
+<TRA:section name="Engine" value="2" >
     <TRA:setting name="EngineNumber" value="2" />
     <TRA:setting name="EngineOnSatellite" value="0" />
     <!-- convinent coeff - instead of entry real values just assume scaled version-->
@@ -460,10 +463,10 @@
      <TRA:setting name="ImplVal" value="2000.0" />
      <TRA:setting name="ImplVal" value="250.0" />
      <TRA:setting name="ImplVal" value="0.0" />
-</section>
+</TRA:section>
 
 
-<section name="Engine" value="3" />
+<TRA:section name="Engine" value="3" >
     <TRA:setting name="EngineNumber" value="3" />
     <TRA:setting name="EngineOnSatellite" value="0" />
     <!-- convinent coeff - instead of entry real values just assume scaled version-->
@@ -568,10 +571,10 @@
      <TRA:setting name="ImplVal" value="250.0" />
      <TRA:setting name="ImplVal" value="0.0" />
 
-</section>
+</TRA:section>
 
 
-<section name="Engine" value="4" />
+<TRA:section name="Engine" value="4" >
     <TRA:setting name="EngineNumber" value="4" />
     <TRA:setting name="EngineOnSatellite" value="0" />
     <!-- convinent coeff - instead of entry real values just assume scaled version-->
@@ -677,8 +680,8 @@
      <TRA:setting name="ImplVal" value="250.0" />
      <TRA:setting name="ImplVal" value="0.0" />
 
-</section>
-<section name="Optim" value="0" />
+</TRA:section>
+<TRA:section name="Optim" value="0" >
 <!-- do optimization of an engine N... (0,1,2,3...)
      it is posible to use 4 engines but optimize engine 3-->
 
@@ -701,17 +704,17 @@
           1 Apogee to a center of NearBody
           3 taget practice not far then distance earth-moon
           4 target practice to a point on a moon's surface 
-          8 intial period
+          8 intial period -->
      <TRA:setting name="Calculate" value="8" />
 
 <!-- last used engine (0,1,2,3..) in trajectory optimization or calculations 
-     TRA:setting lastengine == -1 disable optimization -->
+     lastengine == -1 disable optimization -->
 
     <TRA:setting name="LastEngine" value="-1" />
 
-</section>
+</TRA:section>
 
-<section name="Optim" value="1" />
+<TRA:section name="Optim" value="1" >
         <TRA:setting name="EngineToOptimize" value="0" />
         <TRA:setting name="TrajectoryOptimizationType" value="2" />
         <TRA:setting name="NearBody" value="2" />
@@ -720,9 +723,9 @@
      <TRA:setting name="OptimizationDecCoef" value="10" />
      <TRA:setting name="OptimizationStop" value="1" />
         <TRA:setting name="LastEngine" value="0" />
-</section>
+</TRA:section>
 
-<section name="Optim" value="2" />
+<TRA:section name="Optim" value="2" >
         <TRA:setting name="EngineToOptimize" value="0" />
         <TRA:setting name="TrajectoryOptimizationType" value="2" />
         <TRA:setting name="NearBody" value="2" />
@@ -731,9 +734,9 @@
         <TRA:setting name="OptimizationDecCoef" value="10" />
         <TRA:setting name="OptimizationStop" value="1" />
         <TRA:setting name="LastEngine" value="0" />
-</section>
-
-<section name="Optim" value="3" />
+</TRA:section>
+                                    
+<TRA:section name="Optim" value="3" >
         <TRA:setting name="EngineToOptimize" value="1" />
         <TRA:setting name="TrajectoryOptimizationType" value="2" />
         <TRA:setting name="NearBody" value="2" />
@@ -742,9 +745,9 @@
      <TRA:setting name="OptimizationDecCoef" value="10" />
      <TRA:setting name="OptimizationStop" value="1" />
         <TRA:setting name="LastEngine" value="1" />
-</section>
+</TRA:section>
 
-<section name="Optim" value="4" />
+<TRA:section name="Optim" value="4" >
         <TRA:setting name="EngineToOptimize" value="1" />
         <TRA:setting name="TrajectoryOptimizationType" value="2" />
         <TRA:setting name="NearBody" value="2" />
@@ -753,9 +756,9 @@
      <TRA:setting name="OptimizationDecCoef" value="10" />
      <TRA:setting name="OptimizationStop" value="1" />
         <TRA:setting name="LastEngine" value="1" />
-</section>
+</TRA:section>
 
-<section name="Optim" value="5" />
+<TRA:section name="Optim" value="5" >
         <TRA:setting name="EngineToOptimize" value="1" />
         <TRA:setting name="TrajectoryOptimizationType" value="2" />
         <TRA:setting name="NearBody" value="2" />
@@ -764,9 +767,9 @@
      <TRA:setting name="OptimizationDecCoef" value="10" />
      <TRA:setting name="OptimizationStop" value="1" />
         <TRA:setting name="LastEngine" value="1" />
-</section>
+</TRA:section>
 
-<section name="Optim" value="6" />
+<TRA:section name="Optim" value="6" >
         <TRA:setting name="EngineToOptimize" value="2" />
         <TRA:setting name="TrajectoryOptimizationType" value="2" />
         <TRA:setting name="NearBody" value="2" />
@@ -775,9 +778,9 @@
      <TRA:setting name="OptimizationDecCoef" value="10" />
      <TRA:setting name="OptimizationStop" value="1" />
         <TRA:setting name="LastEngine" value="2" />
-</section>
+</TRA:section>
 
-<section name="Optim" value="7" />
+<TRA:section name="Optim" value="7" >
         <TRA:setting name="EngineToOptimize" value="2" />
         <TRA:setting name="TrajectoryOptimizationType" value="2" />
         <TRA:setting name="NearBody" value="2" />
@@ -786,10 +789,10 @@
      <TRA:setting name="OptimizationDecCoef" value="10" />
      <TRA:setting name="OptimizationStop" value="0.0001" />
         <TRA:setting name="LastEngine" value="2" />
-</section>
+</TRA:section>
 
 
-<section name="Optim" value="8" />
+<TRA:section name="Optim" value="8" >
         <TRA:setting name="EngineToOptimize" value="2" />
         <TRA:setting name="TrajectoryOptimizationType" value="6" />
         <TRA:setting name="NearBody" value="2" />
@@ -798,9 +801,9 @@
      <TRA:setting name="OptimizationDecCoef" value="10" />
      <TRA:setting name="OptimizationStop" value="0.0001" />
         <TRA:setting name="LastEngine" value="2" />
-</section>
+</TRA:section>
 
-<section name="Optim" value="9" />
+<TRA:section name="Optim" value="9" >
         <TRA:setting name="EngineToOptimize" value="2" />
         <TRA:setting name="TrajectoryOptimizationType" value="1" />
         <TRA:setting name="NearBody" value="9" />
@@ -809,9 +812,9 @@
      <TRA:setting name="OptimizationDecCoef" value="10" />
      <TRA:setting name="OptimizationStop" value="1" />
         <TRA:setting name="LastEngine" value="2" />
-</section>
+</TRA:section>
 
-<section name="Optim" value="10" />
+<TRA:section name="Optim" value="10" >
 <!-- calculates perigee to the Moon, search for minimum by adjusting time -->
            <TRA:setting name="EngineToOptimize" value="2" />
            <TRA:setting name="TrajectoryOptimizationType" value="6" />
@@ -823,9 +826,9 @@
            <TRA:setting name="LastEngine" value="2" />
 
         <TRA:setting name="Period" value="5358.000000" />
-</section>
+</TRA:section>
 
-<section name="Optim" value="10" />
+<TRA:section name="Optim" value="10" >
 <!-- calculates perigee to the Moon, search for minimum by adjusting time -->
            <TRA:setting name="EngineToOptimize" value="2" />
            <TRA:setting name="TrajectoryOptimizationType" value="6" />
@@ -837,7 +840,7 @@
            <TRA:setting name="LastEngine" value="2" />
 
         <TRA:setting name="Period" value="5358.000000" />
-</section>
+</TRA:section>
 
 
 </data>

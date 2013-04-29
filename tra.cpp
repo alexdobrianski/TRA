@@ -16,7 +16,11 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>
 ************************************************************************/
 
+
 #include "stdafx.h"
+#include <afxinet.h>
+#include <afxsock.h>
+
 #define _USE_MATH_DEFINES 1
 #include <math.h>
 #include <stdio.h>
@@ -1679,6 +1683,7 @@ int RunOrVoidEngine(int TimeDirection, TRAIMPLOBJ * Engines, TRAOBJ * SlS, TRAOB
 								double Z1 = Sat->Z[j] - SolarSystem.Z[EARTH];
 								double X2;
 								double Y2;
+#ifdef _DO_VISUALIZATION
 								switch(iProfile)
 								{
 									case 0: X2 = X1; Y2 = Y1;break; 
@@ -1696,6 +1701,7 @@ int RunOrVoidEngine(int TimeDirection, TRAIMPLOBJ * Engines, TRAOBJ * SlS, TRAOB
 										putpixel(&EngineColor[i*3], (int)(X2/dRGBScale*bRGBImageH), (int)(Y2/dRGBScale*bRGBImageH));
 									}
 								}
+#endif
 								printf("\n fire engine=====> %d at= %f",j,Engines[j].FireTime);
                                 iRet = 1;
                                 Engines[j].EngineOn = 1;
@@ -2808,7 +2814,7 @@ void AjustKeplerPosition(long double &T,long double &Ap, long double &Ph, long d
     // may be is there another formula to calculate? then just original model
     // just simulation sun-earth-mooon with 1/8 sec delta time gives error 1km per 1 month
 }
-void ConvertJulianDayToDateAndTime(long double JulianDay, SYSTEMTIME *ThatTime)
+void ConvertJulianDayToDateAndTime(double JulianDay, SYSTEMTIME *ThatTime)
 {
     long daysfrom2000 = JulianDay - 2451544.5;
     double flInDay = (JulianDay - 2451544.5) - (double)daysfrom2000; 
@@ -2993,6 +2999,8 @@ int iDayOfTheYearZeroBase(int iDay, int iMonth, int iYear)
 	}
 	return iDays;
 }
+
+char szTraVisualFileName[_MAX_PATH*3]={"travisual.xml"};
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 //
@@ -3088,6 +3096,14 @@ void ParamCommon(char *szString)
         {
             EarthSmAxAU = atof(pszQuo);
             AUcalc = EarthSmAx / EarthSmAxAU;
+        }
+        IF_XML_READ(TRAVisual)
+        {
+            
+            strcpy(szTraVisualFileName,pszQuo);
+            char * iQuot = strstr(szTraVisualFileName,"\"");
+            if (iQuot)
+                *iQuot=0;
         }
 
 #ifdef _DO_VISUALIZATION
@@ -4871,11 +4887,14 @@ void makeExplanationText(char*szText, int iCalc, int iTraj, int iBody)
 
 }
 FILE *VisualFile = NULL;
+//BOOL VisualFileSet = FALSE;
 void dumpTRAvisual(long i)
 {
+    //if (VisualFileSet == FALSE)
+    //    return;
     if (VisualFile == NULL)
     {
-		VisualFile = fopen("travisual.xml", "w");
+		VisualFile = fopen(szTraVisualFileName, "w");
         if (VisualFile)
         {
 		    fprintf(VisualFile,"<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n");
@@ -4896,13 +4915,13 @@ void dumpTRAvisual(long i)
 			//fprintf(VisualFile,"	</MoonObject>\n\r");
             for (int iSat = 0; iSat < Sat.Elem; iSat++)
             {
-                fprintf(VisualFile,"	<Sat%dObject>\n",iSat);
-                fprintf(VisualFile,"		<type>SatTra</type>\n");
-		        fprintf(VisualFile,"		<time>%.18g</time>\n", dStartJD + ((double)i)/(24.0*60.0*60.0));
+                fprintf(VisualFile,"	<Sat%d>\n",iSat);
+                //fprintf(VisualFile,"		<ID>SatTra</ID>\n");
+		        //fprintf(VisualFile,"		<time>%.18g</time>\n", dStartJD + ((double)i)/(24.0*60.0*60.0));
 			    fprintf(VisualFile,"		<X>%.18g</X>\n",Sat.X[iSat]-SolarSystem.X[EARTH]);
 			    fprintf(VisualFile,"		<Y>%.18g</Y>\n",Sat.Y[iSat]-SolarSystem.Y[EARTH]);
 			    fprintf(VisualFile,"		<Z>%.18g</Z>\n",Sat.Z[iSat]-SolarSystem.Z[EARTH]);
-			    fprintf(VisualFile,"	</Sat%dObject>\n",iSat);
+			    fprintf(VisualFile,"	</Sat%d>\n",iSat);
             }
         }
     }
@@ -5116,7 +5135,7 @@ void dumpXMLParam(TRAOBJ *Sat, TRAIMPLOBJ *MyEngine, int iNumbOfEng)
                     Opt[j].TrajectoryOptimizationType, 
                     Opt[j].NearBody);
             fprintf(EnginesFile,szText);
-            fprintf(EnginesFile,"\n           <TRA:setting name=\"EngineToOptimize\" value=\"%d\" />",Opt[j].EngineToOptimize);
+            fprintf(EnginesFile,"\n         <TRA:setting name=\"EngineToOptimize\" value=\"%d\" />",Opt[j].EngineToOptimize);
             if (j == 0)
             {
                 fprintf(EnginesFile,"\n\n<!-- Type of optimization");
@@ -5249,7 +5268,7 @@ int CheckWhatnext(TRAOPTIMOBJ* Opt, TRAOBJ *Sat, TRAIMPLOBJ *Eng, TRAIMPLOBJ *En
 #define TEST_RUN_CALC_YEAR 1
 #define TEST_RUN_ERROR 1
 #define TEST_RUN_EARTH_ERROR 1
-int _tmain(int argc, _TCHAR* argv[])
+int main(int argc, char * argv[])
 {
     //char szSatelite[] = {"ISS (ZARYA)\
 //0         1         2         3         4         5         6         7
@@ -5357,6 +5376,7 @@ int _tmain(int argc, _TCHAR* argv[])
     long double TimeFEpoch;
     double ttProbX,ttProbY,ttProbZ,ttProbVX,ttProbVY,ttProbVZ;
     double tttX,tttVX;
+    char szXMLFileName[3*_MAX_PATH] = {"tra.xml"};
 
 
 #ifdef TEST_RUN_ERROR
@@ -5367,7 +5387,150 @@ int _tmain(int argc, _TCHAR* argv[])
     //InitTraMap(&CurTraMap);
     Sat.Elem = 0;  // zero asatelites at the begining
     Initialize_Ephemeris("bin410.bin");
-    FILE *fInput = fopen("tra.xml", "r");
+    if (argc == 2)
+    {
+        if (argv[1][1] == '?')
+        {
+            printf("\n TRA.EXE trajectory calculation software. Adobri Solutions LTD. Team Plan B");
+            printf("\n licensed under a Creative Commons Attribution-ShareAlike 3.0 Unported License.");
+            printf("\n");
+            printf("\n USAGE:");
+            printf("\n  TRA.EXE  -?          - help");
+            printf("\n  TRA.EXE              - process TRA.XML file");
+            printf("\n  TRA.EXE <FILE NAME>  - process <FILE NAME>");
+            printf("\n  TRA.EXE <URL> - process <URL> file");
+            exit (0);
+        }
+        else
+        {
+            strcpy(szXMLFileName,argv[1]);
+        }
+    }
+    if (strstr(szXMLFileName,"http://"))
+    {
+        // needs to copy original http file from server to a local with temporary name, than process temporary
+        char szURLFileName[3*_MAX_PATH];
+        char szURLServer[3*_MAX_PATH];
+        char sztempFileName[3*_MAX_PATH];
+        char szWebServerResp[8096];
+        int UrlPort=80;
+       	CHttpConnection* m_MainHttpServer = NULL;
+    	CInternetSession  *m_MainInternetConnection = NULL;
+
+        strcpy(szURLFileName,szXMLFileName);
+        strcpy(szXMLFileName, "@tra.xml");
+        strcpy(szURLServer,szURLFileName);
+        char *iFirst = strstr(szURLServer,"http://");
+        iFirst += 7;
+        iFirst = strstr(iFirst,"/");
+        if (iFirst)
+        {
+            *iFirst++=0;
+            strcpy(szURLFileName,iFirst);
+            iFirst = strstr(&szURLServer[7],":");
+            if (iFirst)  // found :8080 port number
+            {
+                UrlPort = atoi(iFirst+1);
+                *iFirst =  0;
+                strcpy(sztempFileName,&szURLServer[7]);
+                strcpy(szURLServer,sztempFileName);
+            }
+        }
+        else
+        {
+            printf(" URL is wrong");
+            exit(3);
+        }
+
+        if (m_MainHttpServer == NULL)
+	    {
+		    m_MainInternetConnection = new CInternetSession("SessionToControlServer",12,INTERNET_OPEN_TYPE_DIRECT,NULL, // proxi name
+				            NULL, // proxi bypass
+				            INTERNET_FLAG_DONT_CACHE|INTERNET_FLAG_TRANSFER_BINARY);
+		    try
+		    {
+			    m_MainHttpServer = 	m_MainInternetConnection->GetHttpConnection( szURLServer, 0, UrlPort, NULL, NULL );
+    		}
+	    	catch(CInternetException *e)
+		    {
+			    m_MainHttpServer = NULL;
+		    }
+	    }
+	    if (m_MainHttpServer)
+	    {
+			CHttpFile* myCHttpFile = NULL;
+			try
+			{
+				myCHttpFile = m_MainHttpServer->OpenRequest( CHttpConnection::HTTP_VERB_GET,
+					szURLFileName,
+					NULL,//((CGrStnApp*)AfxGetApp())->szLoginRQ,
+					NULL,//12345678,
+					NULL, 
+					NULL, 
+					INTERNET_FLAG_EXISTING_CONNECT|
+					INTERNET_FLAG_DONT_CACHE|
+					INTERNET_FLAG_RELOAD );
+			}
+			catch(CInternetException *e)
+			{
+				myCHttpFile = NULL;
+			}
+
+			if (myCHttpFile !=NULL)
+			{
+				try
+				{
+					myCHttpFile->SendRequest();
+					memset(szWebServerResp, 0, sizeof(szWebServerResp));
+					{
+						DWORD dwSize;
+						CString strSize;
+						myCHttpFile->QueryInfo(HTTP_QUERY_CONTENT_LENGTH,strSize);
+						dwSize = atoi(strSize.GetString());
+                        FILE *TempFile = fopen(szXMLFileName, "wb");
+                        if (TempFile)
+                        {
+						    if (dwSize > (sizeof(szWebServerResp)-1))
+						    {
+							    for (DWORD dwread=0; dwread < dwSize; dwread+= (sizeof(szWebServerResp)-1))
+							    {
+								    if ((dwSize - dwread) > (sizeof(szWebServerResp)-1))
+                                    {
+									    if (myCHttpFile->Read(&szWebServerResp,(sizeof(szWebServerResp)-1)))
+                                        {
+                                            fwrite(&szWebServerResp,(sizeof(szWebServerResp)-1),1,TempFile);
+                                        }
+                                    }
+								    else
+                                    {
+									    if (myCHttpFile->Read(&szWebServerResp,(dwSize - dwread)))
+                                        {
+                                            fwrite(&szWebServerResp,(dwSize - dwread),1,TempFile);
+                                        }
+                                    }
+							    }
+						    }
+						    else
+                            {
+							    if (myCHttpFile->Read(&szWebServerResp,dwSize))
+                                {
+                                    fwrite(&szWebServerResp,dwSize,1,TempFile);
+                                }
+                            }
+                            fclose(TempFile);
+                        }
+					}
+				}
+				catch(CInternetException *e)
+				{
+					//ptrApp->m_MainHttpServer = NULL;
+				}
+				myCHttpFile->Close();
+				delete myCHttpFile;
+			}
+		}
+	}
+    FILE *fInput = fopen(szXMLFileName, "r");
     if (fInput != NULL)
     {
         ParamDoAll(fInput);
@@ -5375,7 +5538,7 @@ int _tmain(int argc, _TCHAR* argv[])
     }
     else
     {
-        printf("\n file TRA.XML missing");
+        printf("\n file %s missing", szXMLFileName);
         exit(1);
     }
 	{
