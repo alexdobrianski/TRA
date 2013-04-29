@@ -5441,7 +5441,7 @@ int main(int argc, char * argv[])
             printf(" URL is wrong");
             exit(3);
         }
-
+        AfxSocketInit();
         if (m_MainHttpServer == NULL)
 	    {
 		    m_MainInternetConnection = new CInternetSession("SessionToControlServer",12,INTERNET_OPEN_TYPE_DIRECT,NULL, // proxi name

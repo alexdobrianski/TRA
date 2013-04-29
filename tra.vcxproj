@@ -31,6 +31,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <CharacterSet>MultiByte</CharacterSet>
+    <UseOfMfc>Static</UseOfMfc>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -76,7 +77,10 @@
       <ProgramDatabaseFile>$(OutDir)tra.pdb</ProgramDatabaseFile>
       <SubSystem>Console</SubSystem>
       <TargetMachine>MachineX86</TargetMachine>
-      <AdditionalDependencies>kernel32.lib;nafxcw.lib;libcpmtd.lib;LIBCMTD.lib;OLDNAMES.lib;uuid.lib;%(AdditionalDependencies);jpeglib.lib</AdditionalDependencies>
+      <AdditionalDependencies>kernel32.lib;nafxcwd.lib;libcpmtd.lib;LIBCMTD.lib;OLDNAMES.lib;uuid.lib;%(AdditionalDependencies);jpeglib.lib</AdditionalDependencies>
+      <IgnoreAllDefaultLibraries>
+      </IgnoreAllDefaultLibraries>
+      <AdditionalOptions> /verbose:lib %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
       <Command>
