@@ -24,6 +24,7 @@
 #define _USE_MATH_DEFINES 1
 #include <math.h>
 #include <stdio.h>
+#include <malloc.h>
 #include "ephem_read.h"
 
 //////////////////////////////////////////////////////////////////////////////
@@ -3000,7 +3001,45 @@ int iDayOfTheYearZeroBase(int iDay, int iMonth, int iYear)
 	return iDays;
 }
 
+char szURLTraVisualFileName[3*_MAX_PATH];
+char szURLTraVisualServer[3*_MAX_PATH];
 char szTraVisualFileName[_MAX_PATH*3]={"travisual.xml"};
+int UrlTraVisualPort=80;
+BOOL VisualFileSet = FALSE;
+BOOL ParsURL(char * URLServer, int *port, char* URL,  char * szParsingName)
+{
+    char sztemp[3*_MAX_PATH];
+    *port=80;
+    strcpy(URL,szParsingName);
+    //strcpy(szTraVisualFileName, "@travisual.xml");
+    strcpy(URLServer,URL);
+    char *iFirst = strstr(URLServer,"http://");
+    if (iFirst)
+    {
+        iFirst += 7;
+        iFirst = strstr(iFirst,"/");
+        if (iFirst)
+        {
+            *iFirst++=0;
+            strcpy(URL,iFirst);
+            iFirst = strstr(&URLServer[7],":");
+            if (iFirst)  // found :8080 port number
+            {
+                *port = atoi(iFirst+1);
+                *iFirst =  0;
+            }
+            strcpy(sztemp,&URLServer[7]);
+            strcpy(URLServer,sztemp);
+        }
+        else
+        {
+            printf(" URL:%s is wrong", szParsingName);
+            exit(3);
+        }
+        return TRUE;
+    }
+    return FALSE;
+}
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 //
@@ -3104,8 +3143,12 @@ void ParamCommon(char *szString)
             char * iQuot = strstr(szTraVisualFileName,"\"");
             if (iQuot)
                 *iQuot=0;
+            VisualFileSet = TRUE;
+            if (ParsURL(szURLTraVisualServer, &UrlTraVisualPort, szURLTraVisualFileName,  szTraVisualFileName))
+            {
+                strcpy(szTraVisualFileName, "@travisual.xml");
+            }
         }
-
 #ifdef _DO_VISUALIZATION
         IF_XML_READ(RGBImageW)
         {
@@ -4886,12 +4929,118 @@ void makeExplanationText(char*szText, int iCalc, int iTraj, int iBody)
     }
 
 }
+
+void PostXMLToServer(char* URLServer, int urlport, char* URLFileName, char* FileToTransfer)
+{
+    char szWebServerResp[8096];
+    FILE *FileTransfer = fopen(FileToTransfer,"rb");
+    if (FileTransfer)
+    {
+        fseek(FileTransfer, 0L, SEEK_END);
+        long iSize = ftell( FileTransfer);
+        fseek(FileTransfer, 0L, SEEK_SET);
+        char * szFileContent = (char*)malloc((size_t)iSize);
+        if (szFileContent)
+        {
+            fread(szFileContent,iSize,1,FileTransfer);
+            fclose(FileTransfer);
+            CHttpConnection* m_MainHttpServer = NULL;
+            CInternetSession  *m_MainInternetConnection = NULL;
+
+            if (m_MainHttpServer == NULL)
+            {
+                m_MainInternetConnection = new CInternetSession("SessionToControlServer",12,INTERNET_OPEN_TYPE_DIRECT,NULL, // proxi name
+                            NULL, // proxi bypass
+				            INTERNET_FLAG_DONT_CACHE|INTERNET_FLAG_TRANSFER_BINARY);
+		        try
+		        {
+		            m_MainHttpServer = 	m_MainInternetConnection->GetHttpConnection( URLServer, 0, urlport, NULL, NULL );
+                }
+	            catch(CInternetException *e)
+		        {
+		            m_MainHttpServer = NULL;
+		        }
+            }
+            if (m_MainHttpServer)
+            {
+                CHttpFile* myCHttpFile = NULL;
+                try
+                {
+                    myCHttpFile = m_MainHttpServer->OpenRequest( CHttpConnection::HTTP_VERB_POST,URLFileName, NULL,NULL, NULL, NULL, INTERNET_FLAG_EXISTING_CONNECT|	INTERNET_FLAG_DONT_CACHE|INTERNET_FLAG_RELOAD );
+			    }
+			    catch(CInternetException *e)
+			    {
+				    myCHttpFile = NULL;
+			    }
+
+			    if (myCHttpFile !=NULL)
+			    {
+				    try
+				    {
+                        CString strHeader = "Accept: text/*\r\n";
+                        strHeader += "User-Agent: HttpCall\r\n";
+                        strHeader += "Accept-Language: en-us\r\n";
+
+                        //    strHeader += "Content-type: application/x-www-form-urlencoded\r\n";
+                        //    strHeader += "REMOTE_USER: "+strUser+"\r\n";
+                        //    strHeader += "Accept-Language: en-us\r\n";
+
+                        myCHttpFile->AddRequestHeaders((LPCSTR)strHeader);
+                        myCHttpFile->SendRequestEx(iSize,HSR_INITIATE,1);
+                        myCHttpFile->WriteString((LPCTSTR)szFileContent);
+                        myCHttpFile->EndRequest();
+
+					    memset(szWebServerResp, 0, sizeof(szWebServerResp));
+						DWORD dwSize;
+						CString strSize;
+						myCHttpFile->QueryInfo(HTTP_QUERY_CONTENT_LENGTH,strSize);
+						dwSize = atoi(strSize.GetString());
+    				    if (dwSize > (sizeof(szWebServerResp)-1))
+					    {
+						    for (DWORD dwread=0; dwread < dwSize; dwread+= (sizeof(szWebServerResp)-1))
+						    {
+							    if ((dwSize - dwread) > (sizeof(szWebServerResp)-1))
+                                {
+	                                if (myCHttpFile->Read(&szWebServerResp,(sizeof(szWebServerResp)-1)))
+                                    {
+                                    }
+                                }
+								else
+                                {
+								    if (myCHttpFile->Read(&szWebServerResp,(dwSize - dwread)))
+                                    {
+                                    }
+                                }
+                            }
+                        }
+						else
+                        {
+                            if (myCHttpFile->Read(&szWebServerResp,dwSize))
+                            {
+                            }
+                        }
+                    }
+    				catch(CInternetException *e)
+	    			{
+		    			//ptrApp->m_MainHttpServer = NULL;
+			    	}
+    				myCHttpFile->Close();
+	    			delete myCHttpFile;
+		    	}
+                m_MainHttpServer->Close();
+                m_MainInternetConnection->Close();
+		    }
+            free(szFileContent);
+        }
+    }
+}
+
 FILE *VisualFile = NULL;
-//BOOL VisualFileSet = FALSE;
+
 void dumpTRAvisual(long i)
 {
-    //if (VisualFileSet == FALSE)
-    //    return;
+    if (VisualFileSet == FALSE)
+        return;
     if (VisualFile == NULL)
     {
 		VisualFile = fopen(szTraVisualFileName, "w");
@@ -4960,6 +5109,10 @@ void dumpTRAvisual(long i)
             fprintf(VisualFile,"</Universe>\n");
 			fclose(VisualFile);
             VisualFile = NULL;
+            if (szTraVisualFileName[0] == '@') // yes! it is agly - that is a case when visualization output must to be submit to some server
+            {
+                PostXMLToServer(szURLTraVisualServer, UrlTraVisualPort, szURLTraVisualFileName, szTraVisualFileName);
+            }
 		}
 	}
 }
@@ -5417,29 +5570,9 @@ int main(int argc, char * argv[])
        	CHttpConnection* m_MainHttpServer = NULL;
     	CInternetSession  *m_MainInternetConnection = NULL;
 
-        strcpy(szURLFileName,szXMLFileName);
-        strcpy(szXMLFileName, "@tra.xml");
-        strcpy(szURLServer,szURLFileName);
-        char *iFirst = strstr(szURLServer,"http://");
-        iFirst += 7;
-        iFirst = strstr(iFirst,"/");
-        if (iFirst)
+        if (ParsURL(szURLServer, &UrlPort, szURLFileName, szXMLFileName))
         {
-            *iFirst++=0;
-            strcpy(szURLFileName,iFirst);
-            iFirst = strstr(&szURLServer[7],":");
-            if (iFirst)  // found :8080 port number
-            {
-                UrlPort = atoi(iFirst+1);
-                *iFirst =  0;
-                strcpy(sztempFileName,&szURLServer[7]);
-                strcpy(szURLServer,sztempFileName);
-            }
-        }
-        else
-        {
-            printf(" URL is wrong");
-            exit(3);
+            strcpy(szXMLFileName, "@tra.xml");
         }
         AfxSocketInit();
         if (m_MainHttpServer == NULL)
@@ -5528,6 +5661,8 @@ int main(int argc, char * argv[])
 				myCHttpFile->Close();
 				delete myCHttpFile;
 			}
+            m_MainHttpServer->Close();
+            m_MainInternetConnection->Close();
 		}
 	}
     FILE *fInput = fopen(szXMLFileName, "r");
