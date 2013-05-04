@@ -3052,8 +3052,8 @@ void ParamCommon(char *szString)
         {
 			TotalDays = 0;
             dStartJD = atof(pszQuo);    // format: <TRA:setting name="dStartJD0" value="2455625.1696833" />
-			if (dStartJD <=0) // negativge value set current date munis amount of the minutes (negative -1 mean = 1 minute)
-			{
+			if (dStartJD <=0) // negativge value set current date munis amount of the minutes (negative -3 mean = total time == 3 minutes starting from curent time)
+			{                 // i.e. -60 = total 60 minutes starting from -57 min, and 3 minutes in a future
             	SYSTEMTIME MyTime;
                 TIME_ZONE_INFORMATION tmzone;
                 //SYSTEMTIME ThatTime;
@@ -3076,7 +3076,7 @@ void ParamCommon(char *szString)
                 dStartJD -= atof(pszQuo)/(24.0*60.0);
 				dStartJD = ConverEpochDate2JulianDay(dStartJD);
 				TotalDays = (60.0*atof(pszQuo))/(24.0*60.0*60);
-                dStartJD +=TotalDays; // negative value !!!
+                dStartJD +=TotalDays + (60.0*3)/(24.0*60.0*60); // negative value !!! + 3 minutes
                 //ConvertJulianDayToDateAndTime(dStartJD, &ThatTime);
 			}
 			else
@@ -3108,7 +3108,6 @@ void ParamCommon(char *szString)
                     else // in a normal format
                     {
                     }
-
 				}
 			}
         }
@@ -5105,6 +5104,7 @@ void dumpTRAvisual(long i)
             SYSTEMTIME ThatTime; 
             ConvertJulianDayToDateAndTime(dStartJD + ((double)i)/(24.0*60.0*60.0), &ThatTime);
             fprintf(VisualFile,"		<timeYYDDMMHHMMSS>%02d/%02d/%02d %02d:%02d:%02d</timeYYDDMMHHMMSS>\n", ThatTime.wYear-2000,ThatTime.wMonth,ThatTime.wDay,ThatTime.wHour,ThatTime.wMinute,ThatTime.wSecond);
+            fprintf(VisualFile,"		<ReloadInSec>00001</ReloadInSec>\n"); // for the best case it is 1 sec refresh == that value has to be  
             fprintf(VisualFile,"	</ObjectTime>\n");
             fprintf(VisualFile,"</Universe>\n");
 			fclose(VisualFile);
