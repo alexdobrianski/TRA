@@ -5078,12 +5078,26 @@ void dumpTRAvisual(long i)
 
 		if (VisualFile)
 		{
-		    fprintf(VisualFile,"	<Object>\n");
+            SYSTEMTIME ThatTime; 
+            ConvertJulianDayToDateAndTime(dStartJD + ((double)i)/(24.0*60.0*60.0), &ThatTime);
+            GreenwichA = GreenwichAscension(dStartJD + ((double)i)/(24.0*60.0*60.0));
+            SUN_08 (ThatTime.wYear,
+                iDayOfTheYearZeroBase(ThatTime.wDay, ThatTime.wMonth, ThatTime.wYear) ,
+                ThatTime.wHour,ThatTime.wMinute,ThatTime.wSecond,
+                GST,SLONG,SRASN,SDEC);
+            // GST is a position Greenwich in rad 
+
+            //for moon rotation - moon looks at earth each time
+            // that is a angle btw vector (0,-1,0) and moon position vector in geocentrical coordinates
+            double MoonRot = AngleBtw(0,-1,0,SolarSystem.X[MOON] - SolarSystem.X[EARTH],SolarSystem.Y[MOON] - SolarSystem.Y[EARTH],SolarSystem.Z[MOON] - SolarSystem.Z[EARTH]);
+
+            fprintf(VisualFile,"	<Object>\n");
             fprintf(VisualFile,"		<type>Earth</type>\n");
 			fprintf(VisualFile,"		<X>%.18g</X>\n",SolarSystem.X[EARTH]);
 			fprintf(VisualFile,"		<Y>%.18g</Y>\n",SolarSystem.Y[EARTH]);
 			fprintf(VisualFile,"		<Z>%.18g</Z>\n",SolarSystem.Z[EARTH]);
 			fprintf(VisualFile,"		<R>%.18g</R>\n",EarthR);
+            fprintf(VisualFile,"		<Rot>%.18g</Rot>\n",GST*180.0/M_PI); // convert to degree
 			fprintf(VisualFile,"	</Object>\n");
 			fprintf(VisualFile,"	<Object>\n");
 			fprintf(VisualFile,"		<type>Sun</type>\n");
@@ -5091,6 +5105,7 @@ void dumpTRAvisual(long i)
 			fprintf(VisualFile,"		<Y>%.18g</Y>\n",SolarSystem.Y[SUN]);
 			fprintf(VisualFile,"		<Z>%.18g</Z>\n",SolarSystem.Z[SUN]);
 			fprintf(VisualFile,"		<R>%.18g</R>\n",SunR);
+            fprintf(VisualFile,"		<Rot>%.18g</Rot>\n",0);
 			fprintf(VisualFile,"	</Object>\n");
 			fprintf(VisualFile,"	<Object>\n");
 			fprintf(VisualFile,"		<type>Moon</type>\n");
@@ -5098,11 +5113,11 @@ void dumpTRAvisual(long i)
 			fprintf(VisualFile,"		<Y>%.18g</Y>\n",SolarSystem.Y[MOON]);
 			fprintf(VisualFile,"		<Z>%.18g</Z>\n",SolarSystem.Z[MOON]);
 			fprintf(VisualFile,"		<R>%.18g</R>\n",MoonR);
+            fprintf(VisualFile,"		<Rot>%.18g</Rot>\n",MoonRot);
 			fprintf(VisualFile,"	</Object>\n");
             fprintf(VisualFile,"	<ObjectTime>\n");
 		    fprintf(VisualFile,"		<timeJD>%.18g</timeJD>\n", dStartJD + ((double)i)/(24.0*60.0*60.0));
-            SYSTEMTIME ThatTime; 
-            ConvertJulianDayToDateAndTime(dStartJD + ((double)i)/(24.0*60.0*60.0), &ThatTime);
+            
             fprintf(VisualFile,"		<timeYYDDMMHHMMSS>%02d/%02d/%02d %02d:%02d:%02d</timeYYDDMMHHMMSS>\n", ThatTime.wYear-2000,ThatTime.wMonth,ThatTime.wDay,ThatTime.wHour,ThatTime.wMinute,ThatTime.wSecond);
             fprintf(VisualFile,"		<ReloadInSec>00001</ReloadInSec>\n"); // for the best case it is 1 sec refresh == that value has to be  
             fprintf(VisualFile,"	</ObjectTime>\n");
