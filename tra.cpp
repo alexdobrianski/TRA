@@ -840,6 +840,10 @@ int LastEngine = 0;
 int iItaration = 0;
 
 
+// ground stations
+double GrLat[10];
+double GrLong[10];
+
 void IteraSolarSystem(int TimeDirection, TRAOBJ * SlS)
 {
     int i;
@@ -1368,6 +1372,18 @@ void getXYZMoon(double LongOnMoon,double LatiOnMoon,double &PosXMoon,double &Pos
     PosZMoon =   dRadius * SatZSin + SlS->Z[iRefMOON];
     PosXMoon = - dRadius * SatXSin * SatZCos + SlS->X[iRefMOON];
     PosYMoon =   dRadius * SatYCos * SatZCos + SlS->Y[iRefMOON];
+}
+void GetXYZfromLatLong(double Long,double Lat,double &PosX,double &PosY,double &PosZ, double dRadius)
+{
+//   LAT = latitude * pi/180    // shirota
+//   LON = longitude * pi/180   // dolgota
+//   Y =  R * cos(LAT) * cos(LON)
+//   Z =  R * sin(LAT) 
+//   X = -R * cos(LAT) * sin(LON)
+
+    PosZ =   dRadius * sin(Lat* M_PI/180.0);
+    PosX = - dRadius * cos(Lat* M_PI/180.0) * sin(Long* M_PI/180.0);
+    PosY =   dRadius * cos(Lat* M_PI/180.0) * sin(Long* M_PI/180.0);
 }
 
 #ifdef _DO_VISUALIZATION
@@ -3044,10 +3060,20 @@ BOOL ParsURL(char * URLServer, int *port, char* URL,  char * szParsingName)
 //
 //
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+int iGr = 0;
+
 void ParamCommon(char *szString)
 {
     XML_BEGIN;
     XML_SECTION(TraInfo);
+        IF_XML_READ(GRSTNLat) 
+        {
+            GrLat[iGr] = atof(pszQuo);
+        }
+        IF_XML_READ(GRSTNLong) 
+        {
+            GrLong[iGr++] = atof(pszQuo);
+        }
         IF_XML_READ(dStartJD) 
         {
 			TotalDays = 0;
@@ -5121,6 +5147,18 @@ void dumpTRAvisual(long i)
             fprintf(VisualFile,"		<timeYYDDMMHHMMSS>%02d/%02d/%02d %02d:%02d:%02d</timeYYDDMMHHMMSS>\n", ThatTime.wYear-2000,ThatTime.wMonth,ThatTime.wDay,ThatTime.wHour,ThatTime.wMinute,ThatTime.wSecond);
             fprintf(VisualFile,"		<ReloadInSec>00001</ReloadInSec>\n"); // for the best case it is 1 sec refresh == that value has to be  
             fprintf(VisualFile,"	</ObjectTime>\n");
+            for (int i= 0; i <iGr; i++)
+            {
+                fprintf(VisualFile,"	<GrSt>\n");
+                // now need to calculate coordinates based on latitude and longitude
+                double PosX;double PosY;double PosZ;
+                GetXYZfromLatLong(GrLong[i], GrLat[i],PosX,PosY,PosZ, EarthR);
+                fprintf(VisualFile,"		<type>GrStn</type>\n");
+                fprintf(VisualFile,"		<X>%.18g</X>\n",PosX);
+                fprintf(VisualFile,"		<Y>%.18g</Y>\n",PosY);
+                fprintf(VisualFile,"		<Z>%.18g</Z>\n",PosZ);
+                fprintf(VisualFile,"	</GrSt>\n");
+            }
             fprintf(VisualFile,"</Universe>\n");
 			fclose(VisualFile);
             VisualFile = NULL;
