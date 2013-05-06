@@ -1383,7 +1383,7 @@ void GetXYZfromLatLong(double Long,double Lat,double &PosX,double &PosY,double &
 
     PosZ =   dRadius * sin(Lat* M_PI/180.0);
     PosX = - dRadius * cos(Lat* M_PI/180.0) * sin(Long* M_PI/180.0);
-    PosY =   dRadius * cos(Lat* M_PI/180.0) * sin(Long* M_PI/180.0);
+    PosY =   dRadius * cos(Lat* M_PI/180.0) * cos(Long* M_PI/180.0);
 }
 
 #ifdef _DO_VISUALIZATION
@@ -3089,8 +3089,6 @@ void ParamCommon(char *szString)
 				int iCurSec;
                 int Iret = GetTimeZoneInformation(&tmzone); 
                 GetSystemTime(&MyTime);
-                if (Iret == TIME_ZONE_ID_DAYLIGHT)
-                    MyTime.wHour--;
 
                 iYear = MyTime.wYear-2000;
 				iDays = iDayOfTheYearZeroBase(MyTime.wDay, MyTime.wMonth, MyTime.wYear);
@@ -3099,6 +3097,11 @@ void ParamCommon(char *szString)
 				iCurSec += MyTime.wSecond;
 				dStartJD = iYear *1000.0 + iDays;
 				dStartJD += (((double)iCurSec)+ ((double)MyTime.wMilliseconds/1000.))/ (24.0*60.0*60.0);
+                if (Iret == TIME_ZONE_ID_DAYLIGHT)
+                {
+                   dStartJD -= 1/24.0;
+                }
+
                 dStartJD -= atof(pszQuo)/(24.0*60.0);
 				dStartJD = ConverEpochDate2JulianDay(dStartJD);
 				TotalDays = (60.0*atof(pszQuo))/(24.0*60.0*60);
@@ -5075,18 +5078,11 @@ void dumpTRAvisual(long i)
 		    fprintf(VisualFile,"<Universe>\n");
         }
     }
+	if (VisualFile)
+    {
 
-	if (OutLast == FALSE)
-	{
-		if (VisualFile)
-		{
-		    //fprintf(VisualFile,"	<MoonObject>\n\r");
-            //fprintf(VisualFile,"		<type>MoonTra</type>\n\r");
-		    //fprintf(VisualFile,"	    <time>%.18g</time>\n\r", dStartJD + ((double)i)/(24.0*60.0*60.0));
-			//fprintf(VisualFile,"		<X>%.18g</X>\n\r",SolarSystem.X[MOON]-SolarSystem.X[EARTH]);
-			//fprintf(VisualFile,"		<Y>%.18g</Y>\n\r",SolarSystem.Y[MOON]-SolarSystem.Y[EARTH]);
-			//fprintf(VisualFile,"		<Z>%.18g</Z>\n\r",SolarSystem.Z[MOON]-SolarSystem.Z[EARTH]);
-			//fprintf(VisualFile,"	</MoonObject>\n\r");
+	    //if (OutLast == FALSE)
+	    {
             for (int iSat = 0; iSat < Sat.Elem; iSat++)
             {
                 fprintf(VisualFile,"	<Sat%d>\n",iSat);
@@ -5095,15 +5091,34 @@ void dumpTRAvisual(long i)
 			    fprintf(VisualFile,"		<X>%.18g</X>\n",Sat.X[iSat]-SolarSystem.X[EARTH]);
 			    fprintf(VisualFile,"		<Y>%.18g</Y>\n",Sat.Y[iSat]-SolarSystem.Y[EARTH]);
 			    fprintf(VisualFile,"		<Z>%.18g</Z>\n",Sat.Z[iSat]-SolarSystem.Z[EARTH]);
+                if (iSat == 0) // only for a first satellite - check visibility from ground stations
+                {
+                    // check is it from now time till end of the simulation
+                    if ((iTotalSec - i) < 3* 60)
+                    {
+                        SYSTEMTIME ThatTime; 
+                        ConvertJulianDayToDateAndTime(dStartJD + ((double)i)/(24.0*60.0*60.0), &ThatTime);
+                        SUN_08 (ThatTime.wYear,
+                                iDayOfTheYearZeroBase(ThatTime.wDay, ThatTime.wMonth, ThatTime.wYear) ,
+                                ThatTime.wHour,ThatTime.wMinute,ThatTime.wSecond,
+                                GST,SLONG,SRASN,SDEC);
+                        // only for red line do the check
+                        for (int jGr = 0; jGr < iGr; jGr++)
+                        {
+                            double PosX;double PosY;double PosZ;
+                            GetXYZfromLatLong(GrLong[jGr]-GST*180.0/M_PI, GrLat[jGr],PosX,PosY,PosZ, EarthR);
+                            fprintf(VisualFile,"		<GrStCon>%d</GrStCon>\n",jGr);
+                            fprintf(VisualFile,"		<X>%.18g</X>\n",PosX);
+                            fprintf(VisualFile,"		<Y>%.18g</Y>\n",PosY);
+                            fprintf(VisualFile,"		<Z>%.18g</Z>\n",PosZ);
+                        }
+                    }
+                }
 			    fprintf(VisualFile,"	</Sat%d>\n",iSat);
             }
         }
-    }
-	else
-	{
-
-		if (VisualFile)
-		{
+	    if (OutLast == TRUE)
+	    {
             SYSTEMTIME ThatTime; 
             ConvertJulianDayToDateAndTime(dStartJD + ((double)i)/(24.0*60.0*60.0), &ThatTime);
             GreenwichA = GreenwichAscension(dStartJD + ((double)i)/(24.0*60.0*60.0));
