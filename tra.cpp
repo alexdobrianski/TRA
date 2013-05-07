@@ -2836,6 +2836,7 @@ void ConvertJulianDayToDateAndTime(double JulianDay, SYSTEMTIME *ThatTime)
     long daysfrom2000 = JulianDay - 2451544.5;
     double flInDay = (JulianDay - 2451544.5) - (double)daysfrom2000; 
     int iYear = 0;
+    daysfrom2000 += 1; // 1Jan must be 1;
     while (daysfrom2000 > 366)
     {
         switch(iYear)
@@ -2901,22 +2902,26 @@ void ConvertJulianDayToDateAndTime(double JulianDay, SYSTEMTIME *ThatTime)
         if (++iMonth == 12) // what ?? getout!!!
             break;
     }
-    int iDay  = daysfrom2000+1;
+    int iDay  = daysfrom2000;//+1;
     
     int iHour = flInDay*24;
     int iMinutes = ((flInDay - ((double)iHour)/24.0))*(24.0*60.0);
-    int iSec = ((flInDay - ((double)iHour)/24.0) - ((double)iMinutes)/(24.0*60.0))*(24.0*60.0*60.0);
+    int iSec =   ((flInDay - ((double)iHour)/24.0) - ((double)iMinutes)/(24.0*60.0))*(24.0*60.0*60.0);
+    int iMils = (flInDay - ((double)iHour)/(24.0) - ((double)iMinutes)/(24.0*60.0) - ((double)iSec)/(24.0*60.0*60.0))*(24.0*60.0*60.0*1000.0);
     ThatTime->wMonth = iMonth;
     ThatTime->wDay = iDay;
     ThatTime->wHour = iHour;
     ThatTime->wMinute = iMinutes;
     ThatTime->wSecond = iSec;
-    ThatTime->wMilliseconds = 0;
+    ThatTime->wMilliseconds = iMils;
     ThatTime->wDayOfWeek = 0;
 }
 long double ConverEpochDate2JulianDay(long double KeplerDate)
 {
+    // TLE elements is 1 day based - needs to minus at the end one day
     int iYear = KeplerDate /1000;
+    // date as it is = 2000/01/01     2451544.5, 2451910.5, 2452275.5, 2452640.5, 2453005.5, 2453371.5, 2453736.5, 2013-2456293.5
+    // 
     double t2000_01_01_01 = 2451544.5;
     switch(iYear)
     {
@@ -2946,9 +2951,13 @@ long double ConverEpochDate2JulianDay(long double KeplerDate)
     case  2:t2000_01_01_01+=365;
     case  1:t2000_01_01_01+=366;
     case  0:;
-        // minus years = if you interesting in anything from last century or use formala!!
+        // minus years = add if you interesting in anything from last century or use formala!!
     }
-    return t2000_01_01_01+KeplerDate - ((long double)(iYear*1000));
+    //long it2000_01_01_01 = t2000_01_01_01;
+    //double RestOfTheDay = t2000_01_01_01 - (double)it2000_01_01_01;
+    return t2000_01_01_01// - RestOfTheDay 
+            + KeplerDate - ((long double)(iYear*1000))
+            -1; // epoch date is 1== 1 Jan - needs to adjust date.
 }
 
 
@@ -3015,6 +3024,21 @@ int iDayOfTheYearZeroBase(int iDay, int iMonth, int iYear)
 		break;
 	}
 	return iDays;
+}
+double ConvertDateTimeToTLEEpoch(int iDay, int iMonth, int iYear, int iHour, int iMin, int iSec, int iMills)
+{
+    // An epoch of 98001.00000000 corresponds to 0000 UT on 1998 January 01—in other words, 
+    // midnight between 1997 December 31 and 1998 January 01. 
+    // An epoch of 98000.00000000 would actually correspond to the beginning of 1997 December 31—strange as that might seem. 
+    // Note that the epoch day starts at UT midnight (not noon) and that all times are measured mean solar rather than sidereal time units.
+    int mYear = iYear-2000;
+    int mDays = iDayOfTheYearZeroBase(iDay, iMonth, iYear)+1;
+	long mCurSec = iHour * 60*60;
+    mCurSec += iMin *60;
+    mCurSec += iSec;
+	double dEpoch = mYear *1000.0 + mDays;
+	dEpoch += (((double)mCurSec)+ ((double)iMills/1000.))/ (24.0*60.0*60.0);
+    return dEpoch;
 }
 
 char szURLTraVisualFileName[3*_MAX_PATH];
@@ -3089,23 +3113,31 @@ void ParamCommon(char *szString)
 				int iCurSec;
                 int Iret = GetTimeZoneInformation(&tmzone); 
                 GetSystemTime(&MyTime);
+                //double dEpoch = ConvertDateTimeToTLEEpoch(1, 1, 2013, 0, 0, 0, 0);
+                //dStartJD = ConverEpochDate2JulianDay(dEpoch);
+                double dEpoch = ConvertDateTimeToTLEEpoch(MyTime.wDay, MyTime.wMonth, MyTime.wYear, MyTime.wHour, MyTime.wMinute, MyTime.wSecond, MyTime.wMilliseconds);
+                dStartJD = ConverEpochDate2JulianDay(dEpoch);
+                //iYear = MyTime.wYear-2000;
+				//iDays = iDayOfTheYearZeroBase(MyTime.wDay, MyTime.wMonth, MyTime.wYear);
+				//iCurSec = MyTime.wHour * 60*60;
+				//iCurSec += MyTime.wMinute *60;
+				//iCurSec += MyTime.wSecond;
+				//dStartJD = iYear *1000.0 + iDays;
+				//dStartJD += (((double)iCurSec)+ ((double)MyTime.wMilliseconds/1000.))/ (24.0*60.0*60.0);
+                //if (Iret == TIME_ZONE_ID_DAYLIGHT)
+                //{
+                //   dStartJD -= 1/24.0;
+                //}
 
-                iYear = MyTime.wYear-2000;
-				iDays = iDayOfTheYearZeroBase(MyTime.wDay, MyTime.wMonth, MyTime.wYear);
-				iCurSec = MyTime.wHour * 60*60;
-				iCurSec += MyTime.wMinute *60;
-				iCurSec += MyTime.wSecond;
-				dStartJD = iYear *1000.0 + iDays;
-				dStartJD += (((double)iCurSec)+ ((double)MyTime.wMilliseconds/1000.))/ (24.0*60.0*60.0);
-                if (Iret == TIME_ZONE_ID_DAYLIGHT)
-                {
-                   dStartJD -= 1/24.0;
-                }
+                //dStartJD -= atof(pszQuo)/(24.0*60.0);
+                //dStartJD = ConverEpochDate2JulianDay(dStartJD);
+                //dEpoch -= atof(pszQuo)/(24.0*60.0);
+                //dStartJD = ConverEpochDate2JulianDay(dEpoch);
 
-                dStartJD -= atof(pszQuo)/(24.0*60.0);
-				dStartJD = ConverEpochDate2JulianDay(dStartJD);
+				
 				TotalDays = (60.0*atof(pszQuo))/(24.0*60.0*60);
-                dStartJD +=TotalDays + (60.0*3)/(24.0*60.0*60); // negative value !!! + 3 minutes
+                // negative value !!! + 3 minutes
+                dStartJD +=TotalDays + (60.0*3)/(24.0*60.0*60);
                 //ConvertJulianDayToDateAndTime(dStartJD, &ThatTime);
 			}
 			else
@@ -3126,13 +3158,15 @@ void ParamCommon(char *szString)
 						int iMM = atoi(&pszQuo[12]);
 						int iSS = atoi(&pszQuo[15]);
 						int iMLS = atoi(&pszQuo[18]);
-						int iDays = iDayOfTheYearZeroBase(iDD, iMO, iYY+2000);
-						int iCurSec = iHH * 60*60;
-						iCurSec += iMM *60;
-				        iCurSec += iSS;
-				        dStartJD = iYY *1000.0 + iDays;
-				        dStartJD += (((double)iCurSec)+ ((double)iMLS/1000.))/ (24.0*60.0*60.0);
-				        dStartJD = ConverEpochDate2JulianDay(dStartJD);
+                        double dEpoch = ConvertDateTimeToTLEEpoch(iDD, iMO, iYY+2000, iHH, iMM, iSS,iMLS);
+						//int iDays = iDayOfTheYearZeroBase(iDD, iMO, iYY+2000);
+						//int iCurSec = iHH * 60*60;
+						//iCurSec += iMM *60;
+				        //iCurSec += iSS;
+				        //dStartJD = iYY *1000.0 + iDays;
+				        //dStartJD += (((double)iCurSec)+ ((double)iMLS/1000.))/ (24.0*60.0*60.0);
+				        //dStartJD = ConverEpochDate2JulianDay(dStartJD);
+                        dStartJD = ConverEpochDate2JulianDay(dEpoch);
 					}
                     else // in a normal format
                     {
@@ -5081,49 +5115,50 @@ void dumpTRAvisual(long i)
 	if (VisualFile)
     {
 
-	    //if (OutLast == FALSE)
-	    {
-            for (int iSat = 0; iSat < Sat.Elem; iSat++)
+        for (int iSat = 0; iSat < Sat.Elem; iSat++)
+        {
+            fprintf(VisualFile,"	<Sat%d>\n",iSat);
+            //fprintf(VisualFile,"		<ID>SatTra</ID>\n");
+		    //fprintf(VisualFile,"		<time>%.18g</time>\n", dStartJD + ((double)i)/(24.0*60.0*60.0));
+			fprintf(VisualFile,"		<X>%.18g</X>\n",Sat.X[iSat]-SolarSystem.X[EARTH]);
+			fprintf(VisualFile,"		<Y>%.18g</Y>\n",Sat.Y[iSat]-SolarSystem.Y[EARTH]);
+			fprintf(VisualFile,"		<Z>%.18g</Z>\n",Sat.Z[iSat]-SolarSystem.Z[EARTH]);
+            if (iSat == 0) // only for a first satellite - check visibility from ground stations
             {
-                fprintf(VisualFile,"	<Sat%d>\n",iSat);
-                //fprintf(VisualFile,"		<ID>SatTra</ID>\n");
-		        //fprintf(VisualFile,"		<time>%.18g</time>\n", dStartJD + ((double)i)/(24.0*60.0*60.0));
-			    fprintf(VisualFile,"		<X>%.18g</X>\n",Sat.X[iSat]-SolarSystem.X[EARTH]);
-			    fprintf(VisualFile,"		<Y>%.18g</Y>\n",Sat.Y[iSat]-SolarSystem.Y[EARTH]);
-			    fprintf(VisualFile,"		<Z>%.18g</Z>\n",Sat.Z[iSat]-SolarSystem.Z[EARTH]);
-                if (iSat == 0) // only for a first satellite - check visibility from ground stations
+                // check is it from now time till end of the simulation
+                if ((iTotalSec - i) <= 3* 60)
                 {
-                    // check is it from now time till end of the simulation
-                    if ((iTotalSec - i) < 3* 60)
-                    {
-                        SYSTEMTIME ThatTime; 
-                        ConvertJulianDayToDateAndTime(dStartJD + ((double)i)/(24.0*60.0*60.0), &ThatTime);
-                        SUN_08 (ThatTime.wYear,
-                                iDayOfTheYearZeroBase(ThatTime.wDay, ThatTime.wMonth, ThatTime.wYear) ,
+                    SYSTEMTIME ThatTime; 
+                    TIME_ZONE_INFORMATION tmzone;
+                    ConvertJulianDayToDateAndTime(dStartJD + ((double)(i))/(24.0*60.0*60.0), &ThatTime);
+                    int Iret = GetTimeZoneInformation(&tmzone); 
+                    double dEpoch = ConvertDateTimeToTLEEpoch(ThatTime.wDay, ThatTime.wMonth, ThatTime.wYear, ThatTime.wHour, ThatTime.wMinute, ThatTime.wSecond, ThatTime.wMilliseconds);
+                    GreenwichA = GreenwichAscension(dEpoch);
+                    SUN_08 (ThatTime.wYear,
+                                iDayOfTheYearZeroBase(ThatTime.wDay, ThatTime.wMonth, ThatTime.wYear)+1 ,// in that function specified that 1 day is january 1
                                 ThatTime.wHour,ThatTime.wMinute,ThatTime.wSecond,
                                 GST,SLONG,SRASN,SDEC);
-                        // only for red line do the check
-                        for (int jGr = 0; jGr < iGr; jGr++)
-                        {
-                            double PosX;double PosY;double PosZ;
-                            GetXYZfromLatLong(GrLong[jGr]-GST*180.0/M_PI, GrLat[jGr],PosX,PosY,PosZ, EarthR);
-                            fprintf(VisualFile,"		<GrStCon>%d</GrStCon>\n",jGr);
-                            fprintf(VisualFile,"		<X>%.18g</X>\n",PosX);
-                            fprintf(VisualFile,"		<Y>%.18g</Y>\n",PosY);
-                            fprintf(VisualFile,"		<Z>%.18g</Z>\n",PosZ);
-                        }
+                    // only for red line do the check
+                    for (int jGr = 0; jGr < iGr; jGr++)
+                    {
+                        double PosX;double PosY;double PosZ;
+                        GetXYZfromLatLong(GrLong[jGr]+GST*180.0/M_PI-90.0, GrLat[jGr],PosX,PosY,PosZ, EarthR);
+                        fprintf(VisualFile,"		        <X%d>%.18g</X%d>\n",jGr,PosX,jGr);
+                        fprintf(VisualFile,"		        <Y%d>%.18g</Y%d>\n",jGr,PosY,jGr);
+                        fprintf(VisualFile,"		        <Z%d>%.18g</Z%d>\n",jGr,PosZ,jGr);
                     }
                 }
-			    fprintf(VisualFile,"	</Sat%d>\n",iSat);
             }
+            fprintf(VisualFile,"	</Sat%d>\n",iSat);
         }
 	    if (OutLast == TRUE)
 	    {
             SYSTEMTIME ThatTime; 
             ConvertJulianDayToDateAndTime(dStartJD + ((double)i)/(24.0*60.0*60.0), &ThatTime);
-            GreenwichA = GreenwichAscension(dStartJD + ((double)i)/(24.0*60.0*60.0));
+            double dEpoch = ConvertDateTimeToTLEEpoch(ThatTime.wDay, ThatTime.wMonth, ThatTime.wYear, ThatTime.wHour, ThatTime.wMinute, ThatTime.wSecond, ThatTime.wMilliseconds);
+            GreenwichA = GreenwichAscension(dEpoch);
             SUN_08 (ThatTime.wYear,
-                iDayOfTheYearZeroBase(ThatTime.wDay, ThatTime.wMonth, ThatTime.wYear) ,
+                iDayOfTheYearZeroBase(ThatTime.wDay, ThatTime.wMonth, ThatTime.wYear) + 1 , // in fucntion spec that 1 Jan == 1 
                 ThatTime.wHour,ThatTime.wMinute,ThatTime.wSecond,
                 GST,SLONG,SRASN,SDEC);
             // GST is a position Greenwich in rad 
@@ -5138,7 +5173,7 @@ void dumpTRAvisual(long i)
 			fprintf(VisualFile,"		<Y>%.18g</Y>\n",SolarSystem.Y[EARTH]);
 			fprintf(VisualFile,"		<Z>%.18g</Z>\n",SolarSystem.Z[EARTH]);
 			fprintf(VisualFile,"		<R>%.18g</R>\n",EarthR);
-            fprintf(VisualFile,"		<Rot>%.18g</Rot>\n",GST*180.0/M_PI); // convert to degree
+            fprintf(VisualFile,"		<Rot>%.18g</Rot>\n",GST*180.0/M_PI - 90.0); // convert to degree
 			fprintf(VisualFile,"	</Object>\n");
 			fprintf(VisualFile,"	<Object>\n");
 			fprintf(VisualFile,"		<type>Sun</type>\n");
@@ -5168,7 +5203,7 @@ void dumpTRAvisual(long i)
                 // now need to calculate coordinates based on latitude and longitude
                 double PosX;double PosY;double PosZ;
                 GetXYZfromLatLong(GrLong[i], GrLat[i],PosX,PosY,PosZ, EarthR);
-                fprintf(VisualFile,"		<type>GrStn</type>\n");
+                //fprintf(VisualFile,"		<type>GrStn</type>\n");
                 fprintf(VisualFile,"		<X>%.18g</X>\n",PosX);
                 fprintf(VisualFile,"		<Y>%.18g</Y>\n",PosY);
                 fprintf(VisualFile,"		<Z>%.18g</Z>\n",PosZ);
