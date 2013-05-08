@@ -656,6 +656,7 @@ long OldCurentTimeSec;
 int OldCurentTimeTD;
 int OldCurentIteraPerSec;
 
+double dMinFromNow = 3.0;
 double dStartJD = 0.0;//2451544.5; // if value dStartJD not set (==0.0) then use value from keplers elements of a satelite 0
 // if it will be more then one satellite needs to set this value to a last epoch of all satellites
 
@@ -743,75 +744,6 @@ double MoonCurTimeS;
 double MoonTPeriod;
 int MoonKeplerDone = 0;
 
-//0         1         2         3         4         5         6         7
-//01234567890123456789012345678901234567890123456789012345678901234567890
-//1 25544U 98067A   04236.56031392  .00020137  00000-0  16538-3 0  5135\
-//2 25544  51.6335 341.7760 0007976 126.2523 325.9359 15.70406856328903"
-//    };
-    // "ISS (ZARYA)"    The common name for the object based on information from the SatCat.
-    // "1"              Line Number
-    // "25544"          Object Identification Number
-    // "U"              Elset Classification
-    // "98067A"         International Designator
-    //  98                   - designate the launch year of the object
-    //    067                - launch number, starting from the beginning of the year
-    //       A               - indicates the piece of the launch: "A" is a payload 
-    // "04236.56031392" Element Set Epoch (UTC)
-    //  04                   - year
-    //    236.56031392       - day
-//long double ProbEpoch;
-//long double ProbEpochS;
-
-	// "_.00020137"      1st Derivative of the Mean Motion with respect to Time
-//long double ProbFirstDervMeanMotion;
-    // "_00000-0"        2nd Derivative of the Mean Motion with respect to Time (decimal point assumed)
-//long double ProbSecondDervmeanMotion;
-    // "_16538-3"        B* Drag Term
-//long double ProbDragterm;
-    // "0"              Element Set Type
-//unsigned char ProbElementSetType;
-    // "_513"            Element Number
-    // "5"              Checksum
-    //                        The checksum is the sum of all of the character in the data line, modulo 10. 
-    //                        In this formula, the following non-numeric characters are assigned the indicated values: 
-    //                        Blanks, periods, letters, '+' signs -> 0
-    //                        '-' signs -> 1
-    // "2"             Line Number
-    // "25544"         Object Identification Number
-    // "_51.6335"       Orbit Inclination (degrees)
-//long double ProbIncl;
-    // "341.7760"      Right Ascension of Ascending Node (degrees)
-//long double ProbAscNode;
-	// "0007976"       Eccentricity (decimal point assumed)
-//long double ProbEcc;
-    // "126.2523"      Argument of Perigee (degrees)
-//long double ProbArgPer;
-//long double ProbPer;
-    // "325.9359"      Mean Anomaly (degrees)
-//long double ProbMeanAnom;
-	// "15.70406856"    Mean Motion (revolutions/day)
-//long double ProbMeanMotion;
-    // "328903"        Revolution Number at Epoch
-//long double ProbRevAtEpoch;
-
-// XML read vars
-//double ProbVX = .0;
-//double ProbVY = 10000.;
-//double ProbVZ = 0;
-//double ProbX = 6371000.0 + 200.;
-//double ProbY = .0;
-//double ProbZ = .0;
-//double ProbM = 150.;
-//double ProbTSec;
-//double ProbTDays;
-//long double ProbTPeriod;
-//double ProbAph;
-//double ProbSmAx;
-//double ProbCurTime;
-//double ProbCurTimeS;
-
-
-
 
 double TimeSl = 0;//0.01;
 double TimeSlOld = 0;//0.01;
@@ -825,9 +757,6 @@ BOOL OutLast = FALSE;
 double TotalDays;
 long iTotalSec;
 double IterPerSec;
-//char szProbKeplerLine1[1024];
-//char szProbKeplerLine2[1024];
-//char szProbKeplerLine3[1024];
 
 char szMoonKeplerLine1[1024];
 char szMoonKeplerLine2[1024];
@@ -3090,6 +3019,11 @@ void ParamCommon(char *szString)
 {
     XML_BEGIN;
     XML_SECTION(TraInfo);
+    
+        IF_XML_READ(dMinFromNow) 
+        {
+            dMinFromNow = atof(pszQuo);
+        }
         IF_XML_READ(GRSTNLat) 
         {
             GrLat[iGr] = atof(pszQuo);
@@ -3117,28 +3051,10 @@ void ParamCommon(char *szString)
                 //dStartJD = ConverEpochDate2JulianDay(dEpoch);
                 double dEpoch = ConvertDateTimeToTLEEpoch(MyTime.wDay, MyTime.wMonth, MyTime.wYear, MyTime.wHour, MyTime.wMinute, MyTime.wSecond, MyTime.wMilliseconds);
                 dStartJD = ConverEpochDate2JulianDay(dEpoch);
-                //iYear = MyTime.wYear-2000;
-				//iDays = iDayOfTheYearZeroBase(MyTime.wDay, MyTime.wMonth, MyTime.wYear);
-				//iCurSec = MyTime.wHour * 60*60;
-				//iCurSec += MyTime.wMinute *60;
-				//iCurSec += MyTime.wSecond;
-				//dStartJD = iYear *1000.0 + iDays;
-				//dStartJD += (((double)iCurSec)+ ((double)MyTime.wMilliseconds/1000.))/ (24.0*60.0*60.0);
-                //if (Iret == TIME_ZONE_ID_DAYLIGHT)
-                //{
-                //   dStartJD -= 1/24.0;
-                //}
-
-                //dStartJD -= atof(pszQuo)/(24.0*60.0);
-                //dStartJD = ConverEpochDate2JulianDay(dStartJD);
-                //dEpoch -= atof(pszQuo)/(24.0*60.0);
-                //dStartJD = ConverEpochDate2JulianDay(dEpoch);
-
 				
 				TotalDays = (60.0*atof(pszQuo))/(24.0*60.0*60);
                 // negative value !!! + 3 minutes
-                dStartJD +=TotalDays + (60.0*3)/(24.0*60.0*60);
-                //ConvertJulianDayToDateAndTime(dStartJD, &ThatTime);
+                dStartJD +=TotalDays + (60.0*dMinFromNow)/(24.0*60.0*60);
 			}
 			else
 			{
@@ -3306,6 +3222,15 @@ long double AngleBtw(long double X1,long double Y1,long double Z1,long double X2
 	long double Cosv1v2 = (X1*X2 + Y1*Y2 + Z1*Z2)/v1Len/v2Len;
 	long double Angle = acos(Cosv1v2);
 	return (Angle * 180 /M_PI);
+}
+// calculates ortogonal vector
+void Ort(long double &Xpr, long double &Ypr, long double &Zpr, long double u1, long double u2, long double u3, long double v1, long double v2, long double v3)
+{
+    Xpr = u2*v3 - u3*v2;
+    Ypr = u3*v1 - u1*v3;
+    Zpr = u1*v2-u2*v1;
+    double prMod = sqrt(Xpr*Xpr + Ypr*Ypr +Zpr*Zpr);
+    Xpr/=prMod;Ypr/=prMod;Zpr/=prMod;
 }
 void SUN_08 (int IYEAR,int IDAY,int IHOUR,int MIN,int ISEC,
 	long double &GST,long double &SLONG,long double &SRASN,long double &SDEC)
@@ -5126,7 +5051,7 @@ void dumpTRAvisual(long i)
             if (iSat == 0) // only for a first satellite - check visibility from ground stations
             {
                 // check is it from now time till end of the simulation
-                if ((iTotalSec - i) <= 3* 60)
+                if ((iTotalSec - i) <= dMinFromNow* 60)
                 {
                     SYSTEMTIME ThatTime; 
                     TIME_ZONE_INFORMATION tmzone;
@@ -5143,9 +5068,14 @@ void dumpTRAvisual(long i)
                     {
                         double PosX;double PosY;double PosZ;
                         GetXYZfromLatLong(GrLong[jGr]+GST*180.0/M_PI-90.0, GrLat[jGr],PosX,PosY,PosZ, EarthR);
-                        fprintf(VisualFile,"		        <X%d>%.18g</X%d>\n",jGr,PosX,jGr);
-                        fprintf(VisualFile,"		        <Y%d>%.18g</Y%d>\n",jGr,PosY,jGr);
-                        fprintf(VisualFile,"		        <Z%d>%.18g</Z%d>\n",jGr,PosZ,jGr);
+                        // check: does Cubesat in proximity of a ground station : angle btw vactor-radius and vector cubesat-ground station > 90 degree
+                        if (AngleBtw(-PosX,-PosY,-PosZ,
+                            (Sat.X[iSat]-SolarSystem.X[EARTH])-PosX,(Sat.Y[iSat]-SolarSystem.Y[EARTH])-PosY,(Sat.Z[iSat]-SolarSystem.Z[EARTH])-PosZ) > 90.0)
+                        {
+                            fprintf(VisualFile,"		        <X%d>%.18g</X%d>\n",jGr,PosX,jGr);
+                            fprintf(VisualFile,"		        <Y%d>%.18g</Y%d>\n",jGr,PosY,jGr);
+                            fprintf(VisualFile,"		        <Z%d>%.18g</Z%d>\n",jGr,PosZ,jGr);
+                        }
                     }
                 }
             }
@@ -5196,6 +5126,7 @@ void dumpTRAvisual(long i)
             
             fprintf(VisualFile,"		<timeYYDDMMHHMMSS>%02d/%02d/%02d %02d:%02d:%02d</timeYYDDMMHHMMSS>\n", ThatTime.wYear-2000,ThatTime.wMonth,ThatTime.wDay,ThatTime.wHour,ThatTime.wMinute,ThatTime.wSecond);
             fprintf(VisualFile,"		<ReloadInSec>00001</ReloadInSec>\n"); // for the best case it is 1 sec refresh == that value has to be  
+            fprintf(VisualFile,"		<dMinFromNow>%d</dMinFromNow>\n",(int)dMinFromNow); // how many minutes from now to aproximate
             fprintf(VisualFile,"	</ObjectTime>\n");
             for (int i= 0; i <iGr; i++)
             {
