@@ -16,13 +16,14 @@
     <TRA:setting name="dStartJD0" value="2455625.1696833" />
     <TRA:setting name="dStartJD0" value="11291.79166666" />
     <TRA:setting name="dStartJD0" value="13075.0" />
+    <TRA:setting name="dMinFromNow" value="50" />
     <TRA:setting name="dStartJD" value="-60" />
-    <TRA:setting name="dStartJD0" value="21/03/13 11:02:03:004" />
+    <TRA:setting name="dStartJD0" value="07/05/13 08:28:00:000" />
     <TRA:setting name="dStartJD0" value="11291.854004622962962962962962963" />
     <TRA:setting name="dStartJD0" value="11292.79166666" />
 
-    <TRA:setting name="TRAVisual" value="travisual.xml" />
-
+    <TRA:setting name="TRAVisual1" value="travisual.xml" />
+    <TRA:setting name="TRAVisual" value="http://localhost/SatCtrl/PostTra.aspx" />
 
     <TRA:setting name="RGBImageW" value="1280" />
     <TRA:setting name="RGBImageH" value="720" />
@@ -48,7 +49,9 @@
 <!-- know GMMoon and GMEarth will give proper value for M -->
     <TRA:setting name="Gbig" value="6.6742799999999995e-011" />
     <TRA:setting name="TotalDays0" value="1" />
-    <TRA:setting name="TotalDays" value="0.062337962962962962962962962962963" />
+    <TRA:setting name="TotalDays" value="0.0416666667" />
+
+    <TRA:setting name="TotalDays0" value="0.062337962962962962962962962962963" />
     <TRA:setting name="TotalDays0" value="0.124675925925925925925925925924" />
 
 
@@ -82,6 +85,44 @@
       <TRA:setting name="ProbKeplerLine1" value="0 NAVSTAR 18 (USA 50)" />
       <TRA:setting name="ProbKeplerLine2" value="0 NAVSTAR 18 (USA 50)" />
       <TRA:setting name="ProbKeplerLine3" value="2 20452 055.9375 302.3040 0010546 215.8509 286.6389 01.89596331165219" />
+
+         <TRA:setting name="GRSTNNAME" value="vancouver" />
+         <TRA:setting name="GRSTNLat" value="49.257735" />
+         <TRA:setting name="GRSTNLong" value="-123.123904" />
+
+
+         <TRA:setting name="GRSTNNAME" value="Sarasota" />
+         <TRA:setting name="GRSTNLat" value="27.306121" />
+         <TRA:setting name="GRSTNLong" value="-82.569112" />
+
+         <TRA:setting name="GRSTNNAME" value="Joao Pessoa" />
+         <TRA:setting name="GRSTNLat" value="-7.153526" />
+         <TRA:setting name="GRSTNLong" value="-34.88966" />
+
+         <TRA:setting name="GRSTNNAME" value="Cape Town" />
+         <TRA:setting name="GRSTNLat" value="-33.916743" />
+         <TRA:setting name="GRSTNLong" value="18.402658" />
+
+         <TRA:setting name="GRSTNNAME" value="Donetsk" />
+         <TRA:setting name="GRSTNLat" value="47.971091" />
+         <TRA:setting name="GRSTNLong" value="37.712352" />
+
+         <TRA:setting name="GRSTNNAME" value="Karaganda" />
+         <TRA:setting name="GRSTNLat" value="49.789355" />
+         <TRA:setting name="GRSTNLong" value="73.070583" />
+
+         <TRA:setting name="GRSTNNAME" value="Perth" />
+         <TRA:setting name="GRSTNLat" value="-31.967891" />
+         <TRA:setting name="GRSTNLong" value="115.883274" />
+
+         <TRA:setting name="GRSTNNAME" value="Hilo" />
+         <TRA:setting name="GRSTNLat" value="19.707243" />
+         <TRA:setting name="GRSTNLong" value="-155.064983" />
+
+
+         <TRA:setting name="GRSTNNAME" value="Rarotonga" />
+         <TRA:setting name="GRSTNLat" value="-21.255302" />
+         <TRA:setting name="GRSTNLong" value="-159.768333" />
 
 
 <!-- target point on the Moon -->
