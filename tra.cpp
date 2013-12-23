@@ -4161,6 +4161,8 @@ void ParamProb(char *szString)
             Sat.ProbDragterm[Sat.Elem] = atof(szTempo);
 			if (Sat.Kepler2[Sat.Elem][59] == '-')
 				Sat.ProbDragterm[Sat.Elem] *= pow(10., - (Sat.Kepler2[Sat.Elem][60] - '0'));
+                        else
+                            Sat.ProbDragterm[Sat.Elem] *= pow(10., (Sat.Kepler2[Sat.Elem][60] - '0'));
 			// "0"              Element Set Type
 			Sat.ProbElementSetType[Sat.Elem] = Sat.Kepler2[Sat.Elem][62];
 			// "_513"            Element Number
