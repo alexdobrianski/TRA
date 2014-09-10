@@ -328,16 +328,13 @@ typedef struct TraObj
         Pnk_tilda[1][0] = P[1];
         for (n = 2; n <=iLeg; n++)
         {
-            //switch(n)
-            //{
-            // rest can be suspended to recur formula
-            //case 2:LastP[i] = (-1.0 + 3.0*X*X)/2;break;
-            //case 3:P[i] = (-3.0 *X +5.0*X*X*X)/2;break;
-            //case 4:P[i] = (3.0 - 30.0 * X*X +35.0*(X*X)*(X*X))/8.0;break;
-            //case 5:P[i] = (15.0*X-70.0*(X*X)*X+63.0*(X*X)*(X*X)*X)/8.0;break;
-            //case 6:P[i] = (-5 + 105* (X*X) - 315.0*(X*X)*(X*X) + 231.0*(X*X)*(X*X)*(X*X))/16.0;break;
-            //default://Pn+1(a) = 1/(n+1) * ((2*n+1)*a*Pn(a) - n* Pn-1(a)
-                    // n= i-1 ; n+1 = (i-1)+1 ; n-1 = (i-1) -1;
+            // page 90
+            // (n + 1)Pn+1(z) ? (2n + 1)zPn(z) + nPn?1(z) = 0 =>
+            // (n + 1)Pn+1(z) = (2n + 1)zPn(z) - nPn?1(z) =>
+            // Pn+1(z) = ((2n + 1)zPn(z) - nPn?1(z))/(n + 1) =>
+            // or Pn(z) = ((2(n-1) + 1)zPn-1(z) - (n-1)Pn?2(z))/(n-1 + 1)
+            //
+
             P[n] = ((2.0* (n-1) +1) *sinTetta * P[n-1] - (n-1)*P[n-2])/((n-1)+1);
             Pnk_tilda[n][0] = P[n];
             //break;
@@ -547,7 +544,7 @@ typedef struct TraObj
         {
             Summ -= J[n]*R0divR[n]*P[n];
         }
-        // for now no earth rotation no acounted
+        // for now no earth rotation not acounted
         //+ SUM2=( (r0/r)**2 * P21(sinPHI) * (C21 * cos(1*Lambda) + S21*sin(1*Lanbda)) +
         //           (r0/r)**2 * P22(sinPhi) * (C22 *cos(2*Lambda) + S22*sin(2*Lambda))     )
         //Summ += R0divR[2] * LastPNK[2][1] * (CNK[2][1] * cos(Lambda) + SNK[2][1]*sin(Lambda)) +
@@ -950,110 +947,6 @@ void IteraSat(int TimeDirection, TRAOBJ * SlS, TRAOBJ * Sat)
                     Sat->DeltaVX =1-DX;
                     Sat->DeltaVY =1-DY;
                     Sat->DeltaVZ = 1-DZ;
-                    /*
-                    if (abs(Sat->LastSinTetta) < 0.1)
-                    {
-                        Sat->DeltaVX =1.00195;
-                        Sat->DeltaVY =1.00195;
-                        Sat->DeltaVZ = 1.0048;
-                    }
-                    else if (abs(Sat->LastSinTetta) < 0.25)
-                    {
-                        Sat->DeltaVX =1.0006105;
-                        Sat->DeltaVY =1.0006037;
-                        Sat->DeltaVZ = 1.003578;
-                    }
-                    else if (abs(Sat->LastSinTetta) < 0.3)
-                    {
-                        Sat->DeltaVX =1.0006105;
-                        Sat->DeltaVY =1.0006037;
-                        Sat->DeltaVZ = 1.003578;
-                    }
-                    else if (abs(Sat->LastSinTetta) < 0.35)
-                    {
-                        Sat->DeltaVX =1.00031;
-                        Sat->DeltaVY =1.0003065;
-                        Sat->DeltaVZ = 1.00338;
-                    }
-                    else if (abs(Sat->LastSinTetta) < 0.4)
-                    {
-                        Sat->DeltaVX =0.99984;
-                        Sat->DeltaVY =0.99982;
-                        Sat->DeltaVZ = 1.0031;
-                    }
-                    else if (abs(Sat->LastSinTetta) < 0.45)
-                    {
-                        Sat->DeltaVX =0.999895;
-                        Sat->DeltaVY =0.99989;
-                        Sat->DeltaVZ = 1.003062;
-                    }
-                    else if (abs(Sat->LastSinTetta) < 0.5)
-                    {
-                        Sat->DeltaVX =0.9995375;//0.9997;
-                        Sat->DeltaVY =0.999535;//0.999549;
-                        Sat->DeltaVZ = 1.002985;//1.002908;
-                    }
-                    else if (abs(Sat->LastSinTetta) < 0.55)
-                    {
-                        Sat->DeltaVX =0.99918;
-                        Sat->DeltaVY =0.99918;
-                        Sat->DeltaVZ = 1.002908;
-                    }
-                    else if (abs(Sat->LastSinTetta) < 0.6)
-                    {
-                        Sat->DeltaVX =0.99918;
-                        Sat->DeltaVY =0.99918;
-                        Sat->DeltaVZ = 1.002196;
-                    }
-                    else if (abs(Sat->LastSinTetta) < 0.65)
-                    {
-                        Sat->DeltaVX =0.99918;
-                        Sat->DeltaVY =0.99918;
-                        Sat->DeltaVZ = 1.002;
-                    }
-                    else if (abs(Sat->LastSinTetta) < 0.7)
-                    {
-                        Sat->DeltaVX =0.998397;
-                        Sat->DeltaVY =0.99918;
-                        Sat->DeltaVZ = 1.001900;
-                    }
-                    else if (abs(Sat->LastSinTetta) < 0.75)
-                    {
-                        Sat->DeltaVX =0.998;
-                        Sat->DeltaVY =0.99918;
-                        Sat->DeltaVZ = 1.001002;
-                    }
-                    else if (abs(Sat->LastSinTetta) < 0.8)
-                    {
-                        Sat->DeltaVX =0.998;
-                        Sat->DeltaVY =0.99918;
-                        Sat->DeltaVZ = 1.001002;
-                    }
-                    else if (abs(Sat->LastSinTetta) < 0.85)
-                    {
-                        Sat->DeltaVX =0.9968;
-                        Sat->DeltaVY =0.996845;
-                        Sat->DeltaVZ = 0.99986;
-                    }
-                    else if (abs(Sat->LastSinTetta) < 0.9)
-                    {
-                        Sat->DeltaVX =0.9968;
-                        Sat->DeltaVY =0.99651;
-                        Sat->DeltaVZ = 0.9991;
-                    }
-                    else if (abs(Sat->LastSinTetta) < 0.95)
-                    {
-                        Sat->DeltaVX =0.9968;
-                        Sat->DeltaVY =0.9960;
-                        Sat->DeltaVZ = 0.999525;
-                    }
-                    else
-                    {
-                        Sat->DeltaVX =1;
-                        Sat->DeltaVY =0.9960;
-                        Sat->DeltaVZ = 0.999525;
-                    }
-                   */
 
                     // is this a WGS84??:
                     //Temp = SlS->GM[j] / (R0_MODEL*R0_MODEL);
