@@ -23,7 +23,7 @@
     <TRA:setting name="dStartJD0" value="11292.79166666" />
 
     <TRA:setting name="TRAVisual1" value="travisual.xml" />
-    <TRA:setting name="TRAVisual" value="http://http://24.84.38.192/SatCtrl/PostTra.aspx" />
+    <TRA:setting name="TRAVisual" value="http://96.49.96.50/SatCtrl/PostTra.aspx" />
 
     <TRA:setting name="RGBImageW" value="1280" />
     <TRA:setting name="RGBImageH" value="720" />
