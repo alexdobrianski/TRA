@@ -1,6 +1,6 @@
 /***********************************************************************
      
-    2009-2013 (C) Alex Dobrianski tra.cpp oprbit calculation app
+    2009-2014 (C) Alex Dobrianski tra.cpp oprbit calculation app
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -220,32 +220,32 @@ typedef struct TraObj
 {
     int Elem;
     int flInUse[PLANET_COUNT];
-    double X[PLANET_COUNT];
-    double Y[PLANET_COUNT];
-    double Z[PLANET_COUNT];
-    double VX[PLANET_COUNT];
-    double VY[PLANET_COUNT];
-    double VZ[PLANET_COUNT];
+    long double X[PLANET_COUNT];
+    long double Y[PLANET_COUNT];
+    long double Z[PLANET_COUNT];
+    long double VX[PLANET_COUNT];
+    long double VY[PLANET_COUNT];
+    long double VZ[PLANET_COUNT];
 
-    double X_[PLANET_COUNT];
-    double VX_[PLANET_COUNT];
-    double FX[PLANET_COUNT];
-    double X__[PLANET_COUNT];
-    double Y_[PLANET_COUNT];
-    double VY_[PLANET_COUNT];
-    double FY[PLANET_COUNT];
-    double Y__[PLANET_COUNT];
-    double Z_[PLANET_COUNT];
-    double VZ_[PLANET_COUNT];
-    double FZ[PLANET_COUNT];
-    double Z__[PLANET_COUNT];
+    long double X_[PLANET_COUNT];
+    long double VX_[PLANET_COUNT];
+    long double FX[PLANET_COUNT];
+    long double X__[PLANET_COUNT];
+    long double Y_[PLANET_COUNT];
+    long double VY_[PLANET_COUNT];
+    long double FY[PLANET_COUNT];
+    long double Y__[PLANET_COUNT];
+    long double Z_[PLANET_COUNT];
+    long double VZ_[PLANET_COUNT];
+    long double FZ[PLANET_COUNT];
+    long double Z__[PLANET_COUNT];
 
-    double GM[PLANET_COUNT];
-    double M[PLANET_COUNT];
-    double GMxM[PLANET_COUNT][PLANET_COUNT];
-    double Distance[PLANET_COUNT][PLANET_COUNT];
-    double Distance2[PLANET_COUNT][PLANET_COUNT];
-    double ForceDD[PLANET_COUNT][PLANET_COUNT];
+    long double GM[PLANET_COUNT];
+    long double M[PLANET_COUNT];
+    long double GMxM[PLANET_COUNT][PLANET_COUNT];
+    long double Distance[PLANET_COUNT][PLANET_COUNT];
+    long double Distance2[PLANET_COUNT][PLANET_COUNT];
+    long double ForceDD[PLANET_COUNT][PLANET_COUNT];
     char Kepler1[PLANET_COUNT][100];
     char Kepler2[PLANET_COUNT][100];
     char Kepler3[PLANET_COUNT][100];
@@ -272,29 +272,29 @@ typedef struct TraObj
     int iLeg;
     int iLeg_longit;
     int LegBody;
-    double J[MAX_COEF_J];
-    double CNK[MAX_COEF_J][MAX_COEF_J];
-    double SNK[MAX_COEF_J][MAX_COEF_J];
-    double CosTetta[MAX_COEF_J];
-    double SinTetta[MAX_COEF_J];
-    double P[MAX_COEF_J];
-    double Rn1divR[MAX_COEF_J];
-    double Ptilda[MAX_COEF_J];
-    double Pnk_tilda[MAX_COEF_J][MAX_COEF_J];
+    long double J[MAX_COEF_J];
+    long double CNK[MAX_COEF_J][MAX_COEF_J];
+    long double SNK[MAX_COEF_J][MAX_COEF_J];
+    long double CosTetta[MAX_COEF_J];
+    long double SinTetta[MAX_COEF_J];
+    long double P[MAX_COEF_J];
+    long double Rn1divR[MAX_COEF_J];
+    long double Ptilda[MAX_COEF_J];
+    long double Pnk_tilda[MAX_COEF_J][MAX_COEF_J];
     //double Pnk[MAX_COEF_J][MAX_COEF_J];
-    double Qnk[MAX_COEF_J][MAX_COEF_J];
-    double R0divR[MAX_COEF_J];
-    double ForceDD_;
-    double Lambda;
-    double DeltaVX;
-    double DeltaVY;
-    double DeltaVZ;
-    double Xk[MAX_COEF_J];
-    double Yk[MAX_COEF_J];
-    double XkDxr[MAX_COEF_J];
-    double YkDxr[MAX_COEF_J];
-    double XkDyr[MAX_COEF_J];
-    double YkDyr[MAX_COEF_J];
+    long double Qnk[MAX_COEF_J][MAX_COEF_J];
+    long double R0divR[MAX_COEF_J];
+    long double ForceDD_;
+    long double Lambda;
+    long double DeltaVX;
+    long double DeltaVY;
+    long double DeltaVZ;
+    long double Xk[MAX_COEF_J];
+    long double Yk[MAX_COEF_J];
+    long double XkDxr[MAX_COEF_J];
+    long double YkDxr[MAX_COEF_J];
+    long double XkDyr[MAX_COEF_J];
+    long double YkDyr[MAX_COEF_J];
     void CalcCosK(void)
     {
         
@@ -306,7 +306,9 @@ typedef struct TraObj
         // XdivR, YdivR - must be rotated from original X,Y based on a time (and angle Lambda) 
         //
         //
-        Lambda = 0.36;//1.72944494;
+        Lambda +=1.075; //0.183;//0.36;//1.72944494;
+        //Lambda += 1.2337005501361698273543113749845;
+        //Lambda = -Lambda;
         if (Lambda != -2)
         {
             XdivR = cos(Lambda) * XdivR - sin(Lambda) * YdivR;
@@ -328,14 +330,16 @@ typedef struct TraObj
         Pnk_tilda[1][0] = P[1];
         for (n = 2; n <=iLeg; n++)
         {
-            // page 90
-            // (n + 1)Pn+1(z) ? (2n + 1)zPn(z) + nPn?1(z) = 0 =>
-            // (n + 1)Pn+1(z) = (2n + 1)zPn(z) - nPn?1(z) =>
-            // Pn+1(z) = ((2n + 1)zPn(z) - nPn?1(z))/(n + 1) =>
-            // or Pn(z) = ((2(n-1) + 1)zPn-1(z) - (n-1)Pn?2(z))/(n-1 + 1)
-            //
+            // page 90- formula 8
+            // (n + 1)Pn+1(z) - (2n + 1)zPn(z) + nPn-1(z) = 0 =>
+            // (n + 1)Pn+1(z) = (2n + 1)zPn(z) - nPn-1(z) =>
+            // Pn+1(z) = ((2n + 1)zPn(z) - nPn-1(z))/(n + 1) =>
+            // or Pn(z) = ((2(n-1) + 1)zPn-1(z) - (n-1)Pn-2(z))/(n-1 + 1)
+            // or Pn(z) = ((2n-1)  zPn-1(z) - (n-1)Pn-2(z))/n
+            
 
-            P[n] = ((2.0* (n-1) +1) *sinTetta * P[n-1] - (n-1)*P[n-2])/((n-1)+1);
+            //P[n] = ((2.0* (n-1) +1) *sinTetta * P[n-1] - (n-1)*P[n-2])/((n-1)+1);
+            P[n] = ((2.0* n-1.0) *sinTetta * P[n-1] - (n-1)*P[n-2])/n;
             Pnk_tilda[n][0] = P[n];
             //break;
             //}
@@ -769,6 +773,20 @@ int iItaration = 0;
 // ground stations
 double GrLat[10];
 double GrLong[10];
+typedef struct tagPulsars
+{
+    int N;
+    char Name[20];
+    double ELONG;
+    double ELAT;
+    double P0;
+    double S400mJy;
+
+} PULSARS, *PPULSARS;
+
+#define NPULSARS 150
+int nPulsars= 0;
+PULSARS Pulsars[150];
 
 void IteraSolarSystem(int TimeDirection, TRAOBJ * SlS)
 {
@@ -877,7 +895,8 @@ void IteraSolarSystem(int TimeDirection, TRAOBJ * SlS)
 #endif
     }
 }
-void IteraSat(int TimeDirection, TRAOBJ * SlS, TRAOBJ * Sat)
+long double GreenwichAscension(long double EP);
+void IteraSat(int TimeDirection, TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfCalc)
 {
     int i;
     int j;
@@ -886,28 +905,37 @@ void IteraSat(int TimeDirection, TRAOBJ * SlS, TRAOBJ * Sat)
     double DX,DY,DZ;
 
     // calculation of a forces
+    // loop for all calulated satellites
     for (i = 0; i < Sat->Elem; i++)
     {
-       
+       // loop for all selestial bodies
         for (j = 0; j < SlS->Elem; j++)
         {
+            // do we account that? Sun == yes Moon == yes but Saturn == probably no
             if (SlS->flInUse[j] ==0)
                 continue;
+            // that is the distance*distance from the satellite to selestial body
             double tD_Obj1Obj2 = (Sat->X[i] - SlS->X[j])*(Sat->X[i] - SlS->X[j]) + 
 					    (Sat->Y[i] - SlS->Y[j])*(Sat->Y[i] - SlS->Y[j]) + 
 					    (Sat->Z[i] - SlS->Z[j])*(Sat->Z[i] - SlS->Z[j]);
             
-
+            // if distance will changed = then force will change => otherwice force will be like in prevous iteration
+            // that is not correct - enable this line only to speedup calculations
+#if 0
             if (tD_Obj1Obj2 != Sat->Distance2[i][j])
+#endif
             {
                 Sat->Distance2[i][j] = tD_Obj1Obj2;
+                // not distance in m
                 double tD_ = sqrt(tD_Obj1Obj2);
-
+                // enable this line only to speedup calculations
+#if 0
                 if (tD_ != Sat->Distance[i][j])
+#endif
                 {
                     Sat->Distance[i][j] = tD_;
-                    Sat->ForceDD[i][j] = SlS->GM[j] /* Sat->M[i]*/ / Sat->Distance2[i][j];
-                    if (j == Sat->LegBody)
+                    Sat->ForceDD[i][j] = SlS->GM[j] /* Sat->M[i]*/ / Sat->Distance2[i][j]; // to get real force need to multiply on mass of the satellite
+                    if (j == Sat->LegBody)        // check ? j == EARTH or MOON ?? or anothe selestial body
                     {
                         Sat->R0divR[1] = R0_MODEL/tD_;
                         for (int n = 2; n <= (Sat->iLeg); n++)
@@ -936,6 +964,7 @@ void IteraSat(int TimeDirection, TRAOBJ * SlS, TRAOBJ * Sat)
                     //Sat->LastCosTetta = sin(acos(Sat->LastSinTetta));
                     //Sat->LastCosTetta = sqrt(Sat->Distance[i][j]*Sat->Distance[i][j] - (Sat->Z[i] - SlS->Z[j])*(Sat->Z[i] - SlS->Z[j]))/Sat->Distance[i][j];
                     // first just use only J
+                    Sat->Lambda = GreenwichAscension(TimeOfCalc);
                     Sat->CalcP(Sat->SinTetta[1],((Sat->X[i] - SlS->X[j]) /Sat->Distance[i][j]),((Sat->Y[i] - SlS->Y[j]) /Sat->Distance[i][j]));//>LastCosTetta);
                     //Sat->CalcPNK(Sat->LastCosTetta);
                     Summ = Sat->SummJ();
@@ -2903,7 +2932,7 @@ BOOL ParsURL(char * URLServer, int *port, char* URL,  char * szParsingName)
     return FALSE;
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//
+//   TRA.XMl processing => common data
 //
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 int iGr = 0;
@@ -3009,7 +3038,6 @@ void ParamCommon(char *szString)
         }
         IF_XML_READ(TRAVisual)
         {
-            
             strcpy(szTraVisualFileName,pszQuo);
             char * iQuot = strstr(szTraVisualFileName,"\"");
             if (iQuot)
@@ -3050,11 +3078,7 @@ void ParamCommon(char *szString)
         {
             RGBReferenceBody = atoi(pszQuo);
         }
-        
-
-        
 #endif
-
         IF_XML_READ(EngineToOptimize)
         {
             EngineToOptimize = atoi(pszQuo);
@@ -3079,6 +3103,35 @@ void ParamCommon(char *szString)
         }
 
             
+    XML_SECTION_END;
+    // processing pulsar coordinates and parameters
+    XML_SECTION(pulsars);
+        IF_XML_READ(N)
+        {
+            Pulsars[nPulsars].N = atoi(pszQuo);
+        }
+        IF_XML_READ(Name)
+        {
+            strcpy(Pulsars[nPulsars].Name,pszQuo);
+        }
+        IF_XML_READ(ELONG)
+        {
+            Pulsars[nPulsars].ELONG = atoi(pszQuo);
+        }
+        IF_XML_READ(ELAT)
+        {
+            Pulsars[nPulsars].ELAT = atoi(pszQuo);
+        }
+        IF_XML_READ(P0)
+        {
+            Pulsars[nPulsars].P0 = atoi(pszQuo);
+        }
+        IF_XML_READ(S400mJy)
+        {
+            Pulsars[nPulsars].S400mJy = atoi(pszQuo);
+            if (++nPulsars >= NPULSARS)
+                nPulsars = NPULSARS-1;
+        }
     XML_SECTION_END;
     XML_END;
 }
@@ -3748,7 +3801,7 @@ M_19:
 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//
+//   TRA.XML processing => all data about the MOON
 //
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void ParamMoon(char *szString)
@@ -3835,7 +3888,7 @@ void MoonXYZCalc(double &flX, double &flY, double &flZ, double tsec)
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//
+//   TRA.XMl processing => all data abou SUN (now it is not really used)
 //
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void ParamSun(char *szString)
@@ -3859,7 +3912,7 @@ void ParamSun(char *szString)
     XML_END;
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//
+//   TRA.XML processing => all earth data
 //
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void ParamEarth(char *szString)
@@ -3953,8 +4006,9 @@ void ParamEarth(char *szString)
 }
 // just for convinience to proper orbit clculation
 double EngCoeff = 1.0;
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//
+//       TRA.XML processing => all data about satellite
 //
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void ParamProb(char *szString)
@@ -4096,6 +4150,7 @@ void ParamProb(char *szString)
 			COPYKEPLER(Sat.ProbRevAtEpoch[Sat.Elem],&Sat.Kepler3[Sat.Elem][63],6);
             Sat.Elem++;  // next satellite
         }
+        // finding the tag "UseJPLxyz" will force to retrive all solar sistem parameters from the JPL data
         IF_XML_READ(UseJPLxyz)
         {
             long double tempProbX;
@@ -4496,7 +4551,7 @@ void ParamProb(char *szString)
                 }
             }
             // amount of J coeff used in calcualtion
-            Sat.iLeg = 4;
+            Sat.iLeg = 6;
             Sat.iLeg_longit = 0; // no longitude in calculation
             Sat.Lambda = -2;
             Sat.LegBody = EARTH;
@@ -4756,6 +4811,7 @@ void ParamProb(char *szString)
     XML_SECTION_END;
     XML_END;
 }
+// TRA.XML processing
 void ParamDoAll(FILE *fInput)
 {
     char szString[1024];
@@ -5045,6 +5101,7 @@ void dumpTRAvisual(long i)
 		}
 	}
 }
+// output the same copy of the TRA.XML file
 void dumpXMLParam(TRAOBJ *Sat, TRAIMPLOBJ *MyEngine, int iNumbOfEng)
 {
     char szText[1024];
@@ -5133,6 +5190,8 @@ void dumpXMLParam(TRAOBJ *Sat, TRAIMPLOBJ *MyEngine, int iNumbOfEng)
         fprintf(EnginesFile,"\n    <TRA:setting name=\"UseJPLxyz\" value=\"1.0\" />");
         XML_DUMPI(StartOptim);
         XML_DUMPI(MaxOptim);
+
+        //fprintf(EnginesFile,"\n    <TRA:setting name=\"UseJPLxyz\" value=\"1.0\" />");
         fprintf(EnginesFile,"\n\n<!-- last used engine (0,1,2,3..) in trajectory optimization or calculations ");
         fprintf(EnginesFile,"\n     setting lastengine == -1 disable optimization -->\n");
         XML_DUMPI(LastEngine);
@@ -5455,7 +5514,7 @@ int main(int argc, char * argv[])
 
 	long double tProbTSec,tProbEcc,tProbIncl,tProbAscNode,tProbArgPer,tProbMeanAnom;
 	long double tX,tY,tZ,tVX,tVY,tVZ;
-    long double TimeFEpoch;
+    long double TimeFEpoch=0;
     double ttProbX,ttProbY,ttProbZ,ttProbVX,ttProbVY,ttProbVZ;
     double tttX,tttVX;
     char szXMLFileName[3*_MAX_PATH] = {"tra.xml"};
@@ -5719,7 +5778,7 @@ int main(int argc, char * argv[])
 
                 }
 
-                IteraSat(1, &SolarSystem, &Sat);
+                IteraSat(1, &SolarSystem, &Sat,dStartJD + ((TimeFEpoch+((long double)j)/((long double)iPerSec))/24.0/60.0/60.0));
                 IteraSolarSystem(1, &SolarSystem);
                 EarthX = SolarSystem.X[EARTH];
                 EarthY = SolarSystem.Y[EARTH];
@@ -6250,6 +6309,7 @@ int main(int argc, char * argv[])
 #ifdef _DO_VISUALIZATION
            DrawAnimationSequence(&SolarSystem,&Sat, i,"TRA",&SolarSystem, RGBReferenceBody, dRGBScale, StartSequence, 0); 
 #endif
+           // on first sattelite do compare of the calculated position and SGP4 
             TimeFEpoch = (long double) (i+1);
             long double AE = 1.0;
             long double XKMPER = 6378.1350; //XKMPER kilometers/Earth radii 6378.135
@@ -6269,8 +6329,10 @@ int main(int argc, char * argv[])
             BSTAR = 0.0;
             XNDD6O = 0.0;
             XNDT2O =0.0;
-			SGP4(TimeFEpoch/60.0,//(dStartJD + (TimeFEpoch/24.0/60.0/60.0)- Sat.ProbEpoch[Sat.Elem])*XMNPDA, 
-                XNDT2O,XNDD6O,BSTAR,Sat.ProbIncl[Sat.Elem], Sat.ProbAscNode[Sat.Elem],Sat.ProbEcc[Sat.Elem], Sat.ProbArgPer[Sat.Elem], Sat.ProbMeanAnom[Sat.Elem],XNO, 
+            //(dStartJD - Sat.ProbEpoch[nSat])*XMNPDA
+            // TimeFEpoch/60.0
+			SGP4((dStartJD + (TimeFEpoch/24.0/60.0/60.0)- Sat.ProbEpoch[0])*XMNPDA, 
+                XNDT2O,XNDD6O,BSTAR,Sat.ProbIncl[0], Sat.ProbAscNode[0],Sat.ProbEcc[0], Sat.ProbArgPer[0], Sat.ProbMeanAnom[0],XNO, 
 				tProbX,tProbY,tProbZ,tProbVX,tProbVY,tProbVZ);
 			tProbX=tProbX*XKMPER/AE*1000.0;                 tProbY=tProbY*XKMPER/AE*1000.0;                 tProbZ=tProbZ*XKMPER/AE*1000.0;
 			tProbVX=tProbVX*XKMPER/AE*XMNPDA/86400.*1000.0;	tProbVY=tProbVY*XKMPER/AE*XMNPDA/86400.*1000.0;	tProbVZ=tProbVZ*XKMPER/AE*XMNPDA/86400.*1000.0;
@@ -6289,19 +6351,13 @@ int main(int argc, char * argv[])
             double errAngle =  acos(errorCos);
             double errorD = sqrt(tVX*tVX + tVY*tVY + tVZ*tVZ)/sqrt(tProbVX*tProbVX + tProbVY*tProbVY + tProbVZ*tProbVZ);
             double cosCoLAtitude = tZ / sqrt(tX*tX + tY*tY + tZ*tZ);
-            if (i%128 == 0)
+            if (i%60 == 0)
             {
                 //if (abs(cosCoLAtitude) >0.35)
                 //    printf("\n%3d=%f err(%f)V=%f angle=%f d=%f ",(int)(acos(cosCoLAtitude)*180/M_PI),cosCoLAtitude,tttX,tttVX,errAngle*1000.0,(errorD-1.0)*1000.0);
                 //else
-                    printf("\n%3d=%f err(%f)V=%f angle=%f d=%f ",(int)(acos(cosCoLAtitude)*180/M_PI),cosCoLAtitude,tttX,tttVX,errAngle*1000.0,(errorD-1.0)*1000.0);
+                    printf("\n%3d=%f err(X=%f V=%f) min=%d ",(int)(acos(cosCoLAtitude)*180/M_PI),cosCoLAtitude,tttX,tttVX, i/60);
             }
-            // pizdec kakoi-to !sin with cos does not match in J2-J8 coef! and it does not matter what model of earth it is!
-            // in english reports cos(CoLAtitude) in russian it is sin(Latitude) same value but different viebons
-            // and  best results == 17 km in 5000 seconds does on sin(CoLAtitude) (or in russian's pdf == cos(Latitude) )
-            // all another usees does bigger error 
-            // for now Plan B - use SPG4 as a backup
-            // alex == idiot !!! read carefully page 90
             //Sat.X[0] = tProbX + SolarSystem.X[EARTH]; Sat.Y[0] = tProbY + SolarSystem.Y[EARTH]; Sat.Z[0] = tProbZ + SolarSystem.Z[EARTH];
             //Sat.VX[0] = tProbVX + SolarSystem.VX[EARTH]; Sat.VY[0] = tProbVY + SolarSystem.VY[EARTH]; Sat.VZ[0] = tProbVZ + SolarSystem.VZ[EARTH];
 
