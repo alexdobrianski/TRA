@@ -286,9 +286,9 @@ typedef struct TraObj
     long double R0divR[MAX_COEF_J];
     long double ForceDD_;
     long double Lambda;
-    long double DeltaVX;
-    long double DeltaVY;
-    long double DeltaVZ;
+    long double DeltaVX[PLANET_COUNT];
+    long double DeltaVY[PLANET_COUNT];
+    long double DeltaVZ[PLANET_COUNT];
     long double Xk[MAX_COEF_J];
     long double Yk[MAX_COEF_J];
     long double XkDxr[MAX_COEF_J];
@@ -312,7 +312,7 @@ typedef struct TraObj
         //
         //
         //Lambda +=1.0471975511965977461542144610932;//1.075; //0.183;//0.36;//1.72944494;
-        //Lambda -= 1.5707963267948966192313216916398;//1.2337005501361698273543113749845;
+        //Lambda += 1.5707963267948966192313216916398;//1.2337005501361698273543113749845;
         //Lambda = -Lambda;
         //if (Lambda != -2)
         {
@@ -321,10 +321,10 @@ typedef struct TraObj
         }
 
         SinTetta[1] = sinTetta;
-        //if (ValX > 0.0)
+        if (ValX > 0.0)
             CosTetta[1] = cos(asin(sinTetta));
-        //else 
-        //    CosTetta[1] = -cos(asin(sinTetta));
+        else 
+            CosTetta[1] = -cos(asin(sinTetta));
         // power of a cos
         for (k = 2; k <= iLeg; k++)
         {
@@ -977,7 +977,7 @@ void IteraSat(int TimeDirection, TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfC
             }
             if (j == Sat->LegBody)
             {
-                if (Sat->Distance[i][j] < 1.5*R0_MODEL)
+                if (Sat->Distance[i][j] < 10*R0_MODEL)
                 {
                     // is this a metter how to measure Tetta?
                     // sin Tetta(colatitude) = Z/R
@@ -1003,9 +1003,9 @@ void IteraSat(int TimeDirection, TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfC
                     //Summ *=1.0001;//0.999905;
 
                     //Sat->ForceDD[i][j] = Sat->ForceDD_;// * Summ;
-                    Sat->DeltaVX =(1-DX);
-                    Sat->DeltaVY =(1-DY);
-                    Sat->DeltaVZ =(1-DZ);
+                    Sat->DeltaVX[i] =(1-DX);
+                    Sat->DeltaVY[i] =(1-DY);
+                    Sat->DeltaVZ[i] =(1-DZ);
 
                     // is this a WGS84??:
                     //Temp = SlS->GM[j] / (R0_MODEL*R0_MODEL);
@@ -1013,6 +1013,12 @@ void IteraSat(int TimeDirection, TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfC
                     //Summ = (1- 0.00193185138639*Sat->LastCosTetta*Sat->LastCosTetta)/sqrt(1.0 - 0.00669437999013*Sat->LastCosTetta*Sat->LastCosTetta);
                     //Sat->ForceDD[i][j] = Sat->ForceDD_*Summ;
                     //GM_MODEL 3.986004415E5;
+                }
+                else
+                {
+                    Sat->DeltaVX[i] =1;
+                    Sat->DeltaVY[i] =1;
+                    Sat->DeltaVZ[i] =1;
                 }
             }
             //else // switch off sun and moon == 2 m/s difference in 1 hour
@@ -1042,9 +1048,9 @@ void IteraSat(int TimeDirection, TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfC
             continue;
             if (j == Sat->LegBody)
             {
-                Sat->FX[i] += -( Sat->X[i] - SlS->X[j]) *Sat->DeltaVX * Sat->ForceDD[i][j]/Sat->Distance[i][j];
-                Sat->FY[i] += -( Sat->Y[i] - SlS->Y[j]) *Sat->DeltaVY* Sat->ForceDD[i][j]/Sat->Distance[i][j];
-                Sat->FZ[i] += -( Sat->Z[i] - SlS->Z[j]) *Sat->DeltaVZ * Sat->ForceDD[i][j]/Sat->Distance[i][j];
+                Sat->FX[i] += -( Sat->X[i] - SlS->X[j]) *Sat->DeltaVX[i] * Sat->ForceDD[i][j]/Sat->Distance[i][j];
+                Sat->FY[i] += -( Sat->Y[i] - SlS->Y[j]) *Sat->DeltaVY[i]* Sat->ForceDD[i][j]/Sat->Distance[i][j];
+                Sat->FZ[i] += -( Sat->Z[i] - SlS->Z[j]) *Sat->DeltaVZ[i] * Sat->ForceDD[i][j]/Sat->Distance[i][j];
             }
             else
             {
@@ -4581,7 +4587,7 @@ void ParamProb(char *szString)
                 }
             }
             // amount of J coeff used in calcualtion
-            Sat.iLeg = 7;
+            Sat.iLeg = 8;
             Sat.iLeg_longit = 0; // no longitude in calculation
             Sat.Lambda = -2;
             Sat.LegBody = EARTH;
@@ -6340,7 +6346,8 @@ int main(int argc, char * argv[])
            DrawAnimationSequence(&SolarSystem,&Sat, i,"TRA",&SolarSystem, RGBReferenceBody, dRGBScale, StartSequence, 0); 
 #endif
            // on first sattelite do compare of the calculated position and SGP4 
-            TimeFEpoch = (long double) (i+1);
+           int iCheck = 0;
+           TimeFEpoch = (long double) (i+1);
             long double AE = 1.0;
             long double XKMPER = 6378.1350; //XKMPER kilometers/Earth radii 6378.135
 			long double XKE = BIG_XKE;//.743669161E-1;
@@ -6350,25 +6357,29 @@ int main(int argc, char * argv[])
 
 			long double XMNPDA = 1440.0; // XMNPDA time units(minutes) /day 1440.0
 			long double TEMP=2*M_PI/XMNPDA/XMNPDA; // 2*pi / (1440 **2)
-            long double ProbMeanMotion = Sat.ProbMeanMotion[0];
+            long double ProbMeanMotion = Sat.ProbMeanMotion[iCheck];
 			long double XNO=ProbMeanMotion*TEMP*XMNPDA; // rotation per day * 2*pi /1440 == rotation per day on 1 unit (1 min)
-			long double XNDT2O=Sat.ProbFirstDervMeanMotion[0]*TEMP;
-			long double XNDD6O=Sat.ProbSecondDervmeanMotion[0]*TEMP/XMNPDA;
-			long double BSTAR=Sat.ProbDragterm[0]/AE;
+			long double XNDT2O=Sat.ProbFirstDervMeanMotion[iCheck]*TEMP;
+			long double XNDD6O=Sat.ProbSecondDervmeanMotion[iCheck]*TEMP/XMNPDA;
+			long double BSTAR=Sat.ProbDragterm[iCheck]/AE;
             long double tProbX,tProbY,tProbZ,tProbVX,tProbVY,tProbVZ;
+            // next lines has to be removed ==> today they are included only to avoid drag effect
+#if 1
             BSTAR = 0.0;
             XNDD6O = 0.0;
             XNDT2O =0.0;
+#endif
+
             //(dStartJD - Sat.ProbEpoch[nSat])*XMNPDA
             // TimeFEpoch/60.0
-			SGP4((dStartJD + (TimeFEpoch/24.0/60.0/60.0)- Sat.ProbEpoch[0])*XMNPDA, 
-                XNDT2O,XNDD6O,BSTAR,Sat.ProbIncl[0], Sat.ProbAscNode[0],Sat.ProbEcc[0], Sat.ProbArgPer[0], Sat.ProbMeanAnom[0],XNO, 
+			SGP4((dStartJD + (TimeFEpoch/24.0/60.0/60.0)- Sat.ProbEpoch[iCheck])*XMNPDA, 
+                XNDT2O,XNDD6O,BSTAR,Sat.ProbIncl[iCheck], Sat.ProbAscNode[iCheck],Sat.ProbEcc[iCheck], Sat.ProbArgPer[iCheck], Sat.ProbMeanAnom[iCheck],XNO, 
 				tProbX,tProbY,tProbZ,tProbVX,tProbVY,tProbVZ);
 			tProbX=tProbX*XKMPER/AE*1000.0;                 tProbY=tProbY*XKMPER/AE*1000.0;                 tProbZ=tProbZ*XKMPER/AE*1000.0;
 			tProbVX=tProbVX*XKMPER/AE*XMNPDA/86400.*1000.0;	tProbVY=tProbVY*XKMPER/AE*XMNPDA/86400.*1000.0;	tProbVZ=tProbVZ*XKMPER/AE*XMNPDA/86400.*1000.0;
 
-            tX = Sat.X[0] - SolarSystem.X[EARTH];      tY = Sat.Y[0] - SolarSystem.Y[EARTH];      tZ = Sat.Z[0] - SolarSystem.Z[EARTH];
-		    tVX = Sat.VX[0] - SolarSystem.VX[EARTH];   tVY = Sat.VY[0] - SolarSystem.VY[EARTH];   tVZ = Sat.VZ[0] - SolarSystem.VZ[EARTH];
+            tX = Sat.X[iCheck] - SolarSystem.X[EARTH];      tY = Sat.Y[iCheck] - SolarSystem.Y[EARTH];      tZ = Sat.Z[iCheck] - SolarSystem.Z[EARTH];
+		    tVX = Sat.VX[iCheck] - SolarSystem.VX[EARTH];   tVY = Sat.VY[iCheck] - SolarSystem.VY[EARTH];   tVZ = Sat.VZ[iCheck] - SolarSystem.VZ[EARTH];
 
             ttProbX	= tX - tProbX;ttProbY= tY - tProbY; ttProbZ	= tZ - tProbZ;
             ttProbVX	= tVX - tProbVX; ttProbVY	= tVY - tProbVY; ttProbVZ	= tVZ - tProbVZ;
