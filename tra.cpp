@@ -295,28 +295,36 @@ typedef struct TraObj
     long double YkDxr[MAX_COEF_J];
     long double XkDyr[MAX_COEF_J];
     long double YkDyr[MAX_COEF_J];
+    long double tempValX;
+    long double tempValY;
+    long double tempValZ;
+    long double tempValR;
     void CalcCosK(void)
     {
         
     }
-    void CalcP(double sinTetta, double XdivR, double YdivR)
+    void CalcP(double sinTetta, double XdivR, double YdivR, double ValX, double ValY, double ValZ, double ValR)
     {
         int n,k;
+        tempValX = ValX; tempValY = ValY; tempValZ = ValZ; tempValR = ValR;
         // sinTetta is a Z/R - tetta is Latitude
         // XdivR, YdivR - must be rotated from original X,Y based on a time (and angle Lambda) 
         //
         //
-        Lambda +=1.075; //0.183;//0.36;//1.72944494;
-        //Lambda += 1.2337005501361698273543113749845;
+        //Lambda +=1.0471975511965977461542144610932;//1.075; //0.183;//0.36;//1.72944494;
+        //Lambda -= 1.5707963267948966192313216916398;//1.2337005501361698273543113749845;
         //Lambda = -Lambda;
-        if (Lambda != -2)
+        //if (Lambda != -2)
         {
             XdivR = cos(Lambda) * XdivR - sin(Lambda) * YdivR;
             YdivR = sin(Lambda) * XdivR + cos(Lambda) * YdivR;
         }
 
         SinTetta[1] = sinTetta;
-        CosTetta[1] = cos(asin(sinTetta));
+        //if (ValX > 0.0)
+            CosTetta[1] = cos(asin(sinTetta));
+        //else 
+        //    CosTetta[1] = -cos(asin(sinTetta));
         // power of a cos
         for (k = 2; k <= iLeg; k++)
         {
@@ -373,6 +381,7 @@ typedef struct TraObj
         //    }
         //}
         //if (iLeg_longit) // this is case when need to acount Longitude
+        // last formula on page 92
         Xk[0] = 1; Yk[0] =0; 
         Xk[1] = XdivR; Yk[1] = YdivR;
         for (k = 2; k<=iLeg; k++)
@@ -389,6 +398,7 @@ typedef struct TraObj
             YkDyr[k] = YkDyr[k-1]*XdivR + XkDyr[k-1]*YdivR+Xk[k-1];
         }
         {
+            // formula 8 on page 92
              for (n = 2; n <=iLeg; n++)
              {
                  for (k = 0; k <=iLeg; k++)
@@ -471,8 +481,11 @@ typedef struct TraObj
             //            = - 3 * fm * (ro/r)**2 * (x/r**3) * Pnk_tilda[2][0] * J2 
             //              -     fm * (r0/r)**2 * (1/r) * Pnk_tilda[2][1] * x*z/r**3 *J2 
             //                    fm * (r0/r)**2 * (1/r) Pnk_tilda[2][0] * [0*(1/r-x**2/r**3) + 0*(-x*y/r**3)]
-            X += -(n+1) * R0divR[n] * Pnk_tilda[n][0] * Qnk[n][0]//CNK[n][0] 
-                 - R0divR[n] * SinTetta[1] * Pnk_tilda[n][1] * Qnk[n][0];//CNK[n][0]; 
+            //X += -(n+1) * R0divR[n] * Pnk_tilda[n][0] * Qnk[n][0]//CNK[n][0] 
+            //     - R0divR[n] * SinTetta[1] * Pnk_tilda[n][1] * Qnk[n][0];//CNK[n][0]; 
+            X += -(n+1) * R0divR[n] * Pnk_tilda[n][0] * Qnk[n][0]// * tempValX/(tempValR)
+                 - R0divR[n] * SinTetta[1] * Pnk_tilda[n][1] * Qnk[n][0]// * tempValX* tempValZ/(tempValR*tempValR)
+                 ;
 
             // D(Unk)/D(y) = d(Rn) / d(1/r)    * D(1/r)/D(y)    * Znk    * Qnk +
             //                 Rn * d(Znk)/d(z/r) * D(z/r)/D(y) * Qnk +
@@ -490,8 +503,11 @@ typedef struct TraObj
             //            = - 3 * fm * (ro/r)**2 * (y/r**3) * Pnk_tilda[2][0] * J2 
             //              -     fm * (r0/r)**2 * (1/r) * Pnk_tilda[2][1] * y*z/r**3 *J2 
             //                    fm * (r0/r)**2 * (1/r) Pnk_tilda[2][0] * [0*(-x*y/r**3) + 0*(1/r-y**2/r**3)]
-            Y += -(n+1) * R0divR[n] * Pnk_tilda[n][0] * Qnk[n][0]//CNK[n][0]
-                 - R0divR[n] * SinTetta[1] * Pnk_tilda[n][1] * Qnk[n][0];//CNK[n][0]; 
+            //Y += -(n+1) * R0divR[n] * Pnk_tilda[n][0] * Qnk[n][0]//CNK[n][0]
+            //     - R0divR[n] * SinTetta[1] * Pnk_tilda[n][1] * Qnk[n][0];//CNK[n][0]; 
+            Y += -(n+1) * R0divR[n] * Pnk_tilda[n][0] * Qnk[n][0]//* tempValY/(tempValR)
+                 - R0divR[n] * SinTetta[1] * Pnk_tilda[n][1] * Qnk[n][0]//* tempValY* tempValZ/(tempValR*tempValR)
+            ;
 
             // D(Unk)/D(z) = d(Rn) / d(1/r)    * D(1/r)/D(z)    * Znk    * Qnk +
             //                 Rn * d(Znk)/d(z/r) * D(z/r)/D(z) * Qnk +
@@ -509,26 +525,31 @@ typedef struct TraObj
             //            = - 3 * fm * (ro/r)**2 * (z/r**3) * Pnk_tilda[2][0] * J2 
             //                   fm * (r0/r)**2 * (1/r) * Pnk_tilda[2][1] * (1/r - z**2/r**3 *J2 
             //                    fm * (r0/r)**2 * (1/r) Pnk_tilda[2][0] * [0*(-x*z/r**3) + 0*(-y*z/r**3)]
-            Z += -(n+1) * R0divR[n] * Pnk_tilda[n][0] * Qnk[n][0]//CNK[n][0] 
-            + R0divR[n] * CosTetta[2]/ SinTetta[1] * Pnk_tilda[n][1] * Qnk[n][0];//CNK[n][0]; 
+            //Z += -(n+1) * R0divR[n] * Pnk_tilda[n][0] * Qnk[n][0]//CNK[n][0] 
+            //+ R0divR[n] * CosTetta[2]/ SinTetta[1] * Pnk_tilda[n][1] * Qnk[n][0];//CNK[n][0]; 
+            Z += -(n+1) * R0divR[n] * Pnk_tilda[n][0] * Qnk[n][0]//* tempValZ/(tempValR)
+            + R0divR[n] * CosTetta[2]/ SinTetta[1] * Pnk_tilda[n][1] * Qnk[n][0]//* (1 - tempValZ* tempValZ/(tempValR*tempValR))
+            ;
         }
         // second round
         
         for (n= 2;n <=iLeg;n++)
         {
             // k=0 already done
-            for (k = 1; k<=iLeg; k++)
+            for (k = 1; k<=n; k++)
             {
                 //            = (n+1)* fm * (r0/r)**n * (-x/r**3) * Znk * Qnk +
                 //              Rn * d(K+1)(Pn(sinTetta)/d(sintetta)**(k+1) * (-x*z/r**3) * Qnk +
                 //              Rn * Znk * [(Cnk*D(Xk)/D(x/r)+Snk*DYk)/D(x/r)) * (1/r - x**2/r**3) + (Cnk*D(Xk)/D(y/r)+Snk*DYk)/D(y/r))*(-x*y/r**3)]
-
-                X += -(n+1) * R0divR[n] * Pnk_tilda[n][k] * Qnk[n][k] 
-                    - R0divR[n] * SinTetta[1] * Pnk_tilda[n][k+1] * Qnk[n][k]; 
-                Y += -(n+1) * R0divR[n] * Pnk_tilda[n][k] * Qnk[n][k] 
-                    - R0divR[n] * SinTetta[1] * Pnk_tilda[n][k+1] * Qnk[n][k]; 
-                Z += -(n+1) * R0divR[n] * Pnk_tilda[n][k] * Qnk[n][k] 
-                    + R0divR[n] * CosTetta[2]/ SinTetta[1] * Pnk_tilda[n][k+1] * Qnk[n][k]; 
+                X += -(n+1) * R0divR[n] * Pnk_tilda[n][k] * Qnk[n][k]// * tempValX/(tempValR)
+                    - R0divR[n] * SinTetta[1] * Pnk_tilda[n][k+1] * Qnk[n][k]// * tempValX* tempValZ/(tempValR*tempValR)
+                    ; 
+                Y += -(n+1) * R0divR[n] * Pnk_tilda[n][k] * Qnk[n][k]// * tempValY/(tempValR)
+                    - R0divR[n] * SinTetta[1] * Pnk_tilda[n][k+1] * Qnk[n][k]//* tempValY* tempValZ/(tempValR*tempValR)
+                ; 
+                Z += -(n+1) * R0divR[n] * Pnk_tilda[n][k] * Qnk[n][k]// * tempValZ/(tempValR)
+                    + R0divR[n] * CosTetta[2]/ SinTetta[1] * Pnk_tilda[n][k+1] * Qnk[n][k]//* (1 - tempValZ* tempValZ)/(tempValR*tempValR)
+                ; 
 
             }
         }
@@ -546,13 +567,20 @@ typedef struct TraObj
         double Summ = 1.0;
         for (int n = 2; n <=iLeg; n++)
         {
-            Summ -= J[n]*R0divR[n]*P[n];
+            Summ += J[n]*R0divR[n]*P[n];
         }
-        // for now no earth rotation not acounted
+        // for now no earth rotation acounted
         //+ SUM2=( (r0/r)**2 * P21(sinPHI) * (C21 * cos(1*Lambda) + S21*sin(1*Lanbda)) +
         //           (r0/r)**2 * P22(sinPhi) * (C22 *cos(2*Lambda) + S22*sin(2*Lambda))     )
         //Summ += R0divR[2] * LastPNK[2][1] * (CNK[2][1] * cos(Lambda) + SNK[2][1]*sin(Lambda)) +
         //       R0divR[2]*LastPNK[2][2]*(CNK[2][2]*cos(2.0*Lambda) + SNK[2][2]*sin(2.0*Lambda));
+        for (int n= 2; n <= iLeg; n++)
+        {
+            for (int k =1; k <=n; k++)
+            {
+                Summ += R0divR[n] * Ptilda[n] *(CNK[n][k]*cos((double)k*Lambda) +SNK[n][k]*sin((double)k*Lambda));
+            }
+        }
 
         return Summ;
     }
@@ -904,6 +932,7 @@ void IteraSat(int TimeDirection, TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfC
     double Temp;
     double DX,DY,DZ;
 
+    Sat->Lambda = GreenwichAscension(TimeOfCalc);
     // calculation of a forces
     // loop for all calulated satellites
     for (i = 0; i < Sat->Elem; i++)
@@ -964,18 +993,19 @@ void IteraSat(int TimeDirection, TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfC
                     //Sat->LastCosTetta = sin(acos(Sat->LastSinTetta));
                     //Sat->LastCosTetta = sqrt(Sat->Distance[i][j]*Sat->Distance[i][j] - (Sat->Z[i] - SlS->Z[j])*(Sat->Z[i] - SlS->Z[j]))/Sat->Distance[i][j];
                     // first just use only J
-                    Sat->Lambda = GreenwichAscension(TimeOfCalc);
-                    Sat->CalcP(Sat->SinTetta[1],((Sat->X[i] - SlS->X[j]) /Sat->Distance[i][j]),((Sat->Y[i] - SlS->Y[j]) /Sat->Distance[i][j]));//>LastCosTetta);
+                    
+                    Sat->CalcP(Sat->SinTetta[1],((Sat->X[i] - SlS->X[j]) /Sat->Distance[i][j]),((Sat->Y[i] - SlS->Y[j]) /Sat->Distance[i][j]),
+                        (Sat->X[i] - SlS->X[j]),(Sat->Y[i] - SlS->Y[j]),(Sat->Z[i] - SlS->Z[j]),Sat->Distance[i][j]);//>LastCosTetta);
                     //Sat->CalcPNK(Sat->LastCosTetta);
-                    Summ = Sat->SummJ();
+                    //Summ = Sat->SummJ();
                     Sat->SummXYZ(DX,DY,DZ);
                     
                     //Summ *=1.0001;//0.999905;
 
-                    Sat->ForceDD[i][j] = Sat->ForceDD_;// * Summ;
-                    Sat->DeltaVX =1-DX;
-                    Sat->DeltaVY =1-DY;
-                    Sat->DeltaVZ = 1-DZ;
+                    //Sat->ForceDD[i][j] = Sat->ForceDD_;// * Summ;
+                    Sat->DeltaVX =(1-DX);
+                    Sat->DeltaVY =(1-DY);
+                    Sat->DeltaVZ =(1-DZ);
 
                     // is this a WGS84??:
                     //Temp = SlS->GM[j] / (R0_MODEL*R0_MODEL);
@@ -1028,7 +1058,7 @@ void IteraSat(int TimeDirection, TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfC
 
     for (i = 0; i < Sat->Elem; i++)
     {
-#if 1
+#if 0
         // this is original formula
         Sat->VX[i] += Sat->FX[i] * TimeSl /* Sat->M[i]*/;
         Sat->VY[i] += Sat->FY[i] * TimeSl /* Sat->M[i]*/;
@@ -4541,7 +4571,7 @@ void ParamProb(char *szString)
                 //l	m	            C                                S
 	            //2	0	  -0.10826360229840D-02	                       0.0
                 Sat.J[n] = //sqrt(2*(long double)n+1)* // coeff already normalized
-                    (-Clm[0][n]);
+                    (Clm[0][n]);
                 for (int k = 0; k < MAX_COEF_J; k++)
                 {
                     Sat.CNK[n][k] = Clm[k][n];
@@ -4551,7 +4581,7 @@ void ParamProb(char *szString)
                 }
             }
             // amount of J coeff used in calcualtion
-            Sat.iLeg = 6;
+            Sat.iLeg = 7;
             Sat.iLeg_longit = 0; // no longitude in calculation
             Sat.Lambda = -2;
             Sat.LegBody = EARTH;
