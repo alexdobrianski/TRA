@@ -189,32 +189,32 @@ write_JPEG_file (char * filename,
     //          (r0/r)**8 *P88(sinPHI) * (C88 * cos(8*Lambda) + S86*sin(8*Lambda))         )
 
     // moon 0.0002027
-#define MAX_COEF_J 9
+#define MAX_COEF_J 10
 double GM_MODEL = 3.986004415E5;
 //double R0_MODEL = 6378136.30; // in m
 #define R0_MODEL 6378136.30
 //#define R0_MODEL 6378000.00
 //#define R0_MODEL 6379137.0
 double Clm[MAX_COEF_J][MAX_COEF_J] = {
-    0.0,                  0.0,-0.10826360229840e-02, 0.25324353457544E-05, 0.16193312050719e-05, 0.22771610163688E-06,-0.53964849049834e-06, 0.35136844210318e-06, 0.20251871520885e-06,
-	0.0,                  0.0,-0.24140000522221e-09, 0.21927988018965e-05,-0.50872530365024e-06,-0.53716510187662e-07,-0.59877976856303e-07, 0.20514872797672e-06, 0.16034587141379e-07,
-	0.0,                  0.0, 0.15745360427672e-05, 0.30901604455583e-06, 0.78412230752366e-07, 0.10559053538674e-06, 0.60120988437373e-08, 0.32844904836492e-07, 0.65765423316743e-08,
-	0.0,                  0.0,                  0.0, 0.10055885741455e-06, 0.59215743214072e-07,-0.14926153867389e-07, 0.11822664115915e-08, 0.35285405191512e-08,-0.19463581555399e-09,
-    0.0,                  0.0,                  0.0,                  0.0,-0.39823957404129e-08,-0.22979123502681e-08,-0.32641389117891e-09,-0.58511949148624e-09,-0.31893580211856e-09,
-    0.0,                  0.0,                  0.0,                  0.0,                  0.0, 0.43047675045029e-09,-0.21557711513900e-09, 0.58184856030873e-12,-0.46151734306628e-11, 
-    0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0, 0.22136925556741e-11,-0.24907176820596e-10,-0.18393642697634e-11, 
-    0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0, 0.25590780149873e-13, 0.34297618184624e-12,
-    0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,-0.15803322891725e-12};
+    0.0,                  0.0,-0.10826360229840e-02, 0.25324353457544E-05, 0.16193312050719e-05, 0.22771610163688E-06,-0.53964849049834e-06, 0.35136844210318e-06, 0.20251871520885e-06,0,
+	0.0,                  0.0,-0.24140000522221e-09, 0.21927988018965e-05,-0.50872530365024e-06,-0.53716510187662e-07,-0.59877976856303e-07, 0.20514872797672e-06, 0.16034587141379e-07,0,
+	0.0,                  0.0, 0.15745360427672e-05, 0.30901604455583e-06, 0.78412230752366e-07, 0.10559053538674e-06, 0.60120988437373e-08, 0.32844904836492e-07, 0.65765423316743e-08,0,
+	0.0,                  0.0,                  0.0, 0.10055885741455e-06, 0.59215743214072e-07,-0.14926153867389e-07, 0.11822664115915e-08, 0.35285405191512e-08,-0.19463581555399e-09,0,
+    0.0,                  0.0,                  0.0,                  0.0,-0.39823957404129e-08,-0.22979123502681e-08,-0.32641389117891e-09,-0.58511949148624e-09,-0.31893580211856e-09,0,
+    0.0,                  0.0,                  0.0,                  0.0,                  0.0, 0.43047675045029e-09,-0.21557711513900e-09, 0.58184856030873e-12,-0.46151734306628e-11,0,
+    0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0, 0.22136925556741e-11,-0.24907176820596e-10,-0.18393642697634e-11,0,
+    0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0, 0.25590780149873e-13, 0.34297618184624e-12,0,
+    0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,-0.15803322891725e-12,0};
 double Slm[MAX_COEF_J][MAX_COEF_J] = {
-    0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,
-    0.0,                  0.0, 0.15430999737844e-08, 0.26801189379726e-06,-0.44945993508117e-06,-0.80663463828530e-07, 0.21164664354382e-07, 0.69369893525908e-07, 0.40199781599510e-07,
-    0.0,                  0.0,-0.90386807301869e-06,-0.21140239785975e-06, 0.14815545694714e-06,-0.52326723987632e-07,-0.46503948132217e-07, 0.92823143885084e-08, 0.53813164055056e-08,
-    0.0,                  0.0,                  0.0, 0.19720132389889e-06,-0.12011291831397e-07,-0.71008771406986e-08, 0.18431336880625e-09,-0.30611502382788e-08,-0.87235195047605e-09, 
-    0.0,                  0.0,                  0.0,                  0.0, 0.65256058113396e-08, 0.38730050770804e-09,-0.17844913348882e-08,-0.26361822157867e-09, 0.91177355887255e-10,
-    0.0,                  0.0,                  0.0,                  0.0,                  0.0,-0.16482039468636e-08,-0.43291816989540e-09, 0.63972526639235e-11, 0.16125208346784e-10,
-    0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,-0.55277122205966e-10, 0.10534878629266e-10, 0.86277431674150e-11, 
-    0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0, 0.44759834144751e-12, 0.38147656686685e-12, 
-    0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0, 0.15353381397148e-12};
+    0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,0,
+    0.0,                  0.0, 0.15430999737844e-08, 0.26801189379726e-06,-0.44945993508117e-06,-0.80663463828530e-07, 0.21164664354382e-07, 0.69369893525908e-07, 0.40199781599510e-07,0,
+    0.0,                  0.0,-0.90386807301869e-06,-0.21140239785975e-06, 0.14815545694714e-06,-0.52326723987632e-07,-0.46503948132217e-07, 0.92823143885084e-08, 0.53813164055056e-08,0,
+    0.0,                  0.0,                  0.0, 0.19720132389889e-06,-0.12011291831397e-07,-0.71008771406986e-08, 0.18431336880625e-09,-0.30611502382788e-08,-0.87235195047605e-09,0,
+    0.0,                  0.0,                  0.0,                  0.0, 0.65256058113396e-08, 0.38730050770804e-09,-0.17844913348882e-08,-0.26361822157867e-09, 0.91177355887255e-10,0,
+    0.0,                  0.0,                  0.0,                  0.0,                  0.0,-0.16482039468636e-08,-0.43291816989540e-09, 0.63972526639235e-11, 0.16125208346784e-10,0,
+    0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,-0.55277122205966e-10, 0.10534878629266e-10, 0.86277431674150e-11,0, 
+    0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0, 0.44759834144751e-12, 0.38147656686685e-12,0, 
+    0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0, 0.15353381397148e-12,0};
     
 typedef struct TraObj
 {
@@ -286,9 +286,9 @@ typedef struct TraObj
     long double R0divR[MAX_COEF_J];
     long double ForceDD_;
     long double Lambda;
-    long double DeltaVX[PLANET_COUNT];
-    long double DeltaVY[PLANET_COUNT];
-    long double DeltaVZ[PLANET_COUNT];
+    long double DeltaVX[PLANET_COUNT][PLANET_COUNT];
+    long double DeltaVY[PLANET_COUNT][PLANET_COUNT];
+    long double DeltaVZ[PLANET_COUNT][PLANET_COUNT];
     long double Xk[MAX_COEF_J];
     long double Yk[MAX_COEF_J];
     long double XkDxr[MAX_COEF_J];
@@ -312,7 +312,7 @@ typedef struct TraObj
         //
         //
         //Lambda +=1.0471975511965977461542144610932;//1.075; //0.183;//0.36;//1.72944494;
-        //Lambda += 1.5707963267948966192313216916398;//1.2337005501361698273543113749845;
+        //Lambda -= 1.5707963267948966192313216916398;//1.2337005501361698273543113749845;
         //Lambda = -Lambda;
         //if (Lambda != -2)
         {
@@ -326,7 +326,7 @@ typedef struct TraObj
         else 
             CosTetta[1] = -cos(asin(sinTetta));
         // power of a cos
-        for (k = 2; k <= iLeg; k++)
+        for (k = 2; k <= (iLeg+1); k++)
         {
             CosTetta[k] = CosTetta[k-1]*CosTetta[1];
             SinTetta[k] = SinTetta[k-1]*SinTetta[1];
@@ -336,7 +336,7 @@ typedef struct TraObj
         P[1] = sinTetta;
         Pnk_tilda[0][0] = P[0];
         Pnk_tilda[1][0] = P[1];
-        for (n = 2; n <=iLeg; n++)
+        for (n = 2; n <=(iLeg+1); n++)
         {
             // page 90- formula 8
             // (n + 1)Pn+1(z) - (2n + 1)zPn(z) + nPn-1(z) = 0 =>
@@ -358,16 +358,16 @@ typedef struct TraObj
 
         Pnk_tilda[0][1] = Ptilda[0];
         Pnk_tilda[1][1] = Ptilda[1];
-        for (n=2;n<=iLeg;n++)
+        for (n=2;n<=(iLeg+1);n++)
         {   // all derivatives
             // for P2' == 2* P1 + sin(tetta) * 1
             Ptilda[n] = n * P[n-1] + sinTetta * Ptilda[n-1];
             Pnk_tilda[n][1] = Ptilda[n];
         }
         // derivatives for dK(Pn(sinTetta))/d(sinTetta)**K
-        for (n= 2;n <=iLeg;n++)
+        for (n= 2;n <=(iLeg+1);n++)
         {
-            for (k = 1; k<=iLeg;k++)
+            for (k = 1; k<=(iLeg+1);k++)
             {
                 Pnk_tilda[n][k] = (2*n-1) * Pnk_tilda[n-1][k-1] - Pnk_tilda[n-2][k];
             }
@@ -384,13 +384,13 @@ typedef struct TraObj
         // last formula on page 92
         Xk[0] = 1; Yk[0] =0; 
         Xk[1] = XdivR; Yk[1] = YdivR;
-        for (k = 2; k<=iLeg; k++)
+        for (k = 2; k<=(iLeg+1); k++)
         {
             Xk[k] = Xk[k-1]*XdivR - Yk[k-1] * YdivR;
             Yk[k] = Yk[k-1]*XdivR + Xk[k-1] * YdivR;
         }
         XkDxr[0] = 0; XkDyr[0] = 0; YkDxr[0] = 0; YkDyr[0] = 0;
-        for (k = 1; k <=iLeg; k++)
+        for (k = 1; k <=(iLeg+1); k++)
         {
             XkDxr[k] = XkDxr[k-1]*XdivR + Xk[k-1] - YkDxr[k-1]*YdivR;
             XkDyr[k] = XkDyr[k-1]*XdivR - YkDyr[k-1]*YdivR - Yk[k-1];
@@ -399,9 +399,9 @@ typedef struct TraObj
         }
         {
             // formula 8 on page 92
-             for (n = 2; n <=iLeg; n++)
+             for (n = 2; n <=(iLeg+1); n++)
              {
-                 for (k = 0; k <=iLeg; k++)
+                 for (k = 0; k <=(iLeg+1); k++)
                  {
                      Qnk[n][k] = CNK[n][k] * Xk[k] + SNK[n][k] * Yk[k];
                  }
@@ -418,6 +418,7 @@ typedef struct TraObj
     {
         int n,k;
         X=0; Y=0; Z=0;
+        /*
         for (n= 2;n <=iLeg;n++)
         {
             // implementation of derivetive (page 91 on Aksenov lectures)
@@ -471,9 +472,10 @@ typedef struct TraObj
             //            = (n+1)* fm * (r0/r)**n * (-x/r**3) * Znk * Qnk +
             //              Rn * d(K+1)(Pn(sinTetta)/d(sintetta)**(k+1) * (-x*z/r**3) * Qnk +
             //              Rn * Znk * [D(Qnk)/D(x/r) * (1/r - x**2/r**3) + D(Qnk)/D(y/r)*(-x*y/r**3)]
+            //
             //            = (n+1)* fm * (r0/r)**n * (-x/r**3) * Znk * Qnk +
             //              Rn * d(K+1)(Pn(sinTetta)/d(sintetta)**(k+1) * (-x*z/r**3) * Qnk +
-            //              Rn * Znk * [(Cnk*D(Xk)/D(x/r)+Snk*DYk)/D(x/r)) * (1/r - x**2/r**3) + (Cnk*D(Xk)/D(y/r)+Snk*DYk)/D(y/r))*(-x*y/r**3)]
+            //              Rn * Znk * [(Cnk*D(Xk)/D(x/r)+Snk*D(Yk)/D(x/r)) * (1/r - x**2/r**3) + (Cnk*D(Xk)/D(y/r)+Snk*D(Yk)/D(y/r))*(-x*y/r**3)]
             // as a result for example n=2 and k = 0
             // D(U20)/D(X) = (2+1)* fm * (r0/r)**2 * (-x/r**3) * d(P2(sinTetta))/d(sinTetta) * J2 +
             //              fm * r0**2 * (1/r)**3 * d(0+1)(P2(sinTetta)/d(sintetta)**(0+1) *(-x*z/r**3) * J2 +
@@ -481,10 +483,11 @@ typedef struct TraObj
             //            = - 3 * fm * (ro/r)**2 * (x/r**3) * Pnk_tilda[2][0] * J2 
             //              -     fm * (r0/r)**2 * (1/r) * Pnk_tilda[2][1] * x*z/r**3 *J2 
             //                    fm * (r0/r)**2 * (1/r) Pnk_tilda[2][0] * [0*(1/r-x**2/r**3) + 0*(-x*y/r**3)]
+
             //X += -(n+1) * R0divR[n] * Pnk_tilda[n][0] * Qnk[n][0]//CNK[n][0] 
             //     - R0divR[n] * SinTetta[1] * Pnk_tilda[n][1] * Qnk[n][0];//CNK[n][0]; 
-            X += -(n+1) * R0divR[n] * Pnk_tilda[n][0] * Qnk[n][0]// * tempValX/(tempValR)
-                 - R0divR[n] * SinTetta[1] * Pnk_tilda[n][1] * Qnk[n][0]// * tempValX* tempValZ/(tempValR*tempValR)
+            X += -(n+1) * R0divR[n] * Pnk_tilda[n][0] * Qnk[n][0]
+                 - R0divR[n] * SinTetta[1] * Pnk_tilda[n][1] * Qnk[n][0]
                  ;
 
             // D(Unk)/D(y) = d(Rn) / d(1/r)    * D(1/r)/D(y)    * Znk    * Qnk +
@@ -503,10 +506,10 @@ typedef struct TraObj
             //            = - 3 * fm * (ro/r)**2 * (y/r**3) * Pnk_tilda[2][0] * J2 
             //              -     fm * (r0/r)**2 * (1/r) * Pnk_tilda[2][1] * y*z/r**3 *J2 
             //                    fm * (r0/r)**2 * (1/r) Pnk_tilda[2][0] * [0*(-x*y/r**3) + 0*(1/r-y**2/r**3)]
-            //Y += -(n+1) * R0divR[n] * Pnk_tilda[n][0] * Qnk[n][0]//CNK[n][0]
+            //Y += -(n+1) * R0divR[n] * Pnk_tilda[n][0] * Qnk[n][0]
             //     - R0divR[n] * SinTetta[1] * Pnk_tilda[n][1] * Qnk[n][0];//CNK[n][0]; 
-            Y += -(n+1) * R0divR[n] * Pnk_tilda[n][0] * Qnk[n][0]//* tempValY/(tempValR)
-                 - R0divR[n] * SinTetta[1] * Pnk_tilda[n][1] * Qnk[n][0]//* tempValY* tempValZ/(tempValR*tempValR)
+            Y += -(n+1) * R0divR[n] * Pnk_tilda[n][0] * Qnk[n][0]
+                 - R0divR[n] * SinTetta[1] * Pnk_tilda[n][1] * Qnk[n][0]
             ;
 
             // D(Unk)/D(z) = d(Rn) / d(1/r)    * D(1/r)/D(z)    * Znk    * Qnk +
@@ -525,30 +528,33 @@ typedef struct TraObj
             //            = - 3 * fm * (ro/r)**2 * (z/r**3) * Pnk_tilda[2][0] * J2 
             //                   fm * (r0/r)**2 * (1/r) * Pnk_tilda[2][1] * (1/r - z**2/r**3 *J2 
             //                    fm * (r0/r)**2 * (1/r) Pnk_tilda[2][0] * [0*(-x*z/r**3) + 0*(-y*z/r**3)]
-            //Z += -(n+1) * R0divR[n] * Pnk_tilda[n][0] * Qnk[n][0]//CNK[n][0] 
+            //Z += -(n+1) * R0divR[n] * Pnk_tilda[n][0] * Qnk[n][0] 
             //+ R0divR[n] * CosTetta[2]/ SinTetta[1] * Pnk_tilda[n][1] * Qnk[n][0];//CNK[n][0]; 
-            Z += -(n+1) * R0divR[n] * Pnk_tilda[n][0] * Qnk[n][0]//* tempValZ/(tempValR)
-            + R0divR[n] * CosTetta[2]/ SinTetta[1] * Pnk_tilda[n][1] * Qnk[n][0]//* (1 - tempValZ* tempValZ/(tempValR*tempValR))
+            Z += -(n+1) * R0divR[n] * Pnk_tilda[n][0] * Qnk[n][0]
+            + R0divR[n] * CosTetta[2]/ SinTetta[1] * Pnk_tilda[n][1] * Qnk[n][0]
             ;
         }
         // second round
-        
+        */
         for (n= 2;n <=iLeg;n++)
         {
             // k=0 already done
-            for (k = 1; k<=n; k++)
+            for (k = 0; k<=n; k++)
             {
                 //            = (n+1)* fm * (r0/r)**n * (-x/r**3) * Znk * Qnk +
                 //              Rn * d(K+1)(Pn(sinTetta)/d(sintetta)**(k+1) * (-x*z/r**3) * Qnk +
                 //              Rn * Znk * [(Cnk*D(Xk)/D(x/r)+Snk*DYk)/D(x/r)) * (1/r - x**2/r**3) + (Cnk*D(Xk)/D(y/r)+Snk*DYk)/D(y/r))*(-x*y/r**3)]
-                X += -(n+1) * R0divR[n] * Pnk_tilda[n][k] * Qnk[n][k]// * tempValX/(tempValR)
-                    - R0divR[n] * SinTetta[1] * Pnk_tilda[n][k+1] * Qnk[n][k]// * tempValX* tempValZ/(tempValR*tempValR)
+                X += -(n+1) * R0divR[n] * Pnk_tilda[n][k] * Qnk[n][k]
+                    - R0divR[n] * SinTetta[1] * Pnk_tilda[n][k+1] * Qnk[n][k]
                     ; 
-                Y += -(n+1) * R0divR[n] * Pnk_tilda[n][k] * Qnk[n][k]// * tempValY/(tempValR)
-                    - R0divR[n] * SinTetta[1] * Pnk_tilda[n][k+1] * Qnk[n][k]//* tempValY* tempValZ/(tempValR*tempValR)
+                Y += -(n+1) * R0divR[n] * Pnk_tilda[n][k] * Qnk[n][k]
+                    - R0divR[n] * SinTetta[1] * Pnk_tilda[n][k+1] * Qnk[n][k]
                 ; 
-                Z += -(n+1) * R0divR[n] * Pnk_tilda[n][k] * Qnk[n][k]// * tempValZ/(tempValR)
-                    + R0divR[n] * CosTetta[2]/ SinTetta[1] * Pnk_tilda[n][k+1] * Qnk[n][k]//* (1 - tempValZ* tempValZ)/(tempValR*tempValR)
+                //            = (n+1)* fm * (r0/r)**n * (-z/r**3) * Znk * Qnk +
+                //              Rn * d(K+1)(Pn(sinTetta)/d(sintetta)**(k+1) * (1/r-z**2/r**3) * Qnk +
+                //              Rn * Znk * [(Cnk*D(Xk)/D(x/r)+Snk*DYk)/D(x/r)) * (- x*z/r**3) + (Cnk*D(Xk)/D(y/r)+Snk*DYk)/D(y/r))*(-y*z/r**3)]
+                Z += -(n+1) * R0divR[n] * Pnk_tilda[n][k] * Qnk[n][k]
+                    + R0divR[n] * CosTetta[2]/ SinTetta[1] * Pnk_tilda[n][k+1] * Qnk[n][k]
                 ; 
 
             }
@@ -977,6 +983,10 @@ void IteraSat(int TimeDirection, TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfC
             }
             if (j == Sat->LegBody)
             {
+                Sat->DeltaVX[i][j] =1;
+                Sat->DeltaVY[i][j] =1;
+                Sat->DeltaVZ[i][j] =1;
+
                 if (Sat->Distance[i][j] < 10*R0_MODEL)
                 {
                     // is this a metter how to measure Tetta?
@@ -1003,9 +1013,9 @@ void IteraSat(int TimeDirection, TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfC
                     //Summ *=1.0001;//0.999905;
 
                     //Sat->ForceDD[i][j] = Sat->ForceDD_;// * Summ;
-                    Sat->DeltaVX[i] =(1-DX);
-                    Sat->DeltaVY[i] =(1-DY);
-                    Sat->DeltaVZ[i] =(1-DZ);
+                    Sat->DeltaVX[i][j] =(1-DX);
+                    Sat->DeltaVY[i][j] =(1-DY);
+                    Sat->DeltaVZ[i][j] =(1-DZ);
 
                     // is this a WGS84??:
                     //Temp = SlS->GM[j] / (R0_MODEL*R0_MODEL);
@@ -1013,12 +1023,6 @@ void IteraSat(int TimeDirection, TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfC
                     //Summ = (1- 0.00193185138639*Sat->LastCosTetta*Sat->LastCosTetta)/sqrt(1.0 - 0.00669437999013*Sat->LastCosTetta*Sat->LastCosTetta);
                     //Sat->ForceDD[i][j] = Sat->ForceDD_*Summ;
                     //GM_MODEL 3.986004415E5;
-                }
-                else
-                {
-                    Sat->DeltaVX[i] =1;
-                    Sat->DeltaVY[i] =1;
-                    Sat->DeltaVZ[i] =1;
                 }
             }
             //else // switch off sun and moon == 2 m/s difference in 1 hour
@@ -1048,9 +1052,9 @@ void IteraSat(int TimeDirection, TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfC
             continue;
             if (j == Sat->LegBody)
             {
-                Sat->FX[i] += -( Sat->X[i] - SlS->X[j]) *Sat->DeltaVX[i] * Sat->ForceDD[i][j]/Sat->Distance[i][j];
-                Sat->FY[i] += -( Sat->Y[i] - SlS->Y[j]) *Sat->DeltaVY[i]* Sat->ForceDD[i][j]/Sat->Distance[i][j];
-                Sat->FZ[i] += -( Sat->Z[i] - SlS->Z[j]) *Sat->DeltaVZ[i] * Sat->ForceDD[i][j]/Sat->Distance[i][j];
+                Sat->FX[i] += -( Sat->X[i] - SlS->X[j]) *Sat->DeltaVX[i][j] * Sat->ForceDD[i][j]/Sat->Distance[i][j];
+                Sat->FY[i] += -( Sat->Y[i] - SlS->Y[j]) *Sat->DeltaVY[i][j]* Sat->ForceDD[i][j]/Sat->Distance[i][j];
+                Sat->FZ[i] += -( Sat->Z[i] - SlS->Z[j]) *Sat->DeltaVZ[i][j] * Sat->ForceDD[i][j]/Sat->Distance[i][j];
             }
             else
             {
@@ -6346,7 +6350,7 @@ int main(int argc, char * argv[])
            DrawAnimationSequence(&SolarSystem,&Sat, i,"TRA",&SolarSystem, RGBReferenceBody, dRGBScale, StartSequence, 0); 
 #endif
            // on first sattelite do compare of the calculated position and SGP4 
-           int iCheck = 0;
+           int iCheck = 1;
            TimeFEpoch = (long double) (i+1);
             long double AE = 1.0;
             long double XKMPER = 6378.1350; //XKMPER kilometers/Earth radii 6378.135
