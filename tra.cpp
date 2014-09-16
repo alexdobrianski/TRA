@@ -295,10 +295,12 @@ typedef struct TraObj
     long double YkDxr[MAX_COEF_J];
     long double XkDyr[MAX_COEF_J];
     long double YkDyr[MAX_COEF_J];
-    long double tempValX;
-    long double tempValY;
-    long double tempValZ;
-    long double tempValR;
+    long double OneMinusSinTettaInSquare;
+    long double OneMinusXdivRInSquare;
+    long double OneMinusYdivRInSquare;
+    long double XdivRval;
+    long double YdivRval;
+
     void CalcCosK(void)
     {
         
@@ -306,26 +308,32 @@ typedef struct TraObj
     void CalcP(double sinTetta, double XdivR, double YdivR, double ValX, double ValY, double ValZ, double ValR)
     {
         int n,k;
-        tempValX = ValX; tempValY = ValY; tempValZ = ValZ; tempValR = ValR;
         // sinTetta is a Z/R - tetta is Latitude
         // XdivR, YdivR - must be rotated from original X,Y based on a time (and angle Lambda) 
         //
         //
         //Lambda +=1.0471975511965977461542144610932;//1.075; //0.183;//0.36;//1.72944494;
-        //Lambda -= 1.5707963267948966192313216916398;//1.2337005501361698273543113749845;
+        //Lambda += 1.5707963267948966192313216916398;//1.2337005501361698273543113749845;
         //Lambda = -Lambda;
+        //Lambda -= 0.2;
         //if (Lambda != -2)
         {
             XdivR = cos(Lambda) * XdivR - sin(Lambda) * YdivR;
             YdivR = sin(Lambda) * XdivR + cos(Lambda) * YdivR;
         }
+        XdivRval = XdivR;
+        YdivRval = YdivR;
 
         SinTetta[1] = sinTetta;
         if (ValX > 0.0)
             CosTetta[1] = cos(asin(sinTetta));
         else 
             CosTetta[1] = -cos(asin(sinTetta));
+        
         // power of a cos
+        OneMinusSinTettaInSquare = 1.0 - sinTetta*sinTetta;
+        OneMinusXdivRInSquare =    1.0 - XdivR * XdivR;
+        OneMinusXdivRInSquare =    1.0 - YdivR * YdivR;
         for (k = 2; k <= (iLeg+1); k++)
         {
             CosTetta[k] = CosTetta[k-1]*CosTetta[1];
@@ -392,10 +400,10 @@ typedef struct TraObj
         XkDxr[0] = 0; XkDyr[0] = 0; YkDxr[0] = 0; YkDyr[0] = 0;
         for (k = 1; k <=(iLeg+1); k++)
         {
-            XkDxr[k] = XkDxr[k-1]*XdivR + Xk[k-1] - YkDxr[k-1]*YdivR;
+            XkDxr[k] = XkDxr[k-1]*XdivR + Xk[k-1]          - YkDxr[k-1]*YdivR;
             XkDyr[k] = XkDyr[k-1]*XdivR - YkDyr[k-1]*YdivR - Yk[k-1];
-            YkDxr[k] = YkDxr[k-1]*XdivR + Yk[k-1] + XkDxr[k-1]*YdivR;
-            YkDyr[k] = YkDyr[k-1]*XdivR + XkDyr[k-1]*YdivR+Xk[k-1];
+            YkDxr[k] = YkDxr[k-1]*XdivR + Yk[k-1]          + XkDxr[k-1]*YdivR;
+            YkDyr[k] = YkDyr[k-1]*XdivR + XkDyr[k-1]*YdivR + Xk[k-1];
         }
         {
             // formula 8 on page 92
@@ -539,22 +547,64 @@ typedef struct TraObj
         for (n= 2;n <=iLeg;n++)
         {
             // k=0 already done
-            for (k = 0; k<=n; k++)
+            for (k = 0; k<=iLeg; k++)
             {
-                //            = (n+1)* fm * (r0/r)**n * (-x/r**3) * Znk * Qnk +
-                //              Rn * d(K+1)(Pn(sinTetta)/d(sintetta)**(k+1) * (-x*z/r**3) * Qnk +
-                //              Rn * Znk * [(Cnk*D(Xk)/D(x/r)+Snk*DYk)/D(x/r)) * (1/r - x**2/r**3) + (Cnk*D(Xk)/D(y/r)+Snk*DYk)/D(y/r))*(-x*y/r**3)]
-                X += -(n+1) * R0divR[n] * Pnk_tilda[n][k] * Qnk[n][k]
-                    - R0divR[n] * SinTetta[1] * Pnk_tilda[n][k+1] * Qnk[n][k]
+                // D(Unk)/D(x) = d(Rn) / d(1/r)    * D(1/r)/D(x)    * Znk    * Qnk +
+                //                 Rn * d(Znk)/d(z/r) * D(z/r)/D(x) * Qnk +
+                //                 Rn * Znk * [D(Qnk)/D(x/r) * D(x/r)/D(x) + D(Qnk)/D(y/r)*D(y/r)/D(x)]
+
+                //            = fm */r D((r0/r)**n)/D(1/r) * D(1/r)/D(x) * Znk * Qnk +
+                //              fm/r (r0/r)**n * D(K+1)(Pn(sinTetta)/D(sintetta) * D(Z/r)/D(x) * Qnk +
+                //              fm/r (r0/r)**n * Znk * [ (Cnk*D(Xk)/D(x/r)+Snk*D(Yk)/D(x/r)) * D(x/r)/D(x) + (Cnk*D(Xk)/D(y/r)+Snk*D(Yk)/D(y/r)) *D(y/r)/D(x) ]
+
+                //            = fm * r0**n * (n+1)* (1/r)**n * (-x/r**3) * Znk * Qnk +
+                //              fm/r (r0/r)**n * d(K+1)(Pn(sinTetta)/d(sintetta)**(k+1) * (-x*z/r**3) * Qnk +
+                //              fm/r (r0/r)**n * Znk * [(Cnk*D(Xk)/D(x/r)+Snk*D(Yk)/D(x/r)) * (1/r - x**2/r**3) + (Cnk*D(Xk)/D(y/r)+Snk*DYk)/D(y/r))*(-x*y/r**3)]
+
+                //            = fm *x/r**3   *   -(n+1) * (r0/r)**n *     Znk * Qnk +
+                //              fm *x/r**3   *   d(K+1)(Pn(sinTetta)/d(sintetta)        * 1/r * -z *    Qnk +
+                //              fm/r (r0/r)**n * Znk * [(Cnk*XkDxr+Snk*YkDxr) * (1/r - x**2/r**3) + (Cnk*XkDyr+Snk*YkDyr)*(-x*y/r**3)]
+
+                //            = fm *x/r**3   * (r0/r)**n [  -(n+1) * Znk * Qnk +
+                //                                           d(K+1)(Pn(sinTetta)/d(sintetta)        * -SinTetta *    Qnk +
+                //                                             Znk * ((Cnk*XkDxr+Snk*YkDxr) * (1 - (x/r)**2)*r/x + (Cnk*XkDyr+Snk*YkDyr)*(-y/r))
+                X += R0divR[n] *
+                                  (-(n+1) *  Pnk_tilda[n][k] * Qnk[n][k]
+                                   - Pnk_tilda[n][k+1] * SinTetta[1] *  Qnk[n][k]
+                                   + Pnk_tilda[n][k] * ((CNK[n][k]*XkDxr[k] + SNK[n][k]*YkDxr[k]) * OneMinusXdivRInSquare/XdivRval - (CNK[n][k]*XkDyr[k] + SNK[n][k]*YkDyr[k])*YdivRval)
+                                  )
                     ; 
-                Y += -(n+1) * R0divR[n] * Pnk_tilda[n][k] * Qnk[n][k]
-                    - R0divR[n] * SinTetta[1] * Pnk_tilda[n][k+1] * Qnk[n][k]
+
+                // D(Unk)/D(y) = d(Rn) / d(1/r)    * D(1/r)/D(y)    * Znk    * Qnk +
+                //                 Rn * d(Znk)/d(z/r) * D(z/r)/D(y) * Qnk +
+                //                 Rn * Znk * [D(Qnk)/D(x/r) * D(x/r)/D(y) + D(Qnk)/D(y/r)*D(y/r)/D(y)]
+
+                //             = fm/r D((r0/r)**n)/D(1/r) * D(1/r)/D(y) * Znk * Qnk +
+                //               fm/r (r0/r)**n * D(K+1)(Pn(sinTetta)/D(sintetta) * D(Z/r)/D(y) * Qnk +
+                //               fm/r (r0/r)**n * Znk * [ (Cnk*D(Xk)/D(x/r)+Snk*D(Yk)/D(x/r)) * D(x/r)/D(y) + (Cnk*D(Xk)/D(y/r)+Snk*D(Yk)/D(y/r)) *D(y/r)/D(y) ]
+
+                //            =  fm * r0**n * (n+1)* (1/r)**n * (-y/r**3) * Znk * Qnk +
+                //              fm/r (r0/r)**n * d(K+1)(Pn(sinTetta)/d(sintetta)**(k+1) * (-y*z/r**3) * Qnk +
+                //              fm/r (r0/r)**n * Znk * [(Cnk*D(Xk)/D(x/r)+Snk*D(Yk)/D(x/r)) * (-xy/r**3) + (Cnk*D(Xk)/D(y/r)+Snk*DYk)/D(y/r))*(1/r-y**2/r**3)]
+
+                //            = fm * y/r**3   * (r0/r)**n [  -(n+1) * Znk * Qnk +
+                //                                           d(K+1)(Pn(sinTetta)/d(sintetta)        * -SinTetta *    Qnk +
+                //                                             Znk * ((Cnk*XkDxr+Snk*YkDxr) * (-x/r) + (Cnk*XkDyr+Snk*YkDyr)*(1-(y/r)**2)*r/y)
+
+                Y += R0divR[n] *
+                                  (-(n+1) *  Pnk_tilda[n][k] * Qnk[n][k]
+                                     - Pnk_tilda[n][k+1] * SinTetta[1] *  Qnk[n][k]
+                                     + Pnk_tilda[n][k] * (-(CNK[n][k]*XkDxr[k] + SNK[n][k]*YkDxr[k]) * XdivRval + (CNK[n][k]*XkDyr[k] + SNK[n][k]*YkDyr[k])*OneMinusYdivRInSquare/YdivRval)
+                                     )
                 ; 
                 //            = (n+1)* fm * (r0/r)**n * (-z/r**3) * Znk * Qnk +
-                //              Rn * d(K+1)(Pn(sinTetta)/d(sintetta)**(k+1) * (1/r-z**2/r**3) * Qnk +
-                //              Rn * Znk * [(Cnk*D(Xk)/D(x/r)+Snk*DYk)/D(x/r)) * (- x*z/r**3) + (Cnk*D(Xk)/D(y/r)+Snk*DYk)/D(y/r))*(-y*z/r**3)]
-                Z += -(n+1) * R0divR[n] * Pnk_tilda[n][k] * Qnk[n][k]
-                    + R0divR[n] * CosTetta[2]/ SinTetta[1] * Pnk_tilda[n][k+1] * Qnk[n][k]
+                //              fm/r (r0/r)**n * d(K+1)(Pn(sinTetta)/d(sintetta)**(k+1) * (1/r-z**2/r**3) * Qnk +
+                //              fm/r (r0/r)**n * Znk * [(Cnk*D(Xk)/D(x/r)+Snk*D(Yk)/D(x/r)) * (- x*z/r**3) + (Cnk*D(Xk)/D(y/r)+Snk*D(Yk)/D(y/r))*(-y*z/r**3)]
+                Z += R0divR[n] *
+                                (-(n+1) *  Pnk_tilda[n][k] * Qnk[n][k]
+                                 + OneMinusSinTettaInSquare/ SinTetta[1] * Pnk_tilda[n][k+1] * Qnk[n][k]
+                                 + Pnk_tilda[n][k] * (-(CNK[n][k]*XkDxr[k] + SNK[n][k]*YkDxr[k]) * XdivRval - (CNK[n][k]*XkDyr[k] + SNK[n][k]*YkDyr[k])*YdivRval)
+                                 )
                 ; 
 
             }
@@ -994,6 +1044,11 @@ void IteraSat(int TimeDirection, TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfC
                     // and tetta(Latitude) btw equator and vector
                     // this means that sinTetta(colatitude) equal cosTetta(latitude)
                     Sat->SinTetta[1] = ((Sat->Z[i] - SlS->Z[j]) /Sat->Distance[i][j]);
+
+                    //if (Sat->LastSinTetta <0)
+                    //    Sat->LastCosTetta = cos(asin(Sat->LastSinTetta)-M_PI/2.0);
+                    //else
+                    //Sat->CosTetta[1] = cos(asin(Sat->LastSinTetta[1]));
                     
                     //if (Sat->LastSinTetta <0)
                     //    Sat->LastCosTetta = cos(asin(Sat->LastSinTetta)-M_PI/2.0);
@@ -1009,13 +1064,16 @@ void IteraSat(int TimeDirection, TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfC
                     //Sat->CalcPNK(Sat->LastCosTetta);
                     //Summ = Sat->SummJ();
                     Sat->SummXYZ(DX,DY,DZ);
+                    //long double DSUMM = sqrt(DX*DX+DY*DY+DZ*DZ);
                     
                     //Summ *=1.0001;//0.999905;
 
                     //Sat->ForceDD[i][j] = Sat->ForceDD_;// * Summ;
-                    Sat->DeltaVX[i][j] =(1-DX);
-                    Sat->DeltaVY[i][j] =(1-DY);
-                    Sat->DeltaVZ[i][j] =(1-DZ);
+                    //if (Summ == DSUMM)
+                    //    Summ =0;
+                    Sat->DeltaVX[i][j] =(1.0-DX);
+                    Sat->DeltaVY[i][j] =(1.0-DY);
+                    Sat->DeltaVZ[i][j] =(1.0-DZ);
 
                     // is this a WGS84??:
                     //Temp = SlS->GM[j] / (R0_MODEL*R0_MODEL);
@@ -4591,7 +4649,7 @@ void ParamProb(char *szString)
                 }
             }
             // amount of J coeff used in calcualtion
-            Sat.iLeg = 8;
+            Sat.iLeg = 7;
             Sat.iLeg_longit = 0; // no longitude in calculation
             Sat.Lambda = -2;
             Sat.LegBody = EARTH;
@@ -6350,7 +6408,7 @@ int main(int argc, char * argv[])
            DrawAnimationSequence(&SolarSystem,&Sat, i,"TRA",&SolarSystem, RGBReferenceBody, dRGBScale, StartSequence, 0); 
 #endif
            // on first sattelite do compare of the calculated position and SGP4 
-           int iCheck = 1;
+           int iCheck = 0;
            TimeFEpoch = (long double) (i+1);
             long double AE = 1.0;
             long double XKMPER = 6378.1350; //XKMPER kilometers/Earth radii 6378.135
