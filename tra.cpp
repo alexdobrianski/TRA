@@ -313,9 +313,9 @@ typedef struct TraObj
         //
         //
         //Lambda +=1.0471975511965977461542144610932;//1.075; //0.183;//0.36;//1.72944494;
-        //Lambda += 1.5707963267948966192313216916398;//1.2337005501361698273543113749845;
+        //Lambda -= 1.5707963267948966192313216916398;//1.2337005501361698273543113749845;
         //Lambda = -Lambda;
-        //Lambda -= 0.2;
+        //Lambda -= 1.72;
         //if (Lambda != -2)
         {
             XdivR = cos(Lambda) * XdivR - sin(Lambda) * YdivR;
@@ -547,7 +547,7 @@ typedef struct TraObj
         for (n= 2;n <=iLeg;n++)
         {
             // k=0 already done
-            for (k = 0; k<=iLeg; k++)
+            for (k = 0; k<=n; k++)
             {
                 // D(Unk)/D(x) = d(Rn) / d(1/r)    * D(1/r)/D(x)    * Znk    * Qnk +
                 //                 Rn * d(Znk)/d(z/r) * D(z/r)/D(x) * Qnk +
@@ -585,7 +585,7 @@ typedef struct TraObj
 
                 //            =  fm * r0**n * (n+1)* (1/r)**n * (-y/r**3) * Znk * Qnk +
                 //              fm/r (r0/r)**n * d(K+1)(Pn(sinTetta)/d(sintetta)**(k+1) * (-y*z/r**3) * Qnk +
-                //              fm/r (r0/r)**n * Znk * [(Cnk*D(Xk)/D(x/r)+Snk*D(Yk)/D(x/r)) * (-xy/r**3) + (Cnk*D(Xk)/D(y/r)+Snk*DYk)/D(y/r))*(1/r-y**2/r**3)]
+                //              fm/r (r0/r)**n * Znk * [(Cnk*D(Xk)/D(x/r)+Snk*D(Yk)/D(x/r)) * (-xy/r**3) + (Cnk*D(Xk)/D(y/r)+Snk*D(Yk)/D(y/r))*(1/r-y**2/r**3)]
 
                 //            = fm * y/r**3   * (r0/r)**n [  -(n+1) * Znk * Qnk +
                 //                                           d(K+1)(Pn(sinTetta)/d(sintetta)        * -SinTetta *    Qnk +
@@ -896,17 +896,17 @@ void IteraSolarSystem(int TimeDirection, TRAOBJ * SlS)
 					    (SlS->Y[i] - SlS->Y[j])*(SlS->Y[i] - SlS->Y[j]) + 
 					    (SlS->Z[i] - SlS->Z[j])*(SlS->Z[i] - SlS->Z[j]);
 
-            if (tD_Obj1Obj2 != SlS->Distance2[i][j])
+            //if (tD_Obj1Obj2 != SlS->Distance2[i][j])
             {
                 SlS->Distance2[i][j] = tD_Obj1Obj2;
                 SlS->Distance2[j][i] = tD_Obj1Obj2;
                 double tD_ = sqrt(tD_Obj1Obj2);
 
-                if (tD_ != SlS->Distance[i][j])
+                //if (tD_ != SlS->Distance[i][j])
                 {
                     SlS->Distance[i][j] = tD_;
                     SlS->Distance[j][i] = tD_;
-#if 0
+#if 1
                     SlS->ForceDD[i][j] = SlS->GM[i] * SlS->M[j] / SlS->Distance2[i][j];
                     SlS->ForceDD[j][i] = SlS->GM[j] * SlS->M[i] / SlS->Distance2[j][i];
 #else
@@ -1126,7 +1126,7 @@ void IteraSat(int TimeDirection, TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfC
 
     for (i = 0; i < Sat->Elem; i++)
     {
-#if 0
+#if 1
         // this is original formula
         Sat->VX[i] += Sat->FX[i] * TimeSl /* Sat->M[i]*/;
         Sat->VY[i] += Sat->FY[i] * TimeSl /* Sat->M[i]*/;
@@ -4649,7 +4649,7 @@ void ParamProb(char *szString)
                 }
             }
             // amount of J coeff used in calcualtion
-            Sat.iLeg = 7;
+            Sat.iLeg = 8;
             Sat.iLeg_longit = 0; // no longitude in calculation
             Sat.Lambda = -2;
             Sat.LegBody = EARTH;
