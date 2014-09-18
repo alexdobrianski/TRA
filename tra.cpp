@@ -364,7 +364,9 @@ typedef struct TraObj
     long double OneMinusXdivRInSquare_XdivRval[PLANET_COUNT][MAX_COEF_J][MAX_COEF_J];
     long double OneMinusYdivRInSquare_YdivRval[PLANET_COUNT][MAX_COEF_J][MAX_COEF_J];
     long double OneMinusZdivRInSquare_ZdivRval[PLANET_COUNT][MAX_COEF_J][MAX_COEF_J];
-
+    long double OldXSign[PLANET_COUNT];
+    long double OldYSign[PLANET_COUNT];
+    long double OldZSign[PLANET_COUNT];
     void CalcCosK(void)
     {
         
@@ -457,7 +459,7 @@ typedef struct TraObj
         // derivatives for dK(Pn(sinTetta))/d(sinTetta)**K
         for (n= 2;n <=(iLeg+1);n++)
         {
-            for (k = 1; k<=(iLeg+1);k++)
+            for (k = n; k<=(iLeg+1);k++)
             {
                 Pnk_tilda[n][k] = (2*n-1) * Pnk_tilda[n-1][k-1] - Pnk_tilda[n-2][k];
             }
@@ -654,16 +656,20 @@ typedef struct TraObj
                 //            = fm /r**2   * (r0/r)**n [  -(n+1) * Znk * Qnk x/r +
                 //                                           Znk+1        * -x/r * SinTetta *    Qnk +
                 //                                             Znk * ((Cnk*XkDxr+Snk*YkDxr) * (1 - (x/r)**2) + (Cnk*XkDyr+Snk*YkDyr)*(-x/r * y/r))
-#define CPV 0.000001
-                //if (((XdivRval > CPV ) || (XdivRval < -CPV )))// && (((k+n)&1) == 1))
+#define CPV 0.00001
+                if (((XdivRval > CPV ) || (XdivRval < -CPV )))// && (((k+n)&1) == 1))
+                {
                     OneMinusXdivRInSquare_XdivRval[SatCalc][n][k] = (CNK[n][k]*XkDxr[k] + SNK[n][k]*YkDxr[k]) * OneMinusXdivRInSquare2;///XdivRval;
-                //else
-                //{
-                //    if (((XdivRval >0) && (OneMinusXdivRInSquare_XdivRval[SatCalc][n][k] < 0)) || ((XdivRval <0) && (OneMinusXdivRInSquare_XdivRval[SatCalc][n][k] > 0)))
-                //        OneMinusXdivRInSquare_XdivRval[SatCalc][n][k] = -OneMinusXdivRInSquare_XdivRval[SatCalc][n][k];
-                //    else
-                //        OneMinusXdivRInSquare_XdivRval[SatCalc][n][k] = OneMinusXdivRInSquare_XdivRval[SatCalc][n][k];
-                //}
+                    OldXSign[SatCalc] = XdivRval;
+                }
+                else
+                {
+                    
+                    if (((XdivRval >0) && (OldXSign[SatCalc] < 0)) || ((XdivRval <0) && (OldXSign[SatCalc] > 0)))
+                        OneMinusXdivRInSquare_XdivRval[SatCalc][n][k] = -OneMinusXdivRInSquare_XdivRval[SatCalc][n][k];
+                    else
+                        OneMinusXdivRInSquare_XdivRval[SatCalc][n][k] = OneMinusXdivRInSquare_XdivRval[SatCalc][n][k];
+                }
                     X += R0divR[n] *
                                   (-(n+1)  /**XdivRval*/ *  Pnk_tilda[n][k] * Qnk[n][k]
                                    - Pnk_tilda[n][k+1] *  Qnk[n][k] /** XdivRval*/ * SinTetta[1]
@@ -688,15 +694,18 @@ typedef struct TraObj
                 //            = fm /r**2   * (r0/r)**n [  -(n+1) * Znk * *y/r * Qnk +
                 //                                           Znk+1       * y/r * -SinTetta *    Qnk +
                 //                                             Znk * ((Cnk*XkDxr+Snk*YkDxr) * (-x/r * y/r) + (Cnk*XkDyr+Snk*YkDyr)*(1-(y/r)**2))
-                    //if (((YdivRval > CPV ) || (YdivRval < -CPV )))// && (((k+n)&1) == 1))
+                    if (((YdivRval > CPV ) || (YdivRval < -CPV )))// && (((k+n)&1) == 1))
+                    {
                         OneMinusYdivRInSquare_YdivRval[SatCalc][n][k] = (CNK[n][k]*XkDyr[k] + SNK[n][k]*YkDyr[k])*OneMinusYdivRInSquare2;///YdivRval;
-                    //else
-                    //{
-                    //    if (((YdivRval >0) && (OneMinusYdivRInSquare_YdivRval[SatCalc][n][k] < 0)) || ((YdivRval <0) && (OneMinusYdivRInSquare_YdivRval[SatCalc][n][k] > 0)))
-                    //        OneMinusYdivRInSquare_YdivRval[SatCalc][n][k] = - OneMinusYdivRInSquare_YdivRval[SatCalc][n][k];
-                    //    else
-                    //        OneMinusYdivRInSquare_YdivRval[SatCalc][n][k] = OneMinusYdivRInSquare_YdivRval[SatCalc][n][k];
-                    //}
+                        OldYSign[SatCalc] = YdivRval;
+                    }
+                    else
+                    {
+                        if (((YdivRval >0) && (OldYSign[SatCalc] < 0)) || ((YdivRval <0) && (OldYSign[SatCalc] > 0)))
+                            OneMinusYdivRInSquare_YdivRval[SatCalc][n][k] = - OneMinusYdivRInSquare_YdivRval[SatCalc][n][k];
+                        else
+                            OneMinusYdivRInSquare_YdivRval[SatCalc][n][k] = OneMinusYdivRInSquare_YdivRval[SatCalc][n][k];
+                    }
 
                     Y += R0divR[n] *
                                   (-(n+1) /**YdivRval*/ * Pnk_tilda[n][k] * Qnk[n][k]
@@ -710,15 +719,18 @@ typedef struct TraObj
             //            = fm/r**2  * (r0/r)**n ( (n+1)  * (-z/r) * Znk * Qnk +
             //                                     Znk+1 * (1-(z/r)**2) * Qnk +
             //                                     Znk * [(Cnk*D(Xk)/D(x/r)+Snk*DYk)/D(x/r)) * (- x/r * z/r) + (Cnk*D(Xk)/D(y/r)+Snk*DYk)/D(y/r))*(-y/r *z/r)]
-                    //if (((SinTetta[1] > CPV ) || (SinTetta[1] < -CPV )))// && (((k+n)&1) == 1))
+                    if (((SinTetta[1] > CPV ) || (SinTetta[1] < -CPV )))// && (((k+n)&1) == 1))
+                    {
                         OneMinusZdivRInSquare_ZdivRval[SatCalc][n][k] = OneMinusSinTettaInSquare2 * Pnk_tilda[n][k+1] * Qnk[n][k];// /SinTetta[1];
-                    //else
-                    //{
-                    //    if (((SinTetta[1] >0) && (OneMinusZdivRInSquare_ZdivRval[SatCalc][n][k] < 0)) || ((SinTetta[1] <0) && (OneMinusZdivRInSquare_ZdivRval[SatCalc][n][k] > 0)))
-                    //        OneMinusZdivRInSquare_ZdivRval[SatCalc][n][k] = - OneMinusZdivRInSquare_ZdivRval[SatCalc][n][k];
-                    //    else
-                    //        OneMinusZdivRInSquare_ZdivRval[SatCalc][n][k] = OneMinusZdivRInSquare_ZdivRval[SatCalc][n][k];
-                    //}
+                        OldZSign[SatCalc] = SinTetta[1];
+                    }
+                    else
+                    {
+                        if (((SinTetta[1] >0) && (OldZSign[SatCalc] < 0)) || ((SinTetta[1] <0) && (OldZSign[SatCalc] > 0)))
+                            OneMinusZdivRInSquare_ZdivRval[SatCalc][n][k] = - OneMinusZdivRInSquare_ZdivRval[SatCalc][n][k];
+                        else
+                            OneMinusZdivRInSquare_ZdivRval[SatCalc][n][k] = OneMinusZdivRInSquare_ZdivRval[SatCalc][n][k];
+                    }
                     Z += R0divR[n] *
                                 (-(n+1)  /** SinTetta[1]*/ * Pnk_tilda[n][k] * Qnk[n][k] 
                                  + /*OneMinusSinTettaInSquare * Pnk_tilda[n][k+1] * Qnk[n][k] /SinTetta[1]*/ OneMinusZdivRInSquare_ZdivRval[SatCalc][n][k]
@@ -1143,7 +1155,7 @@ void IteraSat(int TimeDirection, TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfC
                       Sat->R0divR[n] = Sat->R0divR[1]*Sat->R0divR[n-1];
                  }
 
-                if (Sat->Distance[i][j] < 10*R0_MODEL)
+                if (Sat->Distance[i][j] < 20*R0_MODEL)
                 {
                     // is this a metter how to measure Tetta?
                     // sin Tetta(colatitude) = Z/R
@@ -6544,7 +6556,7 @@ int main(int argc, char * argv[])
            DrawAnimationSequence(&SolarSystem,&Sat, i,"TRA",&SolarSystem, RGBReferenceBody, dRGBScale, StartSequence, 0); 
 #endif
            // on first sattelite do compare of the calculated position and SGP4 
-           int iCheck = 0;
+           int iCheck = 1;
            TimeFEpoch = (long double) (i+1);
             long double AE = 1.0;
             long double XKMPER = 6378.1350; //XKMPER kilometers/Earth radii 6378.135
