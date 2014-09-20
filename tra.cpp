@@ -311,19 +311,34 @@ typedef struct TraObj
     long double VYOld[PLANET_COUNT];
     long double VZOld[PLANET_COUNT];
 
+    BOOL FlagEven;
+    BOOL FlagV1Assigned;
+
 
     long double X_[PLANET_COUNT];
     long double VX_[PLANET_COUNT];
     long double FX[PLANET_COUNT];
-    long double X__[PLANET_COUNT];
+    long double X0divDt[PLANET_COUNT];
+    long double VX1[PLANET_COUNT];
+    long double VXsumOdd[PLANET_COUNT];
+    long double VXsumEnen[PLANET_COUNT];
+
     long double Y_[PLANET_COUNT];
     long double VY_[PLANET_COUNT];
     long double FY[PLANET_COUNT];
-    long double Y__[PLANET_COUNT];
+    long double Y0divDt[PLANET_COUNT];
+    long double VY1[PLANET_COUNT];
+    long double VYsumOdd[PLANET_COUNT];
+    long double VYsumEnen[PLANET_COUNT];
+
     long double Z_[PLANET_COUNT];
     long double VZ_[PLANET_COUNT];
     long double FZ[PLANET_COUNT];
-    long double Z__[PLANET_COUNT];
+    long double Z0divDt[PLANET_COUNT];
+    long double VZ1[PLANET_COUNT];
+    long double VZsumOdd[PLANET_COUNT];
+    long double VZsumEnen[PLANET_COUNT];
+
 
     long double GM[PLANET_COUNT];
     long double M[PLANET_COUNT];
@@ -482,8 +497,10 @@ typedef struct TraObj
 #endif
         // legandr functions from sinTetta
         P[0] = 1.0;
+#if 0
         if ((sinTetta > -0.00001) && (sinTetta < 0.00001))
             sinTetta = 0;
+#endif
         P[1] = sinTetta;
         Pnk_tilda[0][0] = P[0];
         Pnk_tilda[1][0] = P[1];
@@ -505,9 +522,11 @@ typedef struct TraObj
         }
         // derivetiveas from legandr fucntions
         Ptilda[0] = 0; // P0 was constant == P0' == 0
+#if 0
         if ((sinTetta > -0.00001) && (sinTetta < 0.00001))
             Ptilda[1] = 0;
         else
+#endif
             Ptilda[1] = 1; // P1 was a X == P1' == 1
 
         Pnk_tilda[0][1] = Ptilda[0];
@@ -823,21 +842,25 @@ typedef struct TraObj
             //            = fm/r**2  * (r0/r)**n ( (n+1)  * (-z/r) * Znk * Qnk +
             //                                     Znk+1 * (1-(z/r)**2) * Qnk +
             //                                     Znk * [(Cnk*D(Xk)/D(x/r)+Snk*DYk)/D(x/r)) * (- x/r * z/r) + (Cnk*D(Xk)/D(y/r)+Snk*DYk)/D(y/r))*(-y/r *z/r)]
-                    //if (((SinTetta > CPV ) || (SinTetta < -CPV )))// && (((k+n)&1) == 1))
-                    //{
+#if 1
+                    if (((SinTetta > CPV ) || (SinTetta < -CPV )))// && (((k+n)&1) == 1))
+                    {
+#endif
                         OneMinusZdivRInSquare_ZdivRval[SatCalc][n][k] = OneMinusSinTettaInSquare2 * Pnk_tilda[n][k+1] * Qnk[n][k];// /SinTetta[1];
                         OldZSign[SatCalc] = SinTetta;
-                    //}
-                    //else
-                    //{
-                    //    if (((SinTetta >0) && (OldZSign[SatCalc] < 0)) || ((SinTetta <0) && (OldZSign[SatCalc] > 0)))
-                    //    {
-                    //        OneMinusZdivRInSquare_ZdivRval[SatCalc][n][k] = - OneMinusZdivRInSquare_ZdivRval[SatCalc][n][k];
-                    //        OldZSign[SatCalc] = -OldZSign[SatCalc];
-                    //    }
-                    //    else
-                    //        OneMinusZdivRInSquare_ZdivRval[SatCalc][n][k] = OneMinusZdivRInSquare_ZdivRval[SatCalc][n][k];
-                    //}
+#if 1
+                    }
+                    else
+                    {
+                        if (((SinTetta >0) && (OldZSign[SatCalc] < 0)) || ((SinTetta <0) && (OldZSign[SatCalc] > 0)))
+                        {
+                            OneMinusZdivRInSquare_ZdivRval[SatCalc][n][k] = - OneMinusZdivRInSquare_ZdivRval[SatCalc][n][k];
+                            OldZSign[SatCalc] = -OldZSign[SatCalc];
+                        }
+                        else
+                            OneMinusZdivRInSquare_ZdivRval[SatCalc][n][k] = OneMinusZdivRInSquare_ZdivRval[SatCalc][n][k];
+                    }
+#endif
                     Z += R0divR[n] *
                                 (-(n+1)  /** SinTetta[1]*/ * Pnk_tilda[n][k] * Qnk[n][k] 
                                  + /*OneMinusSinTettaInSquare * Pnk_tilda[n][k+1] * Qnk[n][k] /SinTetta[1]*/ OneMinusZdivRInSquare_ZdivRval[SatCalc][n][k]
@@ -1329,24 +1352,28 @@ void IteraSat(int TimeDirection, TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfC
         Sat->Z[i] += Sat->VZ[i]*TimeSl;
 
 #else
+        // X(t+1) = X(t) + V(t)*deltaT
+        Sat->X_[i] += Sat->VX_[i];
+        Sat->Y_[i] += Sat->VY_[i];
+        Sat->Z_[i] += Sat->VZ_[i];
+
+        // that is calculation of the postion for a next F(x(t+1)) calculation
+        Sat->X[i] = Sat->X_[i]*TimeSl*TimeSl /* Sat->M[i]*/;
+        Sat->Y[i] = Sat->Y_[i]*TimeSl*TimeSl /* Sat->M[i]*/;
+        Sat->Z[i] = Sat->Z_[i]*TimeSl*TimeSl /* Sat->M[i]*/;
+
+        // that is calculation of the V(t+1) = V(t) + F(x(t))) *deltaT
         Sat->VX_[i] += Sat->FX[i];
         Sat->VY_[i] += Sat->FY[i];
         Sat->VZ_[i] += Sat->FZ[i];
 //#ifdef PROP_VELOCITY
         // this can be skipped to make calculation faster
-        // VX is different from VX_ by coef = TimeS1*Mass
+        // VX is different from VX_ by coef = TimeS1
         // 
-        Sat->VX[i] = Sat->VX_[i]*TimeSl /* Sat->M[i]*/;
-        Sat->VY[i] = Sat->VY_[i]*TimeSl /* Sat->M[i]*/;
-        Sat->VZ[i] = Sat->VZ_[i]*TimeSl /* Sat->M[i]*/;
+        Sat->VX[i] = Sat->VX_[i]*TimeSl;
+        Sat->VY[i] = Sat->VY_[i]*TimeSl;
+        Sat->VZ[i] = Sat->VZ_[i]*TimeSl;
 //#endif
-        Sat->X_[i] += Sat->VX_[i];
-        Sat->Y_[i] += Sat->VY_[i];
-        Sat->Z_[i] += Sat->VZ_[i];
-
-        Sat->X[i] = Sat->X_[i]*TimeSl*TimeSl /* Sat->M[i]*/;
-        Sat->Y[i] = Sat->Y_[i]*TimeSl*TimeSl /* Sat->M[i]*/;
-        Sat->Z[i] = Sat->Z_[i]*TimeSl*TimeSl /* Sat->M[i]*/;
 #endif
     }
 }
@@ -2135,6 +2162,14 @@ void AssignFromNASAData(TRAOBJ * SlS, double JDSec)
         SlS->X_[i] = SlS->X[i]* SlS->M[i] /TimeSl/TimeSl ;
         SlS->Y_[i] = SlS->Y[i]* SlS->M[i] /TimeSl/TimeSl ;
         SlS->Z_[i] = SlS->Z[i]* SlS->M[i] /TimeSl/TimeSl ;
+
+        SlS->Y0divDt[i]=SlS->Y[i]* SlS->M[i] /TimeSl;
+        SlS->Y0divDt[i]=SlS->Y[i]* SlS->M[i] /TimeSl;
+        SlS->Y0divDt[i]=SlS->Y[i]* SlS->M[i] /TimeSl;
+
+        SlS->VXsumOdd[i] = 0;  SlS->VXsumEnen[i] = 0;   SlS->VYsumOdd[i] = 0; SlS->VYsumEnen[i] = 0;    SlS->VZsumOdd[i] = 0; SlS->VZsumEnen[i] = 0;
+        SlS->FlagEven = TRUE;
+
         for (int j = 0; j < SlS->Elem; j++)
         {
             SlS->GMxM[i][j] = SlS->GM[i]*SlS->M[j];
@@ -4827,6 +4862,7 @@ void ParamProb(char *szString)
                 Sat.X_[i] = Sat.X[i]/* Sat.M[i]*/ /TimeSl/TimeSl ;
                 Sat.Y_[i] = Sat.Y[i]/* Sat.M[i]*/ /TimeSl/TimeSl ;
                 Sat.Z_[i] = Sat.Z[i]/* Sat.M[i]*/ /TimeSl/TimeSl ;
+                Sat.X0divDt[i] = Sat.X[i] /TimeSl;
             }
             for (int n = 0 ; n < MAX_COEF_J; n++)
             {
@@ -4869,7 +4905,7 @@ void ParamProb(char *szString)
                 Sat.J[n] = (Clm[0][n]);
             }
             // amount of J coeff used in calcualtion
-            Sat.iLeg = 15;
+            Sat.iLeg = 16;
             Sat.iLeg_longit = 0; // no longitude in calculation
             Sat.Lambda = -2;
             Sat.LegBody = EARTH;
