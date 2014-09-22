@@ -312,14 +312,15 @@ typedef struct TraObj
     long double VZOld[PLANET_COUNT];
 
     BOOL FlagEven;
-    BOOL FlagV1Assigned;
+    BOOL FlagV0Assigned;
+    __int64 CountN;
 
 
     long double X_[PLANET_COUNT];
     long double VX_[PLANET_COUNT];
     long double FX[PLANET_COUNT];
     long double X0divDt[PLANET_COUNT];
-    long double VX1[PLANET_COUNT];
+    long double VX0[PLANET_COUNT];
     long double VXsumOdd[PLANET_COUNT];
     long double VXsumEnen[PLANET_COUNT];
 
@@ -327,7 +328,7 @@ typedef struct TraObj
     long double VY_[PLANET_COUNT];
     long double FY[PLANET_COUNT];
     long double Y0divDt[PLANET_COUNT];
-    long double VY1[PLANET_COUNT];
+    long double VY0[PLANET_COUNT];
     long double VYsumOdd[PLANET_COUNT];
     long double VYsumEnen[PLANET_COUNT];
 
@@ -335,7 +336,7 @@ typedef struct TraObj
     long double VZ_[PLANET_COUNT];
     long double FZ[PLANET_COUNT];
     long double Z0divDt[PLANET_COUNT];
-    long double VZ1[PLANET_COUNT];
+    long double VZ0[PLANET_COUNT];
     long double VZsumOdd[PLANET_COUNT];
     long double VZsumEnen[PLANET_COUNT];
 
@@ -442,7 +443,7 @@ typedef struct TraObj
         //
         //
         //Lambda +=1.0471975511965977461542144610932;//1.075; //0.183;//0.36;//1.72944494;
-        Lambda += 1.5707963267948966192313216916398;//1.2337005501361698273543113749845;
+        //Lambda -= 1.5707963267948966192313216916398;//1.2337005501361698273543113749845;
         //Lambda += 0.87539816339744830961566084581988;// pi/4
         //Lambda = -Lambda;
         //Lambda +=3.1415926535897932384626433832795;
@@ -1217,6 +1218,7 @@ void IteraSolarSystem(int TimeDirection, TRAOBJ * SlS)
         SlS->Z[i] += SlS->VZ[i]*TimeSl;
 
 #else
+#if 0
         SlS->VX_[i] += SlS->FX[i];
         SlS->VY_[i] += SlS->FY[i];
         SlS->VZ_[i] += SlS->FZ[i];
@@ -1236,6 +1238,54 @@ void IteraSolarSystem(int TimeDirection, TRAOBJ * SlS)
         SlS->X[i] = SlS->X_[i]*TimeSl*TimeSl / SlS->M[i];
         SlS->Y[i] = SlS->Y_[i]*TimeSl*TimeSl / SlS->M[i];
         SlS->Z[i] = SlS->Z_[i]*TimeSl*TimeSl / SlS->M[i];
+#else
+        //if (SlS->FlagV0Assigned == FALSE)
+        //{
+        //    SlS->VX0[i] = SlS->VX_[i];
+        //    SlS->VY0[i] = SlS->VY_[i];
+        //    SlS->VZ0[i] = SlS->VZ_[i];
+        //    SlS->FlagV0Assigned = TRUE;
+        //}
+        //if (SlS->FlagEven)
+        //{
+        //    SlS->FlagEven = FALSE;
+        //    SlS->X_[i] += SlS->VX_[i];
+        //    VXsumEnen[i] += SlS->VX_[i];
+        //    VYsumEnen[i] += SlS->VY_[i];
+        //    VZsumEnen[i] += SlS->VZ_[i];
+        //}
+        //else
+        //{
+        //    SlS->FlagEven = TRUE;
+        //    SlS->VXsumOdd[i] += SlS->VX_[i];
+        //    SlS->VYsumOdd[i] += SlS->VY_[i];
+        //    SlS->VZsumOdd[i] += SlS->VZ_[i];
+        //    SlS->CountN++;
+        //    SlS->X_[i] = 2.0*SlS->CountN*(X0divDt + 4.0*SlS->VXsumOdd + 2.0*VXsumEnen[i] + SlS->VX_[i])/
+        //}
+
+        SlS->X_[i] += SlS->VX_[i] + SlS->FX[i]/2;
+        SlS->Y_[i] += SlS->VY_[i] + SlS->FY[i]/2;
+        SlS->Z_[i] += SlS->VZ_[i] + SlS->FZ[i]/2;
+
+        SlS->X[i] = SlS->X_[i]*TimeSl*TimeSl / SlS->M[i];
+        SlS->Y[i] = SlS->Y_[i]*TimeSl*TimeSl / SlS->M[i];
+        SlS->Z[i] = SlS->Z_[i]*TimeSl*TimeSl / SlS->M[i];
+
+        SlS->VX_[i] += SlS->FX[i];
+        SlS->VY_[i] += SlS->FY[i];
+        SlS->VZ_[i] += SlS->FZ[i];
+
+//#ifdef PROP_VELOCITY
+        // this can be skipped to make calculation faster
+        // VX is different from VX_ by coef = TimeS1*Mass
+        // 
+        SlS->VX[i] = SlS->VX_[i]*TimeSl / SlS->M[i];
+        SlS->VY[i] = SlS->VY_[i]*TimeSl / SlS->M[i];
+        SlS->VZ[i] = SlS->VZ_[i]*TimeSl / SlS->M[i];
+//#endif
+
+#endif
 #endif
     }
 }
@@ -1352,10 +1402,36 @@ void IteraSat(int TimeDirection, TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfC
         Sat->Z[i] += Sat->VZ[i]*TimeSl;
 
 #else
+#if 0
+        // that is calculation of the V(t+1) = V(t) + F(x(t))) *deltaT
+        Sat->VX_[i] += Sat->FX[i];
+        Sat->VY_[i] += Sat->FY[i];
+        Sat->VZ_[i] += Sat->FZ[i];
+//#ifdef PROP_VELOCITY
+        // this can be skipped to make calculation faster
+        // VX is different from VX_ by coef = TimeS1
+        // 
+        Sat->VX[i] = Sat->VX_[i]*TimeSl;
+        Sat->VY[i] = Sat->VY_[i]*TimeSl;
+        Sat->VZ[i] = Sat->VZ_[i]*TimeSl;
+//#endif
         // X(t+1) = X(t) + V(t)*deltaT
         Sat->X_[i] += Sat->VX_[i];
         Sat->Y_[i] += Sat->VY_[i];
         Sat->Z_[i] += Sat->VZ_[i];
+
+        // that is calculation of the postion for a next F(x(t+1)) calculation
+        Sat->X[i] = Sat->X_[i]*TimeSl*TimeSl /* Sat->M[i]*/;
+        Sat->Y[i] = Sat->Y_[i]*TimeSl*TimeSl /* Sat->M[i]*/;
+        Sat->Z[i] = Sat->Z_[i]*TimeSl*TimeSl /* Sat->M[i]*/;
+
+
+#else
+        
+        // X(t+1) = X(t) + V(t)*deltaT
+        Sat->X_[i] += Sat->VX_[i] + Sat->FX[i]/2;
+        Sat->Y_[i] += Sat->VY_[i] + Sat->FY[i]/2;
+        Sat->Z_[i] += Sat->VZ_[i] + Sat->FZ[i]/2;
 
         // that is calculation of the postion for a next F(x(t+1)) calculation
         Sat->X[i] = Sat->X_[i]*TimeSl*TimeSl /* Sat->M[i]*/;
@@ -1374,6 +1450,8 @@ void IteraSat(int TimeDirection, TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfC
         Sat->VY[i] = Sat->VY_[i]*TimeSl;
         Sat->VZ[i] = Sat->VZ_[i]*TimeSl;
 //#endif
+
+#endif
 #endif
     }
 }
@@ -2163,29 +2241,22 @@ void AssignFromNASAData(TRAOBJ * SlS, double JDSec)
         SlS->Y_[i] = SlS->Y[i]* SlS->M[i] /TimeSl/TimeSl ;
         SlS->Z_[i] = SlS->Z[i]* SlS->M[i] /TimeSl/TimeSl ;
 
+        SlS->X0divDt[i]=SlS->X[i]* SlS->M[i] /TimeSl;
         SlS->Y0divDt[i]=SlS->Y[i]* SlS->M[i] /TimeSl;
-        SlS->Y0divDt[i]=SlS->Y[i]* SlS->M[i] /TimeSl;
-        SlS->Y0divDt[i]=SlS->Y[i]* SlS->M[i] /TimeSl;
+        SlS->Z0divDt[i]=SlS->Z[i]* SlS->M[i] /TimeSl;
 
-        SlS->VXsumOdd[i] = 0;  SlS->VXsumEnen[i] = 0;   SlS->VYsumOdd[i] = 0; SlS->VYsumEnen[i] = 0;    SlS->VZsumOdd[i] = 0; SlS->VZsumEnen[i] = 0;
-        SlS->FlagEven = TRUE;
+        SlS->VXsumOdd[i] = 0;  SlS->VXsumEnen[i] = SlS->VX_[i];
+        SlS->VYsumOdd[i] = 0; SlS->VYsumEnen[i] = SlS->VY_[i];
+        SlS->VZsumOdd[i] = 0; SlS->VZsumEnen[i] = SlS->VZ_[i];
 
         for (int j = 0; j < SlS->Elem; j++)
         {
             SlS->GMxM[i][j] = SlS->GM[i]*SlS->M[j];
         }
     }
-    // skip that planets to avoid 
-    //SlS->flInUse[0] = 0; //Mer
-    //SlS->flInUse[1] = 0; //Ven
-    //SlS->flInUse[3] = 0; //Mar
-    //SlS->flInUse[6] = 0; //
-    //SlS->flInUse[7] = 0; //
-    //SlS->flInUse[8] = 0; //
-    //SlS->flInUse[SUN] = 0;
-    //SlS->flInUse[MOON] = 0;
-    
-
+    SlS->FlagEven = FALSE;
+    SlS->FlagV0Assigned = FALSE;
+    SlS->CountN = 0;
 }
 
 // main engine to dump keplers elements as it is (no drag)
@@ -4862,8 +4933,17 @@ void ParamProb(char *szString)
                 Sat.X_[i] = Sat.X[i]/* Sat.M[i]*/ /TimeSl/TimeSl ;
                 Sat.Y_[i] = Sat.Y[i]/* Sat.M[i]*/ /TimeSl/TimeSl ;
                 Sat.Z_[i] = Sat.Z[i]/* Sat.M[i]*/ /TimeSl/TimeSl ;
-                Sat.X0divDt[i] = Sat.X[i] /TimeSl;
+
+                Sat.X0divDt[i]=Sat.X[i] /TimeSl;
+                Sat.Y0divDt[i]=Sat.Y[i] /TimeSl;
+                Sat.Z0divDt[i]=Sat.Z[i] /TimeSl;
+
+                Sat.VXsumOdd[i] = 0;  Sat.VXsumEnen[i] = 0;   Sat.VYsumOdd[i] = 0; Sat.VYsumEnen[i] = 0;    Sat.VZsumOdd[i] = 0; Sat.VZsumEnen[i] = 0;
             }
+            Sat.FlagEven = FALSE;
+            Sat.FlagV0Assigned = FALSE;
+            Sat.CountN = 0;
+
             for (int n = 0 ; n < MAX_COEF_J; n++)
             {
                 
