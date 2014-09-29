@@ -307,38 +307,40 @@ typedef struct TraObj
     long double VY[PLANET_COUNT];
     long double VZ[PLANET_COUNT];
 
-    long double VXOld[PLANET_COUNT];
-    long double VYOld[PLANET_COUNT];
-    long double VZOld[PLANET_COUNT];
-
-    BOOL FlagEven;
-    BOOL FlagV0Assigned;
     __int64 CountN;
 
 
     long double X_[PLANET_COUNT];
     long double VX_[PLANET_COUNT];
     long double FX[PLANET_COUNT];
-    long double X0divDt[PLANET_COUNT];
-    long double VX0[PLANET_COUNT];
-    long double VXsumOdd[PLANET_COUNT];
-    long double VXsumEnen[PLANET_COUNT];
+    long double X0divDt2[PLANET_COUNT];
+    long double VX0divDt[PLANET_COUNT];
+    long double FX0[PLANET_COUNT];
+    long double FX1[PLANET_COUNT];
+    long double FX3sumOdd[PLANET_COUNT];
+    long double FX2sumEnen[PLANET_COUNT];
 
     long double Y_[PLANET_COUNT];
     long double VY_[PLANET_COUNT];
     long double FY[PLANET_COUNT];
-    long double Y0divDt[PLANET_COUNT];
-    long double VY0[PLANET_COUNT];
-    long double VYsumOdd[PLANET_COUNT];
-    long double VYsumEnen[PLANET_COUNT];
+    long double Y0divDt2[PLANET_COUNT];
+    long double VY0divDt[PLANET_COUNT];
+    long double FY0[PLANET_COUNT];
+    long double FY1[PLANET_COUNT];
+    long double FY3sumOdd[PLANET_COUNT];
+    long double FY2sumEnen[PLANET_COUNT];
+
 
     long double Z_[PLANET_COUNT];
     long double VZ_[PLANET_COUNT];
     long double FZ[PLANET_COUNT];
-    long double Z0divDt[PLANET_COUNT];
-    long double VZ0[PLANET_COUNT];
-    long double VZsumOdd[PLANET_COUNT];
-    long double VZsumEnen[PLANET_COUNT];
+    long double Z0divDt2[PLANET_COUNT];
+    long double VZ0divDt[PLANET_COUNT];
+    long double FZ0[PLANET_COUNT];
+    long double FZ1[PLANET_COUNT];
+    long double FZ3sumOdd[PLANET_COUNT];
+    long double FZ2sumEnen[PLANET_COUNT];
+
 
 
     long double GM[PLANET_COUNT];
@@ -618,12 +620,7 @@ typedef struct TraObj
         }
 #endif
     }
-    //void CalcPNK(double X)
-    //{
-    //    LastPNK[2][1] = 3*X*sqrt(1-X*X);
-    //    LastPNK[2][2] = 3*(1-X*X);
-    //    // rest skiped
-    //}
+
     void SummXYZ(int SatCalc, double &X, double &Y, double &Z)
     {
         int n,k;
@@ -1202,7 +1199,7 @@ void IteraSolarSystem(int TimeDirection, TRAOBJ * SlS)
         }
     }
     // calculation of velocities and positions 
-
+    ++SlS->CountN; // the number of the iteration
     for (i = 0; i < SlS->Elem; i++)
     {
         if (SlS->flInUse[i] ==0)
@@ -1239,42 +1236,98 @@ void IteraSolarSystem(int TimeDirection, TRAOBJ * SlS)
         SlS->Y[i] = SlS->Y_[i]*TimeSl*TimeSl / SlS->M[i];
         SlS->Z[i] = SlS->Z_[i]*TimeSl*TimeSl / SlS->M[i];
 #else
-        //if (SlS->FlagV0Assigned == FALSE)
-        //{
-        //    SlS->VX0[i] = SlS->VX_[i];
-        //    SlS->VY0[i] = SlS->VY_[i];
-        //    SlS->VZ0[i] = SlS->VZ_[i];
-        //    SlS->FlagV0Assigned = TRUE;
-        //}
-        //if (SlS->FlagEven)
-        //{
-        //    SlS->FlagEven = FALSE;
-        //    SlS->X_[i] += SlS->VX_[i];
-        //    VXsumEnen[i] += SlS->VX_[i];
-        //    VYsumEnen[i] += SlS->VY_[i];
-        //    VZsumEnen[i] += SlS->VZ_[i];
-        //}
-        //else
-        //{
-        //    SlS->FlagEven = TRUE;
-        //    SlS->VXsumOdd[i] += SlS->VX_[i];
-        //    SlS->VYsumOdd[i] += SlS->VY_[i];
-        //    SlS->VZsumOdd[i] += SlS->VZ_[i];
-        //    SlS->CountN++;
-        //    SlS->X_[i] = 2.0*SlS->CountN*(X0divDt + 4.0*SlS->VXsumOdd + 2.0*VXsumEnen[i] + SlS->VX_[i])/
-        //}
-
-        SlS->X_[i] += SlS->VX_[i] + SlS->FX[i]/2;
-        SlS->Y_[i] += SlS->VY_[i] + SlS->FY[i]/2;
-        SlS->Z_[i] += SlS->VZ_[i] + SlS->FZ[i]/2;
+#if 0
+        switch(SlS->CountN)
+        {
+        case 1: // calculation X1 & V1 based on X0 V0 & F0(x0)
+            SlS->FX0[i] = SlS->FX[i]; SlS->FY0[i] = SlS->FY[i]; SlS->FZ0[i] = SlS->FZ[i];
+            SlS->VX[i] = (SlS->VX0divDt[i] + SlS->FX0[i]) * TimeSl;
+            SlS->VY[i] = (SlS->VY0divDt[i] + SlS->FY0[i]) * TimeSl;
+            SlS->VZ[i] = (SlS->VZ0divDt[i] + SlS->FZ0[i]) * TimeSl;
+            SlS->X[i] = (SlS->X0divDt2[i] + SlS->VX0divDt[i] + SlS->FX0[i]) * TimeSl*TimeSl;
+            SlS->Y[i] = (SlS->Y0divDt2[i] + SlS->VY0divDt[i] + SlS->FY0[i]) * TimeSl*TimeSl;
+            SlS->Z[i] = (SlS->Z0divDt2[i] + SlS->VZ0divDt[i] + SlS->FZ0[i]) * TimeSl*TimeSl;
+            break;
+        case 2: // calculation X2 & V2 based on X1 V1 F(X1) and all stored values
+            SlS->FX1[i] = SlS->FX[i]; SlS->FY1[i] = SlS->FY[i]; SlS->FZ1[i] = SlS->FZ[i];
+            SlS->VX[i] = (SlS->VX0divDt[i] + SlS->FX0[i] + SlS->FX1[i]) * TimeSl;
+            SlS->VY[i] = (SlS->VY0divDt[i] + SlS->FY0[i] + SlS->FY1[i]) * TimeSl;
+            SlS->VZ[i] = (SlS->VZ0divDt[i] + SlS->FZ0[i] + SlS->FZ1[i]) * TimeSl;
+            SlS->X[i] = (SlS->X0divDt2[i] + (SlS->VX0divDt[i] + 4.0*SlS->FX0[i] + SlS->FX1[i])/3.0) * TimeSl*TimeSl;
+            SlS->Y[i] = (SlS->Y0divDt2[i] + (SlS->VY0divDt[i] + 4.0*SlS->FY0[i] + SlS->FY1[i])/3.0) * TimeSl*TimeSl;
+            SlS->Z[i] = (SlS->Z0divDt2[i] + (SlS->VZ0divDt[i] + 4.0*SlS->FZ0[i] + SlS->FZ1[i])/3.0) * TimeSl*TimeSl;
+            break;
+        case 3:
+            SlS->VX[i] = (SlS->VX0divDt[i] + (SlS->FX0[i]+4.0*SlS->FX1[i] + SlS->FX[i])/3.0) * TimeSl;
+            SlS->VY[i] = (SlS->VY0divDt[i] + (SlS->FY0[i]+4.0*SlS->FY1[i] + SlS->FY[i])/3.0) * TimeSl;
+            SlS->VZ[i] = (SlS->VZ0divDt[i] + (SlS->FZ0[i]+4.0*SlS->FZ1[i] + SlS->FZ[i])/3.0) * TimeSl;
+            SlS->X[i] = (SlS->X0divDt2[i] + SlS->VX0divDt[i] + (SlS->FX0[i]+4.0*SlS->FX1[i] + SlS->FX[i])/3.0) * TimeSl*TimeSl;
+            SlS->Y[i] = (SlS->Y0divDt2[i] + SlS->VY0divDt[i] + (SlS->FX0[i]+4.0*SlS->FX1[i] + SlS->FX[i])/3.0) * TimeSl*TimeSl;
+            SlS->Z[i] = (SlS->Z0divDt2[i] + SlS->VZ0divDt[i] + (SlS->FX0[i]+4.0*SlS->FX1[i] + SlS->FX[i])/3.0) * TimeSl*TimeSl;
+            SlS->FX2sumEnen[i] += SlS->FX[i]; SlS->FY2sumEnen[i] += SlS->FY[i]; SlS->FZ2sumEnen[i] += SlS->FZ[i];
+            break;
+        case 4:
+            SlS->VX[i] = (SlS->VX0divDt[i] + SlS->FX0[i] + (SlS->FX1[i]+4.0*SlS->FX2sumEnen[i] + SlS->FX[i])/3) * TimeSl;
+            SlS->VY[i] = (SlS->VY0divDt[i] + SlS->FY0[i] + (SlS->FY1[i]+4.0*SlS->FY2sumEnen[i] + SlS->FY[i])/3) * TimeSl;
+            SlS->VZ[i] = (SlS->VZ0divDt[i] + SlS->FZ0[i] + (SlS->FZ1[i]+4.0*SlS->FZ2sumEnen[i] + SlS->FZ[i])/3) * TimeSl;
+            SlS->X[i] = (SlS->X0divDt2[i] + (SlS->VX0divDt[i] + 4.0*(SlS->FX0[i] + SlS->FX2sumEnen[i]) + 2*(SlS->FX1[i] + SlS->FX3sumOdd[i]) + SlS->FX[i])/3.0) * TimeSl*TimeSl;
+            SlS->Y[i] = (SlS->Y0divDt2[i] + (SlS->VY0divDt[i] + 4.0*(SlS->FY0[i] + SlS->FY2sumEnen[i]) + 2*(SlS->FY1[i] + SlS->FY3sumOdd[i]) + SlS->FY[i])/3.0) * TimeSl*TimeSl;
+            SlS->Z[i] = (SlS->Z0divDt2[i] + (SlS->VZ0divDt[i] + 4.0*(SlS->FZ0[i] + SlS->FZ2sumEnen[i]) + 2*(SlS->FZ1[i] + SlS->FZ3sumOdd[i]) + SlS->FZ[i])/3.0) * TimeSl*TimeSl;
+            SlS->FX3sumOdd[i] += SlS->FX[i]; SlS->FY3sumOdd[i]+= SlS->FY[i]; SlS->FZ3sumOdd[i]+= SlS->FZ[i];
+            break;
+        case 5:
+            SlS->VX[i] = (SlS->VX0divDt[i] + (SlS->FX0[i]+4.0*(SlS->FX1[i]+SlS->FX3sumOdd[i]) + 2.0*(SlS->FX2sumEnen[i])+ SlS->FX[i])/3.0) * TimeSl;
+            SlS->VY[i] = (SlS->VY0divDt[i] + (SlS->FY0[i]+4.0*(SlS->FY1[i]+SlS->FY3sumOdd[i]) + 2.0*(SlS->FY2sumEnen[i])+ SlS->FY[i])/3.0) * TimeSl;
+            SlS->VZ[i] = (SlS->VZ0divDt[i] + (SlS->FZ0[i]+4.0*(SlS->FZ1[i]+SlS->FZ3sumOdd[i]) + 2.0*(SlS->FZ2sumEnen[i])+ SlS->FZ[i])/3.0) * TimeSl;
+            SlS->X[i] = (SlS->X0divDt2[i] + SlS->VX0divDt[i] + (SlS->FX0[i]+4.0*(SlS->FX1[i]+SlS->FX3sumOdd[i]) + 2.0*(SlS->FX2sumEnen[i]) + SlS->FX[i])/3.0) * TimeSl*TimeSl;
+            SlS->Y[i] = (SlS->Y0divDt2[i] + SlS->VY0divDt[i] + (SlS->FY0[i]+4.0*(SlS->FY1[i]+SlS->FY3sumOdd[i]) + 2.0*(SlS->FY2sumEnen[i]) + SlS->FY[i])/3.0) * TimeSl*TimeSl;
+            SlS->Z[i] = (SlS->Z0divDt2[i] + SlS->VZ0divDt[i] + (SlS->FZ0[i]+4.0*(SlS->FZ1[i]+SlS->FZ3sumOdd[i]) + 2.0*(SlS->FZ2sumEnen[i]) + SlS->FZ[i])/3.0) * TimeSl*TimeSl;
+            SlS->FX2sumEnen[i] += SlS->FX[i]; SlS->FY2sumEnen[i] += SlS->FY[i]; SlS->FZ2sumEnen[i] += SlS->FZ[i];
+            break;
+        case 6:
+            SlS->VX[i] = (SlS->VX0divDt[i] + SlS->FX0[i] + (SlS->FX1[i]+4.0*SlS->FX2sumEnen[i] + 2.0*SlS->FX3sumOdd[i] + SlS->FX[i])/3) * TimeSl;
+            SlS->VY[i] = (SlS->VY0divDt[i] + SlS->FY0[i] + (SlS->FY1[i]+4.0*SlS->FY2sumEnen[i] + 2.0*SlS->FY3sumOdd[i] + SlS->FY[i])/3) * TimeSl;
+            SlS->VZ[i] = (SlS->VZ0divDt[i] + SlS->FZ0[i] + (SlS->FZ1[i]+4.0*SlS->FZ2sumEnen[i] + 2.0*SlS->FZ3sumOdd[i] + SlS->FZ[i])/3) * TimeSl;
+            SlS->X[i] = (SlS->X0divDt2[i] + (SlS->VX0divDt[i] + 4.0*(SlS->FX0[i] + SlS->FX2sumEnen[i]) + 2*(SlS->FX1[i] + SlS->FX3sumOdd[i]) + SlS->FX[i])/3.0) * TimeSl*TimeSl;
+            SlS->Y[i] = (SlS->Y0divDt2[i] + (SlS->VY0divDt[i] + 4.0*(SlS->FY0[i] + SlS->FY2sumEnen[i]) + 2*(SlS->FY1[i] + SlS->FY3sumOdd[i]) + SlS->FY[i])/3.0) * TimeSl*TimeSl;
+            SlS->Z[i] = (SlS->Z0divDt2[i] + (SlS->VZ0divDt[i] + 4.0*(SlS->FZ0[i] + SlS->FZ2sumEnen[i]) + 2*(SlS->FZ1[i] + SlS->FZ3sumOdd[i]) + SlS->FZ[i])/3.0) * TimeSl*TimeSl;
+            SlS->FX3sumOdd[i] += SlS->FX[i]; SlS->FY3sumOdd[i]+= SlS->FY[i]; SlS->FZ3sumOdd[i]+= SlS->FZ[i];
+            break;
+        default:
+            if (SlS->CountN & 1) // odd = 7,9
+            {
+                SlS->VX[i] = (SlS->VX0divDt[i] + (SlS->FX0[i]+4.0*(SlS->FX1[i]+SlS->FX3sumOdd[i]) + 2.0*(SlS->FX2sumEnen[i])+ SlS->FX[i])/3.0) * TimeSl;
+                SlS->VY[i] = (SlS->VY0divDt[i] + (SlS->FY0[i]+4.0*(SlS->FY1[i]+SlS->FY3sumOdd[i]) + 2.0*(SlS->FY2sumEnen[i])+ SlS->FY[i])/3.0) * TimeSl;
+                SlS->VZ[i] = (SlS->VZ0divDt[i] + (SlS->FZ0[i]+4.0*(SlS->FZ1[i]+SlS->FZ3sumOdd[i]) + 2.0*(SlS->FZ2sumEnen[i])+ SlS->FZ[i])/3.0) * TimeSl;
+                SlS->X[i] = (SlS->X0divDt2[i] + SlS->VX0divDt[i] + (SlS->FX0[i]+4.0*(SlS->FX1[i]+SlS->FX3sumOdd[i]) + 2.0*(SlS->FX2sumEnen[i]) + SlS->FX[i])/3.0) * TimeSl*TimeSl;
+                SlS->Y[i] = (SlS->Y0divDt2[i] + SlS->VY0divDt[i] + (SlS->FY0[i]+4.0*(SlS->FY1[i]+SlS->FY3sumOdd[i]) + 2.0*(SlS->FY2sumEnen[i]) + SlS->FY[i])/3.0) * TimeSl*TimeSl;
+                SlS->Z[i] = (SlS->Z0divDt2[i] + SlS->VZ0divDt[i] + (SlS->FZ0[i]+4.0*(SlS->FZ1[i]+SlS->FZ3sumOdd[i]) + 2.0*(SlS->FZ2sumEnen[i]) + SlS->FZ[i])/3.0) * TimeSl*TimeSl;
+                SlS->FX2sumEnen[i] += SlS->FX[i]; SlS->FY2sumEnen[i] += SlS->FY[i]; SlS->FZ2sumEnen[i] += SlS->FZ[i];
+            }
+            else                 // even 8,10
+            {
+                SlS->VX[i] = (SlS->VX0divDt[i] + SlS->FX0[i] + (SlS->FX1[i]+4.0*SlS->FX2sumEnen[i] + 2.0*SlS->FX3sumOdd[i] + SlS->FX[i])/3) * TimeSl;
+                SlS->VY[i] = (SlS->VY0divDt[i] + SlS->FY0[i] + (SlS->FY1[i]+4.0*SlS->FY2sumEnen[i] + 2.0*SlS->FY3sumOdd[i] + SlS->FY[i])/3) * TimeSl;
+                SlS->VZ[i] = (SlS->VZ0divDt[i] + SlS->FZ0[i] + (SlS->FZ1[i]+4.0*SlS->FZ2sumEnen[i] + 2.0*SlS->FZ3sumOdd[i] + SlS->FZ[i])/3) * TimeSl;
+                SlS->X[i] = (SlS->X0divDt2[i] + (SlS->VX0divDt[i] + 4.0*(SlS->FX0[i] + SlS->FX2sumEnen[i]) + 2*(SlS->FX1[i] + SlS->FX3sumOdd[i]) + SlS->FX[i])/3.0) * TimeSl*TimeSl;
+                SlS->Y[i] = (SlS->Y0divDt2[i] + (SlS->VY0divDt[i] + 4.0*(SlS->FY0[i] + SlS->FY2sumEnen[i]) + 2*(SlS->FY1[i] + SlS->FY3sumOdd[i]) + SlS->FY[i])/3.0) * TimeSl*TimeSl;
+                SlS->Z[i] = (SlS->Z0divDt2[i] + (SlS->VZ0divDt[i] + 4.0*(SlS->FZ0[i] + SlS->FZ2sumEnen[i]) + 2*(SlS->FZ1[i] + SlS->FZ3sumOdd[i]) + SlS->FZ[i])/3.0) * TimeSl*TimeSl;
+                SlS->FX3sumOdd[i] += SlS->FX[i]; SlS->FY3sumOdd[i]+= SlS->FY[i]; SlS->FZ3sumOdd[i]+= SlS->FZ[i];
+            }
+            break;
+        }
+#else
+        SlS->X_[i] += SlS->VX_[i]/2;
+        SlS->Y_[i] += SlS->VY_[i]/2;
+        SlS->Z_[i] += SlS->VZ_[i]/2;
 
         SlS->X[i] = SlS->X_[i]*TimeSl*TimeSl / SlS->M[i];
         SlS->Y[i] = SlS->Y_[i]*TimeSl*TimeSl / SlS->M[i];
         SlS->Z[i] = SlS->Z_[i]*TimeSl*TimeSl / SlS->M[i];
 
-        SlS->VX_[i] += SlS->FX[i];
-        SlS->VY_[i] += SlS->FY[i];
-        SlS->VZ_[i] += SlS->FZ[i];
+        SlS->VX_[i] += SlS->FX[i]/2;
+        SlS->VY_[i] += SlS->FY[i]/2;
+        SlS->VZ_[i] += SlS->FZ[i]/2;
 
 //#ifdef PROP_VELOCITY
         // this can be skipped to make calculation faster
@@ -1284,7 +1337,7 @@ void IteraSolarSystem(int TimeDirection, TRAOBJ * SlS)
         SlS->VY[i] = SlS->VY_[i]*TimeSl / SlS->M[i];
         SlS->VZ[i] = SlS->VZ_[i]*TimeSl / SlS->M[i];
 //#endif
-
+#endif
 #endif
 #endif
     }
@@ -1429,9 +1482,9 @@ void IteraSat(int TimeDirection, TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfC
 #else
         
         // X(t+1) = X(t) + V(t)*deltaT
-        Sat->X_[i] += Sat->VX_[i] + Sat->FX[i]/2;
-        Sat->Y_[i] += Sat->VY_[i] + Sat->FY[i]/2;
-        Sat->Z_[i] += Sat->VZ_[i] + Sat->FZ[i]/2;
+        Sat->X_[i] += Sat->VX_[i]/2;
+        Sat->Y_[i] += Sat->VY_[i]/2;
+        Sat->Z_[i] += Sat->VZ_[i]/2;
 
         // that is calculation of the postion for a next F(x(t+1)) calculation
         Sat->X[i] = Sat->X_[i]*TimeSl*TimeSl /* Sat->M[i]*/;
@@ -1439,9 +1492,9 @@ void IteraSat(int TimeDirection, TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfC
         Sat->Z[i] = Sat->Z_[i]*TimeSl*TimeSl /* Sat->M[i]*/;
 
         // that is calculation of the V(t+1) = V(t) + F(x(t))) *deltaT
-        Sat->VX_[i] += Sat->FX[i];
-        Sat->VY_[i] += Sat->FY[i];
-        Sat->VZ_[i] += Sat->FZ[i];
+        Sat->VX_[i] += Sat->FX[i]/2;
+        Sat->VY_[i] += Sat->FY[i]/2;
+        Sat->VZ_[i] += Sat->FZ[i]/2;
 //#ifdef PROP_VELOCITY
         // this can be skipped to make calculation faster
         // VX is different from VX_ by coef = TimeS1
@@ -2241,21 +2294,24 @@ void AssignFromNASAData(TRAOBJ * SlS, double JDSec)
         SlS->Y_[i] = SlS->Y[i]* SlS->M[i] /TimeSl/TimeSl ;
         SlS->Z_[i] = SlS->Z[i]* SlS->M[i] /TimeSl/TimeSl ;
 
-        SlS->X0divDt[i]=SlS->X[i]* SlS->M[i] /TimeSl;
-        SlS->Y0divDt[i]=SlS->Y[i]* SlS->M[i] /TimeSl;
-        SlS->Z0divDt[i]=SlS->Z[i]* SlS->M[i] /TimeSl;
+        SlS->X0divDt2[i]=SlS->X[i]* SlS->M[i] /TimeSl/TimeSl;
+        SlS->Y0divDt2[i]=SlS->Y[i]* SlS->M[i] /TimeSl/TimeSl;
+        SlS->Z0divDt2[i]=SlS->Z[i]* SlS->M[i] /TimeSl/TimeSl;
 
-        SlS->VXsumOdd[i] = 0;  SlS->VXsumEnen[i] = SlS->VX_[i];
-        SlS->VYsumOdd[i] = 0; SlS->VYsumEnen[i] = SlS->VY_[i];
-        SlS->VZsumOdd[i] = 0; SlS->VZsumEnen[i] = SlS->VZ_[i];
+        SlS->VX0divDt[i]=SlS->VX[i]* SlS->M[i] /TimeSl;
+        SlS->VY0divDt[i]=SlS->VY[i]* SlS->M[i] /TimeSl;
+        SlS->VZ0divDt[i]=SlS->VZ[i]* SlS->M[i] /TimeSl;
+
+
+        SlS->FX3sumOdd[i] = 0; SlS->FX2sumEnen[i] = 0;
+        SlS->FY3sumOdd[i] = 0; SlS->FY2sumEnen[i] = 0;
+        SlS->FZ3sumOdd[i] = 0; SlS->FZ2sumEnen[i] = 0;
 
         for (int j = 0; j < SlS->Elem; j++)
         {
             SlS->GMxM[i][j] = SlS->GM[i]*SlS->M[j];
         }
     }
-    SlS->FlagEven = FALSE;
-    SlS->FlagV0Assigned = FALSE;
     SlS->CountN = 0;
 }
 
@@ -4916,9 +4972,6 @@ void ParamProb(char *szString)
                 Sat.VY[nSat] = tProbVY + SolarSystem.VY[EARTH];
                 Sat.VZ[nSat] = tProbVZ + SolarSystem.VZ[EARTH];
 
-                Sat.VXOld[nSat] = -1.0;
-                Sat.VYOld[nSat] = -1.0;
-                Sat.VZOld[nSat] = -1.0;
                 // this has to be set to properly calc helper variables
                 TimeSl = 1.0 / IterPerSec;
             }    
@@ -4934,14 +4987,16 @@ void ParamProb(char *szString)
                 Sat.Y_[i] = Sat.Y[i]/* Sat.M[i]*/ /TimeSl/TimeSl ;
                 Sat.Z_[i] = Sat.Z[i]/* Sat.M[i]*/ /TimeSl/TimeSl ;
 
-                Sat.X0divDt[i]=Sat.X[i] /TimeSl;
-                Sat.Y0divDt[i]=Sat.Y[i] /TimeSl;
-                Sat.Z0divDt[i]=Sat.Z[i] /TimeSl;
+                Sat.X0divDt2[i]=Sat.X[i] /TimeSl/TimeSl;
+                Sat.Y0divDt2[i]=Sat.Y[i] /TimeSl/TimeSl;
+                Sat.Z0divDt2[i]=Sat.Z[i] /TimeSl/TimeSl;
+                Sat.VX0divDt[i]=Sat.VX[i] /TimeSl;
+                Sat.VY0divDt[i]=Sat.VY[i] /TimeSl;
+                Sat.VZ0divDt[i]=Sat.VZ[i] /TimeSl;
 
-                Sat.VXsumOdd[i] = 0;  Sat.VXsumEnen[i] = 0;   Sat.VYsumOdd[i] = 0; Sat.VYsumEnen[i] = 0;    Sat.VZsumOdd[i] = 0; Sat.VZsumEnen[i] = 0;
+                Sat.FX3sumOdd[i] = 0;  Sat.FY3sumOdd[i] = 0;  Sat.FZ3sumOdd[i] = 0; 
+                Sat.FX2sumEnen[i] = 0; Sat.FY2sumEnen[i] = 0; Sat.FZ2sumEnen[i] = 0;
             }
-            Sat.FlagEven = FALSE;
-            Sat.FlagV0Assigned = FALSE;
             Sat.CountN = 0;
 
             for (int n = 0 ; n < MAX_COEF_J; n++)
