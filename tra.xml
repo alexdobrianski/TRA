@@ -174,6 +174,332 @@
 
 </TRA:section>
 
+<TRA:section name="pulsars" value="0.0">
+   <TRA:setting name="N" value="88"/>
+   <TRA:setting name="Name" value="B0329+54"/>
+   <TRA:setting name="ELONG" value="65.19"/>
+   <TRA:setting name="ELAT" value="34.26"/>
+   <TRA:setting name="P0" value="0.714519699726"/>
+   <TRA:setting name="S400mJy" value="1500"/>
+
+   <TRA:setting name="N" value="114"/>
+   <TRA:setting name="Name" value="J0437-4715"/>
+   <TRA:setting name="ELONG" value="50.47"/>
+   <TRA:setting name="ELAT" value="-67.87"/>
+   <TRA:setting name="P0" value="0.005757451924362137"/>
+   <TRA:setting name="S400mJy" value="550"/>
+
+   <TRA:setting name="N" value="119"/>
+   <TRA:setting name="Name" value="B0450-18"/>
+   <TRA:setting name="ELONG" value="68.83"/>
+   <TRA:setting name="ELAT" value="-40.20"/>
+   <TRA:setting name="P0" value="0.548939223294"/>
+   <TRA:setting name="S400mJy" value="82"/>
+
+   <TRA:setting name="N" value="151"/>
+   <TRA:setting name="Name" value="B0531+21"/>
+   <TRA:setting name="ELONG" value="84.10"/>
+   <TRA:setting name="ELAT" value="-1.29"/>
+   <TRA:setting name="P0" value="0.03308471603"/>
+   <TRA:setting name="S400mJy" value="550"/>
+
+   <TRA:setting name="N" value="193"/>
+   <TRA:setting name="Name" value="B0628-28"/>
+   <TRA:setting name="ELONG" value="100.96"/>
+   <TRA:setting name="ELAT" value="-51.73"/>
+   <TRA:setting name="P0" value="1.24441859615"/>
+   <TRA:setting name="S400mJy" value="206"/>
+
+   <TRA:setting name="N" value="225"/>
+   <TRA:setting name="Name" value="B0736-40"/>
+   <TRA:setting name="ELONG" value="130.29"/>
+   <TRA:setting name="ELAT" value="-60.75"/>
+   <TRA:setting name="P0" value="0.374919985032"/>
+   <TRA:setting name="S400mJy" value="190"/>
+
+   <TRA:setting name="N" value="226"/>
+   <TRA:setting name="Name" value="B0740-28"/>
+   <TRA:setting name="ELONG" value="125.33"/>
+   <TRA:setting name="ELAT" value="-48.71"/>
+   <TRA:setting name="P0" value="0.166762291572"/>
+   <TRA:setting name="S400mJy" value="296"/>
+
+   <TRA:setting name="N" value="244"/>
+   <TRA:setting name="Name" value="B0818-13"/>
+   <TRA:setting name="ELONG" value="131.40"/>
+   <TRA:setting name="ELAT" value="-32.38"/>
+   <TRA:setting name="P0" value="1.2381295438682"/>
+   <TRA:setting name="S400mJy" value="102"/>
+
+   <TRA:setting name="N" value="259"/>
+   <TRA:setting name="Name" value="B0833-45"/>
+   <TRA:setting name="ELONG" value="153.37"/>
+   <TRA:setting name="ELAT" value="-60.36"/>
+   <TRA:setting name="P0" value="0.089328385024"/>
+   <TRA:setting name="S400mJy" value="5000"/>
+
+   <TRA:setting name="N" value="260"/>
+   <TRA:setting name="Name" value="B0834+06"/>
+   <TRA:setting name="ELONG" value="130.04"/>
+   <TRA:setting name="ELAT" value="-11.98"/>
+   <TRA:setting name="P0" value="1.2737682915785"/>
+   <TRA:setting name="S400mJy" value="89"/>
+
+   <TRA:setting name="N" value="262"/>
+   <TRA:setting name="Name" value="B0835-41"/>
+   <TRA:setting name="ELONG" value="150.64"/>
+   <TRA:setting name="ELAT" value="-57.04"/>
+   <TRA:setting name="P0" value="0.751623617646"/>
+   <TRA:setting name="S400mJy" value="197"/>
+
+   <TRA:setting name="N" value="322"/>
+   <TRA:setting name="Name" value="B0950+08"/>
+   <TRA:setting name="ELONG" value="147.71"/>
+   <TRA:setting name="ELAT" value="-4.62"/>
+   <TRA:setting name="P0" value="0.2530651649482"/>
+   <TRA:setting name="S400mJy" value="400"/>
+
+   <TRA:setting name="N" value="328"/>
+   <TRA:setting name="Name" value="B0959-54"/>
+   <TRA:setting name="ELONG" value="187.70"/>
+   <TRA:setting name="ELAT" value="-59.88"/>
+   <TRA:setting name="P0" value="1.43658262920"/>
+   <TRA:setting name="S400mJy" value="80"/>
+
+   <TRA:setting name="N" value="393"/>
+   <TRA:setting name="Name" value="B1055-52"/>
+   <TRA:setting name="ELONG" value="195.77"/>
+   <TRA:setting name="ELAT" value="-52.39"/>
+   <TRA:setting name="P0" value="0.197107608187"/>
+   <TRA:setting name="S400mJy" value="80"/>
+
+   <TRA:setting name="N" value="443"/>
+   <TRA:setting name="Name" value="B1133+16"/>
+   <TRA:setting name="ELONG" value="168.15"/>
+   <TRA:setting name="ELAT" value="12.16"/>
+   <TRA:setting name="P0" value="1.187913065936"/>
+   <TRA:setting name="S400mJy" value="257"/>
+
+   <TRA:setting name="N" value="466"/>
+   <TRA:setting name="Name" value="B1154-62"/>
+   <TRA:setting name="ELONG" value="216.88"/>
+   <TRA:setting name="ELAT" value="-54.63"/>
+   <TRA:setting name="P0" value="0.400522048340"/>
+   <TRA:setting name="S400mJy" value="145"/>
+
+   <TRA:setting name="N" value="503"/>
+   <TRA:setting name="Name" value="B1237+25"/>
+   <TRA:setting name="ELONG" value="178.45"/>
+   <TRA:setting name="ELAT" value="26.64"/>
+   <TRA:setting name="P0" value="1.3824491030388"/>
+   <TRA:setting name="S400mJy" value="110"/>
+
+   <TRA:setting name="N" value="507"/>
+   <TRA:setting name="Name" value="B1240-64"/>
+   <TRA:setting name="ELONG" value="225.57"/>
+   <TRA:setting name="ELAT" value="-52.66"/>
+   <TRA:setting name="P0" value="0.388480921041"/>
+   <TRA:setting name="S400mJy" value="110"/>
+
+   <TRA:setting name="N" value="567"/>
+   <TRA:setting name="Name" value="B1323-58"/>
+   <TRA:setting name="ELONG" value="227.16"/>
+   <TRA:setting name="ELAT" value="-45.27"/>
+   <TRA:setting name="P0" value="0.47799086689"/>
+   <TRA:setting name="S400mJy" value="120"/>
+
+   <TRA:setting name="N" value="571"/>
+   <TRA:setting name="Name" value="B1323-62"/>
+   <TRA:setting name="ELONG" value="229.87"/>
+   <TRA:setting name="ELAT" value="-48.10"/>
+   <TRA:setting name="P0" value="0.52991319210"/>
+   <TRA:setting name="S400mJy" value="135"/>
+
+   <TRA:setting name="N" value="611"/>
+   <TRA:setting name="Name" value="B1356-60"/>
+   <TRA:setting name="ELONG" value="233.39"/>
+   <TRA:setting name="ELAT" value="-44.60"/>
+   <TRA:setting name="P0" value="0.12750077685"/>
+   <TRA:setting name="S400mJy" value="105"/>
+
+   <TRA:setting name="N" value="658"/>
+   <TRA:setting name="Name" value="B1426-66"/>
+   <TRA:setting name="ELONG" value="241.71"/>
+   <TRA:setting name="ELAT" value="-48.01"/>
+   <TRA:setting name="P0" value="0.785440757324"/>
+   <TRA:setting name="S400mJy" value="130"/>
+
+   <TRA:setting name="N" value="679"/>
+   <TRA:setting name="Name" value="B1449-64"/>
+   <TRA:setting name="ELONG" value="243.44"/>
+   <TRA:setting name="ELAT" value="-45.02"/>
+   <TRA:setting name="P0" value="0.1794847539641"/>
+   <TRA:setting name="S400mJy" value="230"/>
+
+   <TRA:setting name="N" value="683"/>
+   <TRA:setting name="Name" value="B1451-68"/>
+   <TRA:setting name="ELONG" value="246.56"/>
+   <TRA:setting name="ELAT" value="-49.00"/>
+   <TRA:setting name="P0" value="0.2633768148933"/>
+   <TRA:setting name="S400mJy" value="350"/>
+
+   <TRA:setting name="N" value="699"/>
+   <TRA:setting name="Name" value="B1508+55"/>
+   <TRA:setting name="ELONG" value="188.03"/>
+   <TRA:setting name="ELAT" value="67.22"/>
+   <TRA:setting name="P0" value="0.739681922904"/>
+   <TRA:setting name="S400mJy" value="114"/>
+
+   <TRA:setting name="N" value="821"/>
+   <TRA:setting name="Name" value="B1556-44"/>
+   <TRA:setting name="ELONG" value="247.11"/>
+   <TRA:setting name="ELAT" value="-23.57"/>
+   <TRA:setting name="P0" value="0.2570560976508"/>
+   <TRA:setting name="S400mJy" value="110"/>
+
+   <TRA:setting name="N" value="978"/>
+   <TRA:setting name="Name" value="B1641-45"/>
+   <TRA:setting name="ELONG" value="255.87"/>
+   <TRA:setting name="ELAT" value="-23.46"/>
+   <TRA:setting name="P0" value="0.455059775403"/>
+   <TRA:setting name="S400mJy" value="375"/>
+
+   <TRA:setting name="N" value="981"/>
+   <TRA:setting name="Name" value="B1642-03"/>
+   <TRA:setting name="ELONG" value="250.19"/>
+   <TRA:setting name="ELAT" value="18.86"/>
+   <TRA:setting name="P0" value="0.387689698034"/>
+   <TRA:setting name="S400mJy" value="393"/>
+
+   <TRA:setting name="N" value="1007"/>
+   <TRA:setting name="Name" value="B1648-42"/>
+   <TRA:setting name="ELONG" value="256.75"/>
+   <TRA:setting name="ELAT" value="-20.11"/>
+   <TRA:setting name="P0" value="0.84408066596"/>
+   <TRA:setting name="S400mJy" value="100"/>
+
+   <TRA:setting name="N" value="1178"/>
+   <TRA:setting name="Name" value="B1727-47"/>
+   <TRA:setting name="ELONG" value="264.78"/>
+   <TRA:setting name="ELAT" value="-24.43"/>
+   <TRA:setting name="P0" value="0.82982878524"/>
+   <TRA:setting name="S400mJy" value="190"/>
+
+   <TRA:setting name="N" value="1341"/>
+   <TRA:setting name="Name" value="B1749-28"/>
+   <TRA:setting name="ELONG" value="268.45"/>
+   <TRA:setting name="ELAT" value="-4.68"/>
+   <TRA:setting name="P0" value="0.56255763553"/>
+   <TRA:setting name="S400mJy" value="1100"/>
+
+   <TRA:setting name="N" value="1530"/>
+   <TRA:setting name="Name" value="B1818-04"/>
+   <TRA:setting name="ELONG" value="275.500072"/>
+   <TRA:setting name="ELAT" value="18.87910"/>
+   <TRA:setting name="P0" value="0.598075929665"/>
+   <TRA:setting name="S400mJy" value="157"/>
+
+   <TRA:setting name="N" value="1629"/>
+   <TRA:setting name="Name" value="B1831-03"/>
+   <TRA:setting name="ELONG" value="278.924582"/>
+   <TRA:setting name="ELAT" value="19.52746"/>
+   <TRA:setting name="P0" value="0.68670444412"/>
+   <TRA:setting name="S400mJy" value="89"/>
+
+   <TRA:setting name="N" value="1869"/>
+   <TRA:setting name="Name" value="B1857-26"/>
+   <TRA:setting name="ELONG" value="283.65"/>
+   <TRA:setting name="ELAT" value="-3.29"/>
+   <TRA:setting name="P0" value="0.6122092044383"/>
+   <TRA:setting name="S400mJy" value="131"/>
+
+   <TRA:setting name="N" value="1879"/>
+   <TRA:setting name="Name" value="B1859+03"/>
+   <TRA:setting name="ELONG" value="287.139002"/>
+   <TRA:setting name="ELAT" value="26.046990"/>
+   <TRA:setting name="P0" value="0.65545023949"/>
+   <TRA:setting name="S400mJy" value="165"/>
+
+   <TRA:setting name="N" value="1978"/>
+   <TRA:setting name="Name" value="B1911-04"/>
+   <TRA:setting name="ELONG" value="289.34"/>
+   <TRA:setting name="ELAT" value="17.53"/>
+   <TRA:setting name="P0" value="0.825935803096"/>
+   <TRA:setting name="S400mJy" value="118"/>
+
+   <TRA:setting name="N" value="2067"/>
+   <TRA:setting name="Name" value="B1929+10"/>
+   <TRA:setting name="ELONG" value="297.05"/>
+   <TRA:setting name="ELAT" value="32.29"/>
+   <TRA:setting name="P0" value="0.226517635038"/>
+   <TRA:setting name="S400mJy" value="303"/>
+
+   <TRA:setting name="N" value="2078"/>
+   <TRA:setting name="Name" value="B1933+16"/>
+   <TRA:setting name="ELONG" value="299.33"/>
+   <TRA:setting name="ELAT" value="37.31"/>
+   <TRA:setting name="P0" value="0.3587384107696"/>
+   <TRA:setting name="S400mJy" value="242"/>
+
+   <TRA:setting name="N" value="2092"/>
+   <TRA:setting name="Name" value="B1937+21"/>
+   <TRA:setting name="ELONG" value="301.97"/>
+   <TRA:setting name="ELAT" value="42.30"/>
+   <TRA:setting name="P0" value="0.001557806472448817"/>
+   <TRA:setting name="S400mJy" value="240"/>
+
+   <TRA:setting name="N" value="2124"/>
+   <TRA:setting name="Name" value="B1946+35"/>
+   <TRA:setting name="ELONG" value="310.62"/>
+   <TRA:setting name="ELAT" value="55.35"/>
+   <TRA:setting name="P0" value="0.717311174076"/>
+   <TRA:setting name="S400mJy" value="145"/>
+
+   <TRA:setting name="N" value="2176"/>
+   <TRA:setting name="Name" value="B2016+28"/>
+   <TRA:setting name="ELONG" value="316.46"/>
+   <TRA:setting name="ELAT" value="46.69"/>
+   <TRA:setting name="P0" value="0.5579534804225"/>
+   <TRA:setting name="S400mJy" value="314"/>
+
+   <TRA:setting name="N" value="2231"/>
+   <TRA:setting name="Name" value="B2111+46"/>
+   <TRA:setting name="ELONG" value="345.94380"/>
+   <TRA:setting name="ELAT" value="58.13401"/>
+   <TRA:setting name="P0" value="1.014684793189"/>
+   <TRA:setting name="S400mJy" value="230"/>
+
+   <TRA:setting name="N" value="2255"/>
+   <TRA:setting name="Name" value="J2145-0750"/>
+   <TRA:setting name="ELONG" value="326.02"/>
+   <TRA:setting name="ELAT" value="5.31"/>
+   <TRA:setting name="P0" value="0.01605242391433660"/>
+   <TRA:setting name="S400mJy" value="100"/>
+
+   <TRA:setting name="N" value="2263"/>
+   <TRA:setting name="Name" value="B2154+40"/>
+   <TRA:setting name="ELONG" value="351.29"/>
+   <TRA:setting name="ELAT" value="48.46"/>
+   <TRA:setting name="P0" value="1.525265633965"/>
+   <TRA:setting name="S400mJy" value="105"/>
+
+   <TRA:setting name="N" value="2276"/>
+   <TRA:setting name="Name" value="B2217+47"/>
+   <TRA:setting name="ELONG" value="3.29"/>
+   <TRA:setting name="ELAT" value="52.54"/>
+   <TRA:setting name="P0" value="0.5384688219194"/>
+   <TRA:setting name="S400mJy" value="111"/>
+
+   <TRA:setting name="N" value="2308"/>
+   <TRA:setting name="Name" value="B2310+42"/>
+   <TRA:setting name="ELONG" value="10.60"/>
+   <TRA:setting name="ELAT" value="43.12"/>
+   <TRA:setting name="P0" value="0.3494336821331"/>
+   <TRA:setting name="S400mJy" value="89"/>
+
+</TRA:section>
+
+
             <!--     now all engines    -->
 <TRA:section name="Engine" value="0.0" >
     <TRA:setting name="EngineNumber" value="0" />
