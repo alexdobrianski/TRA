@@ -436,7 +436,7 @@ typedef struct TraObj
         //
         //
         //Lambda +=1.0471975511965977461542144610932;//1.075; //0.183;//0.36;//1.72944494;
-        //Lambda += 1.5707963267948966192313216916398;//1.2337005501361698273543113749845;
+        Lambda += 1.5707963267948966192313216916398;//1.2337005501361698273543113749845;
         //Lambda += 0.87539816339744830961566084581988;// pi/4
         //Lambda = -Lambda;
         //Lambda +=3.1415926535897932384626433832795;
@@ -1399,7 +1399,7 @@ void IteraSat(int TimeDirection, TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfC
     int j;
     Sat->Lambda = GreenwichAscension(TimeOfCalc);
     CalcSatForces(SlS, Sat, TimeOfCalc);
-#if 1
+#if 0
     if (Sat->CountN++ != 0)
     {
         for (i = 0; i < Sat->Elem; i++)
@@ -1409,6 +1409,17 @@ void IteraSat(int TimeDirection, TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfC
             Sat->SVX[i]=Sat->VX[i]; Sat->SVY[i]=Sat->VY[i]; Sat->SVZ[i]=Sat->VZ[i];
         }
     }
+#else
+    if (Sat->CountN++ != 0)
+    {
+        for (i = 0; i < Sat->Elem; i++)
+        {
+            Sat->SFX[i] = Sat->FX[i]; Sat->SFY[i] = Sat->FY[i]; Sat->SFZ[i] = Sat->FZ[i];
+            Sat->SX[i]=Sat->X_[i]; Sat->SY[i]=Sat->Y_[i]; Sat->SZ[i]=Sat->Z_[i];
+            Sat->SVX[i]=Sat->VX_[i]; Sat->SVY[i]=Sat->VY_[i]; Sat->SVZ[i]=Sat->VZ_[i];
+        }
+    }
+
 #endif
 
     for (i = 0; i < Sat->Elem; i++)
@@ -1446,6 +1457,7 @@ void IteraSat(int TimeDirection, TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfC
         Sat->Y[i] = Sat->Y_[i]*TimeSl*TimeSl /* Sat->M[i]*/;
         Sat->Z[i] = Sat->Z_[i]*TimeSl*TimeSl /* Sat->M[i]*/;
 #else
+#if 0
         Sat->X[i] += Sat->VX[i]*TimeSl + Sat->FX[i]/2 * TimeSl* TimeSl;
         Sat->Y[i] += Sat->VY[i]*TimeSl + Sat->FY[i]/2 * TimeSl* TimeSl;
         Sat->Z[i] += Sat->VZ[i]*TimeSl + Sat->FZ[i]/2 * TimeSl* TimeSl;
@@ -1453,11 +1465,29 @@ void IteraSat(int TimeDirection, TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfC
         Sat->VX[i] += Sat->FX[i] * TimeSl /* Sat->M[i]*/;
         Sat->VY[i] += Sat->FY[i] * TimeSl /* Sat->M[i]*/;
         Sat->VZ[i] += Sat->FZ[i] * TimeSl /* Sat->M[i]*/;
+#else
+        Sat->X_[i] += Sat->VX_[i] + Sat->FX[i]/2;
+        Sat->Y_[i] += Sat->VY_[i] + Sat->FY[i]/2;
+        Sat->Z_[i] += Sat->VZ_[i] + Sat->FZ[i]/2;
+
+        Sat->VX_[i] += Sat->FX[i];
+        Sat->VY_[i] += Sat->FY[i];
+        Sat->VZ_[i] += Sat->FZ[i];
+
+        Sat->X[i] = Sat->X_[i] * TimeSl* TimeSl;
+        Sat->Y[i] = Sat->Y_[i] * TimeSl* TimeSl;
+        Sat->Z[i] = Sat->Z_[i] * TimeSl* TimeSl;
+
+        Sat->VX[i] = Sat->VX_[i]*TimeSl;
+        Sat->VY[i] = Sat->VY_[i]*TimeSl;
+        Sat->VZ[i] = Sat->VZ_[i]*TimeSl;
+
+#endif
 
 #endif
 #endif
     }
-#if 1
+#if 0
     if (Sat->CountN > 1)
     {
         CalcSatForces(SlS, Sat, TimeOfCalc);
@@ -1483,7 +1513,51 @@ void IteraSat(int TimeDirection, TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfC
 //            Sat->VZ[i] = Sat->SVZ[i] + (Sat->SFZ[i]+Sat->FZ[i])/2 * TimeSl /* Sat->M[i]*/;
 //        }
     }
+#else
+    
+    if (Sat->CountN > 1)
+    {
+        CalcSatForces(SlS, Sat, TimeOfCalc);
+        for (i = 0; i < Sat->Elem; i++)
+        {
+            Sat->X_[i] = Sat->SX[i] + Sat->SVX[i] + (Sat->FX[i]+Sat->SFX[i])/4;
+            Sat->Y_[i] = Sat->SY[i] + Sat->SVY[i] + (Sat->FY[i]+Sat->SFY[i])/4;
+            Sat->Z_[i] = Sat->SZ[i] + Sat->SVZ[i] + (Sat->FZ[i]+Sat->SFZ[i])/4;
 
+            Sat->VX_[i] = Sat->SVX[i] + (Sat->SFX[i]+Sat->FX[i])/2;
+            Sat->VY_[i] = Sat->SVY[i] + (Sat->SFY[i]+Sat->FY[i])/2;
+            Sat->VZ_[i] = Sat->SVZ[i] + (Sat->SFZ[i]+Sat->FZ[i])/2;
+
+            Sat->X[i] = Sat->X_[i] * TimeSl* TimeSl;
+            Sat->Y[i] = Sat->Y_[i] * TimeSl* TimeSl;
+            Sat->Z[i] = Sat->Z_[i] * TimeSl* TimeSl;
+
+            Sat->VX[i] = Sat->VX_[i]*TimeSl;
+            Sat->VY[i] = Sat->VY_[i]*TimeSl;
+            Sat->VZ[i] = Sat->VZ_[i]*TimeSl;
+        }
+        /*
+        CalcSatForces(SlS, Sat, TimeOfCalc);
+        for (i = 0; i < Sat->Elem; i++)
+        {
+            Sat->X_[i] = Sat->SX[i] + Sat->SVX[i] + (Sat->FX[i]+Sat->SFX[i])/4;
+            Sat->Y_[i] = Sat->SY[i] + Sat->SVY[i] + (Sat->FY[i]+Sat->SFY[i])/4;
+            Sat->Z_[i] = Sat->SZ[i] + Sat->SVZ[i] + (Sat->FZ[i]+Sat->SFZ[i])/4;
+
+            Sat->VX_[i] = Sat->SVX[i] + (Sat->SFX[i]+Sat->FX[i])/2;
+            Sat->VY_[i] = Sat->SVY[i] + (Sat->SFY[i]+Sat->FY[i])/2;
+            Sat->VZ_[i] = Sat->SVZ[i] + (Sat->SFZ[i]+Sat->FZ[i])/2;
+
+            Sat->X[i] = Sat->X_[i] * TimeSl* TimeSl;
+            Sat->Y[i] = Sat->Y_[i] * TimeSl* TimeSl;
+            Sat->Z[i] = Sat->Z_[i] * TimeSl* TimeSl;
+
+            Sat->VX[i] = Sat->VX_[i]*TimeSl;
+            Sat->VY[i] = Sat->VY_[i]*TimeSl;
+            Sat->VZ[i] = Sat->VZ_[i]*TimeSl;
+        }*/
+    }
+    
 #endif
 }
 
