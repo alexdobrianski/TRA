@@ -182,13 +182,13 @@ void write_JPEG_file (char * filename, int quality, int SizeW, int SizeH, int Si
 
     // moon 0.0002027
 #define MAX_COEF_J 18
-double GM_MODEL = 3.986004415E5;
+long  double GM_MODEL = 3.986004415E5;
 //double R0_MODEL = 6378136.30; // in m
 #define R0_MODEL 6378136.30
 //#define R0_MODEL 6378000.00
 //#define R0_MODEL 6379137.0
 #if 0
-double ClmNN[MAX_COEF_J][MAX_COEF_J] = {
+long double ClmNN[MAX_COEF_J][MAX_COEF_J] = {
     //0             1                    2                                   3                               4                            5                                 6                            7                               8                               9                                      10                             11                              12                               13                           14                    15                                           16
     0.0,                  0.0,-4.841692638330e-04 +4.69720e-11,  9.572027902208e-07+9.87110e-12, 5.399964106071e-07+4.24230e-12, 6.866574057291e-08+2.25770e-12,-1.499596204836e-07+2.23290e-12, 9.050739327092e-08+1.32710e-12, 4.947735333891e-08+1.56620e-12,  2.802002397264e-08+9.21410e-13,  5.332872206339e-08+8.08730e-13,-5.076684067354e-08+7.70390e-13, 3.643698716802e-08+6.23540e-13, 4.173145479803e-08+5.75410e-13,-2.266932614809e-08+5.61610e-13, 2.191678708149e-09+3.89300e-13,-4.711399566556e-09+4.27530e-13,0,
 	0.0,                  0.0,-2.234662444661e-10 +7.80300e-12,  2.030466388182e-06+4.51040e-12,-5.361544237902e-07+4.41410e-12,-6.292428749088e-08+2.36130e-12,-7.592505797236e-08+2.32320e-12, 2.808854277322e-07+1.37430e-12, 2.315575906154e-08+1.61350e-12,  1.421495778857e-07+9.45050e-13,  8.376111145897e-08+8.26590e-13, 1.561187804078e-08+7.85770e-13,-5.358752398482e-08+6.34380e-13,-5.144000572708e-08+5.84180e-13,-1.877109781623e-08+5.68980e-13, 9.430607665241e-09+3.93930e-13, 2.618495087563e-08+4.32170e-13,0,
@@ -208,7 +208,7 @@ double ClmNN[MAX_COEF_J][MAX_COEF_J] = {
     0.0,                  0.0,                             0.0,                             0.0,                            0.0,                            0.0,                            0.0,                            0.0,-                           0.0,                             0.0,                             0.0,                              0,                              0,                              0,                              0,-1.902751314587e-08+4.24590e-12,-1.441678809455e-08+3.48050e-12,0,
     0.0,                  0.0,                             0.0,                             0.0,                            0.0,                            0.0,                            0.0,                            0.0,-                           0.0,                             0.0,                             0.0,                              0,                              0,                              0,                              0,                              0,-3.830521289156e-08+2.63130e-12,0
 };
-double SlmNN[MAX_COEF_J][MAX_COEF_J] = {
+long double SlmNN[MAX_COEF_J][MAX_COEF_J] = {
     0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0, 0, 0, 0, 0, 0, 0, 0,
     0.0,                  0.0, 1.464715526673e-09+7.86590e-12, 2.482080433653e-07+4.51870e-12,-4.735680040417e-07+4.40940e-12,-9.437428640136e-08+2.35880e-12, 2.651378843389e-08+2.32070e-12, 9.512586979716e-08+1.37270e-12, 5.889592314865e-08+1.61160e-12,  2.140014207954e-08+9.44080e-13,-1.310928645967e-07+8.25590e-13,-2.712348064969e-08+7.84900e-13,-4.316458223037e-08+6.33660e-13, 3.869034387873e-08+5.83450e-13,  2.886211920225e-08+5.68410e-13,  1.048343697123e-08+3.93420e-13,  3.334313589953e-08+4.31710e-13,0,
     0.0,                  0.0,-1.400296540441e-06+7.82300e-12,-6.189942681083e-07+6.83640e-12, 6.624855562470e-07+6.02100e-12,-3.233496172587e-07+2.93470e-12,-3.737920915147e-07+2.82890e-12, 9.299919715717e-08+1.58380e-12, 6.528327073129e-08+1.83860e-12, -3.169859562924e-08+1.04420e-12,-5.127653720129e-08+9.05620e-13,-9.899946750685e-08+8.45310e-13, 3.109064951397e-08+6.77990e-13,-6.269439481257e-08+6.17690e-13, -4.054659579019e-09+5.98710e-13, -3.029929942704e-08+4.11600e-13,  2.803047576995e-08+4.49620e-13,0,
@@ -228,7 +228,7 @@ double SlmNN[MAX_COEF_J][MAX_COEF_J] = {
     0.0,                  0.0,                            0.0,                            0.0,                            0.0,                            0.0,                            0.0,                            0.0,-                           0.0,                             0.0,                            0.0,                              0,                              0,                              0,                               0,                               0,  2.968301836612e-09+2.62730e-12,0,
 };
 #else
-double ClmNN[MAX_COEF_J][MAX_COEF_J] = { //2                 3                     4                   5                   6                   7                    8                 9                       10              11              12                  13                        14                15              16           
+long double ClmNN[MAX_COEF_J][MAX_COEF_J] = { //2                 3                     4                   5                   6                   7                    8                 9                       10              11              12                  13                        14                15              16           
     0.0,                  0.0,-4.841692638330e-04,  9.572027902208e-07, 5.399964106071e-07, 6.866574057291e-08,-1.499596204836e-07, 9.050739327092e-08, 4.947735333891e-08,  2.802002397264e-08, 5.332872206339e-08,-5.076684067354e-08, 3.643698716802e-08, 4.173145479803e-08,-2.266932614809e-08, 2.191678708149e-09,-4.711399566556e-09,0,
 	0.0,                  0.0,-2.234662444661e-10,  2.030466388182e-06,-5.361544237902e-07,-6.292428749088e-08,-7.592505797236e-08, 2.808854277322e-07, 2.315575906154e-08,  1.421495778857e-07, 8.376111145897e-08, 1.561187804078e-08,-5.358752398482e-08,-5.144000572708e-08,-1.877109781623e-08, 9.430607665241e-09, 2.618495087563e-08,0,
 	0.0,                  0.0, 2.439350113369e-06,  9.047846524431e-07, 3.504958968385e-07, 6.520778577638e-07, 4.864539750273e-08, 3.304068238591e-07, 8.001179880843e-08,  2.141393810770e-08,-9.399255140566e-08, 2.011423100703e-08, 1.426661258608e-08, 5.530988811097e-08,-3.591920480342e-08,-2.053202027793e-08,-2.451051568312e-08,0,
@@ -247,7 +247,7 @@ double ClmNN[MAX_COEF_J][MAX_COEF_J] = { //2                 3                  
     0.0,                  0.0,                0.0,                 0.0,                0.0,                0.0,                0.0,                0.0,                0.0,                 0.0,                0.0,                  0,                  0,                  0,                  0,-1.902751314587e-08,-1.441678809455e-08,0,
     0.0,                  0.0,                0.0,                 0.0,                0.0,                0.0,                0.0,                0.0,                0.0,                 0.0,                0.0,                  0,                  0,                  0,                  0,                  0,-3.830521289156e-08,0
 };
-double SlmNN[MAX_COEF_J][MAX_COEF_J] = {
+long double SlmNN[MAX_COEF_J][MAX_COEF_J] = {
     0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0, 0, 0, 0, 0, 0, 0, 0,0,
     0.0,                  0.0, 1.464715526673e-09, 2.482080433653e-07,-4.735680040417e-07,-9.437428640136e-08, 2.651378843389e-08, 9.512586979716e-08, 5.889592314865e-08,  2.140014207954e-08,-1.310928645967e-07,-2.712348064969e-08,-4.316458223037e-08, 3.869034387873e-08,  2.886211920225e-08,  1.048343697123e-08,  3.334313589953e-08,0,
     0.0,                  0.0,-1.400296540441e-06,-6.189942681083e-07, 6.624855562470e-07,-3.233496172587e-07,-3.737920915147e-07, 9.299919715717e-08, 6.528327073129e-08, -3.169859562924e-08,-5.127653720129e-08,-9.899946750685e-08, 3.109064951397e-08,-6.269439481257e-08, -4.054659579019e-09, -3.029929942704e-08,  2.803047576995e-08,0,
@@ -267,7 +267,7 @@ double SlmNN[MAX_COEF_J][MAX_COEF_J] = {
     0.0,                  0.0,                0.0,                0.0,                0.0,                0.0,                0.0,                0.0,                0.0,                 0.0,                0.0,                  0,                  0,                  0,                   0,                   0,  2.968301836612e-09,0
 };
 #endif
-double Clm[MAX_COEF_J][MAX_COEF_J] = {//2                 3                     4                        5                   6                   7                    8                  9 10 11 12 13 14 15 16           
+long double Clm[MAX_COEF_J][MAX_COEF_J] = {//2                 3                     4                        5                   6                   7                    8                  9 10 11 12 13 14 15 16           
     0.0,                  0.0,-0.10826360229840e-02, 0.25324353457544E-05, 0.16193312050719e-05, 0.22771610163688E-06,-0.53964849049834e-06, 0.35136844210318e-06, 0.20251871520885e-06, 0, 0, 0, 0, 0, 0, 0,0,
 	0.0,                  0.0,-0.24140000522221e-09, 0.21927988018965e-05,-0.50872530365024e-06,-0.53716510187662e-07,-0.59877976856303e-07, 0.20514872797672e-06, 0.16034587141379e-07, 0, 0, 0, 0, 0, 0, 0,0,
 	0.0,                  0.0, 0.15745360427672e-05, 0.30901604455583e-06, 0.78412230752366e-07, 0.10559053538674e-06, 0.60120988437373e-08, 0.32844904836492e-07, 0.65765423316743e-08, 0, 0, 0, 0, 0, 0, 0,0,
@@ -277,7 +277,7 @@ double Clm[MAX_COEF_J][MAX_COEF_J] = {//2                 3                     
     0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0, 0.22136925556741e-11,-0.24907176820596e-10,-0.18393642697634e-11, 0, 0, 0, 0, 0, 0, 0,0,
     0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0, 0.25590780149873e-13, 0.34297618184624e-12, 0, 0, 0, 0, 0, 0, 0,0,
     0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,-0.15803322891725e-12, 0, 0, 0, 0, 0, 0, 0,0};
-double Slm[MAX_COEF_J][MAX_COEF_J] = {
+long double Slm[MAX_COEF_J][MAX_COEF_J] = {
     0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0, 0, 0, 0, 0, 0, 0, 0,0,
     0.0,                  0.0, 0.15430999737844e-08, 0.26801189379726e-06,-0.44945993508117e-06,-0.80663463828530e-07, 0.21164664354382e-07, 0.69369893525908e-07, 0.40199781599510e-07, 0, 0, 0, 0, 0, 0, 0,0,
     0.0,                  0.0,-0.90386807301869e-06,-0.21140239785975e-06, 0.14815545694714e-06,-0.52326723987632e-07,-0.46503948132217e-07, 0.92823143885084e-08, 0.53813164055056e-08, 0, 0, 0, 0, 0, 0, 0,0,
@@ -310,7 +310,7 @@ typedef struct TraObj
     long double SFZ[PLANET_COUNT];
 
 
-    __int64 CountN;
+    long CountN;  // attention only 1 month with 1024 iteration per 1 sec == 2 month with iteration 512 sec
 
     long double X_[PLANET_COUNT];
     long double VX_[PLANET_COUNT];
@@ -414,9 +414,9 @@ typedef struct TraObj
     long double OneMinusXdivRInSquare_XdivRval[PLANET_COUNT][MAX_COEF_J][MAX_COEF_J];
     long double OneMinusYdivRInSquare_YdivRval[PLANET_COUNT][MAX_COEF_J][MAX_COEF_J];
     long double OneMinusZdivRInSquare_ZdivRval[PLANET_COUNT][MAX_COEF_J][MAX_COEF_J];
-    long double OldXSign[PLANET_COUNT];
-    long double OldYSign[PLANET_COUNT];
-    long double OldZSign[PLANET_COUNT];
+    long double OldXSign[PLANET_COUNT][MAX_COEF_J][MAX_COEF_J];
+    long double OldYSign[PLANET_COUNT][MAX_COEF_J][MAX_COEF_J];
+    long double OldZSign[PLANET_COUNT][MAX_COEF_J][MAX_COEF_J];
     long double D_Qnk_Dxr[MAX_COEF_J][MAX_COEF_J];
     long double D_Qnk_Dyr[MAX_COEF_J][MAX_COEF_J];
 
@@ -424,7 +424,7 @@ typedef struct TraObj
     {
         
     }
-    void CalcP( double ValX, double ValY, double ValZ, double ValR)
+    void CalcP( long double ValX, long double ValY, long double ValZ, long double ValR)
     {
         int n,k;
         long double tempX;
@@ -437,6 +437,7 @@ typedef struct TraObj
         //
         //Lambda +=1.0471975511965977461542144610932;//1.075; //0.183;//0.36;//1.72944494;
         //Lambda += 1.5707963267948966192313216916398;//1.2337005501361698273543113749845;
+        //Lambda -= 1.5707963267948966192313216916398;//1.2337005501361698273543113749845;
         //Lambda += 0.87539816339744830961566084581988;// pi/4
         //Lambda = -Lambda;
         //Lambda +=3.1415926535897932384626433832795;
@@ -599,7 +600,7 @@ typedef struct TraObj
 #endif
     }
 
-    void SummXYZ(int SatCalc, double &X, double &Y, double &Z)
+    void SummXYZ(int SatCalc, long double &X, long double &Y, long double &Z)
     {
         int n,k;
         X=0; Y=0; Z=0;
@@ -750,22 +751,24 @@ typedef struct TraObj
                 //                                           Znk+1        * -x/r * SinTetta *    Qnk +
                 //                                             Znk * ((Cnk*XkDxr+Snk*YkDxr) * (1 - (x/r)**2) + (Cnk*XkDyr+Snk*YkDyr)*(-x/r * y/r))
 #define CPV 0.00001
+#if 1
                 if (((XdivRval > CPV ) || (XdivRval < -CPV )))// && (((k+n)&1) == 1))
                 {
+#endif
                     OneMinusXdivRInSquare_XdivRval[SatCalc][n][k] = D_Qnk_Dxr[n][k]*OneMinusXdivRInSquare2;// (CNK[n][k]*XkDxr[k] + SNK[n][k]*YkDxr[k]) * OneMinusXdivRInSquare2;///XdivRval;
-                    OldXSign[SatCalc] = XdivRval;
+                    OldXSign[SatCalc][n][k] = XdivRval;
+#if 1
                 }
                 else
                 {
                     
-                    if (((XdivRval >0) && (OldXSign[SatCalc] < 0)) || ((XdivRval <0) && (OldXSign[SatCalc] > 0)))
+                    if (((XdivRval >0) && (OldXSign[SatCalc][n][k] < 0)) || ((XdivRval <0) && (OldXSign[SatCalc][n][k] > 0)))
                     {
                         OneMinusXdivRInSquare_XdivRval[SatCalc][n][k] = -OneMinusXdivRInSquare_XdivRval[SatCalc][n][k];
-                        OldXSign[SatCalc] = - OldXSign[SatCalc];
+                        OldXSign[SatCalc][n][k] = - OldXSign[SatCalc][n][k];
                     }
-                    else
-                        OneMinusXdivRInSquare_XdivRval[SatCalc][n][k] = OneMinusXdivRInSquare_XdivRval[SatCalc][n][k];
                 }
+#endif
                     X += R0divR[n] *
                                   (-(n+1)  /**XdivRval*/ *  Pnk_tilda[n][k] * Qnk[n][k]
                                    - Pnk_tilda[n][k+1] *  Qnk[n][k] /** XdivRval*/ * SinTetta
@@ -790,22 +793,23 @@ typedef struct TraObj
                 //            = fm /r**2   * (r0/r)**n [  -(n+1) * Znk * *y/r * Qnk +
                 //                                           Znk+1       * y/r * -SinTetta *    Qnk +
                 //                                             Znk * ((Cnk*XkDxr+Snk*YkDxr) * (-x/r * y/r) + (Cnk*XkDyr+Snk*YkDyr)*(1-(y/r)**2))
+#if 1
                     if (((YdivRval > CPV ) || (YdivRval < -CPV )))// && (((k+n)&1) == 1))
                     {
+#endif
                         OneMinusYdivRInSquare_YdivRval[SatCalc][n][k] = D_Qnk_Dyr[n][k] * OneMinusYdivRInSquare2;//(CNK[n][k]*XkDyr[k] + SNK[n][k]*YkDyr[k])*OneMinusYdivRInSquare2;///YdivRval;
-                        OldYSign[SatCalc] = YdivRval;
+                        OldYSign[SatCalc][n][k] = YdivRval;
+#if 1
                     }
                     else
                     {
-                        if (((YdivRval >0) && (OldYSign[SatCalc] < 0)) || ((YdivRval <0) && (OldYSign[SatCalc] > 0)))
+                        if (((YdivRval >0) && (OldYSign[SatCalc][n][k] < 0)) || ((YdivRval <0) && (OldYSign[SatCalc][n][k] > 0)))
                         {
                             OneMinusYdivRInSquare_YdivRval[SatCalc][n][k] = - OneMinusYdivRInSquare_YdivRval[SatCalc][n][k];
-                            OldYSign[SatCalc] = -OldYSign[SatCalc];
+                            OldYSign[SatCalc][n][k] = -OldYSign[SatCalc][n][k];
                         }
-                        else
-                            OneMinusYdivRInSquare_YdivRval[SatCalc][n][k] = OneMinusYdivRInSquare_YdivRval[SatCalc][n][k];
                     }
-
+#endif
                     Y += R0divR[n] *
                                   (-(n+1) /**YdivRval*/ * Pnk_tilda[n][k] * Qnk[n][k]
                                      - Pnk_tilda[n][k+1] *  Qnk[n][k] /** YdivRval*/ * SinTetta
@@ -823,18 +827,16 @@ typedef struct TraObj
                     {
 #endif
                         OneMinusZdivRInSquare_ZdivRval[SatCalc][n][k] = OneMinusSinTettaInSquare2 * Pnk_tilda[n][k+1] * Qnk[n][k];// /SinTetta[1];
-                        OldZSign[SatCalc] = SinTetta;
+                        OldZSign[SatCalc][n][k] = SinTetta;
 #if 1
                     }
                     else
                     {
-                        if (((SinTetta >0) && (OldZSign[SatCalc] < 0)) || ((SinTetta <0) && (OldZSign[SatCalc] > 0)))
+                        if (((SinTetta >0) && (OldZSign[SatCalc][n][k] < 0)) || ((SinTetta <0) && (OldZSign[SatCalc][n][k] > 0)))
                         {
                             OneMinusZdivRInSquare_ZdivRval[SatCalc][n][k] = - OneMinusZdivRInSquare_ZdivRval[SatCalc][n][k];
-                            OldZSign[SatCalc] = -OldZSign[SatCalc];
+                            OldZSign[SatCalc][n][k] = -OldZSign[SatCalc][n][k];
                         }
-                        else
-                            OneMinusZdivRInSquare_ZdivRval[SatCalc][n][k] = OneMinusZdivRInSquare_ZdivRval[SatCalc][n][k];
                     }
 #endif
                     Z += R0divR[n] *
@@ -846,7 +848,7 @@ typedef struct TraObj
             }
         }
     }
-    double SummJ(void)
+    long double SummJ(void)
     {
         // this is a formula for gravitation potential (NOT a force)
         // to get a force needs to get analiticaly derivitive from Gravitation potencial
@@ -855,7 +857,7 @@ typedef struct TraObj
         //	- J3 * (r0/r)**3 * P3(sinPHI) 
         //  - J4 * (r0/r)**4 * P4(sinPHI)
     
-        double Summ = 1.0;
+        long double Summ = 1.0;
         for (int n = 2; n <=iLeg; n++)
         {
             Summ += J[n]*R0divR[n]*P[n];
@@ -869,7 +871,7 @@ typedef struct TraObj
         {
             for (int k =1; k <=n; k++)
             {
-                Summ += R0divR[n] * Ptilda[n] *(CNK[n][k]*cos((double)k*Lambda) +SNK[n][k]*sin((double)k*Lambda));
+                Summ += R0divR[n] * Ptilda[n] *(CNK[n][k]*cos((long double)k*Lambda) +SNK[n][k]*sin((long double)k*Lambda));
             }
         }
 
@@ -886,39 +888,39 @@ typedef struct TraImplObj
     int EngineDone;
     int ImplsPointer;
     int iCalculate;
-    double TotalImpulse;
-    double Weight;
-    double DeltaTime;
+    long double TotalImpulse;
+    long double Weight;
+    long double DeltaTime;
     int IteraPerSec;
-    double FireTime;
-    double Ang1;
-    double Ang2;
-    double XVec;
-    double YVec;
-    double ZVec;
-    double ValImpl[MAX_IMPULSE_LINES];
+    long double FireTime;
+    long double Ang1;
+    long double Ang2;
+    long double XVec;
+    long double YVec;
+    long double ZVec;
+    long double ValImpl[MAX_IMPULSE_LINES];
     int NearBody;
-    double TotalWeight;
+    long double TotalWeight;
     int AngleType;
     int AngleOnBody;
-    double OptimizationInitialStep;
-    double OptimizationDecCoef;
-    double OptimizationInitialStepCopy;
-    double OptimizationDecCoefCopy;
-    double OptimizationStop;
+    long double OptimizationInitialStep;
+    long double OptimizationDecCoef;
+    long double OptimizationInitialStepCopy;
+    long double OptimizationDecCoefCopy;
+    long double OptimizationStop;
     int OptimizationFirstDirectionSwitch;
-    double SeartchForPeriod;
+    long double SeartchForPeriod;
     int iCountApogPerig;
 } TRAIMPLOBJ, *PTRAIMPLOBJ;
 
 typedef struct TraOptimObj
 {
-    double FireTime; // firing time of an engine
-    double Ang1; // first angle
-    double Ang2; // second angle
-    double XVec; // direction firing vector (X component)
-    double YVec; // direction (Y component)
-    double ZVec; // direction (Z component)
+    long double FireTime; // firing time of an engine
+    long double Ang1; // first angle
+    long double Ang2; // second angle
+    long double XVec; // direction firing vector (X component)
+    long double YVec; // direction (Y component)
+    long double ZVec; // direction (Z component)
     int NearBody; 
     int AngleType;
     int AngleOnBody;
@@ -927,15 +929,15 @@ typedef struct TraOptimObj
     int TrajectoryOptimizationType;
     int LastEngine;
     int Calculate;
-    double OptimizationInitialStep;
-    double OptimizationDecCoef;
-    double OptimizationStop;
+    long double OptimizationInitialStep;
+    long double OptimizationDecCoef;
+    long double OptimizationStop;
     int iNumberOfTryValues;
 #define _VAL_TRY 30*24
-    double dValTry[_VAL_TRY]; 
-    double dValTryMaxMin[_VAL_TRY]; 
-    //double SeartchForPeriod;
-    double Period;
+    long double dValTry[_VAL_TRY]; 
+    long double dValTryMaxMin[_VAL_TRY]; 
+    //long double SeartchForPeriod;
+    long double Period;
 }TRAOPTIMOBJ, *PTRAOPTIMOBJ;
 
 int EngineToOptimize = 4; // 0 == first engine firing - search for apogee 
@@ -975,24 +977,24 @@ long OldCurentTimeSec;
 int OldCurentTimeTD;
 int OldCurentIteraPerSec;
 
-double dMinFromNow = 3.0;
-double dStartJD = 0.0;//2451544.5; // if value dStartJD not set (==0.0) then use value from keplers elements of a satelite 0
+long double dMinFromNow = 3.0;
+long double dStartJD = 0.0;//2451544.5; // if value dStartJD not set (==0.0) then use value from keplers elements of a satelite 0
 // if it will be more then one satellite needs to set this value to a last epoch of all satellites
-double dStartJDEpoch;
+long double dStartJDEpoch;
 
-double SunX =.0;
-double SunY =.0;
-double SunZ = .0;
-double SunM = 1.9891E30;
-double GMSun;
-double SunR;
-double GMEarth;
-double GMEarthMoon;
-double GMMoon;
+long double SunX =.0;
+long double SunY =.0;
+long double SunZ = .0;
+long double SunM = 1.9891E30;
+long double GMSun;
+long double SunR;
+long double GMEarth;
+long double GMEarthMoon;
+long double GMMoon;
 
-double AU;
-double AUcalc;
-double EarthSmAxAU;
+long double AU;
+long double AUcalc;
+long double EarthSmAxAU;
 
 TRAOBJ SolarSystem;
 TRAOBJ Sat;
@@ -1004,80 +1006,80 @@ int iOptPtr = 0;
 int iOptimizationStep = 0;
 
 
-double MinMaxX = .0;
-double MinMaxY = .0;
-double MinMaxZ = .0;
+long double MinMaxX = .0;
+long double MinMaxY = .0;
+long double MinMaxZ = .0;
 
 int iFirstMinMax = 0;
-double FirstMinMaxX2 = .0;
-double FirstMinMaxY2 = .0;
-double FirstMinMaxZ2 = .0;
+long double FirstMinMaxX2 = .0;
+long double FirstMinMaxY2 = .0;
+long double FirstMinMaxZ2 = .0;
 
-double DeltaMinMaxD = 1.0E60;
+long double DeltaMinMaxD = 1.0E60;
 
 
-double EarthX = .0;
-double EarthY = .0;
-double EarthZ = .0;
-double EarthX2 = .0;
-double EarthY2 = .0;
-double EarthZ2 = .0;
-double EarthR = 6371000.0;
-double EarthRP;
-double EarthRE;
-double EarthM = 5.9736E24;
-double MassRatioSunToEarthPlusMoon;
-double EarthTSolSec;
-double EarthCurTime;
-double EarthCurTimeS;
-double EarthSmAx;
-double EarthTDays;
-double EarthTSec;
-double EarthCalcKepler;
+long double EarthX = .0;
+long double EarthY = .0;
+long double EarthZ = .0;
+long double EarthX2 = .0;
+long double EarthY2 = .0;
+long double EarthZ2 = .0;
+long double EarthR = 6371000.0;
+long double EarthRP;
+long double EarthRE;
+long double EarthM = 5.9736E24;
+long double MassRatioSunToEarthPlusMoon;
+long double EarthTSolSec;
+long double EarthCurTime;
+long double EarthCurTimeS;
+long double EarthSmAx;
+long double EarthTDays;
+long double EarthTSec;
+long double EarthCalcKepler;
 
-double EarthVX = .0;
-double EarthVY = .0;
-double EarthVZ = .0;
+long double EarthVX = .0;
+long double EarthVY = .0;
+long double EarthVZ = .0;
 
 long double GST,SLONG,SRASN, SDEC;
 long double GreenwichA = 0.0;
 
 
 
-double MoonX = 363104000.0;
-double MoonY = .0;
-double MoonZ = .0;
+long double MoonX = 363104000.0;
+long double MoonY = .0;
+long double MoonZ = .0;
 
-double MoonR = 1737100.0;
-double MoonRP;
-double MoonRE;
-double MoonM = 7.3477E22;
-double MassRatioEarthToMoon;
+long double MoonR = 1737100.0;
+long double MoonRP;
+long double MoonRE;
+long double MoonM = 7.3477E22;
+long double MassRatioEarthToMoon;
 
 
-double MoonVX = .0;
-double MoonVY = 1022.0;
-double MoonVZ = .0;
-double MoonTSec;
-double MoonCurTime;
-double MoonCurTimeS;
+long double MoonVX = .0;
+long double MoonVY = 1022.0;
+long double MoonVZ = .0;
+long double MoonTSec;
+long double MoonCurTime;
+long double MoonCurTimeS;
 
-double MoonTPeriod;
+long double MoonTPeriod;
 int MoonKeplerDone = 0;
 
 
-double TimeSl = 0;//0.01;
-double TimeSlOld = 0;//0.01;
-double TimeSl_2 = 0;
-double StartLandingIteraPerSec = 0.0;
+long double TimeSl = 0;//0.01;
+long double TimeSlOld = 0;//0.01;
+long double TimeSl_2 = 0;
+long double StartLandingIteraPerSec = 0.0;
 int iStartLandingIteraPerSec = 0;
 
-double Gbig = 0;//6.6725E-11;
+long double Gbig = 0;//6.6725E-11;
 
 BOOL OutLast = FALSE;
-double TotalDays;
+long double TotalDays;
 long iTotalSec;
-double IterPerSec;
+long double IterPerSec;
 
 char szMoonKeplerLine1[1024];
 char szMoonKeplerLine2[1024];
@@ -1091,16 +1093,16 @@ int iItaration = 0;
 
 
 // ground stations
-double GrLat[10];
-double GrLong[10];
+long double GrLat[10];
+long double GrLong[10];
 typedef struct tagPulsars
 {
     int N;
     char Name[20];
-    double ELONG;
-    double ELAT;
-    double P0;
-    double S400mJy;
+    long double ELONG;
+    long double ELAT;
+    long double P0;
+    long double S400mJy;
 
 } PULSARS, *PPULSARS;
 
@@ -1123,7 +1125,7 @@ void CalcPlanetForces(TRAOBJ * SlS)
                 continue;
             if (SlS->flInUse[j] ==0)
                 continue;
-            double tD_Obj1Obj2 = (SlS->X[i] - SlS->X[j])*(SlS->X[i] - SlS->X[j]) + 
+            long double tD_Obj1Obj2 = (SlS->X[i] - SlS->X[j])*(SlS->X[i] - SlS->X[j]) + 
 					    (SlS->Y[i] - SlS->Y[j])*(SlS->Y[i] - SlS->Y[j]) + 
 					    (SlS->Z[i] - SlS->Z[j])*(SlS->Z[i] - SlS->Z[j]);
 
@@ -1178,6 +1180,7 @@ void IteraSolarSystem(int TimeDirection, TRAOBJ * SlS)
 {
     int i;
     int j;
+    // calculation of a[i] based on x[i]
     CalcPlanetForces(SlS);
     // calculation of velocities and positions 
 #if 1
@@ -1198,9 +1201,9 @@ void IteraSolarSystem(int TimeDirection, TRAOBJ * SlS)
             SlS->Y_[i] += SlS->VY_[i] + SlS->FY[i]/2;
             SlS->Z_[i] += SlS->VZ_[i] + SlS->FZ[i]/2;
 
-            SlS->X[i] = (SlS->X0divDt2[i] + SlS->VX0divDt[i] + SlS->X_[i]) * TimeSl* TimeSl;
-            SlS->Y[i] = (SlS->Y0divDt2[i] + SlS->VY0divDt[i] + SlS->Y_[i]) * TimeSl* TimeSl;
-            SlS->Z[i] = (SlS->Z0divDt2[i] + SlS->VZ0divDt[i] + SlS->Z_[i]) * TimeSl* TimeSl;
+            SlS->X[i] = (SlS->X0divDt2[i] + SlS->VX0divDt[i] + SlS->X_[i]) * TimeSl_2;
+            SlS->Y[i] = (SlS->Y0divDt2[i] + SlS->VY0divDt[i] + SlS->Y_[i]) * TimeSl_2;
+            SlS->Z[i] = (SlS->Z0divDt2[i] + SlS->VZ0divDt[i] + SlS->Z_[i]) * TimeSl_2;
 
             SlS->VX_[i] += SlS->FX[i];
             SlS->VY_[i] += SlS->FY[i];
@@ -1273,10 +1276,22 @@ void IteraSolarSystem(int TimeDirection, TRAOBJ * SlS)
         SlS->Y[i] = SlS->Y_[i]*TimeSl*TimeSl / SlS->M[i];
         SlS->Z[i] = SlS->Z_[i]*TimeSl*TimeSl / SlS->M[i];
 #else
-        SlS->X[i] = (SlS->X0divDt2[i] + SlS->CountN*SlS->VX0divDt[i] + (SlS->X_[i] + SlS->VX_[i] + SlS->FX[i]/2)) * TimeSl* TimeSl/ SlS->M[i];
-        SlS->Y[i] = (SlS->Y0divDt2[i] + SlS->CountN*SlS->VY0divDt[i] + (SlS->Y_[i] + SlS->VY_[i] + SlS->FY[i]/2)) * TimeSl* TimeSl/ SlS->M[i];
-        SlS->Z[i] = (SlS->Z0divDt2[i] + SlS->CountN*SlS->VZ0divDt[i] + (SlS->Z_[i] + SlS->VZ_[i] + SlS->FZ[i]/2)) * TimeSl* TimeSl/ SlS->M[i];
+        SlS->X[i] = (SlS->X0divDt2[i] + SlS->CountN*SlS->VX0divDt[i] + (SlS->X_[i] + SlS->VX_[i] + SlS->FX[i]/2)) * TimeSl_2/ SlS->M[i];
+        SlS->Y[i] = (SlS->Y0divDt2[i] + SlS->CountN*SlS->VY0divDt[i] + (SlS->Y_[i] + SlS->VY_[i] + SlS->FY[i]/2)) * TimeSl_2/ SlS->M[i];
+        SlS->Z[i] = (SlS->Z0divDt2[i] + SlS->CountN*SlS->VZ0divDt[i] + (SlS->Z_[i] + SlS->VZ_[i] + SlS->FZ[i]/2)) * TimeSl_2/ SlS->M[i];
+#if 0
+        SlS->X_[i] += SlS->VX_[i] + SlS->FX[i]/2;
+        SlS->Y_[i] += SlS->VY_[i] + SlS->FY[i]/2;
+        SlS->Z_[i] += SlS->VZ_[i] + SlS->FZ[i]/2;
+        SlS->VX_[i] += SlS->FX[i];
+        SlS->VY_[i] += SlS->FY[i];
+        SlS->VZ_[i] += SlS->FZ[i];
 
+        SlS->VX[i] = (SlS->VX0divDt[i] + SlS->VX_[i])*TimeSl/ SlS->M[i];
+        SlS->VY[i] = (SlS->VY0divDt[i] + SlS->VY_[i])*TimeSl/ SlS->M[i];
+        SlS->VZ[i] = (SlS->VZ0divDt[i] + SlS->VZ_[i])*TimeSl/ SlS->M[i];
+
+#endif
 
 #endif
 #endif
@@ -1293,9 +1308,9 @@ void IteraSolarSystem(int TimeDirection, TRAOBJ * SlS)
             SlS->Y_[i] += SlS->VY_[i] + (SlS->FY[i]+SlS->SFY[i])/4;
             SlS->Z_[i] += SlS->VZ_[i] + (SlS->FZ[i]+SlS->SFZ[i])/4;
 
-            SlS->X[i] = (SlS->X0divDt2[i] + SlS->CountN*SlS->VX0divDt[i] + SlS->X_[i]) * TimeSl* TimeSl/ SlS->M[i];
-            SlS->Y[i] = (SlS->Y0divDt2[i] + SlS->CountN*SlS->VY0divDt[i] + SlS->Y_[i]) * TimeSl* TimeSl/ SlS->M[i];
-            SlS->Z[i] = (SlS->Z0divDt2[i] + SlS->CountN*SlS->VZ0divDt[i] + SlS->Z_[i]) * TimeSl* TimeSl/ SlS->M[i];
+            SlS->X[i] = (SlS->X0divDt2[i] + SlS->CountN*SlS->VX0divDt[i] + SlS->X_[i]) * TimeSl_2/ SlS->M[i];
+            SlS->Y[i] = (SlS->Y0divDt2[i] + SlS->CountN*SlS->VY0divDt[i] + SlS->Y_[i]) * TimeSl_2/ SlS->M[i];
+            SlS->Z[i] = (SlS->Z0divDt2[i] + SlS->CountN*SlS->VZ0divDt[i] + SlS->Z_[i]) * TimeSl_2/ SlS->M[i];
 
             SlS->VX_[i] += (SlS->SFX[i]+SlS->FX[i])/2;
             SlS->VY_[i] += (SlS->SFY[i]+SlS->FY[i])/2;
@@ -1329,7 +1344,7 @@ void CalcSatForces(TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfCalc)
     int j;
 //    double Summ;
 //    double Temp;
-    double DX,DY,DZ;
+    long double DX,DY,DZ;
 
     
     // calculation of a forces
@@ -1343,12 +1358,12 @@ void CalcSatForces(TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfCalc)
             if (SlS->flInUse[j] ==0)
                 continue;
             // that is the distance*distance from the satellite to selestial body
-            double tD_Obj1Obj2 = (Sat->X[i] - SlS->X[j])*(Sat->X[i] - SlS->X[j]) + 
+            long double tD_Obj1Obj2 = (Sat->X[i] - SlS->X[j])*(Sat->X[i] - SlS->X[j]) + 
 					    (Sat->Y[i] - SlS->Y[j])*(Sat->Y[i] - SlS->Y[j]) + 
 					    (Sat->Z[i] - SlS->Z[j])*(Sat->Z[i] - SlS->Z[j]);
             
             Sat->Distance2[i][j] = tD_Obj1Obj2;
-            double tD_ = sqrt(tD_Obj1Obj2);
+            long double tD_ = sqrt(tD_Obj1Obj2);
             Sat->Distance[i][j] = tD_;
             Sat->ForceDD[i][j] = SlS->GM[j] /* Sat->M[i]*/ / Sat->Distance2[i][j]; // to get real force need to multiply on mass of the satellite
             Sat->DeltaVX[i][j] =1;
@@ -1447,9 +1462,9 @@ void IteraSat(int TimeDirection, TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfC
             Sat->Y_[i] += Sat->VY_[i] + Sat->FY[i]/2;
             Sat->Z_[i] += Sat->VZ_[i] + Sat->FZ[i]/2;
 
-            Sat->X[i] = (Sat->X0divDt2[i] + Sat->VX0divDt[i] + Sat->X_[i]) * TimeSl* TimeSl;
-            Sat->Y[i] = (Sat->Y0divDt2[i] + Sat->VY0divDt[i] + Sat->Y_[i]) * TimeSl* TimeSl;
-            Sat->Z[i] = (Sat->Z0divDt2[i] + Sat->VZ0divDt[i] + Sat->Z_[i]) * TimeSl* TimeSl;
+            Sat->X[i] = (Sat->X0divDt2[i] + Sat->VX0divDt[i] + Sat->X_[i]) * TimeSl_2;
+            Sat->Y[i] = (Sat->Y0divDt2[i] + Sat->VY0divDt[i] + Sat->Y_[i]) * TimeSl_2;
+            Sat->Z[i] = (Sat->Z0divDt2[i] + Sat->VZ0divDt[i] + Sat->Z_[i]) * TimeSl_2;
 
             Sat->VX_[i] += Sat->FX[i];
             Sat->VY_[i] += Sat->FY[i];
@@ -1508,9 +1523,9 @@ void IteraSat(int TimeDirection, TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfC
         Sat->VY[i] += Sat->FY[i] * TimeSl /* Sat->M[i]*/;
         Sat->VZ[i] += Sat->FZ[i] * TimeSl /* Sat->M[i]*/;
 #else
-            Sat->X[i] = (Sat->X0divDt2[i] + Sat->CountN*Sat->VX0divDt[i] + (Sat->X_[i] + Sat->VX_[i] + Sat->FX[i]/2)) * TimeSl* TimeSl;
-            Sat->Y[i] = (Sat->Y0divDt2[i] + Sat->CountN*Sat->VY0divDt[i] + (Sat->Y_[i] + Sat->VY_[i] + Sat->FY[i]/2)) * TimeSl* TimeSl;
-            Sat->Z[i] = (Sat->Z0divDt2[i] + Sat->CountN*Sat->VZ0divDt[i] + (Sat->Z_[i] + Sat->VZ_[i] + Sat->FZ[i]/2)) * TimeSl* TimeSl;
+            Sat->X[i] = (Sat->X0divDt2[i] + Sat->CountN*Sat->VX0divDt[i] + (Sat->X_[i] + Sat->VX_[i] + Sat->FX[i]/2)) * TimeSl_2;
+            Sat->Y[i] = (Sat->Y0divDt2[i] + Sat->CountN*Sat->VY0divDt[i] + (Sat->Y_[i] + Sat->VY_[i] + Sat->FY[i]/2)) * TimeSl_2;
+            Sat->Z[i] = (Sat->Z0divDt2[i] + Sat->CountN*Sat->VZ0divDt[i] + (Sat->Z_[i] + Sat->VZ_[i] + Sat->FZ[i]/2)) * TimeSl_2;
 #endif
 
 #endif
@@ -1553,9 +1568,9 @@ void IteraSat(int TimeDirection, TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfC
             Sat->Y_[i] += Sat->VY_[i] + (Sat->FY[i]+Sat->SFY[i])/4;
             Sat->Z_[i] += Sat->VZ_[i] + (Sat->FZ[i]+Sat->SFZ[i])/4;
 
-            Sat->X[i] = (Sat->X0divDt2[i] + Sat->CountN*Sat->VX0divDt[i] + Sat->X_[i]) * TimeSl* TimeSl;
-            Sat->Y[i] = (Sat->Y0divDt2[i] + Sat->CountN*Sat->VY0divDt[i] + Sat->Y_[i]) * TimeSl* TimeSl;
-            Sat->Z[i] = (Sat->Z0divDt2[i] + Sat->CountN*Sat->VZ0divDt[i] + Sat->Z_[i]) * TimeSl* TimeSl;
+            Sat->X[i] = (Sat->X0divDt2[i] + Sat->CountN*Sat->VX0divDt[i] + Sat->X_[i]) * TimeSl_2;
+            Sat->Y[i] = (Sat->Y0divDt2[i] + Sat->CountN*Sat->VY0divDt[i] + Sat->Y_[i]) * TimeSl_2;
+            Sat->Z[i] = (Sat->Z0divDt2[i] + Sat->CountN*Sat->VZ0divDt[i] + Sat->Z_[i]) * TimeSl_2;
 
             Sat->VX_[i] += (Sat->SFX[i]+Sat->FX[i])/2;
             Sat->VY_[i] += (Sat->SFY[i]+Sat->FY[i])/2;
@@ -1590,20 +1605,20 @@ void IteraSat(int TimeDirection, TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfC
 #endif
 }
 
-void FireEngine(int TimeDirection, int DeltaTimeFromStart, TRAIMPLOBJ * Engine, TRAOBJ *Sat, int iSat, double DirX, double DirY, double DirZ)
+void FireEngine(int TimeDirection, int DeltaTimeFromStart, TRAIMPLOBJ * Engine, TRAOBJ *Sat, int iSat, long double DirX, long double DirY, long double DirZ)
 {
-    double VectorValue = sqrt(DirX*DirX + DirY*DirY +DirZ*DirZ);
-    double coeff = 1.0/VectorValue;
-    double dirX = DirX*coeff;
-    double dirY = DirY*coeff;
-    double dirZ = DirZ*coeff;
+    long double VectorValue = sqrt(DirX*DirX + DirY*DirY +DirZ*DirZ);
+    long double coeff = 1.0/VectorValue;
+    long double dirX = DirX*coeff;
+    long double dirY = DirY*coeff;
+    long double dirZ = DirZ*coeff;
     // direction of a force is oposit the direction of a firing engine
-    double ForceX = -dirX * Engine->ValImpl[DeltaTimeFromStart];
-    double ForceY = -dirY * Engine->ValImpl[DeltaTimeFromStart];
-    double ForceZ = -dirZ * Engine->ValImpl[DeltaTimeFromStart];
-    double VX = ForceX* Engine->DeltaTime / Sat->M[iSat];
-    double VY = ForceY* Engine->DeltaTime / Sat->M[iSat];
-    double VZ = ForceZ* Engine->DeltaTime / Sat->M[iSat];
+    long double ForceX = -dirX * Engine->ValImpl[DeltaTimeFromStart];
+    long double ForceY = -dirY * Engine->ValImpl[DeltaTimeFromStart];
+    long double ForceZ = -dirZ * Engine->ValImpl[DeltaTimeFromStart];
+    long double VX = ForceX* Engine->DeltaTime / Sat->M[iSat];
+    long double VY = ForceY* Engine->DeltaTime / Sat->M[iSat];
+    long double VZ = ForceZ* Engine->DeltaTime / Sat->M[iSat];
     
     Sat->VX[iSat] += VX;
     Sat->VY[iSat] += VY;
@@ -1614,7 +1629,22 @@ void FireEngine(int TimeDirection, int DeltaTimeFromStart, TRAIMPLOBJ * Engine, 
     Sat->Z[iSat] += VZ * Engine->DeltaTime;
     Sat->M[iSat] -= Engine->Weight * Engine->ValImpl[DeltaTimeFromStart]*Engine->DeltaTime / Engine->TotalImpulse;
 }
-double GetRadius(TRAOBJ * SlS, int iBody, double LongOnMoon,double LatiOnMoon)
+long double GetRadius(TRAOBJ * SlS, int iBody, long double LongOnMoon,long double LatiOnMoon)
+{
+    long double dR = 1000000.0; // just for init == bogus radius 1000km
+    // TBD earth NOT round
+    if (iBody == EARTH)
+    {
+        dR = EarthR;
+    }
+    // TBD with the moon the same 
+    if (iBody == MOON)
+    {
+        dR = MoonR;
+    }
+    return dR;
+}
+long double GetRadius(TRAOBJ * SlS, int iBody, TRAOBJ * Sat, int iSat)
 {
     double dR = 1000000.0; // just for init == bogus radius 1000km
     // TBD earth NOT round
@@ -1629,23 +1659,8 @@ double GetRadius(TRAOBJ * SlS, int iBody, double LongOnMoon,double LatiOnMoon)
     }
     return dR;
 }
-double GetRadius(TRAOBJ * SlS, int iBody, TRAOBJ * Sat, int iSat)
-{
-    double dR = 1000000.0; // just for init == bogus radius 1000km
-    // TBD earth NOT round
-    if (iBody == EARTH)
-    {
-        dR = EarthR;
-    }
-    // TBD with the moon the same 
-    if (iBody == MOON)
-    {
-        dR = MoonR;
-    }
-    return dR;
-}
-double Targetlongitude = -15.0; // dolgota
-double Targetlatitude = -2.0; // shirota
+long double Targetlongitude = -15.0; // dolgota
+long double Targetlatitude = -2.0; // shirota
 // view from north pole to equator plane 
 /// x to right
 //  y to up
@@ -5055,6 +5070,7 @@ void ParamProb(char *szString)
 
                 // this has to be set to properly calc helper variables
                 TimeSl = 1.0 / IterPerSec;
+                TimeSl_2 = 1.0 / ((long double)IterPerSec*(long double)IterPerSec);
             }    
             // this is done to reduce errors and avoid unnessary 5 mul/div operations
             // temporary X_, VX_ will just added (in paralel calculations can be done actualy faster) 
@@ -5687,23 +5703,30 @@ void dumpXMLParam(TRAOBJ *Sat, TRAIMPLOBJ *MyEngine, int iNumbOfEng)
         fprintf(EnginesFile,"\n<!-- starting date (1 jan 2000) = 2451544.5JD ");
         fprintf(EnginesFile,"\n     if this is not set then use keplers elements from a satelite 0 -->");
         XML_DUMPF(dStartJD);
+#ifdef _DO_VISUALIZATION
         fprintf(EnginesFile,"\n\n    <TRA:setting name=\"RGBImageW\" value=\"%d\" />",bRGBImageW);
         fprintf(EnginesFile,"\n    <TRA:setting name=\"RGBImageH\" value=\"%d\" />",bRGBImageH);
-
+#endif
         fprintf(EnginesFile,"\n<!-- int iProfile = 0; ");
         fprintf(EnginesFile,"\n              // 0 == XY , 1 == YZ, 2 == XZ 3 == -YZ 4 == -XZ 5==-XY");
         fprintf(EnginesFile,"\n              // 0 or XY is a view from North to south, 5 (- XY) is a view from south to north");
         fprintf(EnginesFile,"\n              // 1 or YZ is a view to easter -->");
+#ifdef _DO_VISUALIZATION
         fprintf(EnginesFile,"\n    <TRA:setting name=\"RGBView\" value=\"%d\" />", iProfile);
+#endif
 
         fprintf(EnginesFile,"\n<!--  EARTH 2 MOON  9 -->\n");
+#ifdef _DO_VISUALIZATION
         XML_DUMPI(RGBReferenceBody);
+#endif
         fprintf(EnginesFile,"\n<!-- max amount of pictures -->");
+#ifdef _DO_VISUALIZATION
         fprintf(EnginesFile,"\n    <TRA:setting name=\"RGBMaxPictures\" value=\"%d\" />",iMaxSeq);
         fprintf(EnginesFile,"\n<!-- one picture per sec -->");
         fprintf(EnginesFile,"\n    <TRA:setting name=\"RGBSecPerPictures\" value=\"%d\" />", iMaxCounter);
         fprintf(EnginesFile,"\n<!-- scale in m -->");
         fprintf(EnginesFile,"\n    <TRA:setting name=\"RGBScale\" value=\"%.18g\" />\n",dRGBScale);
+#endif
         XML_DUMPF(IterPerSec);
         XML_DUMPF(StartLandingIteraPerSec);
 
@@ -6673,7 +6696,7 @@ int main(int argc, char * argv[])
 
 
 #ifdef TEST_RUN_CALC_YEAR
-                // this is for debug only - checking chnages of the orbit points
+                // this is for debug only - checking changes of the orbit points
                 MinMaxX = (MoonX * MoonM + EarthX * EarthM) / (MoonM + EarthM);
                 MinMaxY = (MoonY * MoonM + EarthY * EarthM) / (MoonM + EarthM);
                 MinMaxZ = (MoonZ * MoonM + EarthZ * EarthM) / (MoonM + EarthM);

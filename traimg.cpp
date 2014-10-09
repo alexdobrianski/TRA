@@ -34,6 +34,7 @@
 #define _USE_MATH_DEFINES 1
 #include <math.h>
 #include <stdio.h>
+#ifdef _DO_VISUALIZATION
 extern "C"
 {
 #include "JPEGLIB.H"
@@ -201,3 +202,4 @@ write_JPEG_file (char * filename,
 }
 ///////////////////////////////////////////////////
 
+#endif
