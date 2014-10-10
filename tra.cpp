@@ -182,14 +182,14 @@ void write_JPEG_file (char * filename, int quality, int SizeW, int SizeH, int Si
 
     // moon 0.0002027
 #define MAX_COEF_J 18
-//long  double GM_MODEL = 3.986004415E5;
-long  double GM_MODEL = 3.986004418E5;
+long  double GM_MODEL = 3.986004415E5;
+//long  double GM_MODEL = 3.986004418E5;
 //double R0_MODEL = 6378136.30; // in m
-//#define R0_MODEL 6378136.30
-#define R0_MODEL 6378137
+#define R0_MODEL 6378136.30
+//#define R0_MODEL 6378137
 //#define R0_MODEL 6378000.00
 //#define R0_MODEL 6379137.0
-#if 1
+#if 0
 long double ClmNN[MAX_COEF_J][MAX_COEF_J] = {
     //0             1                    2                   3                   4                   5                   6                  7                     8                   9                10                  11                    12                     13                           14                    15                                           16
     0.0,                  0.0,-0.484165371736E-03,  0.957254173792E-06, 0.539873863789E-06, 0.685323475630E-07,-0.149957994714E-06, 0.909789371450E-07, 0.496711667324E-07, 0.276714300853E-07, 0.526222488569E-07,-0.509613707522E-07, 0.377252636558E-07, 0.422982206413E-07,-2.266932614809e-08+5.61610e-13, 2.191678708149e-09+3.89300e-13,-4.711399566556e-09+4.27530e-13,0,
@@ -1122,7 +1122,7 @@ void CalcPlanetForces(TRAOBJ * SlS)
     {
         //if (SlS->flInUse[i] ==0)
         //    continue;
-        for (j = i; j < SlS->Elem; j++)
+        for (j = i+1; j < SlS->Elem; j++)
         {
             if (i == j) 
                 continue;
@@ -1142,7 +1142,7 @@ void CalcPlanetForces(TRAOBJ * SlS)
                 {
                     SlS->Distance[i][j] = tD_;
                     SlS->Distance[j][i] = tD_;
-#if 0
+#if 1
                     SlS->ForceDD[i][j] = SlS->GM[i] * SlS->M[j] / SlS->Distance2[i][j];
                     SlS->ForceDD[j][i] = SlS->GM[j] * SlS->M[i] / SlS->Distance2[j][i];
 #else
@@ -1166,8 +1166,8 @@ void CalcPlanetForces(TRAOBJ * SlS)
         for (j = 0; j < SlS->Elem; j++)
         {
             if (i == j) continue;
-            if (SlS->flInUse[j] ==0)
-            continue;
+            //if (SlS->flInUse[j] ==0)
+            //continue;
             SlS->FX[i] += -( SlS->X[i] - SlS->X[j]) * SlS->ForceDD[i][j]/SlS->Distance[i][j];
             SlS->FY[i] += -( SlS->Y[i] - SlS->Y[j]) * SlS->ForceDD[i][j]/SlS->Distance[i][j];
             SlS->FZ[i] += -( SlS->Z[i] - SlS->Z[j]) * SlS->ForceDD[i][j]/SlS->Distance[i][j];
@@ -1179,7 +1179,7 @@ void CalcPlanetForces(TRAOBJ * SlS)
 void IteraSolarSystem(BOOL ForceWasCalculated, TRAOBJ * SlS)
 {
     int i;
-    int j;
+    //int j;
     // calculation of a[i] based on x[i]
     if (ForceWasCalculated == FALSE)
         CalcPlanetForces(SlS);
@@ -1220,8 +1220,8 @@ void IteraSolarSystem(BOOL ForceWasCalculated, TRAOBJ * SlS)
 #endif
     for (i = 0; i < SlS->Elem; i++)
     {
-        if (SlS->flInUse[i] ==0)
-            continue;
+        //if (SlS->flInUse[i] ==0)
+        //    continue;
 #if 0
         // this is original formula
         SlS->VX[i] += SlS->FX[i] * TimeSl / SlS->M[i];
@@ -1309,12 +1309,12 @@ void IteraSolarSystem(BOOL ForceWasCalculated, TRAOBJ * SlS)
             SlS->VZ[i] = (SlS->VZ0divDt[i] + SlS->VZ_[i])*TimeSl/ SlS->M[i];
 
         }
-        if (SlS->CountN > 10000.0)
+        if (SlS->CountN > 100000.0)
         {
 
             for (i = 0; i < SlS->Elem; i++)
             {
-                long double ldTemp;
+                 long double ldTemp;
                 long double ldTemp2;
                 ldTemp = SlS->X0divDt2[i] + SlS->CountN*SlS->VX0divDt[i] + SlS->X_[i]; ldTemp2 = ldTemp- (SlS->X0divDt2[i] + SlS->CountN*SlS->VX0divDt[i]); SlS->X0divDt2[i]=ldTemp; SlS->X_[i] -= ldTemp2;
                 ldTemp = SlS->Y0divDt2[i] + SlS->CountN*SlS->VZ0divDt[i] + SlS->Y_[i]; ldTemp2 = ldTemp- (SlS->Y0divDt2[i] + SlS->CountN*SlS->VY0divDt[i]); SlS->Y0divDt2[i]=ldTemp; SlS->Y_[i] -= ldTemp2;
@@ -1323,7 +1323,7 @@ void IteraSolarSystem(BOOL ForceWasCalculated, TRAOBJ * SlS)
                 ldTemp = SlS->VX0divDt[i] + SlS->VX_[i]; ldTemp2 = ldTemp- SlS->VX0divDt[i]; SlS->VX0divDt[i]=ldTemp; SlS->VX_[i] -= ldTemp2;
                 ldTemp = SlS->VY0divDt[i] + SlS->VY_[i]; ldTemp2 = ldTemp- SlS->VY0divDt[i]; SlS->VY0divDt[i]=ldTemp; SlS->VY_[i] -= ldTemp2;
                 ldTemp = SlS->VZ0divDt[i] + SlS->VZ_[i]; ldTemp2 = ldTemp- SlS->VZ0divDt[i]; SlS->VZ0divDt[i]=ldTemp; SlS->VZ_[i] -= ldTemp2;
-            }
+          }
             SlS->CountN = 0;
             
         }
@@ -1432,7 +1432,7 @@ void CalcSatForces(TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfCalc)
 void IteraSat(int TimeDirection, TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfCalc)
 {
     int i;
-    int j;
+    //int j;
     Sat->Lambda = GreenwichAscension(TimeOfCalc);
     // IteraSat called first - calculations of the forses btw planets will be done at this place
     // just needs to preserv it 
@@ -1571,7 +1571,7 @@ void IteraSat(int TimeDirection, TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfC
             Sat->VY[i] = (Sat->VY0divDt[i] + Sat->VY_[i])*TimeSl;
             Sat->VZ[i] = (Sat->VZ0divDt[i] + Sat->VZ_[i])*TimeSl;
         }
-        if (Sat->CountN > 10000.0)
+        if (Sat->CountN > 100000.0)
         {
             for (i = 0; i < Sat->Elem; i++)
             {
@@ -1924,7 +1924,8 @@ void DrawFinalBody(TRAOBJ *SlS, int iBodyReference, TRAOBJ *Sat, int iSec,char *
 }
 void DrawAnimationSequence(TRAOBJ *SlS, TRAOBJ *Sat, int iSec,char *szInitName, TRAOBJ *XYZReference, int iXYZReference, double Scale, int &StartSequence, int storeNow)
 {
-    int i,j;
+    int i;
+    int j;
 
     if ((StartSequence == 0) && (storeNow ==0))
     {
@@ -2463,7 +2464,7 @@ void DumpKeplers(long double &T,long double &Ecc, long double &Incl, long double
 	long double q = h0 / perihelion_speed;
 	long double major_axis;
 	long double t0;
-	long double perih_time;
+	//long double perih_time;
 	long double w0;
 	if( InvMAxis)
     {
@@ -2574,7 +2575,7 @@ void setup_orbit_vectors( long double &e_epoch, long double &e_ecc, long double 
    long double vec_len;
    //double up[3];
    long double up_x, up_y, up_z;
-   int i;
+   //int i;
 
    e_minor_to_major = sqrt( abs( (long double)1. - e_ecc * e_ecc));
    e_lon_per = e_asc_node + atan2( sin( e_arg_per) * cos_incl,
@@ -2655,7 +2656,7 @@ void do_element_setup( long double &e_epoch, long double &e_ecc, long double &e_
 		long double vec_len;
 		//double up[3];
 		long double up_x, up_y, up_z;
-		int i;
+		//int i;
 
 		e_minor_to_major = sqrt( abs( (long double)1. - e_ecc * e_ecc));
 		e_lon_per = e_asc_node + atan2( sin( e_arg_per) * cos_incl,
@@ -2862,7 +2863,7 @@ int posn_and_vel( long double &e_epoch, long double &e_ecc, long double &e_incl,
                                 e_angular_momentum / (r * r0);
 			long double x1 = x * radial_component - y * angular_component;
 			long double y1 = y * radial_component + x * angular_component;
-			int i;
+			//int i;
 
 			//for( i = 0; i < 3; i++)
 			//   vel[i] = elem->perih_vec[i] * x1 + elem->sideways[i] * y1;
@@ -3497,9 +3498,9 @@ void ParamCommon(char *szString)
                 TIME_ZONE_INFORMATION tmzone;
                 //SYSTEMTIME ThatTime;
 
-                int iYear;
-				int iDays;
-				int iCurSec;
+                //int iYear;
+				//int iDays;
+				//int iCurSec;
                 int Iret = GetTimeZoneInformation(&tmzone); 
                 GetSystemTime(&MyTime);
                 //double dEpoch = ConvertDateTimeToTLEEpoch(1, 1, 2013, 0, 0, 0, 0);
@@ -4532,6 +4533,7 @@ void ParamEarth(char *szString)
                 MoonVX = tempCenterEarthMoonVX + tempMoonVX * (EarthM/(EarthM+MoonM));
                 MoonVY = tempCenterEarthMoonVY + tempMoonVY * (EarthM/(EarthM+MoonM));
                 MoonVZ = tempCenterEarthMoonVZ + tempMoonVZ * (EarthM/(EarthM+MoonM));
+
             }
         }
     XML_SECTION_END;
@@ -4591,9 +4593,9 @@ void ParamProb(char *szString)
         IF_XML_READ(ProbKeplerLine3)
         {
             char szTempo[1024];
-            int iYear;
-            int iDays;
-            double dflTemp;
+            //int iYear;
+            //int iDays;
+            //double dflTemp;
 
             strcpy(Sat.Kepler3[Sat.Elem], pszQuo);
             //strcpy(Sat.Kepler1[0], szProbKeplerLine1);
@@ -5070,9 +5072,9 @@ void ParamProb(char *szString)
                 Sat.Y_[i] = 0 ;
                 Sat.Z_[i] = 0 ;
 
-                Sat.X0divDt2[i]=Sat.X[i] /TimeSl/TimeSl;
-                Sat.Y0divDt2[i]=Sat.Y[i] /TimeSl/TimeSl;
-                Sat.Z0divDt2[i]=Sat.Z[i] /TimeSl/TimeSl;
+                Sat.X0divDt2[i]=Sat.X[i] /TimeSl_2;
+                Sat.Y0divDt2[i]=Sat.Y[i] /TimeSl_2;
+                Sat.Z0divDt2[i]=Sat.Z[i] /TimeSl_2;
                 Sat.VX0divDt[i]=Sat.VX[i] /TimeSl;
                 Sat.VY0divDt[i]=Sat.VY[i] /TimeSl;
                 Sat.VZ0divDt[i]=Sat.VZ[i] /TimeSl;
@@ -5117,14 +5119,14 @@ void ParamProb(char *szString)
                     else
                         Betta = 2.0;
                      CNK = sqrt(Betta*(2*(long double)n+1) * Factor1/Factor2) * ClmNN[k][n];
-                     //Sat.CNK[n][k] = CNK;
+                     Sat.CNK[n][k] = CNK;
                      SNK = sqrt(2*(Betta*(long double)n+1) * Factor1/Factor2) * SlmNN[k][n];
-                     //Sat.SNK[n][k] = SNK;
+                     Sat.SNK[n][k] = SNK;
                 }
                 Sat.J[n] = (Clm[0][n]);
             }
             // amount of J coeff used in calcualtion
-            Sat.iLeg = 8;
+            Sat.iLeg = 16;
             Sat.iLeg_longit = 0; // no longitude in calculation
             Sat.Lambda = -2;
             Sat.LegBody = EARTH;
@@ -6070,9 +6072,9 @@ int main(int argc, char * argv[])
     
 
 #define MAXTRYANGLESDIR 6
-    double FindMin;
+    //double FindMin;
     int iFindMin;
-    double newTryAnglesDirDelta;
+    //double newTryAnglesDirDelta;
 
     int iFirstAngleDone = 0;
     int iMaxTryAnglesDir = MAXTRYANGLESDIR;
@@ -6082,15 +6084,15 @@ int main(int argc, char * argv[])
     double TryAnglesDirValues[MAXTRYANGLESDIR+1];
     double LastStepTryAnglesDirValuesX;
     double LastStepTryAnglesDirValuesY;
-    double LastStepTryAnglesDirValuesZ;
+    //double LastStepTryAnglesDirValuesZ;
 #define LASTSTEPHIST 10
-    int iLastStepHist;
+    //int iLastStepHist;
     double LastStepHistX[LASTSTEPHIST];
     double LastStepHistY[LASTSTEPHIST];
     double LastStepHistZ[LASTSTEPHIST];
     TRAOBJ MyTry = SolarSystem;
     TRAOBJ MyTrySat = Sat;
-    TRAIMPLOBJ MyEngine[MAX_ENGINES];
+    //TRAIMPLOBJ MyEngine[MAX_ENGINES];
 
 	long double tProbTSec,tProbEcc,tProbIncl,tProbAscNode,tProbArgPer,tProbMeanAnom;
 	long double tX,tY,tZ,tVX,tVY,tVZ;
@@ -6937,7 +6939,7 @@ int main(int argc, char * argv[])
             double errAngle =  acos(errorCos);
             double errorD = sqrt(tVX*tVX + tVY*tVY + tVZ*tVZ)/sqrt(tProbVX*tProbVX + tProbVY*tProbVY + tProbVZ*tProbVZ);
             double cosCoLAtitude = tZ / sqrt(tX*tX + tY*tY + tZ*tZ);
-            if (i%60 == 0)
+            if (i%10 == 0)
             {
                 //if (abs(cosCoLAtitude) >0.35)
                 //    printf("\n%3d=%f err(%f)V=%f angle=%f d=%f ",(int)(acos(cosCoLAtitude)*180/M_PI),cosCoLAtitude,tttX,tttVX,errAngle*1000.0,(errorD-1.0)*1000.0);
