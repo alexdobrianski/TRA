@@ -1197,163 +1197,6 @@ void CalcPlanetForces(TRAOBJ * SlS)
     }
 
 }
-
-void IteraSolarSystem(BOOL ForceWasCalculated, TRAOBJ * SlS)
-{
-    int i;
-    //int j;
-    // calculation of a[i] based on x[i]
-    if (ForceWasCalculated == FALSE)
-        CalcPlanetForces(SlS);
-    // calculation of velocities and positions 
-#if 1
-    SlS->CountN++;
-    if (SlS->RunOne == FALSE)
-    {
-        for (i = 0; i < SlS->Elem; i++)
-        {
-            SlS->SFX[i] = SlS->FX[i]; SlS->SFY[i] = SlS->FY[i]; SlS->SFZ[i] = SlS->FZ[i];
-        }
-    }
-    else
-    {
-        SlS->RunOne = FALSE;
-        for (i = 0; i < SlS->Elem; i++)
-        {
-            SlS->X_[i] += SlS->VX_[i] + SlS->FX[i]/2;
-            SlS->Y_[i] += SlS->VY_[i] + SlS->FY[i]/2;
-            SlS->Z_[i] += SlS->VZ_[i] + SlS->FZ[i]/2;
-
-            SlS->X[i] = (SlS->X0divDt2[i] + SlS->VX0divDt[i] + SlS->X_[i]) * TimeSl_2/ SlS->M[i];
-            SlS->Y[i] = (SlS->Y0divDt2[i] + SlS->VY0divDt[i] + SlS->Y_[i]) * TimeSl_2/ SlS->M[i];
-            SlS->Z[i] = (SlS->Z0divDt2[i] + SlS->VZ0divDt[i] + SlS->Z_[i]) * TimeSl_2/ SlS->M[i];
-
-            SlS->VX_[i] += SlS->FX[i];
-            SlS->VY_[i] += SlS->FY[i];
-            SlS->VZ_[i] += SlS->FZ[i];
-
-            SlS->VX[i] = (SlS->VX0divDt[i] + SlS->VX_[i])*TimeSl/ SlS->M[i];
-            SlS->VY[i] = (SlS->VY0divDt[i] + SlS->VY_[i])*TimeSl/ SlS->M[i];
-            SlS->VZ[i] = (SlS->VZ0divDt[i] + SlS->VZ_[i])*TimeSl/ SlS->M[i];
-        }
-        return;
-    }
-
-#endif
-    for (i = 0; i < SlS->Elem; i++)
-    {
-        //if (SlS->flInUse[i] ==0)
-        //    continue;
-#if 0
-        // this is original formula
-        SlS->VX[i] += SlS->FX[i] * TimeSl / SlS->M[i];
-        SlS->VY[i] += SlS->FY[i] * TimeSl / SlS->M[i];
-        SlS->VZ[i] += SlS->FZ[i] * TimeSl / SlS->M[i];
-
-        SlS->X[i] += SlS->VX[i]*TimeSl;
-        SlS->Y[i] += SlS->VY[i]*TimeSl;
-        SlS->Z[i] += SlS->VZ[i]*TimeSl;
-
-#else
-#if 0
-        SlS->VX_[i] += SlS->FX[i];
-        SlS->VY_[i] += SlS->FY[i];
-        SlS->VZ_[i] += SlS->FZ[i];
-
-//#ifdef PROP_VELOCITY
-        // this can be skipped to make calculation faster
-        // VX is different from VX_ by coef = TimeS1*Mass
-        // 
-        SlS->VX[i] = SlS->VX_[i]*TimeSl / SlS->M[i];
-        SlS->VY[i] = SlS->VY_[i]*TimeSl / SlS->M[i];
-        SlS->VZ[i] = SlS->VZ_[i]*TimeSl / SlS->M[i];
-//#endif
-        SlS->X_[i] += SlS->VX_[i];
-        SlS->Y_[i] += SlS->VY_[i];
-        SlS->Z_[i] += SlS->VZ_[i];
-
-        SlS->X[i] = SlS->X_[i]*TimeSl*TimeSl / SlS->M[i];
-        SlS->Y[i] = SlS->Y_[i]*TimeSl*TimeSl / SlS->M[i];
-        SlS->Z[i] = SlS->Z_[i]*TimeSl*TimeSl / SlS->M[i];
-#else
-
-#if 0
-        SlS->X_[i] += SlS->VX_[i] + SlS->FX[i]/2;
-        SlS->Y_[i] += SlS->VY_[i] + SlS->FY[i]/2;
-        SlS->Z_[i] += SlS->VZ_[i] + SlS->FZ[i]/2;
-
-        SlS->VX_[i] += SlS->FX[i];
-        SlS->VY_[i] += SlS->FY[i];
-        SlS->VZ_[i] += SlS->FZ[i];
-
-//#ifdef PROP_VELOCITY
-        // this can be skipped to make calculation faster
-        // VX is different from VX_ by coef = TimeS1*Mass
-        // 
-        SlS->VX[i] = SlS->VX_[i]*TimeSl / SlS->M[i];
-        SlS->VY[i] = SlS->VY_[i]*TimeSl / SlS->M[i];
-        SlS->VZ[i] = SlS->VZ_[i]*TimeSl / SlS->M[i];
-//#endif
-
-        SlS->X[i] = SlS->X_[i]*TimeSl*TimeSl / SlS->M[i];
-        SlS->Y[i] = SlS->Y_[i]*TimeSl*TimeSl / SlS->M[i];
-        SlS->Z[i] = SlS->Z_[i]*TimeSl*TimeSl / SlS->M[i];
-#else
-        SlS->X[i] = (SlS->X0divDt2[i] + SlS->CountN*SlS->VX0divDt[i] + (SlS->X_[i] + SlS->VX_[i] + SlS->FX[i]/2)) * TimeSl_2/ SlS->M[i];
-        SlS->Y[i] = (SlS->Y0divDt2[i] + SlS->CountN*SlS->VY0divDt[i] + (SlS->Y_[i] + SlS->VY_[i] + SlS->FY[i]/2)) * TimeSl_2/ SlS->M[i];
-        SlS->Z[i] = (SlS->Z0divDt2[i] + SlS->CountN*SlS->VZ0divDt[i] + (SlS->Z_[i] + SlS->VZ_[i] + SlS->FZ[i]/2)) * TimeSl_2/ SlS->M[i];
-
-#endif
-#endif
-#endif
-    }
-#if 1
-    //if (SlS->CountN > 1)
-    {
-        CalcPlanetForces(SlS);
-        for (i = 0; i < SlS->Elem; i++)
-        {
-
-            SlS->X_[i] += SlS->VX_[i] + (SlS->FX[i]+SlS->SFX[i])/4;
-            SlS->Y_[i] += SlS->VY_[i] + (SlS->FY[i]+SlS->SFY[i])/4;
-            SlS->Z_[i] += SlS->VZ_[i] + (SlS->FZ[i]+SlS->SFZ[i])/4;
-
-            SlS->X[i] = (SlS->X0divDt2[i] + SlS->CountN*SlS->VX0divDt[i] + SlS->X_[i]) * TimeSl_2/ SlS->M[i];
-            SlS->Y[i] = (SlS->Y0divDt2[i] + SlS->CountN*SlS->VY0divDt[i] + SlS->Y_[i]) * TimeSl_2/ SlS->M[i];
-            SlS->Z[i] = (SlS->Z0divDt2[i] + SlS->CountN*SlS->VZ0divDt[i] + SlS->Z_[i]) * TimeSl_2/ SlS->M[i];
-
-            SlS->VX_[i] += (SlS->SFX[i]+SlS->FX[i])/2;
-            SlS->VY_[i] += (SlS->SFY[i]+SlS->FY[i])/2;
-            SlS->VZ_[i] += (SlS->SFZ[i]+SlS->FZ[i])/2;
-
-            SlS->VX[i] = (SlS->VX0divDt[i] + SlS->VX_[i])*TimeSl/ SlS->M[i];
-            SlS->VY[i] = (SlS->VY0divDt[i] + SlS->VY_[i])*TimeSl/ SlS->M[i];
-            SlS->VZ[i] = (SlS->VZ0divDt[i] + SlS->VZ_[i])*TimeSl/ SlS->M[i];
-
-        }
-        if (SlS->CountN > 100000.0)
-        {
-
-            for (i = 0; i < SlS->Elem; i++)
-            {
-                 long double ldTemp;
-                long double ldTemp2;
-                ldTemp = SlS->X0divDt2[i] + SlS->CountN*SlS->VX0divDt[i] + SlS->X_[i]; ldTemp2 = ldTemp- (SlS->X0divDt2[i] + SlS->CountN*SlS->VX0divDt[i]); SlS->X0divDt2[i]=ldTemp; SlS->X_[i] -= ldTemp2;
-                ldTemp = SlS->Y0divDt2[i] + SlS->CountN*SlS->VZ0divDt[i] + SlS->Y_[i]; ldTemp2 = ldTemp- (SlS->Y0divDt2[i] + SlS->CountN*SlS->VY0divDt[i]); SlS->Y0divDt2[i]=ldTemp; SlS->Y_[i] -= ldTemp2;
-                ldTemp = SlS->Z0divDt2[i] + SlS->CountN*SlS->VZ0divDt[i] + SlS->Z_[i]; ldTemp2 = ldTemp- (SlS->Z0divDt2[i] + SlS->CountN*SlS->VZ0divDt[i]); SlS->Z0divDt2[i]=ldTemp; SlS->Z_[i] -= ldTemp2;
-
-                ldTemp = SlS->VX0divDt[i] + SlS->VX_[i]; ldTemp2 = ldTemp- SlS->VX0divDt[i]; SlS->VX0divDt[i]=ldTemp; SlS->VX_[i] -= ldTemp2;
-                ldTemp = SlS->VY0divDt[i] + SlS->VY_[i]; ldTemp2 = ldTemp- SlS->VY0divDt[i]; SlS->VY0divDt[i]=ldTemp; SlS->VY_[i] -= ldTemp2;
-                ldTemp = SlS->VZ0divDt[i] + SlS->VZ_[i]; ldTemp2 = ldTemp- SlS->VZ0divDt[i]; SlS->VZ0divDt[i]=ldTemp; SlS->VZ_[i] -= ldTemp2;
-          }
-            SlS->CountN = 0;
-            
-        }
-    }
-
-#endif
-
-}
 long double GreenwichAscension(long double EP);
 void CalcSatForces(TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfCalc)
 {
@@ -1451,6 +1294,138 @@ void CalcSatForces(TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfCalc)
         }
     }
 }
+#ifdef VERY_BASIC
+void IteraSolarSystem(BOOL ForceWasCalculated, TRAOBJ * SlS)
+{
+    int i;
+    //int j;
+    // calculation of a[i] based on x[i]
+    CalcPlanetForces(SlS);
+    // calculation of velocities and positions 
+    for (i = 0; i < SlS->Elem; i++)
+    {
+        // this is original formula
+        SlS->VX[i] += SlS->FX[i] * TimeSl / SlS->M[i];
+        SlS->VY[i] += SlS->FY[i] * TimeSl / SlS->M[i];
+        SlS->VZ[i] += SlS->FZ[i] * TimeSl / SlS->M[i];
+
+        SlS->X[i] += SlS->VX[i]*TimeSl;
+        SlS->Y[i] += SlS->VY[i]*TimeSl;
+        SlS->Z[i] += SlS->VZ[i]*TimeSl;
+
+    }
+}
+void IteraSat(int TimeDirection, TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfCalc)
+{
+    int i;
+    //int j;
+    Sat->Lambda = GreenwichAscension(TimeOfCalc);
+
+    CalcSatForces(SlS, Sat, TimeOfCalc);
+
+    for (i = 0; i < Sat->Elem; i++)
+    {
+        Sat->VX[i] += Sat->FX[i] * TimeSl /* Sat->M[i]*/;
+        Sat->VY[i] += Sat->FY[i] * TimeSl /* Sat->M[i]*/;
+        Sat->VZ[i] += Sat->FZ[i] * TimeSl /* Sat->M[i]*/;
+
+        Sat->X[i] += Sat->VX[i]*TimeSl;
+        Sat->Y[i] += Sat->VY[i]*TimeSl;
+        Sat->Z[i] += Sat->VZ[i]*TimeSl;
+
+    }
+}
+#else
+#ifdef BETTER_BUT_MANY_ITERATIONS
+void IteraSolarSystem(BOOL ForceWasCalculated, TRAOBJ * SlS)
+{
+    int i;
+    //int j;
+    // calculation of a[i] based on x[i]
+    if (ForceWasCalculated == FALSE)
+        CalcPlanetForces(SlS);
+    // calculation of velocities and positions 
+    SlS->CountN++;
+    if (SlS->RunOne == FALSE)
+    {
+        for (i = 0; i < SlS->Elem; i++)
+        {
+            SlS->SFX[i] = SlS->FX[i]; SlS->SFY[i] = SlS->FY[i]; SlS->SFZ[i] = SlS->FZ[i];
+        }
+    }
+    else
+    {
+        SlS->RunOne = FALSE;
+        for (i = 0; i < SlS->Elem; i++)
+        {
+            SlS->X_[i] += SlS->VX_[i] + SlS->FX[i]/2;
+            SlS->Y_[i] += SlS->VY_[i] + SlS->FY[i]/2;
+            SlS->Z_[i] += SlS->VZ_[i] + SlS->FZ[i]/2;
+
+            SlS->X[i] = (SlS->X0divDt2[i] + SlS->VX0divDt[i] + SlS->X_[i]) * TimeSl_2/ SlS->M[i];
+            SlS->Y[i] = (SlS->Y0divDt2[i] + SlS->VY0divDt[i] + SlS->Y_[i]) * TimeSl_2/ SlS->M[i];
+            SlS->Z[i] = (SlS->Z0divDt2[i] + SlS->VZ0divDt[i] + SlS->Z_[i]) * TimeSl_2/ SlS->M[i];
+
+            SlS->VX_[i] += SlS->FX[i];
+            SlS->VY_[i] += SlS->FY[i];
+            SlS->VZ_[i] += SlS->FZ[i];
+
+            SlS->VX[i] = (SlS->VX0divDt[i] + SlS->VX_[i])*TimeSl/ SlS->M[i];
+            SlS->VY[i] = (SlS->VY0divDt[i] + SlS->VY_[i])*TimeSl/ SlS->M[i];
+            SlS->VZ[i] = (SlS->VZ0divDt[i] + SlS->VZ_[i])*TimeSl/ SlS->M[i];
+        }
+        return;
+    }
+
+    for (i = 0; i < SlS->Elem; i++)
+    {
+        SlS->X[i] = (SlS->X0divDt2[i] + SlS->CountN*SlS->VX0divDt[i] + (SlS->X_[i] + SlS->VX_[i] + SlS->FX[i]/2)) * TimeSl_2/ SlS->M[i];
+        SlS->Y[i] = (SlS->Y0divDt2[i] + SlS->CountN*SlS->VY0divDt[i] + (SlS->Y_[i] + SlS->VY_[i] + SlS->FY[i]/2)) * TimeSl_2/ SlS->M[i];
+        SlS->Z[i] = (SlS->Z0divDt2[i] + SlS->CountN*SlS->VZ0divDt[i] + (SlS->Z_[i] + SlS->VZ_[i] + SlS->FZ[i]/2)) * TimeSl_2/ SlS->M[i];
+
+    }
+    {
+        CalcPlanetForces(SlS);
+        for (i = 0; i < SlS->Elem; i++)
+        {
+
+            SlS->X_[i] += SlS->VX_[i] + (SlS->FX[i]+SlS->SFX[i])/4;
+            SlS->Y_[i] += SlS->VY_[i] + (SlS->FY[i]+SlS->SFY[i])/4;
+            SlS->Z_[i] += SlS->VZ_[i] + (SlS->FZ[i]+SlS->SFZ[i])/4;
+
+            SlS->X[i] = (SlS->X0divDt2[i] + SlS->CountN*SlS->VX0divDt[i] + SlS->X_[i]) * TimeSl_2/ SlS->M[i];
+            SlS->Y[i] = (SlS->Y0divDt2[i] + SlS->CountN*SlS->VY0divDt[i] + SlS->Y_[i]) * TimeSl_2/ SlS->M[i];
+            SlS->Z[i] = (SlS->Z0divDt2[i] + SlS->CountN*SlS->VZ0divDt[i] + SlS->Z_[i]) * TimeSl_2/ SlS->M[i];
+
+            SlS->VX_[i] += (SlS->SFX[i]+SlS->FX[i])/2;
+            SlS->VY_[i] += (SlS->SFY[i]+SlS->FY[i])/2;
+            SlS->VZ_[i] += (SlS->SFZ[i]+SlS->FZ[i])/2;
+
+            SlS->VX[i] = (SlS->VX0divDt[i] + SlS->VX_[i])*TimeSl/ SlS->M[i];
+            SlS->VY[i] = (SlS->VY0divDt[i] + SlS->VY_[i])*TimeSl/ SlS->M[i];
+            SlS->VZ[i] = (SlS->VZ0divDt[i] + SlS->VZ_[i])*TimeSl/ SlS->M[i];
+
+        }
+        if (SlS->CountN > 100000.0)
+        {
+
+            for (i = 0; i < SlS->Elem; i++)
+            {
+                 long double ldTemp;
+                long double ldTemp2;
+                ldTemp = SlS->X0divDt2[i] + SlS->CountN*SlS->VX0divDt[i] + SlS->X_[i]; ldTemp2 = ldTemp- (SlS->X0divDt2[i] + SlS->CountN*SlS->VX0divDt[i]); SlS->X0divDt2[i]=ldTemp; SlS->X_[i] -= ldTemp2;
+                ldTemp = SlS->Y0divDt2[i] + SlS->CountN*SlS->VZ0divDt[i] + SlS->Y_[i]; ldTemp2 = ldTemp- (SlS->Y0divDt2[i] + SlS->CountN*SlS->VY0divDt[i]); SlS->Y0divDt2[i]=ldTemp; SlS->Y_[i] -= ldTemp2;
+                ldTemp = SlS->Z0divDt2[i] + SlS->CountN*SlS->VZ0divDt[i] + SlS->Z_[i]; ldTemp2 = ldTemp- (SlS->Z0divDt2[i] + SlS->CountN*SlS->VZ0divDt[i]); SlS->Z0divDt2[i]=ldTemp; SlS->Z_[i] -= ldTemp2;
+
+                ldTemp = SlS->VX0divDt[i] + SlS->VX_[i]; ldTemp2 = ldTemp- SlS->VX0divDt[i]; SlS->VX0divDt[i]=ldTemp; SlS->VX_[i] -= ldTemp2;
+                ldTemp = SlS->VY0divDt[i] + SlS->VY_[i]; ldTemp2 = ldTemp- SlS->VY0divDt[i]; SlS->VY0divDt[i]=ldTemp; SlS->VY_[i] -= ldTemp2;
+                ldTemp = SlS->VZ0divDt[i] + SlS->VZ_[i]; ldTemp2 = ldTemp- SlS->VZ0divDt[i]; SlS->VZ0divDt[i]=ldTemp; SlS->VZ_[i] -= ldTemp2;
+          }
+            SlS->CountN = 0;
+            
+        }
+    }
+}
 void IteraSat(int TimeDirection, TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfCalc)
 {
     int i;
@@ -1461,7 +1436,6 @@ void IteraSat(int TimeDirection, TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfC
     CalcPlanetForces(SlS);
 
     CalcSatForces(SlS, Sat, TimeOfCalc);
-#if 1
     Sat->CountN++;
     if (Sat->RunOne == FALSE)
     {
@@ -1494,62 +1468,13 @@ void IteraSat(int TimeDirection, TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfC
         return;
     }
 
-#endif
-
     for (i = 0; i < Sat->Elem; i++)
     {
-#if 0
-        Sat->VX[i] += Sat->FX[i] * TimeSl /* Sat->M[i]*/;
-        Sat->VY[i] += Sat->FY[i] * TimeSl /* Sat->M[i]*/;
-        Sat->VZ[i] += Sat->FZ[i] * TimeSl /* Sat->M[i]*/;
-
-        Sat->X[i] += Sat->VX[i]*TimeSl;
-        Sat->Y[i] += Sat->VY[i]*TimeSl;
-        Sat->Z[i] += Sat->VZ[i]*TimeSl;
-
-#else
-#if 0
-        // that is calculation of the V(t+1) = V(t) + F(x(t))) *deltaT
-        Sat->VX_[i] += Sat->FX[i];
-        Sat->VY_[i] += Sat->FY[i];
-        Sat->VZ_[i] += Sat->FZ[i];
-//#ifdef PROP_VELOCITY
-        // this can be skipped to make calculation faster
-        // VX is different from VX_ by coef = TimeS1
-        // 
-        Sat->VX[i] = Sat->VX_[i]*TimeSl;
-        Sat->VY[i] = Sat->VY_[i]*TimeSl;
-        Sat->VZ[i] = Sat->VZ_[i]*TimeSl;
-//#endif
-        // X(t+1) = X(t) + V(t)*deltaT
-        Sat->X_[i] += Sat->VX_[i];
-        Sat->Y_[i] += Sat->VY_[i];
-        Sat->Z_[i] += Sat->VZ_[i];
-
-        // that is calculation of the postion for a next F(x(t+1)) calculation
-        Sat->X[i] = Sat->X_[i]*TimeSl*TimeSl /* Sat->M[i]*/;
-        Sat->Y[i] = Sat->Y_[i]*TimeSl*TimeSl /* Sat->M[i]*/;
-        Sat->Z[i] = Sat->Z_[i]*TimeSl*TimeSl /* Sat->M[i]*/;
-#else
-#if 0
-        Sat->X[i] += Sat->VX[i]*TimeSl + Sat->FX[i]/2 * TimeSl* TimeSl;
-        Sat->Y[i] += Sat->VY[i]*TimeSl + Sat->FY[i]/2 * TimeSl* TimeSl;
-        Sat->Z[i] += Sat->VZ[i]*TimeSl + Sat->FZ[i]/2 * TimeSl* TimeSl;
-
-        Sat->VX[i] += Sat->FX[i] * TimeSl /* Sat->M[i]*/;
-        Sat->VY[i] += Sat->FY[i] * TimeSl /* Sat->M[i]*/;
-        Sat->VZ[i] += Sat->FZ[i] * TimeSl /* Sat->M[i]*/;
-#else
         Sat->X[i] = (Sat->X0divDt2[i] + Sat->CountN*Sat->VX0divDt[i] + (Sat->X_[i] + Sat->VX_[i] + Sat->FX[i]/2)) * TimeSl_2;
         Sat->Y[i] = (Sat->Y0divDt2[i] + Sat->CountN*Sat->VY0divDt[i] + (Sat->Y_[i] + Sat->VY_[i] + Sat->FY[i]/2)) * TimeSl_2;
         Sat->Z[i] = (Sat->Z0divDt2[i] + Sat->CountN*Sat->VZ0divDt[i] + (Sat->Z_[i] + Sat->VZ_[i] + Sat->FZ[i]/2)) * TimeSl_2;
-#endif
-
-#endif
-#endif
     }
     
-    //if (Sat->CountN > 1)
     {
         // preserving value X,Y,Z of all planets and caclulted forses (it was done at the begining of the IteraSat function
         for (i = 0; i < SlS->Elem; i++)
@@ -1612,6 +1537,208 @@ void IteraSat(int TimeDirection, TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfC
     }
 }
 
+#else
+void IteraSolarSystem(BOOL ForceWasCalculated, TRAOBJ * SlS)
+{
+    int i;
+    //int j;
+    // calculation of a[i] based on x[i]
+    if (ForceWasCalculated == FALSE)
+        CalcPlanetForces(SlS);
+    // calculation of velocities and positions 
+    SlS->CountN++;
+    if (SlS->RunOne == FALSE)
+    {
+        for (i = 0; i < SlS->Elem; i++)
+        {
+            SlS->SFX[i] = SlS->FX[i]; SlS->SFY[i] = SlS->FY[i]; SlS->SFZ[i] = SlS->FZ[i];
+        }
+    }
+    else
+    {
+        SlS->RunOne = FALSE;
+        for (i = 0; i < SlS->Elem; i++)
+        {
+            SlS->X_[i] += SlS->VX_[i] + SlS->FX[i]/2;
+            SlS->Y_[i] += SlS->VY_[i] + SlS->FY[i]/2;
+            SlS->Z_[i] += SlS->VZ_[i] + SlS->FZ[i]/2;
+
+            SlS->X[i] = (SlS->X0divDt2[i] + SlS->VX0divDt[i] + SlS->X_[i]) * TimeSl_2/ SlS->M[i];
+            SlS->Y[i] = (SlS->Y0divDt2[i] + SlS->VY0divDt[i] + SlS->Y_[i]) * TimeSl_2/ SlS->M[i];
+            SlS->Z[i] = (SlS->Z0divDt2[i] + SlS->VZ0divDt[i] + SlS->Z_[i]) * TimeSl_2/ SlS->M[i];
+
+            SlS->VX_[i] += SlS->FX[i];
+            SlS->VY_[i] += SlS->FY[i];
+            SlS->VZ_[i] += SlS->FZ[i];
+
+            SlS->VX[i] = (SlS->VX0divDt[i] + SlS->VX_[i])*TimeSl/ SlS->M[i];
+            SlS->VY[i] = (SlS->VY0divDt[i] + SlS->VY_[i])*TimeSl/ SlS->M[i];
+            SlS->VZ[i] = (SlS->VZ0divDt[i] + SlS->VZ_[i])*TimeSl/ SlS->M[i];
+        }
+        return;
+    }
+
+    for (i = 0; i < SlS->Elem; i++)
+    {
+        SlS->X[i] = (SlS->X0divDt2[i] + SlS->CountN*SlS->VX0divDt[i] + (SlS->X_[i] + SlS->VX_[i] + SlS->FX[i]/2)) * TimeSl_2/ SlS->M[i];
+        SlS->Y[i] = (SlS->Y0divDt2[i] + SlS->CountN*SlS->VY0divDt[i] + (SlS->Y_[i] + SlS->VY_[i] + SlS->FY[i]/2)) * TimeSl_2/ SlS->M[i];
+        SlS->Z[i] = (SlS->Z0divDt2[i] + SlS->CountN*SlS->VZ0divDt[i] + (SlS->Z_[i] + SlS->VZ_[i] + SlS->FZ[i]/2)) * TimeSl_2/ SlS->M[i];
+    }
+    {
+        CalcPlanetForces(SlS);
+        for (i = 0; i < SlS->Elem; i++)
+        {
+
+            SlS->X_[i] += SlS->VX_[i] + (SlS->FX[i]+SlS->SFX[i])/4;
+            SlS->Y_[i] += SlS->VY_[i] + (SlS->FY[i]+SlS->SFY[i])/4;
+            SlS->Z_[i] += SlS->VZ_[i] + (SlS->FZ[i]+SlS->SFZ[i])/4;
+
+            SlS->X[i] = (SlS->X0divDt2[i] + SlS->CountN*SlS->VX0divDt[i] + SlS->X_[i]) * TimeSl_2/ SlS->M[i];
+            SlS->Y[i] = (SlS->Y0divDt2[i] + SlS->CountN*SlS->VY0divDt[i] + SlS->Y_[i]) * TimeSl_2/ SlS->M[i];
+            SlS->Z[i] = (SlS->Z0divDt2[i] + SlS->CountN*SlS->VZ0divDt[i] + SlS->Z_[i]) * TimeSl_2/ SlS->M[i];
+
+            SlS->VX_[i] += (SlS->SFX[i]+SlS->FX[i])/2;
+            SlS->VY_[i] += (SlS->SFY[i]+SlS->FY[i])/2;
+            SlS->VZ_[i] += (SlS->SFZ[i]+SlS->FZ[i])/2;
+
+            SlS->VX[i] = (SlS->VX0divDt[i] + SlS->VX_[i])*TimeSl/ SlS->M[i];
+            SlS->VY[i] = (SlS->VY0divDt[i] + SlS->VY_[i])*TimeSl/ SlS->M[i];
+            SlS->VZ[i] = (SlS->VZ0divDt[i] + SlS->VZ_[i])*TimeSl/ SlS->M[i];
+
+        }
+        if (SlS->CountN > 100000.0)
+        {
+
+            for (i = 0; i < SlS->Elem; i++)
+            {
+                 long double ldTemp;
+                long double ldTemp2;
+                ldTemp = SlS->X0divDt2[i] + SlS->CountN*SlS->VX0divDt[i] + SlS->X_[i]; ldTemp2 = ldTemp- (SlS->X0divDt2[i] + SlS->CountN*SlS->VX0divDt[i]); SlS->X0divDt2[i]=ldTemp; SlS->X_[i] -= ldTemp2;
+                ldTemp = SlS->Y0divDt2[i] + SlS->CountN*SlS->VZ0divDt[i] + SlS->Y_[i]; ldTemp2 = ldTemp- (SlS->Y0divDt2[i] + SlS->CountN*SlS->VY0divDt[i]); SlS->Y0divDt2[i]=ldTemp; SlS->Y_[i] -= ldTemp2;
+                ldTemp = SlS->Z0divDt2[i] + SlS->CountN*SlS->VZ0divDt[i] + SlS->Z_[i]; ldTemp2 = ldTemp- (SlS->Z0divDt2[i] + SlS->CountN*SlS->VZ0divDt[i]); SlS->Z0divDt2[i]=ldTemp; SlS->Z_[i] -= ldTemp2;
+
+                ldTemp = SlS->VX0divDt[i] + SlS->VX_[i]; ldTemp2 = ldTemp- SlS->VX0divDt[i]; SlS->VX0divDt[i]=ldTemp; SlS->VX_[i] -= ldTemp2;
+                ldTemp = SlS->VY0divDt[i] + SlS->VY_[i]; ldTemp2 = ldTemp- SlS->VY0divDt[i]; SlS->VY0divDt[i]=ldTemp; SlS->VY_[i] -= ldTemp2;
+                ldTemp = SlS->VZ0divDt[i] + SlS->VZ_[i]; ldTemp2 = ldTemp- SlS->VZ0divDt[i]; SlS->VZ0divDt[i]=ldTemp; SlS->VZ_[i] -= ldTemp2;
+          }
+            SlS->CountN = 0;
+            
+        }
+    }
+}
+void IteraSat(int TimeDirection, TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfCalc)
+{
+    int i;
+    //int j;
+    Sat->Lambda = GreenwichAscension(TimeOfCalc);
+    // IteraSat called first - calculations of the forses btw planets will be done at this place
+    // just needs to preserv it 
+    CalcPlanetForces(SlS);
+
+    CalcSatForces(SlS, Sat, TimeOfCalc);
+    Sat->CountN++;
+    if (Sat->RunOne == FALSE)
+    {
+        for (i = 0; i < Sat->Elem; i++)
+        {
+            Sat->SFX[i] = Sat->FX[i]; Sat->SFY[i] = Sat->FY[i]; Sat->SFZ[i] = Sat->FZ[i];
+        }
+    }
+    else
+    {
+        Sat->RunOne = FALSE;
+        for (i = 0; i < Sat->Elem; i++)
+        {
+            Sat->X_[i] += Sat->VX_[i] + Sat->FX[i]/2;
+            Sat->Y_[i] += Sat->VY_[i] + Sat->FY[i]/2;
+            Sat->Z_[i] += Sat->VZ_[i] + Sat->FZ[i]/2;
+
+            Sat->X[i] = (Sat->X0divDt2[i] + Sat->VX0divDt[i] + Sat->X_[i]) * TimeSl_2;
+            Sat->Y[i] = (Sat->Y0divDt2[i] + Sat->VY0divDt[i] + Sat->Y_[i]) * TimeSl_2;
+            Sat->Z[i] = (Sat->Z0divDt2[i] + Sat->VZ0divDt[i] + Sat->Z_[i]) * TimeSl_2;
+
+            Sat->VX_[i] += Sat->FX[i];
+            Sat->VY_[i] += Sat->FY[i];
+            Sat->VZ_[i] += Sat->FZ[i];
+
+            Sat->VX[i] = (Sat->VX0divDt[i] + Sat->VX_[i])*TimeSl;
+            Sat->VY[i] = (Sat->VY0divDt[i] + Sat->VY_[i])*TimeSl;
+            Sat->VZ[i] = (Sat->VZ0divDt[i] + Sat->VZ_[i])*TimeSl;
+        }
+        return;
+    }
+
+    for (i = 0; i < Sat->Elem; i++)
+    {
+        Sat->X[i] = (Sat->X0divDt2[i] + Sat->CountN*Sat->VX0divDt[i] + (Sat->X_[i] + Sat->VX_[i] + Sat->FX[i]/2)) * TimeSl_2;
+        Sat->Y[i] = (Sat->Y0divDt2[i] + Sat->CountN*Sat->VY0divDt[i] + (Sat->Y_[i] + Sat->VY_[i] + Sat->FY[i]/2)) * TimeSl_2;
+        Sat->Z[i] = (Sat->Z0divDt2[i] + Sat->CountN*Sat->VZ0divDt[i] + (Sat->Z_[i] + Sat->VZ_[i] + Sat->FZ[i]/2)) * TimeSl_2;
+    }
+    
+    {
+        // preserving value X,Y,Z of all planets and caclulted forses (it was done at the begining of the IteraSat function
+        for (i = 0; i < SlS->Elem; i++)
+        {
+            SlS->SX[i]=SlS->X[i]; SlS->SY[i]=SlS->Y[i]; SlS->SZ[i]=SlS->Z[i];
+            SlS->SFX[i]=SlS->FX[i]; SlS->SFY[i]=SlS->FY[i]; SlS->SFZ[i]=SlS->FZ[i];
+        }
+        // calculation of next position of the planets
+        // (SlS->CountN+1) is for next step: CountN==0 =>1x... CountN==1 =>2x...
+        for (i = 0; i < SlS->Elem; i++)
+        {
+            SlS->X[i] = (SlS->X0divDt2[i] + (SlS->CountN+1)*SlS->VX0divDt[i] + (SlS->X_[i] + SlS->VX_[i] + SlS->FX[i]/2)) * TimeSl_2/ SlS->M[i];
+            SlS->Y[i] = (SlS->Y0divDt2[i] + (SlS->CountN+1)*SlS->VY0divDt[i] + (SlS->Y_[i] + SlS->VY_[i] + SlS->FY[i]/2)) * TimeSl_2/ SlS->M[i];
+            SlS->Z[i] = (SlS->Z0divDt2[i] + (SlS->CountN+1)*SlS->VZ0divDt[i] + (SlS->Z_[i] + SlS->VZ_[i] + SlS->FZ[i]/2)) * TimeSl_2/ SlS->M[i];
+        }
+        CalcPlanetForces(SlS);
+
+        CalcSatForces(SlS, Sat, TimeOfCalc+StepsValInDay);
+        // now restore origial plant's positions and forces
+        for (i = 0; i < SlS->Elem; i++)
+        {
+            SlS->X[i] = SlS->SX[i]; SlS->Y[i] = SlS->SY[i]; SlS->Z[i] = SlS->SZ[i];
+            SlS->FX[i]=SlS->SFX[i]; SlS->FY[i]=SlS->SFY[i]; SlS->FZ[i]=SlS->SFZ[i];
+        }
+
+        for (i = 0; i < Sat->Elem; i++)
+        {
+            Sat->X_[i] += Sat->VX_[i] + (Sat->FX[i]+Sat->SFX[i])/4;
+            Sat->Y_[i] += Sat->VY_[i] + (Sat->FY[i]+Sat->SFY[i])/4;
+            Sat->Z_[i] += Sat->VZ_[i] + (Sat->FZ[i]+Sat->SFZ[i])/4;
+
+            Sat->X[i] = (Sat->X0divDt2[i] + Sat->CountN*Sat->VX0divDt[i] + Sat->X_[i]) * TimeSl_2;
+            Sat->Y[i] = (Sat->Y0divDt2[i] + Sat->CountN*Sat->VY0divDt[i] + Sat->Y_[i]) * TimeSl_2;
+            Sat->Z[i] = (Sat->Z0divDt2[i] + Sat->CountN*Sat->VZ0divDt[i] + Sat->Z_[i]) * TimeSl_2;
+
+            Sat->VX_[i] += (Sat->SFX[i]+Sat->FX[i])/2;
+            Sat->VY_[i] += (Sat->SFY[i]+Sat->FY[i])/2;
+            Sat->VZ_[i] += (Sat->SFZ[i]+Sat->FZ[i])/2;
+
+            Sat->VX[i] = (Sat->VX0divDt[i] + Sat->VX_[i])*TimeSl;
+            Sat->VY[i] = (Sat->VY0divDt[i] + Sat->VY_[i])*TimeSl;
+            Sat->VZ[i] = (Sat->VZ0divDt[i] + Sat->VZ_[i])*TimeSl;
+        }
+        if (Sat->CountN > 100000.0)
+        {
+            for (i = 0; i < Sat->Elem; i++)
+            {
+                long double ldTemp;
+                long double ldTemp2;
+                ldTemp = Sat->X0divDt2[i] + Sat->CountN*Sat->VX0divDt[i] + Sat->X_[i]; ldTemp2 = ldTemp- (Sat->X0divDt2[i] + Sat->CountN*Sat->VX0divDt[i]); Sat->X0divDt2[i]=ldTemp; Sat->X_[i] -= ldTemp2;
+                ldTemp = Sat->Y0divDt2[i] + Sat->CountN*Sat->VZ0divDt[i] + Sat->Y_[i]; ldTemp2 = ldTemp- (Sat->Y0divDt2[i] + Sat->CountN*Sat->VY0divDt[i]); Sat->Y0divDt2[i]=ldTemp; Sat->Y_[i] -= ldTemp2;
+                ldTemp = Sat->Z0divDt2[i] + Sat->CountN*Sat->VZ0divDt[i] + Sat->Z_[i]; ldTemp2 = ldTemp- (Sat->Z0divDt2[i] + Sat->CountN*Sat->VZ0divDt[i]); Sat->Z0divDt2[i]=ldTemp; Sat->Z_[i] -= ldTemp2;
+
+                ldTemp = Sat->VX0divDt[i] + Sat->VX_[i]; ldTemp2 = ldTemp- Sat->VX0divDt[i]; Sat->VX0divDt[i]=ldTemp; Sat->VX_[i] -= ldTemp2;
+                ldTemp = Sat->VY0divDt[i] + Sat->VY_[i]; ldTemp2 = ldTemp- Sat->VY0divDt[i]; Sat->VY0divDt[i]=ldTemp; Sat->VY_[i] -= ldTemp2;
+                ldTemp = Sat->VZ0divDt[i] + Sat->VZ_[i]; ldTemp2 = ldTemp- Sat->VZ0divDt[i]; Sat->VZ0divDt[i]=ldTemp; Sat->VZ_[i] -= ldTemp2;
+            }
+            Sat->CountN = 0;
+        }
+    }
+}
+
+#endif
+#endif
 void FireEngine(int TimeDirection, int DeltaTimeFromStart, TRAIMPLOBJ * Engine, TRAOBJ *Sat, int iSat, long double DirX, long double DirY, long double DirZ)
 {
     long double VectorValue = sqrt(DirX*DirX + DirY*DirY +DirZ*DirZ);
