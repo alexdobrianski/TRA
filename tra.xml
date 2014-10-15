@@ -16,14 +16,14 @@
     <TRA:setting name="dStartJD0" value="2455625.1696833" />
     <TRA:setting name="dStartJD0" value="11291.79166666" />
     <TRA:setting name="dStartJD0" value="13075.0" />
-    <TRA:setting name="dMinFromNow" value="50" />
-    <TRA:setting name="dStartJD" value="-60" />
-    <TRA:setting name="dStartJD0" value="07/05/13 08:28:00:000" />
+    <TRA:setting name="dMinFromNow" value="3" />
+    <TRA:setting name="dStartJD0" value="-60" />
+    <TRA:setting name="dStartJD" value="07/05/14 08:28:00:000" />
     <TRA:setting name="dStartJD0" value="11291.854004622962962962962962963" />
     <TRA:setting name="dStartJD0" value="11292.79166666" />
 
     <TRA:setting name="TRAVisual1" value="travisual.xml" />
-    <TRA:setting name="TRAVisual" value="http://localhost/SatCtrl/PostTra.aspx" />
+    <TRA:setting name="TRAVisual" value="http://96.49.96.50/SatCtrl/PostTra.aspx" />
 
     <TRA:setting name="RGBImageW" value="1280" />
     <TRA:setting name="RGBImageH" value="720" />
@@ -42,14 +42,15 @@
 <!-- scale in m -->
     <TRA:setting name="RGBScale" value="90000000" />
 
-    <TRA:setting name="IterPerSec" value="32" />
+    <TRA:setting name="IterPerSec" value="128" />
     <TRA:setting name="StartLandingIteraPerSec" value="772050" />
 <!-- next vaue actualy just a reference it will be used in-->
 <!-- GMMoon = MoonM * GBig and GMEarth = EarthM*GBig      -->
 <!-- know GMMoon and GMEarth will give proper value for M -->
     <TRA:setting name="Gbig" value="6.6742799999999995e-011" />
+    <TRA:setting name="Gbig0" value="6.6738177929210037e-011" />
     <TRA:setting name="TotalDays0" value="1" />
-    <TRA:setting name="TotalDays" value="0.0416666667" />
+    <TRA:setting name="TotalDays" value="32" />
 
     <TRA:setting name="TotalDays0" value="0.062337962962962962962962962962963" />
     <TRA:setting name="TotalDays0" value="0.124675925925925925925925925924" />
@@ -67,24 +68,29 @@
      <TRA:setting name="@ProbKeplerLine2" value="1 88888U 98067A   11291.79166666  .00073094  13844-3  66816-4 0  8" />
      <TRA:setting name="@ProbKeplerLine3" value="2 88888 072.8435 115.9689 0086731 052.6988 110.5714 16.05824518704292" />
 
-     <TRA:setting name="ProbKeplerLine2" value="1 25544U 98067A   13117.02697819  .00012534  00000-0  20754-3 0  6897" />
-     <TRA:setting name="ProbKeplerLine3" value="2 25544 051.6473 002.1243 0009921 187.0116 251.4605 15.52530691826764" />
+     <TRA:setting name="ProbKeplerLine2" value="1 25544U 98067A   13331.09576263  .00014981  00000-0  26452-3 0  1086" />
+     <TRA:setting name="ProbKeplerLine3" value="2 25544 051.6512 021.2013 0001143 099.6314 347.0821 15.50581010859971" />
 
-      <TRA:setting name="ProbKeplerLine1" value="0 NAVSTAR 15 (USA 42)" />
-      <TRA:setting name="ProbKeplerLine2" value="1 20185U 89064A   13115.82136188 -.00000021  00000-0  00000+0 0   962" />
-      <TRA:setting name="ProbKeplerLine3" value="2 20185 054.5169 254.3220 0013930 257.0593 240.2879 01.86085036166869" />
+      <TRA:setting name="@ProbKeplerLine1" value="0 NAVSTAR 15 (USA 42)" />
+      <TRA:setting name="@ProbKeplerLine2" value="1 20185U 89064A   13331.47286605 -.00000027  00000-0  00000+0 0  3478" />
+      <TRA:setting name="@ProbKeplerLine3" value="2 20185 054.3952 246.8636 0014123 263.2077 345.0976 01.86084982170883" />
 
-      <TRA:setting name="ProbKeplerLine1" value="0 NAVSTAR 16 (USA 47)" />
-      <TRA:setting name="ProbKeplerLine2" value="1 20302U 89085A   13115.66868477 -.00000058  00000-0  00000+0 0  2974" />
-      <TRA:setting name="ProbKeplerLine3" value="2 20302 055.8626 354.1428 0007626 016.8355 021.6721 01.89422997167595" />
+      <TRA:setting name="@ProbKeplerLine1" value="0 NAVSTAR 16 (USA 47)" />
+      <TRA:setting name="@ProbKeplerLine2" value="1 20302U 89085A   13330.73772122 -.00000050  00000-0  00000+0 0  5517" />
+      <TRA:setting name="@ProbKeplerLine3" value="2 20302 055.8526 346.5927 0006697 002.9190 179.6262 01.89423001171667" />
 
-      <TRA:setting name="ProbKeplerLine1" value="0 NAVSTAR 17 (USA 49)" />
-      <TRA:setting name="ProbKeplerLine2" value="1 20361U 89097A   13115.50579826  .00000058  00000-0  00000+0 0  8012" />
-      <TRA:setting name="ProbKeplerLine3" value="2 20361 053.9268 181.3322 0019430 244.4880 265.7461 01.89174592158522" />
+      <TRA:setting name="@ProbKeplerLine1" value="0 NAVSTAR 17 (USA 49)" />
+      <TRA:setting name="@ProbKeplerLine2" value="1 20361U 89097A   13331.33166777  .00000103  00000-0  00000+0 0   495" />
+      <TRA:setting name="@ProbKeplerLine3" value="2 20361 053.9231 173.6164 0018695 245.7484 013.3052 01.89174493162614" />
 
-      <TRA:setting name="ProbKeplerLine1" value="0 NAVSTAR 18 (USA 50)" />
-      <TRA:setting name="ProbKeplerLine2" value="0 NAVSTAR 18 (USA 50)" />
-      <TRA:setting name="ProbKeplerLine3" value="2 20452 055.9375 302.3040 0010546 215.8509 286.6389 01.89596331165219" />
+      <TRA:setting name="@ProbKeplerLine1" value="0 BRIZ-M" />
+      <TRA:setting name="@ProbKeplerLine2" value="1 39286U 13056B   13330.80981764 -.00000059  00000-0  00000+0 0   250" />
+      <TRA:setting name="@ProbKeplerLine3" value="2 39286 023.5285 332.4959 6042427 021.7647 355.7158 02.18174083  1258" />
+
+      <TRA:setting name="@ProbKeplerLine1" value="0 BRIZ-M" />
+      <TRA:setting name="@ProbKeplerLine2" value="1 39285U 13056A   13331.57553947  .00000152  00000-0  00000+0 0   514" />
+      <TRA:setting name="@ProbKeplerLine3" value="2 39285 000.0853 291.4426 0001368 317.1482 068.8134 01.00273241   614" />
+
 
          <TRA:setting name="GRSTNNAME" value="vancouver" />
          <TRA:setting name="GRSTNLat" value="49.257735" />
@@ -123,7 +129,6 @@
          <TRA:setting name="GRSTNNAME" value="Rarotonga" />
          <TRA:setting name="GRSTNLat" value="-21.255302" />
          <TRA:setting name="GRSTNLong" value="-159.768333" />
-
 
 <!-- target point on the Moon -->
     <TRA:setting name="Targetlongitude" value="-15" />
@@ -171,9 +176,10 @@
 <!-- amount of engines to optimizel 0 - no optimization -->
    <TRA:setting name="MaxOptim" value="0" />
 
+<!-- no engines fired just everything is flying -->
+   <TRA:setting name="JustFlySimulation" value="1" />
 
 </TRA:section>
-
 <TRA:section name="pulsars" value="0.0">
    <TRA:setting name="N" value="88"/>
    <TRA:setting name="Name" value="B0329+54"/>
@@ -498,7 +504,6 @@
    <TRA:setting name="S400mJy" value="89"/>
 
 </TRA:section>
-
 
             <!--     now all engines    -->
 <TRA:section name="Engine" value="0.0" >

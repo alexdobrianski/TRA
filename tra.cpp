@@ -1001,6 +1001,7 @@ long double dMinFromNow = 3.0;
 long double dStartJD = 0.0;//2451544.5; // if value dStartJD not set (==0.0) then use value from keplers elements of a satelite 0
 // if it will be more then one satellite needs to set this value to a last epoch of all satellites
 long double dStartJDEpoch;
+int JustFlySimulation =0;
 
 long double SunX =.0;
 long double SunY =.0;
@@ -3505,6 +3506,10 @@ void ParamCommon(char *szString)
         IF_XML_READ(GRSTNLong) 
         {
             GrLong[iGr++] = atof(pszQuo);
+        }
+        IF_XML_READ(JustFlySimulation)
+        {
+            JustFlySimulation = atoi(pszQuo); // if 0 then do enegine firing ; if 1 no engines at all
         }
         IF_XML_READ(dStartJD) 
         {
@@ -6354,26 +6359,27 @@ int main(int argc, char * argv[])
                     iCountMin = 1000;
                 }
 #endif
-
-                if (RunOrVoidEngine(1, &Engine[0], &SolarSystem, &Sat, iCurSec, iCurPortionOfTheSecond, iItearationsPerSec, dStartJD))
+                if (JustFlySimulation == 0)
                 {
-                    // engine is running
-                }
-                else
-                {
-                    if (StartLandingIteraPerSec != 0.0)
+                    if (RunOrVoidEngine(1, &Engine[0], &SolarSystem, &Sat, iCurSec, iCurPortionOfTheSecond, iItearationsPerSec, dStartJD))
                     {
-                        if (StartLandingIteraPerSec <= (iCurSec + iCurPortionOfTheSecond*TimeSl))
+                        // engine is running
+                    }
+                    else
+                    {
+                        if (StartLandingIteraPerSec != 0.0)
                         {
-                            if (iStartLandingIteraPerSec == 0)
+                            if (StartLandingIteraPerSec <= (iCurSec + iCurPortionOfTheSecond*TimeSl))
                             {
-                                TimeSl = 0.1;
-                                iItearationsPerSec = 10;
-                                iStartLandingIteraPerSec = 1;
+                                if (iStartLandingIteraPerSec == 0)
+                                {
+                                    TimeSl = 0.1;
+                                    iItearationsPerSec = 10;
+                                    iStartLandingIteraPerSec = 1;
+                                }
                             }
                         }
                     }
-
                 }
                 IteraSat(1, &SolarSystem, &Sat,dStartJDEpoch + (iCurSec +   (long double)iCurPortionOfTheSecond/(long double)iItearationsPerSec) /86400.0) ;
                 IteraSolarSystem(TRUE, &SolarSystem);
@@ -6829,6 +6835,10 @@ int main(int argc, char * argv[])
                                              ( EarthBSY - EarthBSNY)*( EarthBSY - EarthBSNY) +
                                              ( EarthBSZ - EarthBSNZ)*( EarthBSZ - EarthBSNZ)
                                             );
+                //if (iCurSec > 772040)
+                //{
+                //    printf(".");
+                //}
                 if (tDeltaEarthNASA> dErrorValue)
                 {
                     // error bigger then 1000 M
@@ -6948,7 +6958,7 @@ int main(int argc, char * argv[])
             double errAngle =  acos(errorCos);
             double errorD = sqrt(tVX*tVX + tVY*tVY + tVZ*tVZ)/sqrt(tProbVX*tProbVX + tProbVY*tProbVY + tProbVZ*tProbVZ);
             double SinAngle = tZ / sqrt(tX*tX + tY*tY + tZ*tZ);
-            if (iCurSec%60 == 0)
+            if (iCurSec%(60*60) == 0)
             {
                     printf("\n%f err(X=%f V=%f) min=%d ",(asin(SinAngle)*180/M_PI),tttX,tttVX, iCurSec/60);
             }
