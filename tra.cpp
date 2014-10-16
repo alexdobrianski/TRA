@@ -322,8 +322,6 @@ typedef struct TraObj
     long double VX0divDt[PLANET_COUNT];
     long double FX0[PLANET_COUNT];
     long double FX1[PLANET_COUNT];
-    long double FX3sumOdd[PLANET_COUNT];
-    long double FX2sumEnen[PLANET_COUNT];
 
     long double Y_[PLANET_COUNT];
     long double VY_[PLANET_COUNT];
@@ -332,8 +330,6 @@ typedef struct TraObj
     long double VY0divDt[PLANET_COUNT];
     long double FY0[PLANET_COUNT];
     long double FY1[PLANET_COUNT];
-    long double FY3sumOdd[PLANET_COUNT];
-    long double FY2sumEnen[PLANET_COUNT];
 
 
     long double Z_[PLANET_COUNT];
@@ -343,10 +339,98 @@ typedef struct TraObj
     long double VZ0divDt[PLANET_COUNT];
     long double FZ0[PLANET_COUNT];
     long double FZ1[PLANET_COUNT];
-    long double FZ3sumOdd[PLANET_COUNT];
-    long double FZ2sumEnen[PLANET_COUNT];
 
+    long double fx[PLANET_COUNT];
+    long double fy[PLANET_COUNT];
+    long double fz[PLANET_COUNT];
 
+    long double fsinX[PLANET_COUNT];
+    long double fsinY[PLANET_COUNT];
+    long double fsinZ[PLANET_COUNT];
+
+#ifdef BETTER_BUT_MANY_ITERATIONS
+#else
+
+    long double A0_X[PLANET_COUNT];
+    long double A0_Y[PLANET_COUNT];
+    long double A0_Z[PLANET_COUNT];
+
+    long double VX1divDt[PLANET_COUNT];   
+    long double VY1divDt[PLANET_COUNT];   
+    long double VZ1divDt[PLANET_COUNT];
+
+    long double X1divDt2[PLANET_COUNT];       
+    long double Y1divDt2[PLANET_COUNT];       
+    long double Z1divDt2[PLANET_COUNT];
+
+    long double SmOX[PLANET_COUNT];
+    long double SmOY[PLANET_COUNT];
+    long double SmOZ[PLANET_COUNT];
+
+    long double SmEX[PLANET_COUNT];
+    long double SmEY[PLANET_COUNT];
+    long double SmEZ[PLANET_COUNT];
+
+     long double V35OddX[PLANET_COUNT];
+     long double V35OddY[PLANET_COUNT];
+     long double V35OddZ[PLANET_COUNT];
+     
+     long double V24EvenX[PLANET_COUNT];
+     long double V24EvenY[PLANET_COUNT];
+     long double V24EvenZ[PLANET_COUNT];
+
+     long double A1_X[PLANET_COUNT];
+     long double A1_Y[PLANET_COUNT];
+     long double A1_Z[PLANET_COUNT];
+
+     long double ssEvenX[PLANET_COUNT];
+     long double ssOddX[PLANET_COUNT];
+     long double ssfEvenX[PLANET_COUNT];
+     long double ssfOddX[PLANET_COUNT];
+
+     long double ssEvenY[PLANET_COUNT];
+     long double ssOddY[PLANET_COUNT];
+     long double ssfEvenY[PLANET_COUNT];
+     long double ssfOddY[PLANET_COUNT];
+
+     long double ssEvenZ[PLANET_COUNT];
+     long double ssOddZ[PLANET_COUNT];
+     long double ssfEvenZ[PLANET_COUNT];
+     long double ssfOddZ[PLANET_COUNT];
+
+     long double sOddX[PLANET_COUNT];
+     long double sEvenX[PLANET_COUNT];
+     long double sfOddX[PLANET_COUNT];
+     long double sfEvenX[PLANET_COUNT];
+
+     long double sOddY[PLANET_COUNT];
+     long double sEvenY[PLANET_COUNT];
+     long double sfOddY[PLANET_COUNT];
+     long double sfEvenY[PLANET_COUNT];
+
+     long double sOddZ[PLANET_COUNT];
+     long double sEvenZ[PLANET_COUNT];
+     long double sfOddZ[PLANET_COUNT];
+     long double sfEvenZ[PLANET_COUNT];
+     long double Xminus[PLANET_COUNT];
+     long double Yminus[PLANET_COUNT];
+     long double Zminus[PLANET_COUNT];
+     long double VXminus[PLANET_COUNT];
+     long double VYminus[PLANET_COUNT];
+     long double VZminus[PLANET_COUNT];
+
+     long double FXmmm[PLANET_COUNT];
+     long double FYmmm[PLANET_COUNT];
+     long double FZmmm[PLANET_COUNT];
+
+     long double FXmm[PLANET_COUNT];
+     long double FYmm[PLANET_COUNT];
+     long double FZmm[PLANET_COUNT];
+
+     long double FXm[PLANET_COUNT];
+     long double FYm[PLANET_COUNT];
+     long double FZm[PLANET_COUNT];
+#endif
 
     long double GM[PLANET_COUNT];
     long double M[PLANET_COUNT];
@@ -396,7 +480,7 @@ typedef struct TraObj
     long double DeltaVX[PLANET_COUNT][PLANET_COUNT];
     long double DeltaVY[PLANET_COUNT][PLANET_COUNT];
     long double DeltaVZ[PLANET_COUNT][PLANET_COUNT];
-#if 0
+#if 1
     long double Xk[MAX_COEF_J];
     long double Yk[MAX_COEF_J];
     long double XkDxr[MAX_COEF_J];
@@ -545,7 +629,7 @@ typedef struct TraObj
         //}
         //if (iLeg_longit) // this is case when need to acount Longitude
         // last formula on page 92
-#if 0
+#if 1
         Xk[0] = 1; Yk[0] =0; 
         Xk[1] = XdivR; Yk[1] = YdivR;
         for (k = 2; k<=(iLeg+1); k++)
@@ -758,13 +842,16 @@ typedef struct TraObj
                 //            = fm /r**2   * (r0/r)**n [  -(n+1) * Znk * Qnk x/r +
                 //                                           Znk+1        * -x/r * SinTetta *    Qnk +
                 //                                             Znk * ((Cnk*XkDxr+Snk*YkDxr) * (1 - (x/r)**2) + (Cnk*XkDyr+Snk*YkDyr)*(-x/r * y/r))
+//#define CPV 0.0000005
 #define CPV 0.0000005
+#if 0
                 long double tempVal;
 #if 1
                 if (((XdivRval > CPV ) || (XdivRval < -CPV )))// && (((k+n)&1) == 1))
                 {
 #endif
-                    OneMinusXdivRInSquare_XdivRval[SatCalc][n][k] = tempVal = Pnk_tilda[n][k]*(D_Qnk_Dxr[n][k]*OneMinusXdivRInSquare2- D_Qnk_Dyr[n][k]*YdivRval);// (CNK[n][k]*XkDxr[k] + SNK[n][k]*YkDxr[k]) * OneMinusXdivRInSquare2;///XdivRval;
+                    //OneMinusXdivRInSquare_XdivRval[SatCalc][n][k] = tempVal = R0divR[n] * Pnk_tilda[n][k]*(D_Qnk_Dxr[n][k]*OneMinusXdivRInSquare2- D_Qnk_Dyr[n][k]*YdivRval);// (CNK[n][k]*XkDxr[k] + SNK[n][k]*YkDxr[k]) * OneMinusXdivRInSquare2;///XdivRval;
+                    OneMinusXdivRInSquare_XdivRval[SatCalc][n][k] = tempVal = (R0divR[n] * Pnk_tilda[n][k]*(D_Qnk_Dxr[n][k]*(1-XdivRval*XdivRval)- D_Qnk_Dyr[n][k]*YdivRval*XdivRval))/XdivRval;
                     OldXSign[SatCalc][n][k] = XdivRval;
 #if 1
                 }
@@ -778,18 +865,38 @@ typedef struct TraObj
                     }
                     else
                         tempVal = OneMinusXdivRInSquare_XdivRval[SatCalc][n][k];
+                    //tempVal = (R0divR[n] * Pnk_tilda[n][k]*(D_Qnk_Dxr[n][k]*(1-XdivRval*XdivRval)- D_Qnk_Dyr[n][k]*YdivRval*XdivRval))/XdivRval;
+                    //if ((OldXSign[SatCalc][n][k]/XdivRval) > 4)
+                    {
+                        printf("zero x ");
+                    }
+                        
                     //tempVal = OneMinusXdivRInSquare_XdivRval[SatCalc][n][k] * (OldXSign[SatCalc][n][k]/XdivRval);
                 }
 #endif
+#endif
+#if 0
                     X += R0divR[n] *
                                   (-(n+1)  /**XdivRval*/ *  Pnk_tilda[n][k] * Qnk[n][k]
                                    - Pnk_tilda[n][k+1] *  Qnk[n][k] /** XdivRval*/ * SinTetta
                                    //+ Pnk_tilda[n][k] * (/*(CNK[n][k]*XkDxr[k] + SNK[n][k]*YkDxr[k]) * OneMinusXdivRInSquare/XdivRval*/ //OneMinusXdivRInSquare_XdivRval[SatCalc][n][k]
                                    //                     - D_Qnk_Dyr[n][k]*YdivRval)//(CNK[n][k]*XkDyr[k] + SNK[n][k]*YkDyr[k])/**XdivRval*/*YdivRval)
-                                                        +tempVal
+                                                        
                                   )/*/XdivRval*/
+                                  +tempVal
                     ;
-               
+#else
+                    X += R0divR[n] *
+                                  (-(n+1)  *XdivRval *  Pnk_tilda[n][k] * Qnk[n][k]
+                                   - Pnk_tilda[n][k+1] *  Qnk[n][k] * XdivRval * SinTetta
+                                   + Pnk_tilda[n][k]*(D_Qnk_Dxr[n][k]*(1-XdivRval*XdivRval)- D_Qnk_Dyr[n][k]*YdivRval*XdivRval)
+                                   //+ Pnk_tilda[n][k] * (/*(CNK[n][k]*XkDxr[k] + SNK[n][k]*YkDxr[k]) * OneMinusXdivRInSquare/XdivRval*/ //OneMinusXdivRInSquare_XdivRval[SatCalc][n][k]
+                                   //                     - D_Qnk_Dyr[n][k]*YdivRval)//(CNK[n][k]*XkDyr[k] + SNK[n][k]*YkDyr[k])/**XdivRval*/*YdivRval)
+                                                        
+                                  )/*/XdivRval*/
+
+                    ;
+#endif
 
                 // D(Unk)/D(y) = d(Rn) / d(1/r)    * D(1/r)/D(y)    * Znk    * Qnk +
                 //                 Rn * d(Znk)/d(z/r) * D(z/r)/D(y) * Qnk +
@@ -806,11 +913,13 @@ typedef struct TraObj
                 //            = fm /r**2   * (r0/r)**n [  -(n+1) * Znk * *y/r * Qnk +
                 //                                           Znk+1       * y/r * -SinTetta *    Qnk +
                 //                                             Znk * ((Cnk*XkDxr+Snk*YkDxr) * (-x/r * y/r) + (Cnk*XkDyr+Snk*YkDyr)*(1-(y/r)**2))
+#if 0
 #if 1
                     if (((YdivRval > CPV ) || (YdivRval < -CPV )))// && (((k+n)&1) == 1))
                     {
 #endif
-                        OneMinusYdivRInSquare_YdivRval[SatCalc][n][k] = tempVal= Pnk_tilda[n][k]*(-D_Qnk_Dxr[n][k]*XdivRval+D_Qnk_Dyr[n][k] * OneMinusYdivRInSquare2);//(CNK[n][k]*XkDyr[k] + SNK[n][k]*YkDyr[k])*OneMinusYdivRInSquare2;///YdivRval;
+                        //OneMinusYdivRInSquare_YdivRval[SatCalc][n][k] = tempVal= R0divR[n] *Pnk_tilda[n][k]*(-D_Qnk_Dxr[n][k]*XdivRval+D_Qnk_Dyr[n][k] * OneMinusYdivRInSquare2);//(CNK[n][k]*XkDyr[k] + SNK[n][k]*YkDyr[k])*OneMinusYdivRInSquare2;///YdivRval;
+                        OneMinusYdivRInSquare_YdivRval[SatCalc][n][k] = tempVal= (R0divR[n] *Pnk_tilda[n][k]*(-D_Qnk_Dxr[n][k]*XdivRval*YdivRval +D_Qnk_Dyr[n][k] * (1-YdivRval*YdivRval)))/YdivRval;
                         OldYSign[SatCalc][n][k] = YdivRval;
 #if 1
                     }
@@ -823,27 +932,44 @@ typedef struct TraObj
                         }
                         else
                             tempVal= OneMinusYdivRInSquare_YdivRval[SatCalc][n][k];
+                        //tempVal= (R0divR[n] *Pnk_tilda[n][k]*(-D_Qnk_Dxr[n][k]*XdivRval*YdivRval +D_Qnk_Dyr[n][k] * (1-YdivRval*YdivRval)))/YdivRval;
+                        //if ((OldYSign[SatCalc][n][k]/YdivRval)>4)
+                            printf("zero y ");
                         //tempVal = OneMinusYdivRInSquare_YdivRval[SatCalc][n][k] * (OldYSign[SatCalc][n][k]/YdivRval);
                     }
 #endif
+#endif
+#if 0
                     Y += R0divR[n] *
                                   (-(n+1) /**YdivRval*/ * Pnk_tilda[n][k] * Qnk[n][k]
                                      - Pnk_tilda[n][k+1] *  Qnk[n][k] /** YdivRval*/ * SinTetta
-                                     + Pnk_tilda[n][k] * (-D_Qnk_Dxr[n][k]*XdivRval// + //(CNK[n][k]*XkDxr[k] + SNK[n][k]*YkDxr[k]) * XdivRval /**YdivRval*/ + 
+                                     //+ Pnk_tilda[n][k] * (-D_Qnk_Dxr[n][k]*XdivRval// + //(CNK[n][k]*XkDxr[k] + SNK[n][k]*YkDxr[k]) * XdivRval /**YdivRval*/ + 
                                          /*(CNK[n][k]*XkDyr[k] + SNK[n][k]*YkDyr[k])*OneMinusYdivRInSquare/YdivRval*/ //OneMinusYdivRInSquare_YdivRval[SatCalc][n][k]
-                                         )
-                                     + tempVal
+                                     
                                      )/*/YdivRval*/
+                            + tempVal
                     ;
+#else
+                    Y += R0divR[n] *
+                                  (-(n+1) *YdivRval * Pnk_tilda[n][k] * Qnk[n][k]
+                                     - Pnk_tilda[n][k+1] *  Qnk[n][k] * YdivRval * SinTetta
+                                     + Pnk_tilda[n][k]*(-D_Qnk_Dxr[n][k]*XdivRval*YdivRval +D_Qnk_Dyr[n][k] * (1-YdivRval*YdivRval))
+                                     
+                                     )
+                    ;
+
+#endif
                
             //            = fm/r**2  * (r0/r)**n ( (n+1)  * (-z/r) * Znk * Qnk +
             //                                     Znk+1 * (1-(z/r)**2) * Qnk +
             //                                     Znk * [(Cnk*D(Xk)/D(x/r)+Snk*DYk)/D(x/r)) * (- x/r * z/r) + (Cnk*D(Xk)/D(y/r)+Snk*DYk)/D(y/r))*(-y/r *z/r)]
+#if 0
 #if 1
                     if (((SinTetta > CPV ) || (SinTetta < -CPV )))// && (((k+n)&1) == 1))
                     {
 #endif
-                        OneMinusZdivRInSquare_ZdivRval[SatCalc][n][k] = tempVal=OneMinusSinTettaInSquare2 * Pnk_tilda[n][k+1] * Qnk[n][k];// /SinTetta[1];
+                        //OneMinusZdivRInSquare_ZdivRval[SatCalc][n][k] = tempVal=R0divR[n] *OneMinusSinTettaInSquare2 * Pnk_tilda[n][k+1] * Qnk[n][k];// /SinTetta[1];
+                        OneMinusZdivRInSquare_ZdivRval[SatCalc][n][k] = tempVal =(Pnk_tilda[n][k+1] * Qnk[n][k]*R0divR[n]*(1-SinTetta*SinTetta))/SinTetta;
                         OldZSign[SatCalc][n][k] = SinTetta;
 #if 1
                     }
@@ -857,14 +983,79 @@ typedef struct TraObj
                         else
                             tempVal = - OneMinusZdivRInSquare_ZdivRval[SatCalc][n][k];
                         //tempVal = OneMinusZdivRInSquare_ZdivRval[SatCalc][n][k] *(OldZSign[SatCalc][n][k]/SinTetta);
+                        //tempVal =(Pnk_tilda[n][k+1] * Qnk[n][k]*R0divR[n]*(1-SinTetta*SinTetta))/SinTetta;
+                        //if ((OldZSign[SatCalc][n][k]/SinTetta) > 4)
+                        {
+                            printf("zeroZ");
+                        }
                     }
 #endif
+#endif
+#if 0
                     Z += R0divR[n] *
                                 (-(n+1)  /** SinTetta[1]*/ * Pnk_tilda[n][k] * Qnk[n][k] 
-                                 + /*OneMinusSinTettaInSquare * Pnk_tilda[n][k+1] * Qnk[n][k] /SinTetta[1]*/ tempVal//OneMinusZdivRInSquare_ZdivRval[SatCalc][n][k]
+                                 //+ /*OneMinusSinTettaInSquare * Pnk_tilda[n][k+1] * Qnk[n][k] /SinTetta[1]*/ tempVal//OneMinusZdivRInSquare_ZdivRval[SatCalc][n][k]
                                  + Pnk_tilda[n][k] * (-D_Qnk_Dxr[n][k]*XdivRval - D_Qnk_Dyr[n][k]*YdivRval)//(CNK[n][k]*XkDxr[k] + SNK[n][k]*YkDxr[k]) * XdivRval/**SinTetta[1]*/ - (CNK[n][k]*XkDyr[k] + SNK[n][k]*YkDyr[k])*YdivRval/**SinTetta[1]*/)
                                  )/*/SinTetta[1]*/
+                                 +tempVal
                     ;
+#else
+                    Z += R0divR[n] *
+                                (-(n+1)  * SinTetta * Pnk_tilda[n][k] * Qnk[n][k] 
+                                 + Pnk_tilda[n][k+1] * Qnk[n][k]*(1-SinTetta*SinTetta)
+                                 + Pnk_tilda[n][k] * (-D_Qnk_Dxr[n][k]*XdivRval*SinTetta - D_Qnk_Dyr[n][k]*YdivRval*SinTetta)//(CNK[n][k]*XkDxr[k] + SNK[n][k]*YkDxr[k]) * XdivRval/**SinTetta[1]*/ - (CNK[n][k]*XkDyr[k] + SNK[n][k]*YkDyr[k])*YdivRval/**SinTetta[1]*/)
+                                 )/*/SinTetta[1]*/
+                    ;
+
+#endif
+            }
+        }
+        if (((XdivRval > CPV ) || (XdivRval < -CPV )))
+        {
+            X /= XdivRval; 
+            fx[SatCalc] = X;
+            fsinX[SatCalc] =XdivRval;
+        }
+        else
+        {
+            if (((fsinX[SatCalc]>0) && (XdivRval > 0)) || ((fsinX[SatCalc]<=0) && (XdivRval <= 0)))
+                X = fx[SatCalc];
+            else
+            {
+                fx[SatCalc]=-fx[SatCalc]; fsinX[SatCalc] = -fsinX[SatCalc];
+                X = fx[SatCalc];
+            }
+        }
+        if (((YdivRval > CPV ) || (YdivRval < -CPV )))
+        {
+            Y /= YdivRval; 
+            fy[SatCalc] = Y;
+            fsinY[SatCalc] =YdivRval;
+        }
+        else
+        {
+            if (((fsinY[SatCalc]>0) && (YdivRval > 0)) || ((fsinY[SatCalc]<=0) && (YdivRval <= 0)))
+                Y = fy[SatCalc];
+            else
+            {
+                fy[SatCalc]=-fy[SatCalc]; fsinY[SatCalc] = -fsinY[SatCalc];
+                Y = fy[SatCalc];
+            }
+        }
+        if (((SinTetta > CPV ) || (SinTetta < -CPV )))
+        {
+            Z /= SinTetta; 
+            fz[SatCalc] = Z;
+            fsinZ[SatCalc] =SinTetta;
+        }
+        else
+        {
+            if (((fsinZ[SatCalc]>0) && (SinTetta > 0)) || ((fsinZ[SatCalc]<=0) && (SinTetta <= 0)))
+                Z = fz[SatCalc];
+            else
+            {
+                fz[SatCalc]=-fz[SatCalc]; fsinZ[SatCalc] = -fsinZ[SatCalc];
+                Z = fz[SatCalc];
             }
         }
     }
@@ -897,25 +1088,27 @@ typedef struct TraObj
 
         return Summ;
     }
+#ifdef BETTER_BUT_MANY_ITERATIONS
+#else
     long double v3v5OddX(long lOdd, long double a6, long double a5, long double a7, int i)
     {
         long double n = (lOdd-1)/2;
         ssEvenX[i]  += a6; ssOddX[i]   += a5; ssfEvenX[i] += ssEvenX[i]; ssfOddX[i]  += ssOddX[i];
-        V35OddX[i] = n*VX_1[i] + (n*A1_X[i] + 4.0*ssfEvenX[i] + 2.0*ssfOddX[i] + ssOddX[i] + a7)/3;
+        V35OddX[i] = n*VX1divDt[i] + (n*A1_X[i] + 4.0*ssfEvenX[i] + 2.0*ssfOddX[i] + ssOddX[i] + a7)/3;
         return V35OddX[i];
     }
     long double v3v5OddY(long lOdd, long double a6, long double a5, long double a7, int i)
     {
         long double n = (lOdd-1)/2;
         ssEvenY[i]  += a6; ssOddY[i]   += a5; ssfEvenY[i] += ssEvenY[i]; ssfOddY[i]  += ssOddY[i];
-        V35OddY[i] = n*VY_1[i] + (n*A1_Y[i] + 4.0*ssfEvenY[i] + 2.0*ssfOddY[i] + ssOddY[i] + a7)/3;
+        V35OddY[i] = n*VY1divDt[i] + (n*A1_Y[i] + 4.0*ssfEvenY[i] + 2.0*ssfOddY[i] + ssOddY[i] + a7)/3;
         return V35OddY[i];
     }
     long double v3v5OddZ(long lOdd, long double a6, long double a5, long double a7, int i)
     {
         long double n = (lOdd-1)/2;
         ssEvenZ[i]  += a6; ssOddZ[i]   += a5; ssfEvenZ[i] += ssEvenZ[i]; ssfOddZ[i]  += ssOddZ[i];
-        V35OddZ[i] = n*VZ_1[i] + (n*A1_Z[i] + 4.0*ssfEvenZ[i] + 2.0*ssfOddZ[i] + ssOddZ[i] + a7)/3;
+        V35OddZ[i] = n*VZ1divDt[i] + (n*A1_Z[i] + 4.0*ssfEvenZ[i] + 2.0*ssfOddZ[i] + ssOddZ[i] + a7)/3;
         return V35OddZ[i];
     }
     long double v2v4EvenX(long lEven, long double a5, long double a4, long double a6, int i)
@@ -925,6 +1118,14 @@ typedef struct TraObj
         V24EvenX[i] = n*VX0divDt[i] + (n*A0_X[i] + 4.0* sfOddX[i] + 2.0* sfEvenX[i] + sEvenX[i] + a6)/3;
         return V24EvenX[i];
     }
+    long double v2EvenX(long lEven, long double a1, long double a0, long double a2, int i)
+    {
+        long double n = lEven/2;
+        sOddX[i] += a1; sfOddX[i] += sOddX[i]; 
+        V24EvenX[i] = n*VX0divDt[i] + (n*A0_X[i] + 4.0* sfOddX[i] +  a2)/3;
+        return V24EvenX[i];
+    }
+
     long double v2v4EvenY(long lEven, long double a5, long double a4, long double a6, int i)
     {
         long double n = lEven/2;
@@ -932,6 +1133,14 @@ typedef struct TraObj
         V24EvenY[i] = n*VY0divDt[i] + (n*A0_Y[i] + 4.0* sfOddY[i] + 2.0* sfEvenY[i] + sEvenY[i] + a6)/3;
         return V24EvenY[i];
     }
+    long double v2EvenY(long lEven, long double a1, long double a0, long double a2, int i)
+    {
+        long double n = lEven/2;
+        sOddY[i] += a1; sfOddY[i] += sOddY[i]; 
+        V24EvenY[i] = n*VY0divDt[i] + (n*A0_Y[i] + 4.0* sfOddY[i] +  a2)/3;
+        return V24EvenY[i];
+    }
+
     long double v2v4EvenZ(long lEven, long double a5, long double a4, long double a6, int i)
     {
         long double n = lEven/2;
@@ -939,6 +1148,14 @@ typedef struct TraObj
         V24EvenZ[i] = n*VZ0divDt[i] + (n*A0_Z[i] + 4.0* sfOddZ[i] + 2.0* sfEvenZ[i] + sEvenZ[i] + a6)/3;
         return V24EvenZ[i];
     }
+    long double v2EvenZ(long lEven, long double a1, long double a0, long double a2, int i)
+    {
+        long double n = lEven/2;
+        sOddZ[i] += a1; sfOddZ[i] += sOddZ[i]; 
+        V24EvenZ[i] = n*VZ0divDt[i] + (n*A0_Z[i] + 4.0* sfOddZ[i] +  a2)/3;
+        return V24EvenZ[i];
+    }
+#endif
 } TRAOBJ, *PTRAOBJ;
 
 #define MAX_IMPULSE_LINES 100
@@ -1276,6 +1493,7 @@ void CalcSatForces(TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfCalc)
             Sat->ForceDD_ = Sat->ForceDD[i][j];
             if (j == Sat->LegBody)
             {
+                 Sat->R0divR[0] = 1;
                  Sat->R0divR[1] = R0_MODEL/tD_;
                  for (int n = 2; n <= (Sat->iLeg+1); n++)
                  {
@@ -1585,8 +1803,8 @@ void IteraSolarSystem(BOOL ForceWasCalculated, TRAOBJ * SlS)
     int i;
     //int j;
     // calculation of a[i] based on x[i]
-    if (ForceWasCalculated == FALSE)
-        CalcPlanetForces(SlS);
+    //if (ForceWasCalculated == FALSE)
+    CalcPlanetForces(SlS);
     // calculation of velocities and positions 
     SlS->CountN++;
     if (SlS->RunOne == FALSE)
@@ -1594,8 +1812,9 @@ void IteraSolarSystem(BOOL ForceWasCalculated, TRAOBJ * SlS)
         // SlS->CountN == 2,3,4...
         for (i = 0; i < SlS->Elem; i++)
         {
-            SlS->oSFX[i] = SlS->SFX[i]; SlS->oSFY[i] = SlS->SFY[i]; SlS->oSFZ[i] = SlS->SFZ[i];
-            SlS->SFX[i] = SlS->FX[i]; SlS->SFY[i] = SlS->FY[i]; SlS->SFZ[i] = SlS->FZ[i];
+            SlS->FXmmm[i] = SlS->FXmm[i]; SlS->FYmmm[i] = SlS->FYmm[i]; SlS->FZmmm[i] = SlS->FZmm[i];
+            SlS->FXmm[i] = SlS->FXm[i]; SlS->FYmm[i] = SlS->FYm[i]; SlS->FZmm[i] = SlS->FZm[i];
+            SlS->FXm[i] = SlS->FX[i]; SlS->FYm[i] = SlS->FY[i]; SlS->FZm[i] = SlS->FZ[i];
         }
     }
     else
@@ -1606,27 +1825,38 @@ void IteraSolarSystem(BOOL ForceWasCalculated, TRAOBJ * SlS)
         {
             SlS->A0_X[i] = SlS->FX[i];  SlS->A0_Y[i] = SlS->FY[i];  SlS->A0_Z[i] = SlS->FZ[i];
 
-            SlS->VX_1[i] = SlS->VX0divDt[i] + SlS->A0_X[i];   
-            SlS->VY_1[i] = SlS->VY0divDt[i] + SlS->A0_Y[i];   
-            SlS->VZ_1[i] = SlS->VZ0divDt[i] + SlS->A0_Z[i];
+            SlS->VX1divDt[i] = SlS->VX0divDt[i] + SlS->A0_X[i];   
+            SlS->VY1divDt[i] = SlS->VY0divDt[i] + SlS->A0_Y[i];   
+            SlS->VZ1divDt[i] = SlS->VZ0divDt[i] + SlS->A0_Z[i];
 
-            SlS->X_1[i]= SlS->X0divDt2[i] + SlS->VX0divDt[i] + SlS->A0_X[i]/2;       
-            SlS->Y_1[i]= SlS->Y0divDt2[i] + SlS->VY0divDt[i] + SlS->A0_Y[i]/2;       
-            SlS->Z_1[i]= SlS->Z0divDt2[i] + SlS->VZ0divDt[i] + SlS->A0_Z[i]/2;
+            SlS->X1divDt2[i]= SlS->X0divDt2[i] + SlS->VX0divDt[i] + SlS->A0_X[i]/2;       
+            SlS->Y1divDt2[i]= SlS->Y0divDt2[i] + SlS->VY0divDt[i] + SlS->A0_Y[i]/2;       
+            SlS->Z1divDt2[i]= SlS->Z0divDt2[i] + SlS->VZ0divDt[i] + SlS->A0_Z[i]/2;
 
-            SlS->VX[i] = SlS->VX_1[i]*TimeSl/ SlS->M[i];
-            SlS->VY[i] = SlS->VY_1[i]*TimeSl/ SlS->M[i];
-            SlS->VZ[i] = SlS->VZ_1[i]*TimeSl/ SlS->M[i];
+            SlS->VX[i] = SlS->VX1divDt[i]*TimeSl/ SlS->M[i];
+            SlS->VY[i] = SlS->VY1divDt[i]*TimeSl/ SlS->M[i];
+            SlS->VZ[i] = SlS->VZ1divDt[i]*TimeSl/ SlS->M[i];
 
-            SlS->X[i] = SlS->X_1[i] * TimeSl_2/ SlS->M[i];
-            SlS->Y[i] = SlS->Y_1[i] * TimeSl_2/ SlS->M[i];
-            SlS->Z[i] = SlS->Z_1[i] * TimeSl_2/ SlS->M[i];
+            SlS->X[i] = SlS->X1divDt2[i] * TimeSl_2/ SlS->M[i];
+            SlS->Y[i] = SlS->Y1divDt2[i] * TimeSl_2/ SlS->M[i];
+            SlS->Z[i] = SlS->Z1divDt2[i] * TimeSl_2/ SlS->M[i];
 
             SlS->SmOX[i] = 0;   SlS->SmOY[i] = 0;   SlS->SmOZ[i] = 0;
             SlS->SmEX[i] = 0;   SlS->SmEY[i] = 0;   SlS->SmEZ[i] = 0;
 
             SlS->V35OddX[i] = 0;  SlS->V35OddY[i] = 0;  SlS->V35OddZ[i] = 0;
             SlS->V24EvenX[i] = 0; SlS->V24EvenY[i] = 0; SlS->V24EvenZ[i] = 0;
+            SlS->ssEvenX[i] = 0;  SlS->ssEvenY[i] = 0;  SlS->ssEvenZ[i] = 0;
+            SlS->ssOddX[i] = 0;   SlS->ssOddY[i] = 0;   SlS->ssOddZ[i] = 0;
+            SlS->ssfEvenX[i] = 0; SlS->ssfEvenY[i] = 0; SlS->ssfEvenZ[i] = 0;
+            SlS->ssfOddX[i] = 0;  SlS->ssfOddY[i] = 0;  SlS->ssfOddZ[i] = 0;
+
+            SlS->sOddX[i]=0;      SlS->sOddY[i]=0;      SlS->sOddZ[i]=0;
+            SlS->sEvenX[i]=0;     SlS->sEvenY[i]=0;     SlS->sEvenZ[i]=0;
+            SlS->sfOddX[i]=0;     SlS->sfOddY[i]=0;     SlS->sfOddZ[i]=0;
+            SlS->sfEvenX[i]=0;    SlS->sfEvenY[i]=0;    SlS->sfEvenZ[i]=0;
+
+            SlS->FXm[i] = SlS->FX[i]; SlS->FYm[i] = SlS->FY[i]; SlS->FZm[i] = SlS->FZ[i];
         }
         return;
     }
@@ -1639,29 +1869,30 @@ void IteraSolarSystem(BOOL ForceWasCalculated, TRAOBJ * SlS)
                 // set a1
                 SlS->A1_X[i] = SlS->FX[i];  SlS->A1_Y[i] = SlS->FY[i];  SlS->A1_Z[i] = SlS->FZ[i];
 
-                SlS->VX_[i] = (SlS->VX_1[i] + SlS->A1_X[i]);
-                SlS->VY_[i] = (SlS->VY_1[i] + SlS->A1_Y[i]);
-                SlS->VZ_[i] = (SlS->VZ_1[i] + SlS->A1_Z[i]);
+                SlS->VX_[i] = (SlS->VX1divDt[i] + SlS->A1_X[i]);
+                SlS->VY_[i] = (SlS->VY1divDt[i] + SlS->A1_Y[i]);
+                SlS->VZ_[i] = (SlS->VZ1divDt[i] + SlS->A1_Z[i]);
 
-                SlS->Xminus[i] = (SlS->X0divDt2[i] + (SlS->VX0divDt[i] + 4.0*SlS->VX_1[i])/3 + (4.0*SlS->v3v5OddX(1,0,0,SlS->A1_X[i],i)+2.0*SlS->V24EvenX[i])/3.0;
+                SlS->Xminus[i] = SlS->X0divDt2[i] + (SlS->VX0divDt[i] + 4.0*SlS->VX1divDt[i])/3;
                 SlS->X[i] = (SlS->Xminus[i] + SlS->VX_[i]/3.0)* TimeSl_2/ SlS->M[i];
-                SlS->Yminus[i] = (SlS->Y0divDt2[i] + (SlS->VY0divDt[i] + 4.0*SlS->VY_1[i])/3 + (4.0*SlS->v3v5OddY(1,0,0,SlS->A1_Y[i],i)+2.0*SlS->V24EvenY[i])/3.0;
+                SlS->Yminus[i] = SlS->Y0divDt2[i] + (SlS->VY0divDt[i] + 4.0*SlS->VY1divDt[i])/3;
                 SlS->Y[i] = (SlS->Yminus[i] + SlS->VY_[i]/3.0)* TimeSl_2/ SlS->M[i];
-                SlS->Zminus[i] = (SlS->Z0divDt2[i] + (SlS->VZ0divDt[i] + 4.0*SlS->VZ_1[i])/3 + (4.0*SlS->v3v5OddZ(1,0,0,SlS->A1_Z[i],i)+2.0*SlS->V24EvenZ[i])/3.0;
+                SlS->Zminus[i] = SlS->Z0divDt2[i] + (SlS->VZ0divDt[i] + 4.0*SlS->VZ1divDt[i])/3;
                 SlS->Z[i] = (SlS->Zminus[i] + SlS->VZ_[i]/3.0)* TimeSl_2/ SlS->M[i];
             }
             // calc new forces in new point
             CalcPlanetForces(SlS);
             for (i = 0; i < SlS->Elem; i++)
             {
-                SlS->SmOX[i]+=SlS->FX[i];  SlS->SmOY[i]+=SlS->FY[i];  SlS->SmOZ[i]+=SlS->FZ[i];
-                SlS->VXminus[i] = SlS->X0divDt2[i] + (SlS->A0_X[i] +4.0*SlS->SmOX[i] + 2.0*SlS->SmEX[i])/3.0 ;
+                SlS->SmOX[i]+=SlS->FXm[i];  SlS->SmOY[i]+=SlS->FYm[i];  SlS->SmOZ[i]+=SlS->FZm[i];
+                SlS->VXminus[i] = SlS->VX0divDt[i] + (SlS->A0_X[i] +4.0*SlS->SmOX[i] + 2.0*SlS->SmEX[i])/3.0 ;
                 SlS->X[i] = (SlS->Xminus[i] + (SlS->VXminus[i] + SlS->FX[i]/3.0)/3.0)*TimeSl_2/ SlS->M[i];
-                SlS->VYminus[i] = SlS->Y0divDt2[i] + (SlS->A0_Y[i] +4.0*SlS->SmOY[i] + 2.0*SlS->SmEY[i])/3.0 ;
+                SlS->VYminus[i] = SlS->VY0divDt[i] + (SlS->A0_Y[i] +4.0*SlS->SmOY[i] + 2.0*SlS->SmEY[i])/3.0 ;
                 SlS->Y[i] = (SlS->Yminus[i] + (SlS->VYminus[i] + SlS->FY[i]/3.0)/3.0)*TimeSl_2/ SlS->M[i];
-                SlS->VZminus[i] = SlS->Z0divDt2[i] + (SlS->A0_Z[i] +4.0*SlS->SmOZ[i] + 2.0*SlS->SmEZ[i])/3.0 ;
+                SlS->VZminus[i] = SlS->VZ0divDt[i] + (SlS->A0_Z[i] +4.0*SlS->SmOZ[i] + 2.0*SlS->SmEZ[i])/3.0 ;
                 SlS->Z[i] = (SlS->Zminus[i] + (SlS->VZminus[i] + SlS->FZ[i]/3.0)/3.0)*TimeSl_2/ SlS->M[i];
 
+                // just for reference
                 SlS->VX[i] = (SlS->VX_[i])*TimeSl/ SlS->M[i];
                 SlS->VY[i] = (SlS->VY_[i])*TimeSl/ SlS->M[i];
                 SlS->VZ[i] = (SlS->VZ_[i])*TimeSl/ SlS->M[i];
@@ -1672,64 +1903,101 @@ void IteraSolarSystem(BOOL ForceWasCalculated, TRAOBJ * SlS)
         {
             for (i = 0; i < SlS->Elem; i++)
             {
-                SlS->VX_[i] = SlS->VXminus[i] + SlS->FX[i]/3 + (3.0*SlS->FX[i]- SlS->SFX[i])/2;
-                SlS->VX_[i] = SlS->VYminus[i] + SlS->FY[i]/3 + (3.0*SlS->FY[i]- SlS->SFY[i])/2;
-                SlS->VZ_[i] = SlS->VZminus[i] + SlS->FZ[i]/3 + (3.0*SlS->FZ[i]- SlS->SFZ[i])/2;
+                SlS->VX_[i] = SlS->VXminus[i] + SlS->FXm[i]/3 + (3.0*SlS->FXm[i]- SlS->FXmm[i])/2;
+                SlS->VX_[i] = SlS->VYminus[i] + SlS->FYm[i]/3 + (3.0*SlS->FYm[i]- SlS->FYmm[i])/2;
+                SlS->VZ_[i] = SlS->VZminus[i] + SlS->FZm[i]/3 + (3.0*SlS->FZm[i]- SlS->FZmm[i])/2;
 
-                SlS->Xminus[i] = (SlS->X0divDt2[i] + (SlS->VX0divDt[i] + 4.0*SlS->VX_1[i])/3 + (4.0*SlS->v3v5OddX(SlS->CountN-1,SlS->SFX[i],SlS->oSFX[i],SlS->FX[i],i)+2.0*SlS->V24EvenX[i])/3.0;
+                SlS->Xminus[i] = SlS->X0divDt2[i] + (SlS->VX0divDt[i] + 4.0*SlS->VX1divDt[i])/3 + (4.0*SlS->v3v5OddX(SlS->CountN-1,SlS->FXmm[i],SlS->FXmmm[i],SlS->FXm[i],i)+2.0*SlS->V24EvenX[i])/3.0;
                 SlS->X[i] = (SlS->Xminus[i] + SlS->VX_[i]/3.0)* TimeSl_2/ SlS->M[i];
-                SlS->Yminus[i] = (SlS->Y0divDt2[i] + (SlS->VY0divDt[i] + 4.0*SlS->VY_1[i])/3 + (4.0*SlS->v3v5OddY(SlS->CountN-1,SlS->SFY[i],SlS->oSFY[i],SlS->FY[i],i)+2.0*SlS->V24EvenY[i])/3.0;
+                SlS->Yminus[i] = SlS->Y0divDt2[i] + (SlS->VY0divDt[i] + 4.0*SlS->VY1divDt[i])/3 + (4.0*SlS->v3v5OddY(SlS->CountN-1,SlS->FYmm[i],SlS->FYmmm[i],SlS->FYm[i],i)+2.0*SlS->V24EvenY[i])/3.0;
                 SlS->Y[i] = (SlS->Yminus[i] + SlS->VY_[i]/3.0)* TimeSl_2/ SlS->M[i];
-                SlS->Zminus[i] = (SlS->Z0divDt2[i] + (SlS->VZ0divDt[i] + 4.0*SlS->VZ_1[i])/3 + (4.0*SlS->v3v5OddZ(SlS->CountN-1,SlS->SF[i]Z,SlS->oSFZ[i],SlS->FZ[i],i)+2.0*SlS->V24EvenZ[i])/3.0;
+                SlS->Zminus[i] = SlS->Z0divDt2[i] + (SlS->VZ0divDt[i] + 4.0*SlS->VZ1divDt[i])/3 + (4.0*SlS->v3v5OddZ(SlS->CountN-1,SlS->FZmm[i],SlS->FZmmm[i],SlS->FZm[i],i)+2.0*SlS->V24EvenZ[i])/3.0;
                 SlS->Z[i] = (SlS->Zminus[i] + SlS->VZ_[i]/3.0)* TimeSl_2/ SlS->M[i];
             }
             // calc new forces in new point
             CalcPlanetForces(SlS);
             for (i = 0; i < SlS->Elem; i++)
             {
-                SlS->SmOX[i]+=SlS->FX[i];  SlS->SmOY[i]+=SlS->FY[i];  SlS->SmOZ[i]+=SlS->FZ[i];
-                SlS->VXminus[i] = SlS->X0divDt2[i] + (SlS->A0_X[i] +4.0*SlS->SmOX[i] + 2.0*SlS->SmEX[i])/3.0 ;
+                SlS->SmOX[i]+=SlS->FXm[i];  SlS->SmOY[i]+=SlS->FYm[i];  SlS->SmOZ[i]+=SlS->FZm[i];
+                SlS->VXminus[i] = SlS->VX0divDt[i] + (SlS->A0_X[i] +4.0*SlS->SmOX[i] + 2.0*SlS->SmEX[i])/3.0 ;
                 SlS->X[i] = (SlS->Xminus[i] + (SlS->VXminus[i] + SlS->FX[i]/3.0)/3.0)*TimeSl_2/ SlS->M[i];
-                SlS->VYminus[i] = SlS->Y0divDt2[i] + (SlS->A0_Y[i] +4.0*SlS->SmOY[i] + 2.0*SlS->SmEY[i])/3.0 ;
+                SlS->VYminus[i] = SlS->VY0divDt[i] + (SlS->A0_Y[i] +4.0*SlS->SmOY[i] + 2.0*SlS->SmEY[i])/3.0 ;
                 SlS->Y[i] = (SlS->Yminus[i] + (SlS->VYminus[i] + SlS->FY[i]/3.0)/3.0)*TimeSl_2/ SlS->M[i];
-                SlS->VZminus[i] = SlS->Z0divDt2[i] + (SlS->A0_Z[i] +4.0*SlS->SmOZ[i] + 2.0*SlS->SmEZ[i])/3.0 ;
+                SlS->VZminus[i] = SlS->VZ0divDt[i] + (SlS->A0_Z[i] +4.0*SlS->SmOZ[i] + 2.0*SlS->SmEZ[i])/3.0 ;
                 SlS->Z[i] = (SlS->Zminus[i] + (SlS->VZminus[i] + SlS->FZ[i]/3.0)/3.0)*TimeSl_2/ SlS->M[i];
 
+                // reference only
                 SlS->VX[i] = (SlS->VX_[i])*TimeSl/ SlS->M[i];
                 SlS->VY[i] = (SlS->VY_[i])*TimeSl/ SlS->M[i];
                 SlS->VZ[i] = (SlS->VZ_[i])*TimeSl/ SlS->M[i];
             }
         }
+    }
     else  // Odd
     {
-        for (i = 0; i < SlS->Elem; i++)
+        if (SlS->CountN == 3) 
         {
-            SlS->VX_[i] = SlS->VXminus[i] + SlS->FX[i]/3 + (3.0*SlS->FX[i]- SlS->SFX[i])/2;
-            SlS->VX_[i] = SlS->VYminus[i] + SlS->FY[i]/3 + (3.0*SlS->FY[i]- SlS->SFY[i])/2;
-            SlS->VZ_[i] = SlS->VZminus[i] + SlS->FZ[i]/3 + (3.0*SlS->FZ[i]- SlS->SFZ[i])/2;
+            for (i = 0; i < SlS->Elem; i++)
+            {
+                SlS->VX_[i] = SlS->VXminus[i] + SlS->FXm[i]/3 + (3.0*SlS->FXm[i]- SlS->FXmm[i])/2;
+                SlS->VX_[i] = SlS->VYminus[i] + SlS->FYm[i]/3 + (3.0*SlS->FYm[i]- SlS->FYmm[i])/2;
+                SlS->VZ_[i] = SlS->VZminus[i] + SlS->FZm[i]/3 + (3.0*SlS->FZm[i]- SlS->FZmm[i])/2;
 
-            SlS->Xminus[i] = (SlS->X_1[i] + SlS->VX_1[i]/3 + (4.0*SlS->v2v4EvenX(SlS->CountN-1,SlS->SFX[i],SlS->oSFX[i],SlS->FX[i],i)+2.0*SlS->V35OddX[i])/3.0;
-            SlS->X[i] = (SlS->Xminus[i] + SlS->VX_[i]/3.0)* TimeSl_2/ SlS->M[i];
-            SlS->Yminus[i] = (SlS->Y_1[i] + SlS->VY_1[i]/3 + (4.0*SlS->v2v4EvenY(SlS->CountN-1,SlS->SFY[i],SlS->oSFY[i],SlS->FY[i],i)+2.0*SlS->V35OddY[i])/3.0;
-            SlS->Y[i] = (SlS->Yminus[i] + SlS->VY_[i]/3.0)* TimeSl_2/ SlS->M[i];
-            SlS->Zminus[i] = (SlS->Z_1[i] + SlS->VZ_1[i]/3 + (4.0*SlS->v2v4EvenZ(SlS->CountN-1,SlS->SFZ[i],SlS->oSFZ[i],SlS->FZ[i],i)+2.0*SlS->V35OddZ[i])/3.0;
-            SlS->Z[i] = (SlS->Zminus[i] + SlS->VZ_[i]/3.0)* TimeSl_2/ SlS->M[i];
-        }
+                SlS->Xminus[i] = SlS->X1divDt2[i] + SlS->VX1divDt[i]/3 + (4.0*SlS->v2EvenX(SlS->CountN-1,SlS->FXmm[i],SlS->FXmmm[i],SlS->FXm[i],i))/3.0;
+                SlS->X[i] = (SlS->Xminus[i] + SlS->VX_[i]/3.0)* TimeSl_2/ SlS->M[i];
+                SlS->Yminus[i] = SlS->Y1divDt2[i] + SlS->VY1divDt[i]/3 + (4.0*SlS->v2EvenY(SlS->CountN-1,SlS->FYmm[i],SlS->FYmmm[i],SlS->FYm[i],i))/3.0;
+                SlS->Y[i] = (SlS->Yminus[i] + SlS->VY_[i]/3.0)* TimeSl_2/ SlS->M[i];
+                SlS->Zminus[i] = SlS->Z1divDt2[i] + SlS->VZ1divDt[i]/3 + (4.0*SlS->v2EvenZ(SlS->CountN-1,SlS->FZmm[i],SlS->FZmmm[i],SlS->FZm[i],i))/3.0;
+                SlS->Z[i] = (SlS->Zminus[i] + SlS->VZ_[i]/3.0)* TimeSl_2/ SlS->M[i];
+            }
             // calc new forces in new point
-        CalcPlanetForces(SlS);
-        for (i = 0; i < SlS->Elem; i++)
-        {
-            SlS->SmEX[i]+=SlS->FX[i];  SlS->SmEY[i]+=SlS->FY[i];  SlS->SmEZ[i]+=SlS->FZ[i];
-            SlS->VXminus[i] = SlS->X_1[i] + (SlS->A1_X[i] +4.0*SlS->SmEX[i] + 2.0*(SlS->SmOX[i]-SlS->SFX[i]))/3.0 ;
-            SlS->X[i] = (SlS->Xminus[i] + (SlS->VXminus[i] + SlS->FX[i]/3.0)/3.0)*TimeSl_2/ SlS->M[i];
-            SlS->VYminus[i] = SlS->Y_1[i] + (SlS->A1_Y[i] +4.0*SlS->SmEY[i] + 2.0*(SlS->SmOY[i]-SlS->SFY[i]))/3.0 ;
-            SlS->Y[i] = (SlS->Yminus[i] + (SlS->VYminus[i] + SlS->FY[i]/3.0)/3.0)*TimeSl_2/ SlS->M[i];
-            SlS->VZminus[i] = SlS->Z_1[i] + (SlS->A1_Z[i] +4.0*SlS->SmEZ[i] + 2.0*(SlS->SmOZ[i]-SlS->SFZ[i]))/3.0 ;
-            SlS->Z[i] = (SlS->Zminus[i] + (SlS->VZminus[i] + SlS->FZ[i]/3.0)/3.0)*TimeSl_2/ SlS->M[i];
-            SlS->VX[i] = (SlS->VX_[i])*TimeSl/ SlS->M[i];
-            SlS->VY[i] = (SlS->VY_[i])*TimeSl/ SlS->M[i];
-            SlS->VZ[i] = (SlS->VZ_[i])*TimeSl/ SlS->M[i];
+            CalcPlanetForces(SlS);
+            for (i = 0; i < SlS->Elem; i++)
+            {
+                SlS->SmEX[i]+=SlS->FXm[i];  SlS->SmEY[i]+=SlS->FYm[i];  SlS->SmEZ[i]+=SlS->FZm[i];
+                SlS->VXminus[i] = SlS->VX1divDt[i] + (SlS->A1_X[i] +4.0*SlS->SmEX[i] + 2.0*(SlS->SmOX[i]-SlS->A1_X[i]))/3.0 ;
+                SlS->X[i] = (SlS->Xminus[i] + (SlS->VXminus[i] + SlS->FX[i]/3.0)/3.0)*TimeSl_2/ SlS->M[i];
+                SlS->VYminus[i] = SlS->VY1divDt[i] + (SlS->A1_Y[i] +4.0*SlS->SmEY[i] + 2.0*(SlS->SmOY[i]-SlS->A1_Y[i]))/3.0 ;
+                SlS->Y[i] = (SlS->Yminus[i] + (SlS->VYminus[i] + SlS->FY[i]/3.0)/3.0)*TimeSl_2/ SlS->M[i];
+                SlS->VZminus[i] = SlS->VZ1divDt[i] + (SlS->A1_Z[i] +4.0*SlS->SmEZ[i] + 2.0*(SlS->SmOZ[i]-SlS->A1_Z[i]))/3.0 ;
+                SlS->Z[i] = (SlS->Zminus[i] + (SlS->VZminus[i] + SlS->FZ[i]/3.0)/3.0)*TimeSl_2/ SlS->M[i];
+                SlS->VX[i] = (SlS->VX_[i])*TimeSl/ SlS->M[i];
+                SlS->VY[i] = (SlS->VY_[i])*TimeSl/ SlS->M[i];
+                SlS->VZ[i] = (SlS->VZ_[i])*TimeSl/ SlS->M[i];
+            }
         }
+        else // odd and != 3
+        {
+            for (i = 0; i < SlS->Elem; i++)
+            {
+                SlS->VX_[i] = SlS->VXminus[i] + SlS->FXm[i]/3 + (3.0*SlS->FXm[i]- SlS->FXmm[i])/2;
+                SlS->VX_[i] = SlS->VYminus[i] + SlS->FYm[i]/3 + (3.0*SlS->FYm[i]- SlS->FYmm[i])/2;
+                SlS->VZ_[i] = SlS->VZminus[i] + SlS->FZm[i]/3 + (3.0*SlS->FZm[i]- SlS->FZmm[i])/2;
+
+                SlS->Xminus[i] = SlS->X1divDt2[i] + SlS->VX1divDt[i]/3 + (4.0*SlS->v2v4EvenX(SlS->CountN-1,SlS->FXmm[i],SlS->FXmmm[i],SlS->FXm[i],i)+2.0*SlS->V35OddX[i])/3.0;
+                SlS->X[i] = (SlS->Xminus[i] + SlS->VX_[i]/3.0)* TimeSl_2/ SlS->M[i];
+                SlS->Yminus[i] = SlS->Y1divDt2[i] + SlS->VY1divDt[i]/3 + (4.0*SlS->v2v4EvenY(SlS->CountN-1,SlS->FYmm[i],SlS->FYmmm[i],SlS->FYm[i],i)+2.0*SlS->V35OddY[i])/3.0;
+                SlS->Y[i] = (SlS->Yminus[i] + SlS->VY_[i]/3.0)* TimeSl_2/ SlS->M[i];
+                SlS->Zminus[i] = SlS->Z1divDt2[i] + SlS->VZ1divDt[i]/3 + (4.0*SlS->v2v4EvenZ(SlS->CountN-1,SlS->FZmm[i],SlS->FZmmm[i],SlS->FZm[i],i)+2.0*SlS->V35OddZ[i])/3.0;
+                SlS->Z[i] = (SlS->Zminus[i] + SlS->VZ_[i]/3.0)* TimeSl_2/ SlS->M[i];
+            }
+            // calc new forces in new point
+            CalcPlanetForces(SlS);
+            for (i = 0; i < SlS->Elem; i++)
+            {
+                SlS->SmEX[i]+=SlS->FXm[i];  SlS->SmEY[i]+=SlS->FYm[i];  SlS->SmEZ[i]+=SlS->FZm[i];
+                SlS->VXminus[i] = SlS->VX1divDt[i] + (SlS->A1_X[i] +4.0*SlS->SmEX[i] + 2.0*(SlS->SmOX[i]-SlS->A1_X[i]))/3.0 ;
+                SlS->X[i] = (SlS->Xminus[i] + (SlS->VXminus[i] + SlS->FX[i]/3.0)/3.0)*TimeSl_2/ SlS->M[i];
+                SlS->VYminus[i] = SlS->VY1divDt[i] + (SlS->A1_Y[i] +4.0*SlS->SmEY[i] + 2.0*(SlS->SmOY[i]-SlS->A1_Y[i]))/3.0 ;
+                SlS->Y[i] = (SlS->Yminus[i] + (SlS->VYminus[i] + SlS->FY[i]/3.0)/3.0)*TimeSl_2/ SlS->M[i];
+                SlS->VZminus[i] = SlS->VZ1divDt[i] + (SlS->A1_Z[i] +4.0*SlS->SmEZ[i] + 2.0*(SlS->SmOZ[i]-SlS->A1_Z[i]))/3.0 ;
+                SlS->Z[i] = (SlS->Zminus[i] + (SlS->VZminus[i] + SlS->FZ[i]/3.0)/3.0)*TimeSl_2/ SlS->M[i];
+                SlS->VX[i] = (SlS->VX_[i])*TimeSl/ SlS->M[i];
+                SlS->VY[i] = (SlS->VY_[i])*TimeSl/ SlS->M[i];
+                SlS->VZ[i] = (SlS->VZ_[i])*TimeSl/ SlS->M[i];
+            }
+        }
+
     }
     /*{
         CalcPlanetForces(SlS);
@@ -1786,102 +2054,197 @@ void IteraSat(int TimeDirection, TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfC
     Sat->CountN++;
     if (Sat->RunOne == FALSE)
     {
+        // SlS->CountN == 2,3,4...
         for (i = 0; i < Sat->Elem; i++)
         {
-            Sat->SFX[i] = Sat->FX[i]; Sat->SFY[i] = Sat->FY[i]; Sat->SFZ[i] = Sat->FZ[i];
+            Sat->FXmmm[i] = Sat->FXmm[i]; Sat->FYmmm[i] = Sat->FYmm[i]; Sat->FZmmm[i] = Sat->FZmm[i];
+            Sat->FXmm[i] = Sat->FXm[i]; Sat->FYmm[i] = Sat->FYm[i]; Sat->FZmm[i] = Sat->FZm[i];
+            Sat->FXm[i] = Sat->FX[i]; Sat->FYm[i] = Sat->FY[i]; Sat->FZm[i] = Sat->FZ[i];
         }
     }
     else
     {
+        // SlS->CountN == 1
         Sat->RunOne = FALSE;
         for (i = 0; i < Sat->Elem; i++)
         {
-            Sat->X_[i] += Sat->VX_[i] + Sat->FX[i]/2;
-            Sat->Y_[i] += Sat->VY_[i] + Sat->FY[i]/2;
-            Sat->Z_[i] += Sat->VZ_[i] + Sat->FZ[i]/2;
+            Sat->A0_X[i] = Sat->FX[i];  Sat->A0_Y[i] = Sat->FY[i];  Sat->A0_Z[i] = Sat->FZ[i];
 
-            Sat->X[i] = (Sat->X0divDt2[i] + Sat->VX0divDt[i] + Sat->X_[i]) * TimeSl_2;
-            Sat->Y[i] = (Sat->Y0divDt2[i] + Sat->VY0divDt[i] + Sat->Y_[i]) * TimeSl_2;
-            Sat->Z[i] = (Sat->Z0divDt2[i] + Sat->VZ0divDt[i] + Sat->Z_[i]) * TimeSl_2;
+            Sat->VX1divDt[i] = Sat->VX0divDt[i] + Sat->A0_X[i];   
+            Sat->VY1divDt[i] = Sat->VY0divDt[i] + Sat->A0_Y[i];   
+            Sat->VZ1divDt[i] = Sat->VZ0divDt[i] + Sat->A0_Z[i];
 
-            Sat->VX_[i] += Sat->FX[i];
-            Sat->VY_[i] += Sat->FY[i];
-            Sat->VZ_[i] += Sat->FZ[i];
+            Sat->X1divDt2[i]= Sat->X0divDt2[i] + Sat->VX0divDt[i] + Sat->A0_X[i]/2;       
+            Sat->Y1divDt2[i]= Sat->Y0divDt2[i] + Sat->VY0divDt[i] + Sat->A0_Y[i]/2;       
+            Sat->Z1divDt2[i]= Sat->Z0divDt2[i] + Sat->VZ0divDt[i] + Sat->A0_Z[i]/2;
 
-            Sat->VX[i] = (Sat->VX0divDt[i] + Sat->VX_[i])*TimeSl;
-            Sat->VY[i] = (Sat->VY0divDt[i] + Sat->VY_[i])*TimeSl;
-            Sat->VZ[i] = (Sat->VZ0divDt[i] + Sat->VZ_[i])*TimeSl;
+            Sat->VX[i] = Sat->VX1divDt[i]*TimeSl;
+            Sat->VY[i] = Sat->VY1divDt[i]*TimeSl;
+            Sat->VZ[i] = Sat->VZ1divDt[i]*TimeSl;
+
+            Sat->X[i] = Sat->X1divDt2[i] * TimeSl_2;
+            Sat->Y[i] = Sat->Y1divDt2[i] * TimeSl_2;
+            Sat->Z[i] = Sat->Z1divDt2[i] * TimeSl_2;
+
+            Sat->SmOX[i] = 0;   Sat->SmOY[i] = 0;   Sat->SmOZ[i] = 0;
+            Sat->SmEX[i] = 0;   Sat->SmEY[i] = 0;   Sat->SmEZ[i] = 0;
+
+            Sat->V35OddX[i] = 0;  Sat->V35OddY[i] = 0;  Sat->V35OddZ[i] = 0;
+            Sat->V24EvenX[i] = 0; Sat->V24EvenY[i] = 0; Sat->V24EvenZ[i] = 0;
+            Sat->ssEvenX[i] = 0;  Sat->ssEvenY[i] = 0;  Sat->ssEvenZ[i] = 0;
+            Sat->ssOddX[i] = 0;   Sat->ssOddY[i] = 0;   Sat->ssOddZ[i] = 0;
+            Sat->ssfEvenX[i] = 0; Sat->ssfEvenY[i] = 0; Sat->ssfEvenZ[i] = 0;
+            Sat->ssfOddX[i] = 0;  Sat->ssfOddY[i] = 0;  Sat->ssfOddZ[i] = 0;
+
+            Sat->sOddX[i]=0;      Sat->sOddY[i]=0;      Sat->sOddZ[i]=0;
+            Sat->sEvenX[i]=0;     Sat->sEvenY[i]=0;     Sat->sEvenZ[i]=0;
+            Sat->sfOddX[i]=0;     Sat->sfOddY[i]=0;     Sat->sfOddZ[i]=0;
+            Sat->sfEvenX[i]=0;    Sat->sfEvenY[i]=0;    Sat->sfEvenZ[i]=0;
+
+            Sat->FXm[i] = Sat->FX[i]; Sat->FYm[i] = Sat->FY[i]; Sat->FZm[i] = Sat->FZ[i];
         }
         return;
     }
-
-    for (i = 0; i < Sat->Elem; i++)
+    if ((Sat->CountN & 1) == 0) //Even
     {
-        Sat->X[i] = (Sat->X0divDt2[i] + Sat->CountN*Sat->VX0divDt[i] + (Sat->X_[i] + Sat->VX_[i] + Sat->FX[i]/2)) * TimeSl_2;
-        Sat->Y[i] = (Sat->Y0divDt2[i] + Sat->CountN*Sat->VY0divDt[i] + (Sat->Y_[i] + Sat->VY_[i] + Sat->FY[i]/2)) * TimeSl_2;
-        Sat->Z[i] = (Sat->Z0divDt2[i] + Sat->CountN*Sat->VZ0divDt[i] + (Sat->Z_[i] + Sat->VZ_[i] + Sat->FZ[i]/2)) * TimeSl_2;
-    }
-    
-    {
-        // preserving value X,Y,Z of all planets and caclulted forses (it was done at the begining of the IteraSat function
-        for (i = 0; i < SlS->Elem; i++)
-        {
-            SlS->SX[i]=SlS->X[i]; SlS->SY[i]=SlS->Y[i]; SlS->SZ[i]=SlS->Z[i];
-            SlS->SFX[i]=SlS->FX[i]; SlS->SFY[i]=SlS->FY[i]; SlS->SFZ[i]=SlS->FZ[i];
-        }
-        // calculation of next position of the planets
-        // (SlS->CountN+1) is for next step: CountN==0 =>1x... CountN==1 =>2x...
-        for (i = 0; i < SlS->Elem; i++)
-        {
-            SlS->X[i] = (SlS->X0divDt2[i] + (SlS->CountN+1)*SlS->VX0divDt[i] + (SlS->X_[i] + SlS->VX_[i] + SlS->FX[i]/2)) * TimeSl_2/ SlS->M[i];
-            SlS->Y[i] = (SlS->Y0divDt2[i] + (SlS->CountN+1)*SlS->VY0divDt[i] + (SlS->Y_[i] + SlS->VY_[i] + SlS->FY[i]/2)) * TimeSl_2/ SlS->M[i];
-            SlS->Z[i] = (SlS->Z0divDt2[i] + (SlS->CountN+1)*SlS->VZ0divDt[i] + (SlS->Z_[i] + SlS->VZ_[i] + SlS->FZ[i]/2)) * TimeSl_2/ SlS->M[i];
-        }
-        CalcPlanetForces(SlS);
-
-        CalcSatForces(SlS, Sat, TimeOfCalc+StepsValInDay);
-        // now restore origial plant's positions and forces
-        for (i = 0; i < SlS->Elem; i++)
-        {
-            SlS->X[i] = SlS->SX[i]; SlS->Y[i] = SlS->SY[i]; SlS->Z[i] = SlS->SZ[i];
-            SlS->FX[i]=SlS->SFX[i]; SlS->FY[i]=SlS->SFY[i]; SlS->FZ[i]=SlS->SFZ[i];
-        }
-
-        for (i = 0; i < Sat->Elem; i++)
-        {
-            Sat->X_[i] += Sat->VX_[i] + (Sat->FX[i]+Sat->SFX[i])/4;
-            Sat->Y_[i] += Sat->VY_[i] + (Sat->FY[i]+Sat->SFY[i])/4;
-            Sat->Z_[i] += Sat->VZ_[i] + (Sat->FZ[i]+Sat->SFZ[i])/4;
-
-            Sat->X[i] = (Sat->X0divDt2[i] + Sat->CountN*Sat->VX0divDt[i] + Sat->X_[i]) * TimeSl_2;
-            Sat->Y[i] = (Sat->Y0divDt2[i] + Sat->CountN*Sat->VY0divDt[i] + Sat->Y_[i]) * TimeSl_2;
-            Sat->Z[i] = (Sat->Z0divDt2[i] + Sat->CountN*Sat->VZ0divDt[i] + Sat->Z_[i]) * TimeSl_2;
-
-            Sat->VX_[i] += (Sat->SFX[i]+Sat->FX[i])/2;
-            Sat->VY_[i] += (Sat->SFY[i]+Sat->FY[i])/2;
-            Sat->VZ_[i] += (Sat->SFZ[i]+Sat->FZ[i])/2;
-
-            Sat->VX[i] = (Sat->VX0divDt[i] + Sat->VX_[i])*TimeSl;
-            Sat->VY[i] = (Sat->VY0divDt[i] + Sat->VY_[i])*TimeSl;
-            Sat->VZ[i] = (Sat->VZ0divDt[i] + Sat->VZ_[i])*TimeSl;
-        }
-        if (Sat->CountN > 100000.0)
+        if (Sat->CountN == 2) 
         {
             for (i = 0; i < Sat->Elem; i++)
             {
-                long double ldTemp;
-                long double ldTemp2;
-                ldTemp = Sat->X0divDt2[i] + Sat->CountN*Sat->VX0divDt[i] + Sat->X_[i]; ldTemp2 = ldTemp- (Sat->X0divDt2[i] + Sat->CountN*Sat->VX0divDt[i]); Sat->X0divDt2[i]=ldTemp; Sat->X_[i] -= ldTemp2;
-                ldTemp = Sat->Y0divDt2[i] + Sat->CountN*Sat->VZ0divDt[i] + Sat->Y_[i]; ldTemp2 = ldTemp- (Sat->Y0divDt2[i] + Sat->CountN*Sat->VY0divDt[i]); Sat->Y0divDt2[i]=ldTemp; Sat->Y_[i] -= ldTemp2;
-                ldTemp = Sat->Z0divDt2[i] + Sat->CountN*Sat->VZ0divDt[i] + Sat->Z_[i]; ldTemp2 = ldTemp- (Sat->Z0divDt2[i] + Sat->CountN*Sat->VZ0divDt[i]); Sat->Z0divDt2[i]=ldTemp; Sat->Z_[i] -= ldTemp2;
+                // set a1
+                Sat->A1_X[i] = Sat->FX[i];  Sat->A1_Y[i] = Sat->FY[i];  Sat->A1_Z[i] = Sat->FZ[i];
 
-                ldTemp = Sat->VX0divDt[i] + Sat->VX_[i]; ldTemp2 = ldTemp- Sat->VX0divDt[i]; Sat->VX0divDt[i]=ldTemp; Sat->VX_[i] -= ldTemp2;
-                ldTemp = Sat->VY0divDt[i] + Sat->VY_[i]; ldTemp2 = ldTemp- Sat->VY0divDt[i]; Sat->VY0divDt[i]=ldTemp; Sat->VY_[i] -= ldTemp2;
-                ldTemp = Sat->VZ0divDt[i] + Sat->VZ_[i]; ldTemp2 = ldTemp- Sat->VZ0divDt[i]; Sat->VZ0divDt[i]=ldTemp; Sat->VZ_[i] -= ldTemp2;
+                Sat->VX_[i] = (Sat->VX1divDt[i] + Sat->A1_X[i]);
+                Sat->VY_[i] = (Sat->VY1divDt[i] + Sat->A1_Y[i]);
+                Sat->VZ_[i] = (Sat->VZ1divDt[i] + Sat->A1_Z[i]);
+
+                Sat->Xminus[i] = Sat->X0divDt2[i] + (Sat->VX0divDt[i] + 4.0*Sat->VX1divDt[i])/3;
+                Sat->X[i] = (Sat->Xminus[i] + Sat->VX_[i]/3.0)* TimeSl_2;
+                Sat->Yminus[i] = Sat->Y0divDt2[i] + (Sat->VY0divDt[i] + 4.0*Sat->VY1divDt[i])/3;
+                Sat->Y[i] = (Sat->Yminus[i] + Sat->VY_[i]/3.0)* TimeSl_2;
+                Sat->Zminus[i] = Sat->Z0divDt2[i] + (Sat->VZ0divDt[i] + 4.0*Sat->VZ1divDt[i])/3;
+                Sat->Z[i] = (Sat->Zminus[i] + Sat->VZ_[i]/3.0)* TimeSl_2;
             }
-            Sat->CountN = 0;
+            // calc new forces in new point
+            CalcSatForces(SlS, Sat, TimeOfCalc);
+            for (i = 0; i < Sat->Elem; i++)
+            {
+                Sat->SmOX[i]+=Sat->FXm[i];  Sat->SmOY[i]+=Sat->FYm[i];  Sat->SmOZ[i]+=Sat->FZm[i];
+                Sat->VXminus[i] = Sat->VX0divDt[i] + (Sat->A0_X[i] +4.0*Sat->SmOX[i] + 2.0*Sat->SmEX[i])/3.0 ;
+                Sat->X[i] = (Sat->Xminus[i] + (Sat->VXminus[i] + Sat->FX[i]/3.0)/3.0)*TimeSl_2;
+                Sat->VYminus[i] = Sat->VY0divDt[i] + (Sat->A0_Y[i] +4.0*Sat->SmOY[i] + 2.0*Sat->SmEY[i])/3.0 ;
+                Sat->Y[i] = (Sat->Yminus[i] + (Sat->VYminus[i] + Sat->FY[i]/3.0)/3.0)*TimeSl_2;
+                Sat->VZminus[i] = Sat->VZ0divDt[i] + (Sat->A0_Z[i] +4.0*Sat->SmOZ[i] + 2.0*Sat->SmEZ[i])/3.0 ;
+                Sat->Z[i] = (Sat->Zminus[i] + (Sat->VZminus[i] + Sat->FZ[i]/3.0)/3.0)*TimeSl_2;
+
+                // just for reference
+                Sat->VX[i] = (Sat->VX_[i])*TimeSl;
+                Sat->VY[i] = (Sat->VY_[i])*TimeSl;
+                Sat->VZ[i] = (Sat->VZ_[i])*TimeSl;
+            }
+            return;
+        }
+        else  // even, and != 2
+        {
+            for (i = 0; i < Sat->Elem; i++)
+            {
+                Sat->VX_[i] = Sat->VXminus[i] + Sat->FXm[i]/3 + (3.0*Sat->FXm[i]- Sat->FXmm[i])/2;
+                Sat->VX_[i] = Sat->VYminus[i] + Sat->FYm[i]/3 + (3.0*Sat->FYm[i]- Sat->FYmm[i])/2;
+                Sat->VZ_[i] = Sat->VZminus[i] + Sat->FZm[i]/3 + (3.0*Sat->FZm[i]- Sat->FZmm[i])/2;
+
+                Sat->Xminus[i] = Sat->X0divDt2[i] + (Sat->VX0divDt[i] + 4.0*Sat->VX1divDt[i])/3 + (4.0*Sat->v3v5OddX(Sat->CountN-1,Sat->FXmm[i],Sat->FXmmm[i],Sat->FXm[i],i)+2.0*Sat->V24EvenX[i])/3.0;
+                Sat->X[i] = (Sat->Xminus[i] + Sat->VX_[i]/3.0)* TimeSl_2;
+                Sat->Yminus[i] = Sat->Y0divDt2[i] + (Sat->VY0divDt[i] + 4.0*Sat->VY1divDt[i])/3 + (4.0*Sat->v3v5OddY(Sat->CountN-1,Sat->FYmm[i],Sat->FYmmm[i],Sat->FYm[i],i)+2.0*Sat->V24EvenY[i])/3.0;
+                Sat->Y[i] = (Sat->Yminus[i] + Sat->VY_[i]/3.0)* TimeSl_2;
+                Sat->Zminus[i] = Sat->Z0divDt2[i] + (Sat->VZ0divDt[i] + 4.0*Sat->VZ1divDt[i])/3 + (4.0*Sat->v3v5OddZ(Sat->CountN-1,Sat->FZmm[i],Sat->FZmmm[i],Sat->FZm[i],i)+2.0*Sat->V24EvenZ[i])/3.0;
+                Sat->Z[i] = (Sat->Zminus[i] + Sat->VZ_[i]/3.0)* TimeSl_2;
+            }
+            // calc new forces in new point
+            CalcSatForces(SlS, Sat, TimeOfCalc);
+            for (i = 0; i < Sat->Elem; i++)
+            {
+                Sat->SmOX[i]+=Sat->FXm[i];  Sat->SmOY[i]+=Sat->FYm[i];  Sat->SmOZ[i]+=Sat->FZm[i];
+                Sat->VXminus[i] = Sat->VX0divDt[i] + (Sat->A0_X[i] +4.0*Sat->SmOX[i] + 2.0*Sat->SmEX[i])/3.0 ;
+                Sat->X[i] = (Sat->Xminus[i] + (Sat->VXminus[i] + Sat->FX[i]/3.0)/3.0)*TimeSl_2;
+                Sat->VYminus[i] = Sat->VY0divDt[i] + (Sat->A0_Y[i] +4.0*Sat->SmOY[i] + 2.0*Sat->SmEY[i])/3.0 ;
+                Sat->Y[i] = (Sat->Yminus[i] + (Sat->VYminus[i] + Sat->FY[i]/3.0)/3.0)*TimeSl_2;
+                Sat->VZminus[i] = Sat->VZ0divDt[i] + (Sat->A0_Z[i] +4.0*Sat->SmOZ[i] + 2.0*Sat->SmEZ[i])/3.0 ;
+                Sat->Z[i] = (Sat->Zminus[i] + (Sat->VZminus[i] + Sat->FZ[i]/3.0)/3.0)*TimeSl_2;
+
+                // reference only
+                Sat->VX[i] = (Sat->VX_[i])*TimeSl;
+                Sat->VY[i] = (Sat->VY_[i])*TimeSl;
+                Sat->VZ[i] = (Sat->VZ_[i])*TimeSl;
+            }
         }
     }
+    else  // Odd
+    {
+        if (Sat->CountN == 3) 
+        {
+            for (i = 0; i < Sat->Elem; i++)
+            {
+                Sat->VX_[i] = Sat->VXminus[i] + Sat->FXm[i]/3 + (3.0*Sat->FXm[i]- Sat->FXmm[i])/2;
+                Sat->VX_[i] = Sat->VYminus[i] + Sat->FYm[i]/3 + (3.0*Sat->FYm[i]- Sat->FYmm[i])/2;
+                Sat->VZ_[i] = Sat->VZminus[i] + Sat->FZm[i]/3 + (3.0*Sat->FZm[i]- Sat->FZmm[i])/2;
+
+                Sat->Xminus[i] = Sat->X1divDt2[i] + Sat->VX1divDt[i]/3 + (4.0*Sat->v2EvenX(Sat->CountN-1,Sat->FXmm[i],Sat->FXmmm[i],Sat->FXm[i],i))/3.0;
+                Sat->X[i] = (Sat->Xminus[i] + Sat->VX_[i]/3.0)* TimeSl_2;
+                Sat->Yminus[i] = Sat->Y1divDt2[i] + Sat->VY1divDt[i]/3 + (4.0*Sat->v2EvenY(Sat->CountN-1,Sat->FYmm[i],Sat->FYmmm[i],Sat->FYm[i],i))/3.0;
+                Sat->Y[i] = (Sat->Yminus[i] + Sat->VY_[i]/3.0)* TimeSl_2;
+                Sat->Zminus[i] = Sat->Z1divDt2[i] + Sat->VZ1divDt[i]/3 + (4.0*Sat->v2EvenZ(Sat->CountN-1,Sat->FZmm[i],Sat->FZmmm[i],Sat->FZm[i],i))/3.0;
+                Sat->Z[i] = (Sat->Zminus[i] + Sat->VZ_[i]/3.0)* TimeSl_2;
+            }
+            // calc new forces in new point
+            CalcSatForces(SlS, Sat, TimeOfCalc);
+            for (i = 0; i < Sat->Elem; i++)
+            {
+                Sat->SmEX[i]+=Sat->FXm[i];  Sat->SmEY[i]+=Sat->FYm[i];  Sat->SmEZ[i]+=Sat->FZm[i];
+                Sat->VXminus[i] = Sat->VX1divDt[i] + (Sat->A1_X[i] +4.0*Sat->SmEX[i] + 2.0*(Sat->SmOX[i]-Sat->A1_X[i]))/3.0 ;
+                Sat->X[i] = (Sat->Xminus[i] + (Sat->VXminus[i] + Sat->FX[i]/3.0)/3.0)*TimeSl_2;
+                Sat->VYminus[i] = Sat->VY1divDt[i] + (Sat->A1_Y[i] +4.0*Sat->SmEY[i] + 2.0*(Sat->SmOY[i]-Sat->A1_Y[i]))/3.0 ;
+                Sat->Y[i] = (Sat->Yminus[i] + (Sat->VYminus[i] + Sat->FY[i]/3.0)/3.0)*TimeSl_2;
+                Sat->VZminus[i] = Sat->VZ1divDt[i] + (Sat->A1_Z[i] +4.0*Sat->SmEZ[i] + 2.0*(Sat->SmOZ[i]-Sat->A1_Z[i]))/3.0 ;
+                Sat->Z[i] = (Sat->Zminus[i] + (Sat->VZminus[i] + Sat->FZ[i]/3.0)/3.0)*TimeSl_2;
+                Sat->VX[i] = (Sat->VX_[i])*TimeSl;
+                Sat->VY[i] = (Sat->VY_[i])*TimeSl;
+                Sat->VZ[i] = (Sat->VZ_[i])*TimeSl;
+            }
+        }
+        else // odd and != 3
+        {
+            for (i = 0; i < Sat->Elem; i++)
+            {
+                Sat->VX_[i] = Sat->VXminus[i] + Sat->FXm[i]/3 + (3.0*Sat->FXm[i]- Sat->FXmm[i])/2;
+                Sat->VX_[i] = Sat->VYminus[i] + Sat->FYm[i]/3 + (3.0*Sat->FYm[i]- Sat->FYmm[i])/2;
+                Sat->VZ_[i] = Sat->VZminus[i] + Sat->FZm[i]/3 + (3.0*Sat->FZm[i]- Sat->FZmm[i])/2;
+
+                Sat->Xminus[i] = Sat->X1divDt2[i] + Sat->VX1divDt[i]/3 + (4.0*Sat->v2v4EvenX(Sat->CountN-1,Sat->FXmm[i],Sat->FXmmm[i],Sat->FXm[i],i)+2.0*Sat->V35OddX[i])/3.0;
+                Sat->X[i] = (Sat->Xminus[i] + Sat->VX_[i]/3.0)* TimeSl_2;
+                Sat->Yminus[i] = Sat->Y1divDt2[i] + Sat->VY1divDt[i]/3 + (4.0*Sat->v2v4EvenY(Sat->CountN-1,Sat->FYmm[i],Sat->FYmmm[i],Sat->FYm[i],i)+2.0*Sat->V35OddY[i])/3.0;
+                Sat->Y[i] = (Sat->Yminus[i] + Sat->VY_[i]/3.0)* TimeSl_2;
+                Sat->Zminus[i] = Sat->Z1divDt2[i] + Sat->VZ1divDt[i]/3 + (4.0*Sat->v2v4EvenZ(Sat->CountN-1,Sat->FZmm[i],Sat->FZmmm[i],Sat->FZm[i],i)+2.0*Sat->V35OddZ[i])/3.0;
+                Sat->Z[i] = (Sat->Zminus[i] + Sat->VZ_[i]/3.0)* TimeSl_2;
+            }
+            // calc new forces in new point
+            CalcSatForces(SlS, Sat, TimeOfCalc);
+            for (i = 0; i < Sat->Elem; i++)
+            {
+                Sat->SmEX[i]+=Sat->FXm[i];  Sat->SmEY[i]+=Sat->FYm[i];  Sat->SmEZ[i]+=Sat->FZm[i];
+                Sat->VXminus[i] = Sat->VX1divDt[i] + (Sat->A1_X[i] +4.0*Sat->SmEX[i] + 2.0*(Sat->SmOX[i]-Sat->A1_X[i]))/3.0 ;
+                Sat->X[i] = (Sat->Xminus[i] + (Sat->VXminus[i] + Sat->FX[i]/3.0)/3.0)*TimeSl_2;
+                Sat->VYminus[i] = Sat->VY1divDt[i] + (Sat->A1_Y[i] +4.0*Sat->SmEY[i] + 2.0*(Sat->SmOY[i]-Sat->A1_Y[i]))/3.0 ;
+                Sat->Y[i] = (Sat->Yminus[i] + (Sat->VYminus[i] + Sat->FY[i]/3.0)/3.0)*TimeSl_2;
+                Sat->VZminus[i] = Sat->VZ1divDt[i] + (Sat->A1_Z[i] +4.0*Sat->SmEZ[i] + 2.0*(Sat->SmOZ[i]-Sat->A1_Z[i]))/3.0 ;
+                Sat->Z[i] = (Sat->Zminus[i] + (Sat->VZminus[i] + Sat->FZ[i]/3.0)/3.0)*TimeSl_2;
+                Sat->VX[i] = (Sat->VX_[i])*TimeSl;
+                Sat->VY[i] = (Sat->VY_[i])*TimeSl;
+                Sat->VZ[i] = (Sat->VZ_[i])*TimeSl;
+            }
+        }
+
+    }
+ 
 }
 
 #endif
@@ -2676,11 +3039,6 @@ void AssignFromNASAData(TRAOBJ * SlS, double JDSec)
         SlS->VX0divDt[i]=SlS->VX[i]* SlS->M[i] /TimeSl;
         SlS->VY0divDt[i]=SlS->VY[i]* SlS->M[i] /TimeSl;
         SlS->VZ0divDt[i]=SlS->VZ[i]* SlS->M[i] /TimeSl;
-
-
-        SlS->FX3sumOdd[i] = 0; SlS->FX2sumEnen[i] = 0;
-        SlS->FY3sumOdd[i] = 0; SlS->FY2sumEnen[i] = 0;
-        SlS->FZ3sumOdd[i] = 0; SlS->FZ2sumEnen[i] = 0;
 
         for (int j = 0; j < SlS->Elem; j++)
         {
@@ -5377,8 +5735,6 @@ void ParamProb(char *szString)
                 Sat.VY0divDt[i]=Sat.VY[i] /TimeSl;
                 Sat.VZ0divDt[i]=Sat.VZ[i] /TimeSl;
 
-                Sat.FX3sumOdd[i] = 0;  Sat.FY3sumOdd[i] = 0;  Sat.FZ3sumOdd[i] = 0; 
-                Sat.FX2sumEnen[i] = 0; Sat.FY2sumEnen[i] = 0; Sat.FZ2sumEnen[i] = 0;
             }
             Sat.CountN = 0;
             Sat.RunOne = TRUE;
@@ -6946,7 +7302,7 @@ int main(int argc, char * argv[])
                     if (dRE < EarthR) // TBD Earth is not round!!!
                     {
 
-                        printf("\n Landed on Earth at sec = %d", iCurSec);
+                        //printf("\n Landed on Earth at sec = %d", iCurSec);
                         Sat.flInUse[0] = 0;
                     }
 
@@ -7124,7 +7480,6 @@ int main(int argc, char * argv[])
                     MoonVZ = SolarSystem.VZ_[MOON]*TimeSl / SolarSystem.M[MOON];
 
                     EarthVX = SolarSystem.VX_[EARTH]*TimeSl / SolarSystem.M[EARTH];
-                    EarthVX = SolarSystem.VX_[EARTH]*TimeSl / SolarSystem.M[EARTH];
                     EarthVY = SolarSystem.VY_[EARTH]*TimeSl / SolarSystem.M[EARTH];
                     EarthVZ = SolarSystem.VZ_[EARTH]*TimeSl / SolarSystem.M[EARTH];
 #ifdef TEST_RUN_EARTH_ERROR
@@ -7232,7 +7587,7 @@ int main(int argc, char * argv[])
             double errAngle =  acos(errorCos);
             double errorD = sqrt(tVX*tVX + tVY*tVY + tVZ*tVZ)/sqrt(tProbVX*tProbVX + tProbVY*tProbVY + tProbVZ*tProbVZ);
             double SinAngle = tZ / sqrt(tX*tX + tY*tY + tZ*tZ);
-            if (iCurSec%(60*60) == 0)
+            if (iCurSec%(60) == 0)
             {
                     printf("\n%f err(X=%f V=%f) min=%d ",(asin(SinAngle)*180/M_PI),tttX,tttVX, iCurSec/60);
             }
