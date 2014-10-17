@@ -19,6 +19,11 @@
     <TRA:setting name="dMinFromNow" value="3" />
     <TRA:setting name="dStartJD0" value="-60" />
     <TRA:setting name="dStartJD" value="07/05/14 08:28:00:000" />
+    <TRA:setting name="dStartJD1" value="07/05/14 10:00:00:000" />
+    <TRA:setting name="dStartJD3" value="07/05/14 11:32:00:000" />
+    <TRA:setting name="dStartJD3" value="07/05/14 13:04:00:000" />
+    <TRA:setting name="dStartJD5" value="07/05/14 14:34:00:000" />
+    <TRA:setting name="dStartJD0" value="07/05/14 16:06:00:000" />
     <TRA:setting name="dStartJD0" value="11291.854004622962962962962962963" />
     <TRA:setting name="dStartJD0" value="11292.79166666" />
 
@@ -42,7 +47,7 @@
 <!-- scale in m -->
     <TRA:setting name="RGBScale" value="90000000" />
 
-    <TRA:setting name="IterPerSec" value="128" />
+    <TRA:setting name="IterPerSec" value="439" />
     <TRA:setting name="StartLandingIteraPerSec" value="772050" />
 <!-- next vaue actualy just a reference it will be used in-->
 <!-- GMMoon = MoonM * GBig and GMEarth = EarthM*GBig      -->
