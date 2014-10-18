@@ -289,7 +289,11 @@ long double Slm[MAX_COEF_J][MAX_COEF_J] = {
     0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,-0.55277122205966e-10, 0.10534878629266e-10, 0.86277431674150e-11, 0, 0, 0, 0, 0, 0, 0,0,
     0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0, 0.44759834144751e-12, 0.38147656686685e-12, 0, 0, 0, 0, 0, 0, 0,0,
     0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0, 0.15353381397148e-12, 0, 0, 0, 0, 0, 0, 0,0};
-    
+
+
+long double GST,SLONG,SRASN, SDEC;
+long double dStartGreenwichA = 0.0;
+
 typedef struct TraObj
 {
     int Elem;
@@ -444,7 +448,8 @@ typedef struct TraObj
     // 3 punch card calculation helper vars
     //
     long double ProbEpoch[PLANET_COUNT];
-    long double ProbEpochS[PLANET_COUNT];
+    long double ProbJD[PLANET_COUNT];
+    long double ProbJDSec[PLANET_COUNT];
     long double ProbMeanMotion[PLANET_COUNT];
     long double ProbFirstDervMeanMotion[PLANET_COUNT];
     long double ProbSecondDervmeanMotion[PLANET_COUNT];
@@ -526,9 +531,10 @@ typedef struct TraObj
         //Lambda += 1.5707963267948966192313216916398;//1.2337005501361698273543113749845;
         //Lambda -= 1.5707963267948966192313216916398;//1.2337005501361698273543113749845; <===================================
         //Lambda -= 0.87539816339744830961566084581988;// pi/4
-        // Lambda = -Lambda
-        //Lambda = -Lambda + M_PI/12.0/60.0*92.868414479719345777515072294812*5;
-        Lambda = -Lambda - M_PI/12.0/60.0*5;
+        Lambda =0.02181661564992911971154613460611;//2.82;//-Lambda - M_PI/12.0/60.0*5;// -Lambda;// - dStartGreenwichA + (6.1454312968999147 - 1.7564866843458731);
+        //Lambda = -Lambda + M_PI/12.0/60.0*(92.868414479719345777515072294812*6 -5);
+        //Lambda = -Lambda - M_PI/12.0/60.0*5;
+        //Lambda = -Lambda + M_PI/12.0/60.0*92.868414479719345777515072294812;
         //Lambda +=3.1415926535897932384626433832795;
         //Lambda +=3.9269908169872415480783042290994; //5/4 pi
         //Lambda +=3.5342917352885173932704738061894;//9/8 pi
@@ -580,10 +586,10 @@ typedef struct TraObj
 //#define CPV 0.0000005
 #define CPV 0.0000005
 
-        if ((XdivRval > -CPV) && (XdivRval < CPV))
-            return 1;
-        if ((YdivRval > -CPV) && (YdivRval < CPV))
-            return 2;
+//        if ((XdivRval > -CPV) && (XdivRval < CPV))
+//            return 1;
+//        if ((YdivRval > -CPV) && (YdivRval < CPV))
+//            return 2;
 #define _ACCOUNT_SIN
 
 #ifndef _ACCOUNT_SIN
@@ -1302,7 +1308,7 @@ int OldCurentIteraPerSec;
 long double dMinFromNow = 3.0;
 long double dStartJD = 0.0;//2451544.5; // if value dStartJD not set (==0.0) then use value from keplers elements of a satelite 0
 // if it will be more then one satellite needs to set this value to a last epoch of all satellites
-long double dStartJDEpoch;
+long double dStartEpoch;
 int JustFlySimulation =0;
 
 long double SunX =.0;
@@ -1363,10 +1369,6 @@ long double EarthCalcKepler;
 long double EarthVX = .0;
 long double EarthVY = .0;
 long double EarthVZ = .0;
-
-long double GST,SLONG,SRASN, SDEC;
-long double GreenwichA = 0.0;
-
 
 
 long double MoonX = 363104000.0;
@@ -1499,7 +1501,7 @@ void CalcPlanetForces(TRAOBJ * SlS)
     }
 
 }
-long double GreenwichAscension(long double EP);
+long double GreenwichAscensionFromEpoch(long double EP);
 void CalcSatForces(TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfCalc)
 {
     int i;
@@ -1575,11 +1577,11 @@ void CalcSatForces(TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfCalc)
                         {
                             while(DoIterations)
                             {
-                                Sat->Lambda = GreenwichAscension(TimeOfCalc - stepsAproximations*(StepsValInDay));
+                                Sat->Lambda = GreenwichAscensionFromEpoch(TimeOfCalc - stepsAproximations*(StepsValInDay));
                                 if ((iRet= Sat->CalcP(ValX0,ValY0,ValZ0,Sat->Distance[i][j])) == 0)
                                 {
                                     Sat->SummXYZ(i, DXx1,DYy1,DZz1);
-                                    Sat->Lambda = GreenwichAscension(TimeOfCalc + stepsAproximations*(StepsValInDay));
+                                    Sat->Lambda = GreenwichAscensionFromEpoch(TimeOfCalc + stepsAproximations*(StepsValInDay));
                                     if ((iRet= Sat->CalcP(ValX0,ValY0,ValZ0,Sat->Distance[i][j])) == 0)
                                     {
                                         Sat->SummXYZ(i, DXx2,DYy2,DZz2);
@@ -1611,7 +1613,7 @@ void CalcSatForces(TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfCalc)
                             BOOL DoByX = TRUE;
                             while(DoIterations)
                             {
-                                Sat->Lambda = GreenwichAscension(TimeOfCalc); // same place on longitude
+                                Sat->Lambda = GreenwichAscensionFromEpoch(TimeOfCalc); // same place on longitude
                                 if (DoByX)
                                 {
                                     tempX = cos(-stepsAproximations*OneSecond) * ValX0 - sin(-stepsAproximations*OneSecond) * ValZ0;
@@ -1627,7 +1629,7 @@ void CalcSatForces(TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfCalc)
                                 if ((iRet= Sat->CalcP(tempX,tempY,tempZ,Sat->Distance[i][j])) == 0)
                                 {
                                     Sat->SummXYZ(i, DXx1,DYy1,DZz1);
-                                    Sat->Lambda = GreenwichAscension(TimeOfCalc);
+                                    Sat->Lambda = GreenwichAscensionFromEpoch(TimeOfCalc);
                                     if (DoByX)
                                     {
                                         tempX = cos(+stepsAproximations*OneSecond) * ValX0 - sin(+stepsAproximations*OneSecond) * ValZ0;
@@ -1747,7 +1749,7 @@ void IteraSat(int TimeDirection, TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfC
 {
     int i;
     //int j;
-    Sat->Lambda = GreenwichAscension(TimeOfCalc);
+    Sat->Lambda = GreenwichAscensionFromEpoch(TimeOfCalc);
 
     CalcSatForces(SlS, Sat, TimeOfCalc);
 
@@ -1858,7 +1860,7 @@ void IteraSat(int TimeDirection, TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfC
 {
     int i;
     //int j;
-    Sat->Lambda = GreenwichAscension(TimeOfCalc);
+    Sat->Lambda = GreenwichAscensionFromEpoch(TimeOfCalc);
     // IteraSat called first - calculations of the forses btw planets will be done at this place
     // just needs to preserv it 
     CalcPlanetForces(SlS);
@@ -1919,7 +1921,7 @@ void IteraSat(int TimeDirection, TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfC
             SlS->Z[i] = (SlS->Z0divDt2[i] + (SlS->CountN+1)*SlS->VZ0divDt[i] + (SlS->Z_[i] + SlS->VZ_[i] + SlS->FZ[i]/2)) * TimeSl_2/ SlS->M[i];
         }
         CalcPlanetForces(SlS);
-        Sat->Lambda = GreenwichAscension(TimeOfCalc+StepsValInDay);
+        Sat->Lambda = GreenwichAscensionFromEpoch(TimeOfCalc+StepsValInDay);
         CalcSatForces(SlS, Sat, TimeOfCalc+StepsValInDay);
         // now restore origial plant's positions and forces
         for (i = 0; i < SlS->Elem; i++)
@@ -1946,7 +1948,7 @@ void IteraSat(int TimeDirection, TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfC
             Sat->VY[i] = (Sat->VY0divDt[i] + Sat->VY_[i])*TimeSl;
             Sat->VZ[i] = (Sat->VZ0divDt[i] + Sat->VZ_[i])*TimeSl;
         }
-        if (Sat->CountN > 100000.0)
+        if (Sat->CountN > 10000.0)
         {
             for (i = 0; i < Sat->Elem; i++)
             {
@@ -2213,7 +2215,7 @@ void IteraSat(int TimeDirection, TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfC
 {
     int i;
     //int j;
-    Sat->Lambda = GreenwichAscension(TimeOfCalc);
+    Sat->Lambda = GreenwichAscensionFromEpoch(TimeOfCalc);
     // IteraSat called first - calculations of the forses btw planets will be done at this place
     // just needs to preserv it 
     CalcPlanetForces(SlS);
@@ -4365,6 +4367,8 @@ void ParamCommon(char *szString)
                     }
 				}
 			}
+            SYSTEMTIME ThatTime;
+            dStartEpoch = ConvertJulianDayToDateAndTime(dStartJD, &ThatTime);
         }
         XML_READ(TimeSl);
         XML_READ(Gbig);
@@ -4634,7 +4638,7 @@ END
 // The function subroutine THETAG is passed the epoch time exactly as it appears on the input element cards.
 // The routine converts this time to days since 1950 Jan 0.0 UTC, stores this in the COMMON E1,
 // and returns the right ascension of Greenwich at epoch (in radians).
-long double GreenwichAscension(long double EP)
+long double GreenwichAscensionFromEpoch(long double EP)
 {
 	//FUNCTION THETAG(EP)
 	//COMMON /E1/XMO,XNODEO,OMEGAO,EO,XINCL,XNO,XNDT2O,XNDD6O,BSTAR,
@@ -4648,7 +4652,7 @@ long double GreenwichAscension(long double EP)
 	D=EP-YR*1.e3;
 	//IF(JY.LT.10) JY=JY+80
 	if(JY < 20) 
-		JY=JY+80;
+		JY=JY+100;
 	int N=(JY-69)/4;
 	//IF(JY.LT.70) N=(JY-72)/4
 	if (JY < 70) 
@@ -5440,13 +5444,15 @@ void ParamProb(char *szString)
 			//  04                   - year
 			//    236.56031392       - day
             Sat.ProbEpoch[Sat.Elem] = atof(&Sat.Kepler2[Sat.Elem][18]);
-            Sat.ProbEpochS[Sat.Elem] = Sat.ProbEpoch[Sat.Elem] =ConverEpochDate2JulianDay(Sat.ProbEpoch[Sat.Elem]);
-			Sat.ProbEpochS[Sat.Elem] *=  60*60*24;
+            Sat.ProbJDSec[Sat.Elem] = Sat.ProbJD[Sat.Elem] = ConverEpochDate2JulianDay(Sat.ProbEpoch[Sat.Elem]);
+			Sat.ProbJDSec[Sat.Elem] *=  60*60*24;
+            SYSTEMTIME ThatTime;
             // now for initial step asign emulation starting time:
 			// if nothing is set then starting point is a last satellite epoch
             if (dStartJD == 0.0)
             {
                 dStartJD = ConverEpochDate2JulianDay(Sat.ProbEpoch[Sat.Elem]);
+                dStartEpoch = ConvertJulianDayToDateAndTime(dStartJD, &ThatTime);
             }
 			//  "_.00020137"      1st Derivative of the Mean Motion with respect to Time F10.8
 			//double ProbFirstDervMeanMotion; XNDT2O
@@ -5587,11 +5593,32 @@ void ParamProb(char *szString)
 			// "328903"        Revolution Number at Epoch
 			//double ProbRevAtEpoch;
 			
-			
+			// just cheking GST must be eq GreenwichA
 			SUN_08 (1950,1,0,0,0,GST,SLONG,SRASN,SDEC);
-			GreenwichA = GreenwichAscension(50001.0);
-            // GreenwichA == GST but SUN_08 works for 2011
-			//SRASN = SRASN * 180/ M_PI;
+			dStartGreenwichA = GreenwichAscensionFromEpoch(50000.0); // 50 000.0 == 1950, day 1( first of january), 00:00:00 
+            // error is:
+            //   GST =  1.7466460286076149
+            // dStartGreenwichA = -0.0000017029127985
+            // error in seconds== -0.01561115459725791718482933112546
+            SYSTEMTIME ThatTime;
+            int YY_Days = ConvertJulianDayToDateAndTime(dStartJD, &ThatTime);
+            int Days_in_Year = YY_Days % 1000;
+            // now for <TRA:setting name="dStartJD" value="07/05/14 08:28:00:000" />
+            // dStartJD = 2456784.8527777777
+            // dStartEpoch = 14127.352777777705
+            SUN_08 (ThatTime.wYear,Days_in_Year,ThatTime.wHour,ThatTime.wMinute,ThatTime.wSecond,GST,SLONG,SRASN,SDEC);
+            dStartGreenwichA = GreenwichAscensionFromEpoch(dStartEpoch);
+            // error is:
+            // GST = 6.1453506996084499
+            // dStartGreenwichA 6.1454312968999147
+            // error in sec 0.7388615425790099904549342040562
+
+            // all sat positions will be in absolut coordinates 
+            // for first sat TLE (at Epoch time) earth was in one position
+            // at dStartEpoch it will be on another
+            // to account in graviational potential the shape of the earth 
+            // needs to know this position
+            //dStartGreenwichA = GreenwichAscensionFromEpoch(Sat.ProbEpoch[0]);
             for (int nSat = 0; nSat <Sat.Elem; nSat++)
             {
 			    
@@ -5624,7 +5651,7 @@ void ParamProb(char *szString)
 			    //TSINCE=TS
 			    //IFLAG=1
 			    // first one does not use BSTAR
-			    //SGP((dStartJD - Sat.ProbEpoch[nSat])*XMNPDA, XNDT2O,XNDD6O,BSTAR,Sat.ProbIncl[nSat], Sat.ProbAscNode[nSat],Sat.ProbEcc[nSat], 
+			    //SGP((dStartJD - Sat.ProbEpochS[nSat])*XMNPDA, XNDT2O,XNDD6O,BSTAR,Sat.ProbIncl[nSat], Sat.ProbAscNode[nSat],Sat.ProbEcc[nSat], 
                 //               Sat.ProbArgPer[nSat], Sat.ProbMeanAnom[nSat],XNO, 
 			    //	tProbX,tProbY,tProbZ,tProbVX,tProbVY,tProbVZ);
 			    //tProbX=tProbX*XKMPER/AE*1000.0;
@@ -5639,7 +5666,7 @@ void ParamProb(char *szString)
                 BSTAR = 0.0;
                 XNDD6O = 0.0;
                 XNDT2O =0.0;
-			    SGP4((dStartJD - Sat.ProbEpoch[nSat])*XMNPDA, XNDT2O,XNDD6O,BSTAR,Sat.ProbIncl[nSat], Sat.ProbAscNode[nSat],Sat.ProbEcc[nSat], 
+			    SGP4((dStartJD - Sat.ProbJD[nSat])*XMNPDA, XNDT2O,XNDD6O,BSTAR,Sat.ProbIncl[nSat], Sat.ProbAscNode[nSat],Sat.ProbEcc[nSat], 
                     Sat.ProbArgPer[nSat], Sat.ProbMeanAnom[nSat],XNO, 
 				    tProbX,tProbY,tProbZ,tProbVX,tProbVY,tProbVZ);
 			    tProbX=tProbX*XKMPER/AE*1000.0;
@@ -5649,7 +5676,7 @@ void ParamProb(char *szString)
 			    tProbVY=tProbVY*XKMPER/AE*XMNPDA/86400.*1000.0;
 			    tProbVZ=tProbVZ*XKMPER/AE*XMNPDA/86400.*1000.0;
 
-                KeplerPosition(Sat.ProbEpoch[nSat],dStartJD,      // prob epoch, and curent time
+                KeplerPosition(Sat.ProbJD[nSat],dStartJD,      // prob epoch, and curent time
 	    			    Sat.ProbTSec[nSat], // - orbit period in sec
 		    		    Sat.ProbEcc[nSat],             // - Eccentricity
                         Sat.ProbIncl[nSat],            // - Inclination
@@ -5867,7 +5894,7 @@ void ParamProb(char *szString)
                 // for today only one sattelite
                 //Sat.Elem = 1;
                 Sat.flInUse[nSat] = 1;
-                Sat.Lambda = GreenwichA;
+                //Sat.Lambda = dStartGreenwichA;
                 //Sat.Lambda  = M_PI * 15.0 / 8.0; //3.0 / 8.0; 11.0 / 8.0;
                 //Sat.M[0] = ProbM;
                 Sat.X[nSat] = tempProbX + SolarSystem.X[EARTH];
@@ -6406,7 +6433,7 @@ void dumpTRAvisual(long i)
                     ConvertJulianDayToDateAndTime(dStartJD + ((double)(i))/(24.0*60.0*60.0), &ThatTime);
                     int Iret = GetTimeZoneInformation(&tmzone); 
                     double dEpoch = ConvertDateTimeToTLEEpoch(ThatTime.wDay, ThatTime.wMonth, ThatTime.wYear, ThatTime.wHour, ThatTime.wMinute, ThatTime.wSecond, ThatTime.wMilliseconds);
-                    GreenwichA = GreenwichAscension(dEpoch);
+                    double dGreenwichA = GreenwichAscensionFromEpoch(dEpoch);
                     SUN_08 (ThatTime.wYear,
                                 iDayOfTheYearZeroBase(ThatTime.wDay, ThatTime.wMonth, ThatTime.wYear)+1 ,// in that function specified that 1 day is january 1
                                 ThatTime.wHour,ThatTime.wMinute,ThatTime.wSecond,
@@ -6434,7 +6461,7 @@ void dumpTRAvisual(long i)
             SYSTEMTIME ThatTime; 
             ConvertJulianDayToDateAndTime(dStartJD + ((double)i)/(24.0*60.0*60.0), &ThatTime);
             double dEpoch = ConvertDateTimeToTLEEpoch(ThatTime.wDay, ThatTime.wMonth, ThatTime.wYear, ThatTime.wHour, ThatTime.wMinute, ThatTime.wSecond, ThatTime.wMilliseconds);
-            GreenwichA = GreenwichAscension(dEpoch);
+            double long dGreenwichA = GreenwichAscensionFromEpoch(dEpoch);
             SUN_08 (ThatTime.wYear,
                 iDayOfTheYearZeroBase(ThatTime.wDay, ThatTime.wMonth, ThatTime.wYear) + 1 , // in fucntion spec that 1 Jan == 1 
                 ThatTime.wHour,ThatTime.wMinute,ThatTime.wSecond,
@@ -7136,7 +7163,7 @@ int main(int argc, char * argv[])
             StateEarth.Position[1]*1000.0, 
             StateEarth.Position[2]*1000.0);
          SYSTEMTIME ThatTime;
-        dStartJDEpoch = ConvertJulianDayToDateAndTime(dStartJD, &ThatTime);
+        dStartEpoch = ConvertJulianDayToDateAndTime(dStartJD, &ThatTime);
 
         for (iCurSec = 0; iCurSec < iTotalSec; iCurSec++)
 		{
@@ -7179,7 +7206,7 @@ int main(int argc, char * argv[])
                         }
                     }
                 }
-                IteraSat(1, &SolarSystem, &Sat,dStartJDEpoch + (iCurSec +   (long double)iCurPortionOfTheSecond/(long double)iItearationsPerSec) /86400.0) ;
+                IteraSat(1, &SolarSystem, &Sat,dStartEpoch + (iCurSec +   (long double)iCurPortionOfTheSecond/(long double)iItearationsPerSec) /86400.0) ;
                 IteraSolarSystem(TRUE, &SolarSystem);
                 EarthX = SolarSystem.X[EARTH];
                 EarthY = SolarSystem.Y[EARTH];
@@ -7732,10 +7759,10 @@ int main(int argc, char * argv[])
             XNDT2O =0.0;
 #endif
 
-            //(dStartJD - Sat.ProbEpoch[nSat])*XMNPDA
+            //(dStartJD - Sat.ProbEpochS[nSat])*XMNPDA
             // TimeFEpoch/60.0
             // first parameter in in minutes from epoch
-			SGP4((dStartJD + (TimeFEpoch/24.0/60.0/60.0)- Sat.ProbEpoch[iCheck])*XMNPDA, 
+			SGP4((dStartJD + (TimeFEpoch/24.0/60.0/60.0)- Sat.ProbJD[iCheck])*XMNPDA, 
                 XNDT2O,XNDD6O,BSTAR,Sat.ProbIncl[iCheck], Sat.ProbAscNode[iCheck],Sat.ProbEcc[iCheck], Sat.ProbArgPer[iCheck], Sat.ProbMeanAnom[iCheck],XNO, 
 				tProbX,tProbY,tProbZ,tProbVX,tProbVY,tProbVZ);
 			tProbX=tProbX*XKMPER/AE*1000.0;                 tProbY=tProbY*XKMPER/AE*1000.0;                 tProbZ=tProbZ*XKMPER/AE*1000.0;
