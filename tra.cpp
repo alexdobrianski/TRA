@@ -1958,7 +1958,7 @@ void IteraSat(int TimeDirection, TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfC
             Sat->VY[i] = (Sat->VY0divDt[i] + Sat->VY_[i])*TimeSl;
             Sat->VZ[i] = (Sat->VZ0divDt[i] + Sat->VZ_[i])*TimeSl;
         }
-        if (Sat->CountN > 10000.0)
+        if (Sat->CountN > 100000.0)
         {
             for (i = 0; i < Sat->Elem; i++)
             {
