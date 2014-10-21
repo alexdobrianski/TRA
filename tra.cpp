@@ -385,8 +385,125 @@ typedef struct Long_Double_Intergal_Var
         X_h =0.0;    Y_h =0.0;    Z_h =0.0;
         X_hh =0.0;   Y_hh =0.0;   Z_hh =0.0;
         CountNx = 0; CountNy = 0; CountNz = 0;
+        CountNx_h = 0; CountNy_h = 0; CountNz_h = 0;
     }
 } LONG_DOUBLE_INT_VAR, *PLONG_DOUBLE_INT_VAR;
+
+typedef struct Long_Double_Intergal_Var4
+{
+    long double X;
+    long double Y;
+    long double Z;
+
+    long double X_h;
+    long double Y_h;
+    long double Z_h;
+
+    long double X_hh;
+    long double Y_hh;
+    long double Z_hh;
+
+    long double X_hhh;
+    long double Y_hhh;
+    long double Z_hhh;
+
+    long CountNx;
+    long CountNy;
+    long CountNz;
+
+
+    long CountNx_h;
+    long CountNy_h;
+    long CountNz_h;
+
+    long CountNx_hh;
+    long CountNy_hh;
+    long CountNz_hh;
+
+
+    long double x() 
+        { 
+           return X+X_h+X_hh+X_hhh; 
+        }
+    long double y() 
+        { 
+            return Y+Y_h+Y_hh+Y_hhh; 
+        }
+    long double z() 
+        { 
+            return Z+Z_h+Z_hh+Z_hhh; 
+        }
+    void adjustX(long MaxVal, long MaxVal_h)
+    {
+        long double ldTemp, ldTemp2;
+        if (++CountNx >= MaxVal)
+        {
+            CountNx = 0;
+            ADJUST(X_h, 0, X);
+            if (++CountNx_h >= MaxVal_h)
+            {
+                CountNx_h = 0;
+                ADJUST(X_hh, 0, X_h);
+                if (++CountNx_hh >= 983)
+                {
+                    CountNx_hh = 0;
+                    ADJUST(X_hhh, 0, X_hh);
+                }
+            }
+        }
+    }
+    void adjustY(long MaxVal, long MaxVal_h)
+    {
+        long double ldTemp, ldTemp2;
+        if (++CountNy >= MaxVal)
+        {
+            CountNy = 0;
+            ADJUST(Y_h, 0, Y);
+            if (++CountNy_h >= MaxVal_h)
+            {
+                CountNy_h = 0;
+                ADJUST(Y_hh, 0, Y_h);
+                if (++CountNy_hh >= 1019)
+                {
+                    CountNy_hh = 0;
+                    ADJUST(Y_hhh, 0, Y_hh);
+                }
+            }
+        }
+    }
+    void adjustZ(long MaxVal, long MaxVal_h)
+    {
+        long double ldTemp, ldTemp2;
+        if (++CountNz >= MaxVal)
+        {
+            CountNz = 0;
+            ADJUST(Z_h, 0, Z);
+            if (++CountNz_h >= MaxVal_h)
+            {
+                CountNz_h = 0;
+                ADJUST(Z_hh, 0, Z_h);
+                if (++CountNz_hh >= 1307)
+                {
+                    CountNz_hh = 0;
+                   ADJUST(Z_hhh, 0, Z_hh);
+                }
+            }
+        }
+    }
+
+    void ZeroIntegral (void)
+    {
+        X = 0.0;      Y = 0.0;      Z = 0.0;
+        X_h =0.0;    Y_h =0.0;    Z_h =0.0;
+        X_hh =0.0;   Y_hh =0.0;   Z_hh =0.0;
+        X_hhh =0.0;   Y_hhh =0.0;   Z_hhh =0.0;
+        CountNx = 0; CountNy = 0; CountNz = 0;
+        CountNx_h = 0; CountNy_h = 0; CountNz_h = 0;
+        CountNx_hh = 0; CountNy_hh = 0; CountNz_hh = 0;
+    }
+} LONG_DOUBLE_INT_VAR4, *PLONG_DOUBLE_INT_VAR4;
+
+
 typedef struct TraObj
 {
     int Elem;
@@ -486,17 +603,17 @@ typedef struct TraObj
 
     LONG_DOUBLE_INT_VAR ssOdd[PLANET_COUNT];
 
-    LONG_DOUBLE_INT_VAR ssfEven[PLANET_COUNT];
+    LONG_DOUBLE_INT_VAR4 ssfEven[PLANET_COUNT];
 
-    LONG_DOUBLE_INT_VAR ssfOdd[PLANET_COUNT];
+    LONG_DOUBLE_INT_VAR4 ssfOdd[PLANET_COUNT];
 
     LONG_DOUBLE_INT_VAR sOdd[PLANET_COUNT];
 
     LONG_DOUBLE_INT_VAR sEven[PLANET_COUNT];
 
-    LONG_DOUBLE_INT_VAR sfOdd[PLANET_COUNT];
+    LONG_DOUBLE_INT_VAR4 sfOdd[PLANET_COUNT];
 
-    LONG_DOUBLE_INT_VAR sfEven[PLANET_COUNT];
+    LONG_DOUBLE_INT_VAR4 sfEven[PLANET_COUNT];
 
 //   ====================================================================
 //   vars used in iterations for a integral calculations
@@ -626,7 +743,7 @@ typedef struct TraObj
         //Lambda = -0.000625;    // orbit 0 for position for velosity it is 0
         //Lambda = 0.007421875;      // orbit 5
         //Lambda = -0.0077584798140724316715348723974075 ;//+ 
-        //Lambda = ((double)iCurSec) /24.0/60.0/60.0 /365.25 * M_PI* 2.0;
+        //Lambda = -0.8 * ((double)iCurSec) /24.0/60.0/60.0;
         //Lambda = 0;//0.025;
         //Lambda =0.03934489311022016027702600566773/2;//
         //Lambda =-0.0024711490343553411599869836126428;//0.02181661564992911971154613460611;//2.82;//-Lambda - M_PI/12.0/60.0*5;// -Lambda;// - dStartGreenwichA + (6.1454312968999147 - 1.7564866843458731);
@@ -636,7 +753,9 @@ typedef struct TraObj
         //Lambda +=3.1415926535897932384626433832795;
         //Lambda +=3.9269908169872415480783042290994; //5/4 pi
         //Lambda +=3.5342917352885173932704738061894;//9/8 pi
-        //Lambda = -Lambda;
+        if (Lambda > 2*M_PI)
+            Lambda = fmod(Lambda, (long double)M_PI);
+        Lambda = -Lambda;
         //if (Lambda != -2)
 
         //Lambda =  Lambda +M_PI/2;
@@ -647,10 +766,85 @@ typedef struct TraObj
         //Lambda =  Lambda -M_PI;
         //Lambda = -Lambda +M_PI;
         //Lambda = -Lambda -M_PI;
-        Lambda = -Lambda; // 47.537662 err(X=25.926414 V=0.063977) min=92  // 30.904266 err(X=7928921.017762 V=19913.856377) min=920
-        //Lambda = 0;       // 47.537460 err(X=51.049379 V=0.056969) min=92
+        //Lambda = -Lambda; // 47.537662 err(X=25.926414 V=0.063977) min=92  // 30.904266 err(X=7928921.017762 V=19913.856377) min=920
+        //Lambda = 1/365.25 / M_PI/ 2.0;       // 47.537460 err(X=51.049379 V=0.056969) min=92
+        // Lambda = -1/365.25 / M_PI/ 2.0;
+        //Lambda = 0 ;
+        //Lambda = 0.1;
+        //Lambda = 0.2;
+        //Lambda = 0.25;
+        //Lambda = 0.3;
+        //Lambda = 0.35;
+        //Lambda = 0.375;
+        //Lambda = 0.4;
+        //Lambda = 0.5;
+        //Lambda = 0.6;
+        //Lambda = 0.7;
+        //Lambda = 0.8;
+        //Lambda = 0.9;
+        //Lambda = 1.0;
+        //Lambda = 1.1;
+        //Lambda = 1.2;
+        //Lambda = 1.3;
+        //Lambda = 1.4;
+        //Lambda = 1.5;
+        //Lambda = 1.6;
+        //Lambda = 1.7;
+        //Lambda = 1.8;
+        //Lambda = 1.9;
+        //Lambda = 2.0;
+        // Lambda = 2.1;
+        //Lambda = 2.2;
+        //Lambda = 2.3;
+        //Lambda = 2.4;
+        //Lambda = 2.45;
+        //Lambda = 2.5;
+        //Lambda = 2.6;
+        //Lambda = 2.7;
+        //Lambda = 2.8;
+        //Lambda = 2.9;
+        //Lambda = 3.0;
+        //Lambda = 3.1;
+        //Lambda = 3.2;
+        //Lambda = 3.3;
+        //Lambda = 3.4;
+        //Lambda = 3.45;
+        //Lambda = 3.5;
+        // Lambda = 3.55; 
+        //Lambda = 3.555; 
+        // Lambda = 3.6;
+        //Lambda = 3.625;
+        //Lambda = 3.65;
+        //Lambda = 3.7;
+        //Lambda = 3.8;
+        //Lambda = 3.9;
+        //Lambda = 4.0;
+        //Lambda = 4.1;
+        //Lambda = 4.2;
+        //Lambda = 4.3;
+        //Lambda = 4.4;
+        //Lambda = 4.5;
+        //Lambda = 4.6;
+        //Lambda = 4.7;
+        //Lambda = 4.8;
+        //Lambda = 4.9;
+        //Lambda = 5.0;
+        //Lambda = 5.1;
+        //Lambda = 5.2;
+        //Lambda = 5.3;
+        //Lambda = 5.4;
+        //Lambda = 5.5; 
+        //Lambda = 5.6;  
+        //Lambda = 5.7;     
+        //Lambda = 5.8;
+        //Lambda = 5.9; 
+        // Lambda = 5.95; 
+        //Lambda = 6.0;
+        //Lambda = 6.05;
+        //Lambda = 6.1;
+        //Lambda = 6.2;
 
-        {
+         {
             //tempX = cos(Lambda) * XdivR - sin(Lambda) * YdivR;
             //tempY = sin(Lambda) * XdivR + cos(Lambda) * YdivR;
             //XdivR = tempX;YdivR = tempY;
@@ -2256,19 +2450,28 @@ void IteraSat(int TimeDirection, TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfC
 
         // now adjust presision == all number must be different and prime to randomize error
         
-        Sat->SmE[i].adjustX(10103,10111);      Sat->SmE[i].adjustY(10133,10139);      Sat->SmE[i].adjustZ(10141,10151);
-        Sat->SmO[i].adjustX(10159,10163);      Sat->SmO[i].adjustY(10169,10177);      Sat->SmO[i].adjustZ(10181,10193);
+        Sat->SmE[i].adjustX(10103,10163);      Sat->SmE[i].adjustY(10463,10559);      Sat->SmE[i].adjustZ(10607,10667);
+        Sat->SmO[i].adjustX(10799,10883);      Sat->SmO[i].adjustY(11279,11423);      Sat->SmO[i].adjustZ(11483,11699);
 
-        Sat->ssEven[i].adjustX(10211,10223);   Sat->ssEven[i].adjustY(10243,10247);   Sat->ssEven[i].adjustZ(10253,10259);
-        Sat->ssOdd[i].adjustX(10267,10271);    Sat->ssOdd[i].adjustY(10273,10289);    Sat->ssOdd[i].adjustZ(10301,10303);
-        Sat->ssfEven[i].adjustX(10313,10321);  Sat->ssfEven[i].adjustY(10331,10333);  Sat->ssfEven[i].adjustZ(10337,10343);
-        Sat->ssfOdd[i].adjustX(10357,10369);   Sat->ssfOdd[i].adjustY(10391,10399);   Sat->ssfOdd[i].adjustZ(10427,10429);
+        Sat->ssEven[i].adjustX(11807,12107);   Sat->ssEven[i].adjustY(12203,12227);   Sat->ssEven[i].adjustZ(12263,12347);
+        Sat->ssOdd[i].adjustX(12527,12539);    Sat->ssOdd[i].adjustY(12647,12659);    Sat->ssOdd[i].adjustZ(12899,12983);
 
-        Sat->sOdd[i].adjustX(10433,10453);     Sat->sOdd[i].adjustY(10457,10459);     Sat->sOdd[i].adjustZ(10463,10477);
-        Sat->sEven[i].adjustX(10487,10499);    Sat->sEven[i].adjustY(10501,10513);    Sat->sEven[i].adjustZ(10529,10531);
-        Sat->sfOdd[i].adjustX(10559,10567);    Sat->sfOdd[i].adjustY(10589,10597);    Sat->sfOdd[i].adjustZ(10601,10607);
-        Sat->sfEven[i].adjustX(10613,10627);   Sat->sfEven[i].adjustY(10631,10639);   Sat->sfEven[i].adjustZ(10651,10657);
         
+
+        Sat->sOdd[i].adjustX(13043,13103);     Sat->sOdd[i].adjustY(13127,13163);     Sat->sOdd[i].adjustZ(13799,13967);
+        Sat->sEven[i].adjustX(14087,14159);    Sat->sEven[i].adjustY(14207,14243);    Sat->sEven[i].adjustZ(14303,14387);
+
+        //Sat->ssfEven[i].adjustX(10313,10321);  Sat->ssfEven[i].adjustY(10331,10333);  Sat->ssfEven[i].adjustZ(10337,10343);
+        //Sat->ssfOdd[i].adjustX(10357,10369);   Sat->ssfOdd[i].adjustY(10391,10399);   Sat->ssfOdd[i].adjustZ(10427,10429);
+        //Sat->sfOdd[i].adjustX(10559,10567);    Sat->sfOdd[i].adjustY(10589,10597);    Sat->sfOdd[i].adjustZ(10601,10607);
+        //Sat->sfEven[i].adjustX(10613,10627);   Sat->sfEven[i].adjustY(10631,10639);   Sat->sfEven[i].adjustZ(10651,10657);
+
+
+        Sat->ssfEven[i].adjustX(1319,1367);  Sat->ssfEven[i].adjustY(1439,1487);  Sat->ssfEven[i].adjustZ(1523,1619);
+        Sat->ssfOdd[i].adjustX(2027,2039);   Sat->ssfOdd[i].adjustY(2063,2099);   Sat->ssfOdd[i].adjustZ(2447,2459);
+        Sat->sfOdd[i].adjustX(2579,2963);    Sat->sfOdd[i].adjustY(2999,3023);    Sat->sfOdd[i].adjustZ(3119,3167);
+        Sat->sfEven[i].adjustX(3203,3467);   Sat->sfEven[i].adjustY(3623,3779);   Sat->sfEven[i].adjustZ(3803,3863);
+
    }
 }
 
@@ -6163,8 +6366,8 @@ void ParamProb(char *szString)
                 long double Betta;
                 for (int k = 0; k < MAX_COEF_J; k++)
                 {
-                    Sat.CNK[n][k] = Clm[k][n];
-                    Sat.SNK[n][k] = Slm[k][n];
+                    Sat.CNK[n][k] = Clm[n][k];
+                    Sat.SNK[n][k] = Slm[n][k];
                     Factor1 =1.0;
                     Factor2 =1.0;
                     for (int m= n-k; m >=1; m--)
