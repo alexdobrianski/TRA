@@ -753,9 +753,9 @@ typedef struct TraObj
         //Lambda +=3.1415926535897932384626433832795;
         //Lambda +=3.9269908169872415480783042290994; //5/4 pi
         //Lambda +=3.5342917352885173932704738061894;//9/8 pi
-        if (Lambda > 2*M_PI)
-            Lambda = fmod(Lambda, (long double)M_PI);
-        Lambda = -Lambda;
+        //if (Lambda > 2*M_PI)
+        //    Lambda = fmod(Lambda, (long double)M_PI);
+        //Lambda = -Lambda;
         //if (Lambda != -2)
 
         //Lambda =  Lambda +M_PI/2;
@@ -766,7 +766,7 @@ typedef struct TraObj
         //Lambda =  Lambda -M_PI;
         //Lambda = -Lambda +M_PI;
         //Lambda = -Lambda -M_PI;
-        //Lambda = -Lambda; // 47.537662 err(X=25.926414 V=0.063977) min=92  // 30.904266 err(X=7928921.017762 V=19913.856377) min=920
+        Lambda = -Lambda; // 47.537662 err(X=25.926414 V=0.063977) min=92  // 30.904266 err(X=7928921.017762 V=19913.856377) min=920
         //Lambda = 1/365.25 / M_PI/ 2.0;       // 47.537460 err(X=51.049379 V=0.056969) min=92
         // Lambda = -1/365.25 / M_PI/ 2.0;
         //Lambda = 0 ;
@@ -866,11 +866,12 @@ typedef struct TraObj
 
         SinTetta = sinTetta;
 #define CPV 0.0000005
-
+#if 0
         if ((XdivRval > -CPV) && (XdivRval < CPV))
             return 1;
         if ((YdivRval > -CPV) && (YdivRval < CPV))
             return 2;
+#endif
 #define _ACCOUNT_SIN
 
 #ifndef _ACCOUNT_SIN
@@ -1348,6 +1349,11 @@ typedef struct TraObj
 #endif
             }
         }
+        long double tempX = cos(-Lambda) * X - sin(-Lambda) * Y;
+        long double tempY = sin(-Lambda) * X + cos(-Lambda) * Y;
+        X = tempX;
+        Y = tempY;
+#if 0
         if (((XdivRval > CPV ) || (XdivRval < -CPV )))
         {
             fx[SatCalc] = X;
@@ -1388,7 +1394,7 @@ typedef struct TraObj
                 Y = fy[SatCalc]/fsinY[SatCalc];// Z = fz[SatCalc];
             }
         }
-
+#endif
 #ifndef _ACCOUNT_SIN
         if (((SinTetta > CPV ) || (SinTetta < -CPV )))
         {
@@ -1973,9 +1979,14 @@ void CalcSatForces(TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfCalc)
                     //Sat->CalcPNK(Sat->LastCosTetta);
                     //Summ = Sat->SummJ();
                     Sat->SummXYZ(i, DX,DY,DZ);
+#if 0
                     Sat->DeltaVX[i][j] =(1.0-DX);
                     Sat->DeltaVY[i][j] =(1.0-DY);
+#else
+                    Sat->DeltaVX[i][j] =(DX);
+                    Sat->DeltaVY[i][j] =(DY);
 
+#endif
 #ifndef _ACCOUNT_SIN
                     Sat->DeltaVZ[i][j] =(1.0-DZ);
 #else
@@ -2004,9 +2015,13 @@ void CalcSatForces(TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfCalc)
             //continue;
             if (j == Sat->LegBody)
             {
+#if 0
                 Sat->FX[i] += -( Sat->X[i] - SlS->X[j]) *Sat->DeltaVX[i][j] * Sat->ForceDD[i][j]/Sat->Distance[i][j];
                 Sat->FY[i] += -( Sat->Y[i] - SlS->Y[j]) *Sat->DeltaVY[i][j]* Sat->ForceDD[i][j]/Sat->Distance[i][j];
-
+#else
+                Sat->FX[i] += -( Sat->X[i] - SlS->X[j])  * Sat->ForceDD[i][j]/Sat->Distance[i][j] + Sat->DeltaVX[i][j]*SlS->GM[j]/ Sat->Distance2[i][j];
+                Sat->FY[i] += -( Sat->Y[i] - SlS->Y[j])  * Sat->ForceDD[i][j]/Sat->Distance[i][j] + Sat->DeltaVY[i][j]*SlS->GM[j]/ Sat->Distance2[i][j];
+#endif
 #ifndef _ACCOUNT_SIN
                 Sat->FZ[i] += -( Sat->Z[i] - SlS->Z[j]) *Sat->DeltaVZ[i][j] * Sat->ForceDD[i][j]/Sat->Distance[i][j];
 #else
@@ -6366,8 +6381,8 @@ void ParamProb(char *szString)
                 long double Betta;
                 for (int k = 0; k < MAX_COEF_J; k++)
                 {
-                    Sat.CNK[n][k] = Clm[n][k];
-                    Sat.SNK[n][k] = Slm[n][k];
+                    Sat.CNK[n][k] = Clm[k][n];
+                    Sat.SNK[n][k] = Slm[k][n];
                     Factor1 =1.0;
                     Factor2 =1.0;
                     for (int m= n-k; m >=1; m--)
