@@ -915,7 +915,7 @@ typedef struct TraObj
         // derivatives for dK(Pn(sinTetta))/d(sinTetta)**K
         for (n= 2;n <=iLeg;n++)
         {
-            for (k = 2; k<=n;k++)
+            for (k = 2; k<=n+1;k++)
             {
                 Pnk_tilda[n][k] = (2*n-1) * Pnk_tilda[n-1][k-1] - Pnk_tilda[n-2][k];
             }
@@ -8210,7 +8210,7 @@ int main(int argc, char * argv[])
             double errAngle =  acos(errorCos);
             double errorD = sqrt(tVX*tVX + tVY*tVY + tVZ*tVZ)/sqrt(tProbVX*tProbVX + tProbVY*tProbVY + tProbVZ*tProbVZ);
             double SinAngle = tZ / sqrt(tX*tX + tY*tY + tZ*tZ);
-            if (iCurSec%(60) == 0)
+            if (iCurSec%(60*92) == 0)
             {
                     printf("\n%f err(X=%f V=%f) min=%d ",(asin(SinAngle)*180/M_PI),tttX,tttVX, iCurSec/60);
             }
