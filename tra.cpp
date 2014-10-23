@@ -181,15 +181,28 @@ void write_JPEG_file (char * filename, int quality, int SizeW, int SizeH, int Si
     //          (r0/r)**8 *P88(sinPHI) * (C88 * cos(8*Lambda) + S86*sin(8*Lambda))         )
 
     // moon 0.0002027
+
+
 #define MAX_COEF_J 18
-//long  double GM_MODEL = 3.986004415E5;
+#define USE_MODEL_1
+#ifdef USE_MODEL_0
+long  double GM_MODEL = 3.986004415E5;
+#define R0_MODEL 637813.7
+#endif
+
+#ifdef USE_MODEL_1
+long  double GM_MODEL = 3.986004415E5;
+#define R0_MODEL 6378136.30
+#endif
+#ifdef USE_MODEL_2
+long  double GM_MODEL = 3.986004415E5;
+#define R0_MODEL 6378136.30
+#endif
+#ifdef USE_MODEL_3
 long  double GM_MODEL = 3.986004418E5;
-//double R0_MODEL = 6378136.30; // in m
-//#define R0_MODEL 6378136.30
 #define R0_MODEL 6378137
-//#define R0_MODEL 6378000.00
-//#define R0_MODEL 6379137.0
-#if 1
+#endif 
+#ifdef USE_MODEL_3
 long double ClmNN[MAX_COEF_J][MAX_COEF_J] = {
     //0             1                    2                   3                   4                   5                   6                  7                     8                   9                10                  11                    12                     13               14                    15               16         17
     0.0,                  0.0,-0.484165371736E-03,  0.957254173792E-06, 0.539873863789E-06, 0.685323475630E-07,-0.149957994714E-06, 0.909789371450E-07, 0.496711667324E-07, 0.276714300853E-07, 0.526222488569E-07,-0.509613707522E-07, 0.377252636558E-07, 0.422982206413E-07,-0.242786502921E-07, 0.147910068708E-08,-0.315322986722E-08,0,
@@ -271,8 +284,54 @@ long double SlmNN[MAX_COEF_J][MAX_COEF_J] = {
     0.0,                  0.0,                0.0,                0.0,                0.0,                0.0,                0.0,                0.0,                0.0,                 0.0,                0.0,                  0,                  0,                  0,                   0,                   0,                   0,0
 };
 #endif
+
+#ifdef USE_MODEL_0
+
 long double Clm[MAX_COEF_J][MAX_COEF_J] = {//2                 3                     4                        5                   6                   7                    8             9 10 11 12 13 14 15 16 17           
-    0.0,                  0.0,-0.10826360229840e-02, 0.25324353457544E-05, 0.16193312050719e-05, 0.22771610163688E-06,-0.53964849049834e-06, 0.35136844210318e-06, 0.20251871520885e-06, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0.0,                  0.0, -0.10826360229840e-02,   0.25325160653E-05,   0.16185636000E-05,    0.2266690830E-06,    -0.5390785906e-06,                    0,                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0.0,                  0.0,       +0.2194691e-09,                    0,                    0,                    0,                    0,                    0,                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0.0,                  0.0,    0.15744102040e-05,                    0,                    0,                    0,                    0,                    0,                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0.0,                  0.0,                  0.0,                    0,                    0,                    0,                    0,                    0,                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0.0,                  0.0,                  0.0,                  0.0,                    0,                    0,                    0,                    0,                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0.0,                  0.0,                  0.0,                  0.0,                  0.0,                    0,                    0,                    0,                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0.0,                  0.0,                  0.0,                  0.0,                  0.0,                    0,                    0,                    0,                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0.0,                  0.0,                  0.0,                  0.0,                  0.0,                    0,                    0,                    0,                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0.0,                  0.0,                  0.0,                  0.0,                  0.0,                    0,                    0,                    0,                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+
+ };
+long double Slm[MAX_COEF_J][MAX_COEF_J] = {
+    0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0.0,                  0.0,      +0.15362834e-08,                    0,                    0,                    0,                    0,                    0,                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0.0,                  0.0,    -0.9037571782e-06,                    0,                    0,                    0,                    0,                    0,                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0.0,                  0.0,                  0.0,                    0,                    0,                    0,                    0,                    0,                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0.0,                  0.0,                  0.0,                    0,                    0,                    0,                    0,                    0,                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0.0,                  0.0,                  0.0,                    0,                    0,                    0,                    0,                    0,                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0.0,                  0.0,                  0.0,                    0,                    0,                    0,                    0,                    0,                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0.0,                  0.0,                  0.0,                    0,                    0,                    0,                    0,                    0,                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0.0,                  0.0,                  0.0,                    0,                    0,                    0,                    0,                    0,                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+};
+#else
+
+long double Clm[MAX_COEF_J][MAX_COEF_J] = {//2                 3                     4                        5                   6                   7                    8             9 10 11 12 13 14 15 16 17           
+    0.0,                  0.0,-0.10826260745913e-02, 0.25324353457544E-05, 0.16193312050719e-05, 0.22771610163688E-06,-0.53964849049834e-06, 0.35136844210318e-06, 0.20251871520885e-06, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	0.0,                  0.0,-0.24140000522221e-09, 0.21927988018965e-05,-0.50872530365024e-06,-0.53716510187662e-07,-0.59877976856303e-07, 0.20514872797672e-06, 0.16034587141379e-07, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	0.0,                  0.0, 0.15745360427672e-05, 0.30901604455583e-06, 0.78412230752366e-07, 0.10559053538674e-06, 0.60120988437373e-08, 0.32844904836492e-07, 0.65765423316743e-08, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	0.0,                  0.0,                  0.0, 0.10055885741455e-06, 0.59215743214072e-07,-0.14926153867389e-07, 0.11822664115915e-08, 0.35285405191512e-08,-0.19463581555399e-09, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -313,6 +372,8 @@ long double Slm[MAX_COEF_J][MAX_COEF_J] = {
     0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0,                  0.0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 };
 
+
+#endif
 long double GST,SLONG,SRASN, SDEC;
 long double dStartGreenwichA = 0.0;
 long double TotalDays;
@@ -747,10 +808,10 @@ typedef struct TraObj
         //Lambda =  -Lambda -M_PI/2;            // 0 - 162 2 - 152 4 - 101
         //Lambda =  Lambda -M_PI/2;//           // 0 - 164 2 - 143 4 - 147
         //Lambda = -Lambda +M_PI;               // 0 - 082 2 - 106 4 - 048
-        Lambda =  Lambda -3*M_PI/2;           // 0 - 052 2 - 059 4 - 149 5 - 038 6 - 103
+        //Lambda =  Lambda -3*M_PI/2;           // 0 - 052 2 - 059 4 - 149 5 - 038 6 - 103
         //Lambda = -Lambda +M_PI/2;             // 0 - 047 2 - 149 4 - 159
         //Lambda =  Lambda +M_PI/2;             // 0 - 052 2 - 059 4 - 149
-        //Lambda = - Lambda;                    // 0 - 161 2 - 134 4 - 161
+        Lambda = - Lambda;                    // 0 - 161 2 - 134 4 - 161
         //Lambda = - Lambda + M_PI; // 0 min - 082 2 - 059 4 - 149
         //Lambda =0 ;
         //Lambda = 0.1;
@@ -880,7 +941,7 @@ typedef struct TraObj
         P[1] = sinTetta;
         Pnk_tilda[0][0] = P[0];
         Pnk_tilda[1][0] = P[1];
-        for (n = 2; n <=iLeg+1; n++)
+        for (n = 2; n <=iLeg; n++)
         {
             // page 90- formula 8
             // (n + 1)Pn+1(z) - (2n + 1)zPn(z) + nPn-1(z) = 0 =>
@@ -898,6 +959,7 @@ typedef struct TraObj
         }
         // derivetiveas from legandr fucntions
         Ptilda[0] = 0; // P0 was constant == P0' == 0
+#if 0
         Ptilda[1] = 1; // P1 was a X == P1' == 1
 
         Pnk_tilda[0][1] = Ptilda[0];
@@ -908,6 +970,16 @@ typedef struct TraObj
             Ptilda[n] = n * P[n-1] + sinTetta * Ptilda[n-1];
             Pnk_tilda[n][1] = Ptilda[n];
         }
+#else
+        Pnk_tilda[0][1] = Ptilda[0];
+        for (n=1;n<=iLeg;n++)
+        {   // all derivatives
+            // for P2' == 2* P1 + sin(tetta) * 1
+            Ptilda[n] = n * P[n-1] + sinTetta * Ptilda[n-1];
+            Pnk_tilda[n][1] = Ptilda[n];
+        }
+
+#endif
         for (k= 2;k <=iLeg+1;k++)
         {
             Pnk_tilda[0][k] = 0; Pnk_tilda[1][k] = 0;
@@ -981,6 +1053,13 @@ typedef struct TraObj
 
             D_Qnk_Dxr[n][0] = 0;
             D_Qnk_Dyr[n][0] = 0;
+            //XkDxr = XkDxrPrev*XdivR + XkPrev          - YkDxrPrev*YdivR;
+            //XkDyr = XkDyrPrev*XdivR - YkDyrPrev*YdivR - YkPrev;
+            //YkDxr = YkDxrPrev*XdivR + YkPrev          + XkDxrPrev*YdivR;
+            //YkDyr = YkDyrPrev*XdivR + XkDyrPrev*YdivR + XkPrev;
+
+            //D_Qnk_Dxr[n][0] = CNK[n][k]*XkDxr + SNK[n][k]*YkDxr;
+            //D_Qnk_Dyr[n][0] = CNK[n][k]*XkDyr + SNK[n][k]*YkDyr;
             for (k = 1; k <=n; k++)
             {
                 Xk = XkPrev*XdivR - YkPrev*YdivR;
@@ -2006,6 +2085,7 @@ void CalcSatForces(TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfCalc)
         }
     }
 }
+//#define VERY_BASIC
 #ifdef VERY_BASIC
 void IteraSolarSystem(BOOL ForceWasCalculated, TRAOBJ * SlS)
 {
@@ -2041,9 +2121,9 @@ void IteraSat(int TimeDirection, TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfC
         Sat->VY[i] += Sat->FY[i] * TimeSl /* Sat->M[i]*/;
         Sat->VZ[i] += Sat->FZ[i] * TimeSl /* Sat->M[i]*/;
 
-        Sat->X[i] += Sat->VX[i]*TimeSl;
-        Sat->Y[i] += Sat->VY[i]*TimeSl;
-        Sat->Z[i] += Sat->VZ[i]*TimeSl;
+        Sat->X[i] +=Sat->VX[i]*TimeSl;
+        Sat->Y[i] +=Sat->VY[i]*TimeSl;
+        Sat->Z[i] +=Sat->VZ[i]*TimeSl;
 
     }
 }
@@ -4106,6 +4186,8 @@ int posn_and_vel( long double &e_epoch, long double &e_ecc, long double &e_incl,
 //#define BIG_XKE 7.43669161331734132e-2
 
 // was based in SGP4 on G=398600.8 km**3/s**2
+//#define R0_MODEL 6378136.30
+
 #define BIG_XKE .743669161E-1
 
 
@@ -6397,14 +6479,33 @@ void ParamProb(char *szString)
                     else
                         Betta = 2.0;
                      CNK = sqrt(Betta*(2*(long double)n+1) * Factor1/Factor2) * ClmNN[k][n];
-                     //Sat.CNK[n][k] = CNK;
+                     
                      SNK = sqrt(2*(Betta*(long double)n+1) * Factor1/Factor2) * SlmNN[k][n];
-                     //Sat.SNK[n][k] = SNK;
+#ifdef USE_MODEL_2
+                     Sat.CNK[n][k] = CNK;
+                     Sat.SNK[n][k] = SNK;
+#endif
+#ifdef USE_MODEL_3
+                     Sat.CNK[n][k] = CNK;
+                     Sat.SNK[n][k] = SNK;
+#endif
                 }
                 Sat.J[n] = (Clm[0][n]);
             }
             // amount of J coeff used in calcualtion
+#ifdef USE_MODEL_0
+            Sat.iLeg = 6;
+#endif
+#ifdef USE_MODEL_1
             Sat.iLeg = 8;
+#endif
+#ifdef USE_MODEL_2
+            Sat.iLeg = 16;
+#endif
+#ifdef USE_MODEL_3
+            Sat.iLeg = 16;
+#endif
+
             Sat.iLeg_longit = 0; // no longitude in calculation
             Sat.Lambda = -2;
             Sat.LegBody = EARTH;
@@ -8210,9 +8311,10 @@ int main(int argc, char * argv[])
             double errAngle =  acos(errorCos);
             double errorD = sqrt(tVX*tVX + tVY*tVY + tVZ*tVZ)/sqrt(tProbVX*tProbVX + tProbVY*tProbVY + tProbVZ*tProbVZ);
             double SinAngle = tZ / sqrt(tX*tX + tY*tY + tZ*tZ);
-            if (iCurSec%(60*92) == 0)
+            double ErrorDD = sqrt(tVX*tVX + tVY*tVY + tVZ*tVZ) - sqrt(tProbVX*tProbVX + tProbVY*tProbVY + tProbVZ*tProbVZ);
+            if (iCurSec%(60) == 0)
             {
-                    printf("\n%f err(X=%f V=%f) min=%d ",(asin(SinAngle)*180/M_PI),tttX,tttVX, iCurSec/60);
+                    printf("\n%f err(X=%f V=%f pr=%f lv=%f) min=%d ",(asin(SinAngle)*180/M_PI),tttX,tttVX, errorD, ErrorDD,iCurSec/60);
             }
             //Sat.X[0] = tProbX + SolarSystem.X[EARTH]; Sat.Y[0] = tProbY + SolarSystem.Y[EARTH]; Sat.Z[0] = tProbZ + SolarSystem.Z[EARTH];
             //Sat.VX[0] = tProbVX + SolarSystem.VX[EARTH]; Sat.VY[0] = tProbVY + SolarSystem.VY[EARTH]; Sat.VZ[0] = tProbVZ + SolarSystem.VZ[EARTH];
