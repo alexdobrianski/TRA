@@ -861,8 +861,11 @@ typedef struct TraObj
         //Lambda = 3.2;
         //Lambda = 3.3;
         //Lambda = 3.4;
+        //Lambda = 3.45;
         //Lambda = 3.5;
-        // Lambda = 3.6;
+        //Lambda = 3.55;
+        //Lambda = 3.6;
+        //Lambda = 3.65;
         //Lambda = 3.7;
         //Lambda = 3.8;
         //Lambda = 3.9;
@@ -919,6 +922,7 @@ typedef struct TraObj
         // next iteration by n
         n = 1;
         P_m_2 = P_m_1; P_m_1 = P_;
+        //P_ = sinTetta;
         P_ = sinTetta;
         memcpy(Ptilda_m_2,Ptilda_m_1, sizeof(Ptilda_m_2)); memcpy(Ptilda_m_1,Ptilda_, sizeof(Ptilda_m_1));
         //Ptilda_[1] = n * P_m_1 + sinTetta * Ptilda_m_1[1]; // P'[1]  k == '
@@ -6725,7 +6729,7 @@ void ParamProb(char *szString)
             Sat.RunOne = TRUE;
 
 #ifdef USE_MODEL_LOAD
-            Sat.iLeg = 64;
+            Sat.iLeg = 200;
             iCounter_nk_lm_Numbers =0;
             FILE *FileC_S = fopen("egm96","r");
             if (FileC_S == NULL)
@@ -6742,6 +6746,7 @@ void ParamProb(char *szString)
                 long double SNK;
                 long double Factor1;
                 long double Factor2;
+                long double Factor3;
                 long double Betta;
                 for (int k = 0; k <= n; k++)
                 {
@@ -6780,13 +6785,32 @@ void ParamProb(char *szString)
 DONE_WITH_LINE:
                     Factor1 =1.0;
                     Factor2 =1.0;
-                    for (int m= n-k; m >=1; m--)
+                    Factor3 =1.0;
+                    int m,m1;
+                    for (m= n-k; m >=1; m--)
                     {
                         Factor1 *= (long double)m;
                     }
-                    for (int m= n+k; m >=1; m--)
+                    for (m= n+k; m >=1; m--)
                     {
                         Factor2 *= (long double)m;
+                    }
+
+                    
+                    for (m = n-k, m1= n+k; (m >=1) || (m1 >=1); m--,m1--)
+                    {
+                        if ((m >= 1) && (m1 >=1))
+                        {
+                            Factor3 *= (long double)m/(long double)m1;
+                        }
+                        else if (m >= 1)
+                        {
+                            Factor3 *= (long double)m;
+                        }
+                        else // (m1 >=1)
+                        {
+                            Factor3 /= (long double)m1;
+                        }
                     }
 
                     // CNK = sqrt(2*(2*n+1)) * sqrt(((n-k)!/(n+k)!) * Clm
@@ -6795,9 +6819,15 @@ DONE_WITH_LINE:
                         Betta = 1.0;
                     else
                         Betta = 2.0;
-                     CNK = sqrt(Betta*(2*(long double)n+1) * Factor1/Factor2) * ClmNN[k][n];
+                     CNK = sqrt(Betta*(2*(long double)n+1) * Factor1/Factor2) * C_S_nk[iCounter_nk_lm_Numbers][0];
+
+                     CNK = sqrt(Betta*(2*(long double)n+1) * Factor3) * C_S_nk[iCounter_nk_lm_Numbers][0];
                      
-                     SNK = sqrt(2*(Betta*(long double)n+1) * Factor1/Factor2) * SlmNN[k][n];
+                     SNK = sqrt(2*(Betta*(long double)n+1) * Factor1/Factor2) * C_S_nk[iCounter_nk_lm_Numbers][1];
+
+                     SNK = sqrt(2*(Betta*(long double)n+1) * Factor3) * C_S_nk[iCounter_nk_lm_Numbers][1];
+
+
                      if (iCounter_nk_lm_Numbers == 0 && n < 2)
                          continue;
                      nk_lm_Numbers[iCounter_nk_lm_Numbers][0] = n;
@@ -6839,20 +6869,27 @@ DONE_WITH_LINE:
                 long double SNK;
                 long double Factor1;
                 long double Factor2;
+                long double Factor3;
                 long double Betta;
                 for (int k = 0; k <= n; k++)
                 {
                     Sat.CNK[n][k] = Clm[k][n];
                     Sat.SNK[n][k] = Slm[k][n];
-                    Factor1 =1.0;
-                    Factor2 =1.0;
-                    for (int m= n-k; m >=1; m--)
+                    int m,m1;
+                    for (m = n-k, m1= n+k; (m >=1) || (m1 >=1); m--,m1--)
                     {
-                        Factor1 *= (long double)m;
-                    }
-                    for (int m= n+k; m >=1; m--)
-                    {
-                        Factor2 *= (long double)m;
+                        if ((m >= 1) && (m1 >=1))
+                        {
+                            Factor3 *= (long double)m/(long double)m1;
+                        }
+                        else if (m >= 1)
+                        {
+                            Factor3 *= (long double)m;
+                        }
+                        else // (m1 >=1)
+                        {
+                            Factor3 /= (long double)m1;
+                        }
                     }
 
                     // CNK = sqrt(2*(2*n+1)) * sqrt(((n-k)!/(n+k)!) * Clm
@@ -6861,9 +6898,9 @@ DONE_WITH_LINE:
                         Betta = 1.0;
                     else
                         Betta = 2.0;
-                     CNK = sqrt(Betta*(2*(long double)n+1) * Factor1/Factor2) * ClmNN[k][n];
+                     CNK = sqrt(Betta*(2*(long double)n+1) * Factor3) * ClmNN[k][n];
                      
-                     SNK = sqrt(2*(Betta*(long double)n+1) * Factor1/Factor2) * SlmNN[k][n];
+                     SNK = sqrt(2*(Betta*(long double)n+1) * Factor3) * SlmNN[k][n];
 #ifdef USE_MODEL_2
                      Sat.CNK[n][k] = CNK;
                      Sat.SNK[n][k] = SNK;
