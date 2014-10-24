@@ -113,6 +113,12 @@ void write_JPEG_file (char * filename, int quality, int SizeW, int SizeH, int Si
 	//8	7	   0.34297618184624D-12 	   0.38147656686685D-12 
 
 	//8	8	  -0.15803322891725D-12	           0.15353381397148D-12
+
+#define MAX_COEF_J 18
+#define TOTAL_COEF 360
+int iCounter_nk_lm_Numbers;
+int nk_lm_Numbers[TOTAL_COEF*TOTAL_COEF/2][2];
+long double C_S_nk[TOTAL_COEF*TOTAL_COEF/2][2];
     	
     // see http://vadimchazov.narod.ru/lepa_zov/lesat.pdf
     // P0 == P[0](x) = 1
@@ -183,8 +189,12 @@ void write_JPEG_file (char * filename, int quality, int SizeW, int SizeH, int Si
     // moon 0.0002027
 
 
-#define MAX_COEF_J 18
-#define USE_MODEL_1
+
+#define USE_MODEL_LOAD
+#ifdef USE_MODEL_LOAD
+long  double GM_MODEL = 3.986004415E5;
+#define R0_MODEL 6378136.30
+#endif
 #ifdef USE_MODEL_0
 long  double GM_MODEL = 3.986004415E5;
 #define R0_MODEL 637813.7
@@ -798,6 +808,245 @@ typedef struct TraObj
     long double D_Qnk_Dxr[MAX_COEF_J][MAX_COEF_J];
     long double D_Qnk_Dyr[MAX_COEF_J][MAX_COEF_J];
 
+    void FastSummXYZ( long double ValX, long double ValY, long double ValZ, long double ValR, long double &X, long double &Y, long double &Z)
+    {
+        int n,k;
+        long double tempX;
+        long double tempY;
+        long double sinTetta, XdivR, YdivR, tempValX, tempValY;
+        X = 0; Y = 0; Z = 0;
+        // Lambda                               // 0 - 143 2 - 165 4 - 049
+        //Lambda =  -Lambda -M_PI/2;            // 0 - 162 2 - 152 4 - 101
+        //Lambda =  Lambda -M_PI/2;//           // 0 - 164 2 - 143 4 - 147
+        //Lambda = -Lambda +M_PI;               // 0 - 082 2 - 106 4 - 048
+        //Lambda =  Lambda -3*M_PI/2;           // 0 - 052 2 - 059 4 - 149 5 - 038 6 - 103
+        //Lambda = -Lambda +M_PI/2;             // 0 - 047 2 - 149 4 - 159
+        //Lambda =  Lambda +M_PI/2;             // 0 - 052 2 - 059 4 - 149
+        Lambda = - Lambda;                    // 0 - 161 2 - 134 4 - 161
+        //Lambda = - Lambda + M_PI; // 0 min - 082 2 - 059 4 - 149
+        //Lambda =0 ;
+        //Lambda = 0.1;
+        //Lambda = 0.2;
+        //Lambda = 0.3;
+        //Lambda = 0.4;
+        //Lambda = 0.5;
+        //Lambda = 0.6;
+        //Lambda = 0.7;
+        //Lambda = 0.8;
+        //Lambda = 0.9;
+        //Lambda = 1.0;
+        //Lambda = 1.1;
+        //Lambda = 1.2;
+        //Lambda = 1.3;
+        //Lambda = 1.4;
+        //Lambda = 1.5;
+        //Lambda = 1.6;
+        //Lambda = 1.7;
+        //Lambda = 1.8;
+        //Lambda = 1.9;
+        //Lambda = 2.0;
+        //Lambda = 2.08;
+        //Lambda = 2.1;
+        //Lambda = 2.2;
+        //Lambda = 2.3;
+        //Lambda = 2.4;
+        //Lambda = 2.45;
+        //Lambda = 2.5;
+        //Lambda = 2.6;
+        //Lambda = 2.7;
+        //Lambda = 2.8;
+        //Lambda = 2.9;
+        //Lambda = 3.0;
+        //Lambda = 3.1;
+        //Lambda = 3.2;
+        //Lambda = 3.3;
+        //Lambda = 3.4;
+        //Lambda = 3.5;
+        // Lambda = 3.6;
+        //Lambda = 3.7;
+        //Lambda = 3.8;
+        //Lambda = 3.9;
+        //Lambda = 4.0;
+        //Lambda = 4.1;
+        //Lambda = 4.2;
+        //Lambda = 4.3;
+        //Lambda = 4.4;
+        //Lambda = 4.5;
+        //Lambda = 4.6;
+        //Lambda = 4.7;
+        //Lambda = 4.8;
+        //Lambda = 4.9;
+        //Lambda = 5.0;
+        //Lambda = 5.1;
+        //Lambda = 5.2;
+        //Lambda = 5.3;
+        //Lambda = 5.4;
+        //Lambda = 5.5; 
+        //Lambda = 5.6;  
+        //Lambda = 5.7;     
+        //Lambda = 5.8;
+        //Lambda = 5.9; 
+        //Lambda = 6.0;
+        //Lambda = 6.1;
+        //Lambda = 6.2;
+
+
+        tempX = cos(Lambda) * ValX - sin(Lambda) * ValY;
+        tempY = sin(Lambda) * ValX + cos(Lambda) * ValY;
+
+        sinTetta =ValZ/ValR;
+
+        XdivR =   tempX/ValR;
+        YdivR =   tempY/ValR;
+        XdivRval = XdivR;
+        YdivRval = YdivR;
+
+        SinTetta = sinTetta;
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        n = 0;  //  initial
+        long double P_m_2 = 0;
+        long double P_m_1 = 0;
+        long double P_ = 1;
+
+        long double Ptilda_m_2[TOTAL_COEF];
+        long double Ptilda_m_1[TOTAL_COEF];
+        long double Ptilda_[TOTAL_COEF];
+        for (k = 0; k < TOTAL_COEF; k++) 
+        {
+            Ptilda_[k] = 0;
+        }
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        // next iteration by n
+        n = 1;
+        P_m_2 = P_m_1; P_m_1 = P_;
+        P_ = sinTetta;
+        memcpy(Ptilda_m_2,Ptilda_m_1, sizeof(Ptilda_m_2)); memcpy(Ptilda_m_1,Ptilda_, sizeof(Ptilda_m_1));
+        //Ptilda_[1] = n * P_m_1 + sinTetta * Ptilda_m_1[1]; // P'[1]  k == '
+
+        // P = sin => d(P)/d(sin) = 1
+        Ptilda_[1] =  1;
+
+        long double R0divR_ = R0divR[1]*R0divR[1];
+        int ip = 0;
+        // loop iteration starts from n=2 k = 0
+        // formula 8 on page 92
+        for (n = 2; n <=iLeg; n++)
+        {
+            long double x,y,z;
+            x = 0;  y = 0;  z = 0;
+            // sanity check n:
+            if (n != nk_lm_Numbers[ip][0])
+                exit (1);
+            //////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            // next iteration by n
+            P_m_2 = P_m_1; P_m_1 = P_;
+            memcpy(Ptilda_m_2,Ptilda_m_1, sizeof(Ptilda_m_2)); memcpy(Ptilda_m_1,Ptilda_, sizeof(Ptilda_m_1));
+            P_ = ((2.0* n-1.0) *sinTetta * P_m_1 - (n-1)*P_m_2)/n;  // P[2]
+
+            long double XkDxrPrev =0;
+            long double XkDyrPrev =0;
+            long double YkDxrPrev =0;
+            long double YkDyrPrev =0;
+            long double XkPrev =1;
+            long double YkPrev =0;
+            long double XkDxr, XkDyr, YkDxr, YkDyr;
+            long double Xk =1;
+            long double Yk =0;
+            /////////////////////////////////////////////////////////////////////////////  k =================0
+            k = 0;
+            // sanity check k:
+            if (k != nk_lm_Numbers[ip][1])
+                exit (1);
+
+            long double Qnk_ = C_S_nk[ip][0] * Xk + C_S_nk[ip][1] * Yk;
+            // on k=0 iteration!! i.e. n=2, k=0
+            // Qnk = Cnk=0*Xk=0 +Snk=0*Yk=0
+            // Xk=0 = 1; and Yk=0 = 0;
+            // Qn0 = Cn0  => D_Qnk_Dxr =0; D_Qnk_Dyr=0
+            long double D_Qnk_Dxr_ = 0;
+            long double D_Qnk_Dyr_ = 0;
+            // k is derivative
+            long double Ptilda_nk = n * P_m_1 + sinTetta * Ptilda_m_1[1];                        // P'[2]
+
+            // J case
+            x += (-(n+1) *XdivRval * P_ * Qnk_ - Ptilda_nk *  Qnk_ * XdivRval * SinTetta   + P_ * ( D_Qnk_Dxr_*(1-XdivRval*XdivRval)- D_Qnk_Dyr_ * YdivRval*XdivRval     ));
+            y += (-(n+1) *YdivRval * P_ * Qnk_ - Ptilda_nk *  Qnk_ * YdivRval * SinTetta   + P_ * (-D_Qnk_Dxr_*XdivRval*YdivRval    + D_Qnk_Dyr_ * (1-YdivRval*YdivRval) ));
+            z += (-(n+1) *SinTetta * P_ * Qnk_ + Ptilda_nk *  Qnk_ * (1-SinTetta*SinTetta) + P_ * (-D_Qnk_Dxr_*XdivRval*SinTetta    - D_Qnk_Dyr_ * YdivRval*SinTetta     ));
+            Ptilda_[1] = Ptilda_nk; // store P'[2] for use 
+            //////////////////////////////////////////////////////////////////////////   k ==================1
+            // next iteration by k
+            ip++;
+            k = 1;
+            // sanity check k:
+            if (k != nk_lm_Numbers[ip][1])
+                exit (1);
+            Xk = XkPrev*XdivR - YkPrev*YdivR;
+            Yk = YkPrev*XdivR + XkPrev*YdivR;
+            Qnk_ = C_S_nk[ip][0] * Xk + C_S_nk[ip][1] * Yk;
+            XkDxr = XkDxrPrev*XdivR + XkPrev          - YkDxrPrev*YdivR;
+            XkDyr = XkDyrPrev*XdivR - YkDyrPrev*YdivR - YkPrev;
+            YkDxr = YkDxrPrev*XdivR + YkPrev          + XkDxrPrev*YdivR;
+            YkDyr = YkDyrPrev*XdivR + XkDyrPrev*YdivR + XkPrev;
+
+            //D(Qnk)/D(x/r) * D(x/r)/D(y) + D(Qnk)/D(y/r)
+            D_Qnk_Dxr_ = C_S_nk[ip][0]*XkDxr + C_S_nk[ip][1]*YkDxr;
+            D_Qnk_Dyr_ = C_S_nk[ip][0]*XkDyr + C_S_nk[ip][1]*YkDyr;
+            XkDxrPrev =XkDxr; XkDyrPrev =XkDyr; YkDxrPrev =YkDxr; YkDyrPrev =YkDyr;
+            XkPrev = Xk; YkPrev = Yk;
+
+            long double P_nk = Ptilda_[1]; // P'[2] == (k= 1)
+            Ptilda_nk  = n * P_m_1 + sinTetta * Ptilda_m_1[2]; // P"[2] 
+
+            x += (-(n+1) *XdivRval * P_nk * Qnk_ - Ptilda_nk *  Qnk_ * XdivRval * SinTetta   + P_nk * ( D_Qnk_Dxr_*(1-XdivRval*XdivRval)- D_Qnk_Dyr_ * YdivRval*XdivRval     ));
+            y += (-(n+1) *YdivRval * P_nk * Qnk_ - Ptilda_nk *  Qnk_ * YdivRval * SinTetta   + P_nk * (-D_Qnk_Dxr_*XdivRval*YdivRval    + D_Qnk_Dyr_ * (1-YdivRval*YdivRval) ));
+            z += (-(n+1) *SinTetta * P_nk * Qnk_ + Ptilda_nk *  Qnk_ * (1-SinTetta*SinTetta) + P_nk * (-D_Qnk_Dxr_*XdivRval*SinTetta    - D_Qnk_Dyr_ * YdivRval*SinTetta     ));
+            Ptilda_[2] = Ptilda_nk; // store P"[2] for next use
+            ////////////////////////////////////////////////////////////////////////////////////////
+            for (k = 2; k <=n; k++)
+            {
+                ////////////////////////////////////////////////////////////////////////////////////////
+                // next iteration == k ==2
+                ip++;
+
+                // sanity check k:
+                if (k != nk_lm_Numbers[ip][1])
+                    exit (1);
+                Xk = XkPrev*XdivR - YkPrev*YdivR;
+                Yk = YkPrev*XdivR + XkPrev*YdivR;
+                Qnk_ = C_S_nk[ip][0] * Xk + C_S_nk[ip][1] * Yk;
+                XkDxr = XkDxrPrev*XdivR + XkPrev          - YkDxrPrev*YdivR;
+                XkDyr = XkDyrPrev*XdivR - YkDyrPrev*YdivR - YkPrev;
+                YkDxr = YkDxrPrev*XdivR + YkPrev          + XkDxrPrev*YdivR;
+                YkDyr = YkDyrPrev*XdivR + XkDyrPrev*YdivR + XkPrev;
+
+                //D(Qnk)/D(x/r) * D(x/r)/D(y) + D(Qnk)/D(y/r)
+                D_Qnk_Dxr_ = C_S_nk[ip][0]*XkDxr + C_S_nk[ip][1]*YkDxr;
+                D_Qnk_Dyr_ = C_S_nk[ip][0]*XkDyr + C_S_nk[ip][1]*YkDyr;
+                XkDxrPrev =XkDxr; XkDyrPrev =XkDyr; YkDxrPrev =YkDxr; YkDyrPrev =YkDyr;
+                XkPrev = Xk; YkPrev = Yk;
+
+                P_nk = Ptilda_[k];
+                Ptilda_nk = (2*n-1) * Ptilda_m_1[k-1] - Ptilda_m_2[k+1];
+
+                x += (-(n+1) *XdivRval * P_nk * Qnk_ - Ptilda_nk *  Qnk_ * XdivRval * SinTetta   + P_nk * ( D_Qnk_Dxr_*(1-XdivRval*XdivRval)- D_Qnk_Dyr_ * YdivRval*XdivRval     ));
+                y += (-(n+1) *YdivRval * P_nk * Qnk_ - Ptilda_nk *  Qnk_ * YdivRval * SinTetta   + P_nk * (-D_Qnk_Dxr_*XdivRval*YdivRval    + D_Qnk_Dyr_ * (1-YdivRval*YdivRval) ));
+                z += (-(n+1) *SinTetta * P_nk * Qnk_ + Ptilda_nk *  Qnk_ * (1-SinTetta*SinTetta) + P_nk * (-D_Qnk_Dxr_*XdivRval*SinTetta    - D_Qnk_Dyr_ * YdivRval*SinTetta     ));
+                Ptilda_[k+1] = Ptilda_nk; // store P'"[2] (third derivative) for next use
+            }
+            X += x* R0divR_; Y += y *R0divR_; Z += z * R0divR_;
+            R0divR_ *= R0divR[1];
+            ////////////////////////////////////////////////////////////////////////////////////////
+            // next iteration == k ==2
+            ip++;
+        }
+        tempX = cos(-Lambda) * X - sin(-Lambda) * Y;
+        tempY = sin(-Lambda) * X + cos(-Lambda) * Y;
+        X = tempX;
+        Y = tempY;
+
+    }
+    
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     int CalcP( long double ValX, long double ValY, long double ValZ, long double ValR)
     {
         int n,k;
@@ -960,7 +1209,7 @@ typedef struct TraObj
         // derivetiveas from legandr fucntions
         Ptilda[0] = 0; // P0 was constant == P0' == 0
 #if 0
-        Ptilda[1] = 1; // P1 was a X == P1' == 1
+        Ptilda[1] = sqrt(ValX*ValX + ValY*ValY)/ValR;; // P1 was a X == P1' == 1
 
         Pnk_tilda[0][1] = Ptilda[0];
         Pnk_tilda[1][1] = Ptilda[1];
@@ -980,9 +1229,12 @@ typedef struct TraObj
         }
 
 #endif
-        for (k= 2;k <=iLeg+1;k++)
+        Pnk_tilda[0][2] = 0;
+        Pnk_tilda[1][2] = 1;
+        for (k= 3;k <=iLeg+1;k++)
         {
-            Pnk_tilda[0][k] = 0; Pnk_tilda[1][k] = 0;
+            Pnk_tilda[0][k] = 0;
+            Pnk_tilda[1][k] =0;
         }
         // derivatives for dK(Pn(sinTetta))/d(sinTetta)**K
         for (n= 2;n <=iLeg;n++)
@@ -1387,6 +1639,7 @@ typedef struct TraObj
                                  +tempVal
                     ;
 #else
+
                     Z += R0divR[n] *
                                 (-(n+1)  * SinTetta * Pnk_tilda[n][k] * Qnk[n][k] 
                                  + Pnk_tilda[n][k+1] * Qnk[n][k]*(1-SinTetta*SinTetta)
@@ -1883,6 +2136,30 @@ void CalcSatForces(TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfCalc)
             Sat->Distance[i][j] = tD_;
             Sat->ForceDD[i][j] = SlS->GM[j] /* Sat->M[i]*/ / Sat->Distance2[i][j]; // to get real force need to multiply on mass of the satellite
             //Sat->ForceDD[i][j] = SlS->GM[j] /* Sat->M[i]*/ / (R0_MODEL*R0_MODEL); // to get real force need to multiply on mass of the satellite
+#define FAST_CALCULATIONS
+#ifdef FAST_CALCULATIONS
+            Sat->ForceDD_ = Sat->ForceDD[i][j];
+            Sat->DeltaVX[i][j] =0;
+            Sat->DeltaVY[i][j] =0;
+            Sat->DeltaVZ[i][j] =0;
+
+            if (j == Sat->LegBody)
+            {
+                Sat->R0divR[0] = 1;
+                Sat->R0divR[1] = R0_MODEL/tD_;
+                if (Sat->Distance[i][j] < 20*R0_MODEL)
+                {
+                    long double ValX0 = (Sat->X[i] - SlS->X[j]);
+                    long double ValY0 = (Sat->Y[i] - SlS->Y[j]);
+                    long double ValZ0 = (Sat->Z[i] - SlS->Z[j]);
+                    Sat->FastSummXYZ(ValX0,ValY0,ValZ0,Sat->Distance[i][j],DX,DY,DZ);
+                    Sat->DeltaVX[i][j] =DX;
+                    Sat->DeltaVY[i][j] =DY;
+                    Sat->DeltaVZ[i][j] =DZ;
+                }
+            }
+
+#else
             Sat->DeltaVX[i][j] =1;
             Sat->DeltaVY[i][j] =1;
             Sat->DeltaVZ[i][j] =1;
@@ -2048,6 +2325,7 @@ void CalcSatForces(TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfCalc)
                     //GM_MODEL 3.986004415E5;
                 }
             }
+#endif
         }
     }
     // calculation of a XYZ forces
@@ -2314,9 +2592,9 @@ void IteraSat(int TimeDirection, TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfC
 
         for (i = 0; i < Sat->Elem; i++)
         {
-            Sat->X_[i] += Sat->VX_[i] + (Sat->FX[i]+Sat->SFX[i])/4;
-            Sat->Y_[i] += Sat->VY_[i] + (Sat->FY[i]+Sat->SFY[i])/4;
-            Sat->Z_[i] += Sat->VZ_[i] + (Sat->FZ[i]+Sat->SFZ[i])/4;
+            Sat->X_[i] += Sat->VX_[i] + Sat->SFX[i]/2;
+            Sat->Y_[i] += Sat->VY_[i] + Sat->SFY[i]/2;
+            Sat->Z_[i] += Sat->VZ_[i] + Sat->SFZ[i]/2;
 
             Sat->X[i] = (Sat->X0divDt2[i] + Sat->CountNx*Sat->VX0divDt[i] + Sat->X_[i]) * TimeSl_2;
             Sat->Y[i] = (Sat->Y0divDt2[i] + Sat->CountNy*Sat->VY0divDt[i] + Sat->Y_[i]) * TimeSl_2;
@@ -2447,7 +2725,7 @@ void IteraSat(int TimeDirection, TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfC
         }
         else
         {
-#if 1
+#if 0
             Sat->VX_[i] = Sat->VXminus[i] + Sat->FXm[i]/3 + (3.0*Sat->FXm[i]- Sat->FXmm[i])/2;
             Sat->VY_[i] = Sat->VYminus[i] + Sat->FYm[i]/3 + (3.0*Sat->FYm[i]- Sat->FYmm[i])/2;
             Sat->VZ_[i] = Sat->VZminus[i] + Sat->FZm[i]/3 + (3.0*Sat->FZm[i]- Sat->FZmm[i])/2;
@@ -6424,6 +6702,7 @@ void ParamProb(char *szString)
             }    
             // this is done to reduce errors and avoid unnessary 5 mul/div operations
             // temporary X_, VX_ will just added (in paralel calculations can be done actualy faster) 
+
             for (int i = 0; i <Sat.Elem; i++)
             {
                 Sat.VX_[i] = 0 ;
@@ -6445,7 +6724,111 @@ void ParamProb(char *szString)
             Sat.CountNx = 0; Sat.CountNy = 0; Sat.CountNz = 0;
             Sat.RunOne = TRUE;
 
-            for (int n = 0 ; n < MAX_COEF_J; n++)
+#ifdef USE_MODEL_LOAD
+            Sat.iLeg = 64;
+            iCounter_nk_lm_Numbers =0;
+            FILE *FileC_S = fopen("egm96","r");
+            if (FileC_S == NULL)
+            {
+                printf("\n file with C and S dose not exsists");
+                exit(555);
+            }
+            char szTemp[512];
+            for (int n = 2 ; n <= Sat.iLeg; n++)
+            {
+                //l	m	            C                                S
+	            //2	0	  -0.10826360229840D-02	                       0.0
+                long double CNK;
+                long double SNK;
+                long double Factor1;
+                long double Factor2;
+                long double Betta;
+                for (int k = 0; k <= n; k++)
+                {
+                    memset(szTemp, 0, sizeof(szTemp));
+                    fgets(szTemp, sizeof(szTemp), FileC_S);
+                    char *ptrD = szTemp;
+                    int iDataCount = 0;
+                    for (int ic= 0; ic <sizeof(szTemp); ic++,ptrD++)
+                    {
+                        if (*ptrD != ' ')
+                        {
+                            switch(iDataCount)
+                            {
+                            case 0:iDataCount++; nk_lm_Numbers[iCounter_nk_lm_Numbers][0] = atoi(ptrD);  if (nk_lm_Numbers[iCounter_nk_lm_Numbers][0] != n) { printf("\n worng C S file"); exit(777); }
+                                break;
+                            case 2:iDataCount++; nk_lm_Numbers[iCounter_nk_lm_Numbers][1] = atoi(ptrD);  if (nk_lm_Numbers[iCounter_nk_lm_Numbers][1] != k) { printf("\n worng C S file"); exit(777); }
+                                break;
+                            case 4:iDataCount++; C_S_nk[iCounter_nk_lm_Numbers][0] = atof(ptrD);  
+                                break;
+                            case 6:iDataCount++; C_S_nk[iCounter_nk_lm_Numbers][1] = atof(ptrD);  
+                                goto DONE_WITH_LINE;
+                                break;
+                            }
+                        }
+                        else
+                        {
+                            switch(iDataCount)
+                            {
+                            case 1: iDataCount++;break;
+                            case 3: iDataCount++;break;
+                            case 5: iDataCount++;break;
+                            case 7: iDataCount++;break;
+                            }
+                        }
+                    }
+DONE_WITH_LINE:
+                    Factor1 =1.0;
+                    Factor2 =1.0;
+                    for (int m= n-k; m >=1; m--)
+                    {
+                        Factor1 *= (long double)m;
+                    }
+                    for (int m= n+k; m >=1; m--)
+                    {
+                        Factor2 *= (long double)m;
+                    }
+
+                    // CNK = sqrt(2*(2*n+1)) * sqrt(((n-k)!/(n+k)!) * Clm
+                    // SNK = sqrt(2*(2*n+1) * sqrt((n-k)!/(n+k)!)) * Slm
+                    if (k == 0)
+                        Betta = 1.0;
+                    else
+                        Betta = 2.0;
+                     CNK = sqrt(Betta*(2*(long double)n+1) * Factor1/Factor2) * ClmNN[k][n];
+                     
+                     SNK = sqrt(2*(Betta*(long double)n+1) * Factor1/Factor2) * SlmNN[k][n];
+                     if (iCounter_nk_lm_Numbers == 0 && n < 2)
+                         continue;
+                     nk_lm_Numbers[iCounter_nk_lm_Numbers][0] = n;
+                     nk_lm_Numbers[iCounter_nk_lm_Numbers][1] = k;
+                     C_S_nk[iCounter_nk_lm_Numbers][0] =CNK;
+                     C_S_nk[iCounter_nk_lm_Numbers][1] =SNK;
+                     if (iCounter_nk_lm_Numbers++ >= TOTAL_COEF*TOTAL_COEF/2)
+                     {
+                         printf("\n something wrong with coef");
+                         exit(555);
+                     }
+                }
+            }
+
+#else
+            // amount of J coeff used in calcualtion
+#ifdef USE_MODEL_0
+            Sat.iLeg = 6;
+#endif
+#ifdef USE_MODEL_1
+            Sat.iLeg = 8;
+#endif
+#ifdef USE_MODEL_2
+            Sat.iLeg = 16;
+#endif
+#ifdef USE_MODEL_3
+            Sat.iLeg = 16;
+#endif
+
+            iCounter_nk_lm_Numbers =0;
+            for (int n = 0 ; n <= Sat.iLeg; n++)
             {
                 
                 //l	m	            C                                S
@@ -6457,7 +6840,7 @@ void ParamProb(char *szString)
                 long double Factor1;
                 long double Factor2;
                 long double Betta;
-                for (int k = 0; k < MAX_COEF_J; k++)
+                for (int k = 0; k <= n; k++)
                 {
                     Sat.CNK[n][k] = Clm[k][n];
                     Sat.SNK[n][k] = Slm[k][n];
@@ -6489,21 +6872,20 @@ void ParamProb(char *szString)
                      Sat.CNK[n][k] = CNK;
                      Sat.SNK[n][k] = SNK;
 #endif
+                     if (iCounter_nk_lm_Numbers == 0 && n < 2)
+                         continue;
+                     nk_lm_Numbers[iCounter_nk_lm_Numbers][0] = n;
+                     nk_lm_Numbers[iCounter_nk_lm_Numbers][1] = k;
+                     C_S_nk[iCounter_nk_lm_Numbers][0] =Sat.CNK[n][k];
+                     C_S_nk[iCounter_nk_lm_Numbers][1] =Sat.SNK[n][k];
+                     if (iCounter_nk_lm_Numbers++ >= TOTAL_COEF*TOTAL_COEF/2)
+                     {
+                         printf("\n something wrong with coef");
+                         exit(555);
+                     }
                 }
                 Sat.J[n] = (Clm[0][n]);
             }
-            // amount of J coeff used in calcualtion
-#ifdef USE_MODEL_0
-            Sat.iLeg = 6;
-#endif
-#ifdef USE_MODEL_1
-            Sat.iLeg = 8;
-#endif
-#ifdef USE_MODEL_2
-            Sat.iLeg = 16;
-#endif
-#ifdef USE_MODEL_3
-            Sat.iLeg = 16;
 #endif
 
             Sat.iLeg_longit = 0; // no longitude in calculation
