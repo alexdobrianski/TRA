@@ -999,7 +999,8 @@ typedef struct TraObj
             XkPrev = Xk; YkPrev = Yk;
 
             long double P_nk = Ptilda_[1]; // P'[2] == (k= 1)
-            Ptilda_nk  = n * P_m_1 + sinTetta * Ptilda_m_1[2]; // P"[2] 
+            //Ptilda_nk  = n * Ptilda_[1] + sinTetta * Ptilda_m_1[2]; // P"[2] 
+            Ptilda_nk  = (2*n-1) * Ptilda_m_1[1] - Ptilda_m_2[2];
 
             x += (-(n+1) *XdivRval * P_nk * Qnk_ - Ptilda_nk *  Qnk_ * XdivRval * SinTetta   + P_nk * ( D_Qnk_Dxr_*(1-XdivRval*XdivRval)- D_Qnk_Dyr_ * YdivRval*XdivRval     ));
             y += (-(n+1) *YdivRval * P_nk * Qnk_ - Ptilda_nk *  Qnk_ * YdivRval * SinTetta   + P_nk * (-D_Qnk_Dxr_*XdivRval*YdivRval    + D_Qnk_Dyr_ * (1-YdivRval*YdivRval) ));
@@ -1030,7 +1031,7 @@ typedef struct TraObj
                 XkPrev = Xk; YkPrev = Yk;
 
                 P_nk = Ptilda_[k];
-                Ptilda_nk = (2*n-1) * Ptilda_m_1[k-1] - Ptilda_m_2[k+1];
+                Ptilda_nk = (2*n-1) * Ptilda_m_1[k] - Ptilda_m_2[k+1];
 
                 x += (-(n+1) *XdivRval * P_nk * Qnk_ - Ptilda_nk *  Qnk_ * XdivRval * SinTetta   + P_nk * ( D_Qnk_Dxr_*(1-XdivRval*XdivRval)- D_Qnk_Dyr_ * YdivRval*XdivRval     ));
                 y += (-(n+1) *YdivRval * P_nk * Qnk_ - Ptilda_nk *  Qnk_ * YdivRval * SinTetta   + P_nk * (-D_Qnk_Dxr_*XdivRval*YdivRval    + D_Qnk_Dyr_ * (1-YdivRval*YdivRval) ));
@@ -6729,7 +6730,7 @@ void ParamProb(char *szString)
             Sat.RunOne = TRUE;
 
 #ifdef USE_MODEL_LOAD
-            Sat.iLeg = 200;
+            Sat.iLeg = 10;
             iCounter_nk_lm_Numbers =0;
             FILE *FileC_S = fopen("egm96","r");
             if (FileC_S == NULL)
