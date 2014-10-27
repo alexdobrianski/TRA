@@ -192,8 +192,10 @@ long double C_S_nk[TOTAL_COEF*TOTAL_COEF/2][2];
 
 #define USE_MODEL_LOAD
 #ifdef USE_MODEL_LOAD
-long  double GM_MODEL = 3.986004415E5;
-#define R0_MODEL 6378136.30
+//long  double GM_MODEL = 3.986004415E5;
+//#define R0_MODEL 6378136.30
+long double GM_MODEL = 398600.44150e9;
+#define R0_MODEL   6378136.30
 #endif
 #ifdef USE_MODEL_0
 long  double GM_MODEL = 3.986004415E5;
@@ -822,9 +824,9 @@ typedef struct TraObj
         //Lambda =  Lambda -3*M_PI/2;           // 0 - 052 2 - 059 4 - 149 5 - 038 6 - 103
         //Lambda = -Lambda +M_PI/2;             // 0 - 047 2 - 149 4 - 159
         //Lambda =  Lambda +M_PI/2;             // 0 - 052 2 - 059 4 - 149
-        Lambda = - Lambda;                    // 0 - 161 2 - 134 4 - 161
+        //Lambda = - Lambda;                    // 0 - 161 2 - 134 4 - 161
         //Lambda = - Lambda + M_PI; // 0 min - 082 2 - 059 4 - 149
-        //Lambda =0 ;
+        //Lambda =0 ;    // 0.534817
         //Lambda = 0.1;
         //Lambda = 0.2;
         //Lambda = 0.3;
@@ -834,7 +836,7 @@ typedef struct TraObj
         //Lambda = 0.7;
         //Lambda = 0.8;
         //Lambda = 0.9;
-        //Lambda = 1.0;
+        //Lambda = 1.0;  // 0.261425      //  0.063522
         //Lambda = 1.1;
         //Lambda = 1.2;
         //Lambda = 1.3;
@@ -844,7 +846,7 @@ typedef struct TraObj
         //Lambda = 1.7;
         //Lambda = 1.8;
         //Lambda = 1.9;
-        //Lambda = 2.0;
+        //Lambda = 2.0;  // 0.866801      // 0.064737
         //Lambda = 2.08;
         //Lambda = 2.1;
         //Lambda = 2.2;
@@ -855,31 +857,46 @@ typedef struct TraObj
         //Lambda = 2.6;
         //Lambda = 2.7;
         //Lambda = 2.8;
-        //Lambda = 2.9;
-        //Lambda = 3.0;
-        //Lambda = 3.1;
+        //Lambda = 2.9;    // 0.129654
+        //Lambda = 2.95;   // 0.183307
+        //Lambda = 2.97;   // 0.163805
+        //Lambda = 2.99;   // 0.127882
+        //Lambda = 2.999;  // 0.114059
+        //Lambda = 3.0;    // 0.112786      0.051262
+        //Lambda = 3.05;   // 0.112436
+        //Lambda = 3.05005; // 0.112493
+        //Lambda = 3.0501; // 0.112550
+        //Lambda = 3.0502;  // 0.112665
+        //Lambda = 3.0505;  //0.113013
+        //Lambda = 3.051;   // 0.113612
+        //Lambda = 3.052;  // 0.114875
+        //Lambda = 3.053;  // 0.116229
+        //Lambda = 3.055;   // 0.119229
+        //Lambda = 3.06;  // 0.128573
+        //Lambda = 3.1;    // 0.282524
         //Lambda = 3.2;
-        //Lambda = 3.3;
+        //Lambda = 3.3;   // 0.413997    0.026944
         //Lambda = 3.4;
-        //Lambda = 3.45;
-        //Lambda = 3.5;
-        //Lambda = 3.55;
+        //Lambda = 3.45;  //            0.015089        
+        //Lambda = 3.47;  //            0.010156
+        //Lambda = 3.5;   // 0.884982   0.006773
+        //Lambda = 3.55;   //            .007355
         //Lambda = 3.6;
         //Lambda = 3.65;
         //Lambda = 3.7;
         //Lambda = 3.8;
         //Lambda = 3.9;
-        //Lambda = 4.0;
+        //Lambda = 4.0;   // 1.901618    0.010409
         //Lambda = 4.1;
         //Lambda = 4.2;
         //Lambda = 4.3;
-        //Lambda = 4.4;
+        //Lambda = 4.4;   //             0.084054
         //Lambda = 4.5;
         //Lambda = 4.6;
         //Lambda = 4.7;
         //Lambda = 4.8;
         //Lambda = 4.9;
-        //Lambda = 5.0;
+        //Lambda = 5.0;  // 0.548953    0.046089
         //Lambda = 5.1;
         //Lambda = 5.2;
         //Lambda = 5.3;
@@ -2368,7 +2385,7 @@ void CalcSatForces(TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfCalc)
         }
     }
 }
-//#define VERY_BASIC
+#define VERY_BASIC
 #ifdef VERY_BASIC
 void IteraSolarSystem(BOOL ForceWasCalculated, TRAOBJ * SlS)
 {
@@ -6730,9 +6747,10 @@ void ParamProb(char *szString)
             Sat.RunOne = TRUE;
 
 #ifdef USE_MODEL_LOAD
-            Sat.iLeg = 10;
+            Sat.iLeg = 70;
             iCounter_nk_lm_Numbers =0;
-            FILE *FileC_S = fopen("egm96","r");
+            //FILE *FileC_S = fopen("egm96","r");
+            FILE *FileC_S = fopen("JGM3.txt","r");
             if (FileC_S == NULL)
             {
                 printf("\n file with C and S dose not exsists");
