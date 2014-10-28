@@ -821,11 +821,10 @@ typedef struct TraObj
         //Lambda =  -Lambda -M_PI/2;            // 0 - 162 2 - 152 4 - 101
         //Lambda =  Lambda -M_PI/2;//           // 0 - 164 2 - 143 4 - 147
         //Lambda = -Lambda +M_PI;               // 0 - 082 2 - 106 4 - 048
-        //Lambda =  Lambda -3*M_PI/2;           // 0 - 052 2 - 059 4 - 149 5 - 038 6 - 103
-        //Lambda = -Lambda +M_PI/2;             // 0 - 047 2 - 149 4 - 159
+        // Lambda = -Lambda +M_PI/2;             // 0 - 047 2 - 149 4 - 159
         //Lambda =  Lambda +M_PI/2;             // 0 - 052 2 - 059 4 - 149
-        Lambda = - Lambda;                    // 0 - 161 2 - 134 4 - 161
-        //Lambda = - Lambda + M_PI; // 0 min - 082 2 - 059 4 - 149
+        //Lambda = - Lambda;                    // 0 - 161 2 - 134 4 - 161
+        Lambda = - Lambda + M_PI; // 0 min - 082 2 - 059 4 - 149
         //Lambda =0 ;    // 0.000243
         //Lambda = 0.1;  // 0.000254
         //Lambda = 0.2;
@@ -2365,7 +2364,7 @@ void CalcSatForces(TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfCalc)
         }
     }
 }
-#define VERY_BASIC
+//#define VERY_BASIC
 #ifdef VERY_BASIC
 void IteraSolarSystem(BOOL ForceWasCalculated, TRAOBJ * SlS)
 {
@@ -2517,7 +2516,7 @@ void IteraSolarSystem(BOOL ForceWasCalculated, TRAOBJ * SlS)
     }
 }
 
-#if 1
+#if 0
 void IteraSat(int TimeDirection, TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfCalc)
 {
     int i;
