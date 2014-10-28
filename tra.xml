@@ -18,12 +18,23 @@
     <TRA:setting name="dStartJD0" value="13075.0" />
     <TRA:setting name="dMinFromNow" value="3" />
     <TRA:setting name="dStartJD0" value="-60" />
-    <TRA:setting name="dStartJD" value="07/05/14 08:28:00:000" />
-    <TRA:setting name="dStartJD1" value="07/05/14 10:00:00:000" />
-    <TRA:setting name="dStartJD3" value="07/05/14 11:32:00:000" />
-    <TRA:setting name="dStartJD3" value="07/05/14 13:04:00:000" />
-    <TRA:setting name="dStartJD5" value="07/05/14 14:34:00:000" />
-    <TRA:setting name="dStartJD0" value="07/05/14 16:06:00:000" />
+    <TRA:setting name="dStartJD0" value="07/05/14 08:28:00:000" />
+    <TRA:setting name="dStartJD1" value="07/05/14 10:00:52:000" />
+    <TRA:setting name="dStartJD2" value="07/05/14 11:33:44:000" />
+    <TRA:setting name="dStartJD3" value="07/05/14 13:06:36:000" />
+    <TRA:setting name="dStartJD4" value="07/05/14 14:39:28:000" />
+    <TRA:setting name="dStartJD" value="07/05/14 16:12:20:000" />
+    <TRA:setting name="dStartJD6" value="07/05/14 17:45:12:000" />
+    <TRA:setting name="dStartJD7" value="07/05/14 19:18:04:000" />
+    <TRA:setting name="dStartJD8" value="07/05/14 20:50:56:000" />
+    <TRA:setting name="dStartJD9" value="07/05/14 22:23:48:000" />
+    <TRA:setting name="dStartJDa" value="07/05/14 23:56:41:000" />
+    <TRA:setting name="dStartJDb" value="07/05/15 01:29:33:000" />
+    <TRA:setting name="dStartJDc" value="07/05/15 03:02:25:000" />
+    <TRA:setting name="dStartJDd" value="07/05/15 04:35:17:000" />
+    <TRA:setting name="dStartJDe" value="07/05/15 06:08:09:000" />
+    <TRA:setting name="dStartJDf" value="07/05/15 07:41:01:000" />
+
     <TRA:setting name="dStartJD0" value="11291.854004622962962962962962963" />
     <TRA:setting name="dStartJD0" value="11292.79166666" />
 
@@ -47,7 +58,12 @@
 <!-- scale in m -->
     <TRA:setting name="RGBScale" value="90000000" />
 
-    <TRA:setting name="IterPerSec" value="439" />
+    <TRA:setting name="IterPerSec" value="479" />
+    <TRA:setting name="IterPerSec1" value="1013" />
+    <TRA:setting name="IterPerSec2" value="1523" />
+    <TRA:setting name="IterPerSec3" value="3167" />
+    <TRA:setting name="IterPerSec5" value="5507" />
+
     <TRA:setting name="StartLandingIteraPerSec" value="772050" />
 <!-- next vaue actualy just a reference it will be used in-->
 <!-- GMMoon = MoonM * GBig and GMEarth = EarthM*GBig      -->

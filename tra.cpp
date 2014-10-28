@@ -190,7 +190,7 @@ long double C_S_nk[TOTAL_COEF*TOTAL_COEF/2][2];
 
 
 
-#define USE_MODEL_LOAD
+#define USE_MODEL_1
 #ifdef USE_MODEL_LOAD
 //long  double GM_MODEL = 3.986004415E5;
 //#define R0_MODEL 6378136.30
@@ -824,10 +824,10 @@ typedef struct TraObj
         //Lambda =  Lambda -3*M_PI/2;           // 0 - 052 2 - 059 4 - 149 5 - 038 6 - 103
         //Lambda = -Lambda +M_PI/2;             // 0 - 047 2 - 149 4 - 159
         //Lambda =  Lambda +M_PI/2;             // 0 - 052 2 - 059 4 - 149
-        //Lambda = - Lambda;                    // 0 - 161 2 - 134 4 - 161
+        Lambda = - Lambda;                    // 0 - 161 2 - 134 4 - 161
         //Lambda = - Lambda + M_PI; // 0 min - 082 2 - 059 4 - 149
-        //Lambda =0 ;    // 0.534817
-        //Lambda = 0.1;
+        //Lambda =0 ;    // 0.000243
+        //Lambda = 0.1;  // 0.000254
         //Lambda = 0.2;
         //Lambda = 0.3;
         //Lambda = 0.4;
@@ -836,67 +836,46 @@ typedef struct TraObj
         //Lambda = 0.7;
         //Lambda = 0.8;
         //Lambda = 0.9;
-        //Lambda = 1.0;  // 0.261425      //  0.063522
+        //Lambda = 1.0;  // 0.000221      //  0.063522
         //Lambda = 1.1;
         //Lambda = 1.2;
         //Lambda = 1.3;
-        //Lambda = 1.4;
-        //Lambda = 1.5;
+        //Lambda = 1.4;   // 0.000115
+        //Lambda = 1.5;  // 0.000101
         //Lambda = 1.6;
-        //Lambda = 1.7;
+        //Lambda = 1.7;  // 0.000106
         //Lambda = 1.8;
         //Lambda = 1.9;
-        //Lambda = 2.0;  // 0.866801      // 0.064737
-        //Lambda = 2.08;
+        //Lambda = 2.0;  // 0.000090      // 0.064737
         //Lambda = 2.1;
         //Lambda = 2.2;
         //Lambda = 2.3;
         //Lambda = 2.4;
-        //Lambda = 2.45;
-        //Lambda = 2.5;
+        //Lambda = 2.5; // 0.000142
         //Lambda = 2.6;
         //Lambda = 2.7;
         //Lambda = 2.8;
-        //Lambda = 2.9;    // 0.129654
-        //Lambda = 2.95;   // 0.183307
-        //Lambda = 2.97;   // 0.163805
-        //Lambda = 2.99;   // 0.127882
-        //Lambda = 2.999;  // 0.114059
-        //Lambda = 3.0;    // 0.112786      0.051262
-        //Lambda = 3.05;   // 0.112436
-        //Lambda = 3.05005; // 0.112493
-        //Lambda = 3.0501; // 0.112550
-        //Lambda = 3.0502;  // 0.112665
-        //Lambda = 3.0505;  //0.113013
-        //Lambda = 3.051;   // 0.113612
-        //Lambda = 3.052;  // 0.114875
-        //Lambda = 3.053;  // 0.116229
-        //Lambda = 3.055;   // 0.119229
-        //Lambda = 3.06;  // 0.128573
-        //Lambda = 3.1;    // 0.282524
-        //Lambda = 3.2;
-        //Lambda = 3.3;   // 0.413997    0.026944
+        //Lambda = 3.0;    //0.000109      0.051262
+        //Lambda = 3.1;    
+        //Lambda = 3.2;  // 0.000012
+        //Lambda = 3.3;   
         //Lambda = 3.4;
-        //Lambda = 3.45;  //            0.015089        
-        //Lambda = 3.47;  //            0.010156
-        //Lambda = 3.5;   // 0.884982   0.006773
-        //Lambda = 3.55;   //            .007355
+        //Lambda = 3.5;   
         //Lambda = 3.6;
-        //Lambda = 3.65;
         //Lambda = 3.7;
         //Lambda = 3.8;
         //Lambda = 3.9;
-        //Lambda = 4.0;   // 1.901618    0.010409
+        //Lambda = 4.0;   // 0.000221    0.010409
         //Lambda = 4.1;
         //Lambda = 4.2;
         //Lambda = 4.3;
         //Lambda = 4.4;   //             0.084054
-        //Lambda = 4.5;
+        //Lambda = 4.5;  // 0.000311
         //Lambda = 4.6;
         //Lambda = 4.7;
-        //Lambda = 4.8;
+        //Lambda = 4.8;   // 0.000241
         //Lambda = 4.9;
-        //Lambda = 5.0;  // 0.548953    0.046089
+        //Lambda = 5.0;  // 0.000183    0.046089
         //Lambda = 5.1;
         //Lambda = 5.2;
         //Lambda = 5.3;
@@ -906,8 +885,8 @@ typedef struct TraObj
         //Lambda = 5.7;     
         //Lambda = 5.8;
         //Lambda = 5.9; 
-        //Lambda = 6.0;
-        //Lambda = 6.1;
+        //Lambda = 6.0; // 0.000200
+        //Lambda = 6.1; // 0.000217
         //Lambda = 6.2;
 
 
@@ -1017,7 +996,7 @@ typedef struct TraObj
 
             long double P_nk = Ptilda_[1]; // P'[2] == (k= 1)
             //Ptilda_nk  = n * Ptilda_[1] + sinTetta * Ptilda_m_1[2]; // P"[2] 
-            Ptilda_nk  = (2*n-1) * Ptilda_m_1[1] - Ptilda_m_2[2];
+            Ptilda_nk  = (2*n-1) * Ptilda_m_1[1] + Ptilda_m_2[2];
 
             x += (-(n+1) *XdivRval * P_nk * Qnk_ - Ptilda_nk *  Qnk_ * XdivRval * SinTetta   + P_nk * ( D_Qnk_Dxr_*(1-XdivRval*XdivRval)- D_Qnk_Dyr_ * YdivRval*XdivRval     ));
             y += (-(n+1) *YdivRval * P_nk * Qnk_ - Ptilda_nk *  Qnk_ * YdivRval * SinTetta   + P_nk * (-D_Qnk_Dxr_*XdivRval*YdivRval    + D_Qnk_Dyr_ * (1-YdivRval*YdivRval) ));
@@ -1048,7 +1027,7 @@ typedef struct TraObj
                 XkPrev = Xk; YkPrev = Yk;
 
                 P_nk = Ptilda_[k];
-                Ptilda_nk = (2*n-1) * Ptilda_m_1[k] - Ptilda_m_2[k+1];
+                Ptilda_nk = (2*n-1) * Ptilda_m_1[k] + Ptilda_m_2[k+1];
 
                 x += (-(n+1) *XdivRval * P_nk * Qnk_ - Ptilda_nk *  Qnk_ * XdivRval * SinTetta   + P_nk * ( D_Qnk_Dxr_*(1-XdivRval*XdivRval)- D_Qnk_Dyr_ * YdivRval*XdivRval     ));
                 y += (-(n+1) *YdivRval * P_nk * Qnk_ - Ptilda_nk *  Qnk_ * YdivRval * SinTetta   + P_nk * (-D_Qnk_Dxr_*XdivRval*YdivRval    + D_Qnk_Dyr_ * (1-YdivRval*YdivRval) ));
@@ -1230,8 +1209,8 @@ typedef struct TraObj
         }
         // derivetiveas from legandr fucntions
         Ptilda[0] = 0; // P0 was constant == P0' == 0
-#if 0
-        Ptilda[1] = sqrt(ValX*ValX + ValY*ValY)/ValR;; // P1 was a X == P1' == 1
+#if 1
+        Ptilda[1] = 1;//sqrt(ValX*ValX + ValY*ValY)/ValR;; // P1 was a X == P1' == 1
 
         Pnk_tilda[0][1] = Ptilda[0];
         Pnk_tilda[1][1] = Ptilda[1];
@@ -1252,7 +1231,7 @@ typedef struct TraObj
 
 #endif
         Pnk_tilda[0][2] = 0;
-        Pnk_tilda[1][2] = 1;
+        Pnk_tilda[1][2] = 0;
         for (k= 3;k <=iLeg+1;k++)
         {
             Pnk_tilda[0][k] = 0;
@@ -1263,7 +1242,7 @@ typedef struct TraObj
         {
             for (k = 2; k<=n+1;k++)
             {
-                Pnk_tilda[n][k] = (2*n-1) * Pnk_tilda[n-1][k-1] - Pnk_tilda[n-2][k];
+                Pnk_tilda[n][k] = (2*n-1) * Pnk_tilda[n-1][k-1] + Pnk_tilda[n-2][k];
             }
         }
         //for (n= 2;n <=iLeg;n++)
@@ -2160,6 +2139,7 @@ void CalcSatForces(TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfCalc)
             //Sat->ForceDD[i][j] = SlS->GM[j] /* Sat->M[i]*/ / (R0_MODEL*R0_MODEL); // to get real force need to multiply on mass of the satellite
 #define FAST_CALCULATIONS
 #ifdef FAST_CALCULATIONS
+
             Sat->ForceDD_ = Sat->ForceDD[i][j];
             Sat->DeltaVX[i][j] =0;
             Sat->DeltaVY[i][j] =0;
@@ -6747,10 +6727,10 @@ void ParamProb(char *szString)
             Sat.RunOne = TRUE;
 
 #ifdef USE_MODEL_LOAD
-            Sat.iLeg = 70;
+            Sat.iLeg = 32;
             iCounter_nk_lm_Numbers =0;
-            //FILE *FileC_S = fopen("egm96","r");
-            FILE *FileC_S = fopen("JGM3.txt","r");
+            FILE *FileC_S = fopen("egm96","r");
+            //FILE *FileC_S = fopen("JGM3.txt","r");
             if (FileC_S == NULL)
             {
                 printf("\n file with C and S dose not exsists");
@@ -6895,6 +6875,7 @@ DONE_WITH_LINE:
                     Sat.CNK[n][k] = Clm[k][n];
                     Sat.SNK[n][k] = Slm[k][n];
                     int m,m1;
+                    Factor3 =1;
                     for (m = n-k, m1= n+k; (m >=1) || (m1 >=1); m--,m1--)
                     {
                         if ((m >= 1) && (m1 >=1))
@@ -8533,12 +8514,13 @@ int main(int argc, char * argv[])
                             }
                             else
                             {
+                                /*
                                 printf("\nchange(to min)=%f x=%f y=%f z=%f (d=%f) at changed sign at %ld sec + %f - %f sec ", 
                                     sqrt(maxDeltaMinMaxD),
                                     MinMaxX, MinMaxY, MinMaxZ, sqrt(MinMaxX*MinMaxX+MinMaxY*MinMaxY+MinMaxZ*MinMaxZ),
                                     iCurSec, 
                                     TimeSl*iCurPortionOfTheSecond, TimeSl*(iCurPortionOfTheSecond+1));
-
+                                    */
                                 flFindMax = 0;
                                 flFindMin = 1;
                                 minDeltaMinMaxD = tDeltaMinMaxD;
@@ -8562,13 +8544,15 @@ int main(int argc, char * argv[])
                             }
                             else
                             {
+                                /*
                                 printf("\nchange(to max)=%f x=%f y=%f z=%f (d=%f) at changed sign at %ld sec + %f - %f sec ", 
                                     sqrt(minDeltaMinMaxD),
                                     MinMaxX, MinMaxY, MinMaxZ, sqrt(MinMaxX*MinMaxX+MinMaxY*MinMaxY+MinMaxZ*MinMaxZ),
                                     iCurSec, 
                                     TimeSl*iCurPortionOfTheSecond, TimeSl*(iCurPortionOfTheSecond+1));
                                 Interpolate_State( dStartJD+((double)(iCurSec+1))/(24.0*60.0*60.0)+TimeSl*((double)iCurPortionOfTheSecond) , EARTH , &StateEarth );
-                                printf("\n JPL=%f %f %f ",StateEarth.Position[0],StateEarth.Position[iCurSec],StateEarth.Position[0]);
+                                printf("\n JPL=%f %f %f ",StateEarth.Position[0],StateEarth.Position[1],StateEarth.Position[2]);
+                                */
                                 flFindMax = 1;
                                 flFindMin = 0;
                                 maxDeltaMinMaxD = tDeltaMinMaxD;
