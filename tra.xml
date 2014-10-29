@@ -23,7 +23,7 @@
     <TRA:setting name="dStartJD2" value="07/05/14 11:33:44:000" />
     <TRA:setting name="dStartJD3" value="07/05/14 13:06:36:000" />
     <TRA:setting name="dStartJD4" value="07/05/14 14:39:28:000" />
-    <TRA:setting name="dStartJD" value="07/05/14 16:12:20:000" />
+    <TRA:setting name="dStartJD5" value="07/05/14 16:12:20:000" />
     <TRA:setting name="dStartJD6" value="07/05/14 17:45:12:000" />
     <TRA:setting name="dStartJD7" value="07/05/14 19:18:04:000" />
     <TRA:setting name="dStartJD8" value="07/05/14 20:50:56:000" />
@@ -34,6 +34,11 @@
     <TRA:setting name="dStartJDd" value="07/05/15 04:35:17:000" />
     <TRA:setting name="dStartJDe" value="07/05/15 06:08:09:000" />
     <TRA:setting name="dStartJDf" value="07/05/15 07:41:01:000" />
+
+    <TRA:setting name="dStartJDT" value="24/03/14 15:00:00:000" />
+    <TRA:setting name="dStartJDt" value="01/01/00 00:00:00:000" />
+    <TRA:setting name="dStartJD" value="07/05/14 11:39:03:000" />
+
 
     <TRA:setting name="dStartJD0" value="11291.854004622962962962962962963" />
     <TRA:setting name="dStartJD0" value="11292.79166666" />

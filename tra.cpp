@@ -190,16 +190,16 @@ long double C_S_nk[TOTAL_COEF*TOTAL_COEF/2][2];
 
 
 
-#define USE_MODEL_1
+#define USE_MODEL_LOAD
 #ifdef USE_MODEL_LOAD
 //long  double GM_MODEL = 3.986004415E5;
 //#define R0_MODEL 6378136.30
-long double GM_MODEL = 398600.44150e9;
-#define R0_MODEL   6378136.30
+long double GM_MODEL = 398600.4418e9;
+#define R0_MODEL   6378137.00
 #endif
 #ifdef USE_MODEL_0
 long  double GM_MODEL = 3.986004415E5;
-#define R0_MODEL 637813.7
+#define R0_MODEL 6378137.0
 #endif
 
 #ifdef USE_MODEL_1
@@ -817,14 +817,16 @@ typedef struct TraObj
         long double tempY;
         long double sinTetta, XdivR, YdivR, tempValX, tempValY;
         X = 0; Y = 0; Z = 0;
+//#define M_PI_ 1.744761118*2
+#define M_PI_ M_PI
         // Lambda                               // 0 - 143 2 - 165 4 - 049
-        //Lambda =  -Lambda -M_PI/2;            // 0 - 162 2 - 152 4 - 101
-        //Lambda =  Lambda -M_PI/2;//           // 0 - 164 2 - 143 4 - 147
-        //Lambda = -Lambda +M_PI;               // 0 - 082 2 - 106 4 - 048
-        // Lambda = -Lambda +M_PI/2;             // 0 - 047 2 - 149 4 - 159
-        //Lambda =  Lambda +M_PI/2;             // 0 - 052 2 - 059 4 - 149
+        //Lambda =  -Lambda -M_PI_/2;            // 0 - 162 2 - 152 4 - 101
+        //Lambda =  Lambda -M_PI_/2;//           // 0 - 164 2 - 143 4 - 147
+        //Lambda = -Lambda +M_PI_;               // 0 - 082 2 - 106 4 - 048
+        Lambda = -Lambda +M_PI_/2;             // 0 - 047 2 - 149 4 - 159
+        //Lambda =  Lambda +M_PI_/2;             // 0 - 052 2 - 059 4 - 149
         //Lambda = - Lambda;                    // 0 - 161 2 - 134 4 - 161
-        Lambda = - Lambda + M_PI; // 0 min - 082 2 - 059 4 - 149
+        //Lambda = Lambda + M_PI_;
         //Lambda =0 ;    // 0.000243
         //Lambda = 0.1;  // 0.000254
         //Lambda = 0.2;
@@ -2146,6 +2148,8 @@ void CalcSatForces(TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfCalc)
 
             if (j == Sat->LegBody)
             {
+                Sat->ForceDD[i][j] = GM_MODEL / Sat->Distance2[i][j];
+                
                 Sat->R0divR[0] = 1;
                 Sat->R0divR[1] = R0_MODEL/tD_;
                 if (Sat->Distance[i][j] < 20*R0_MODEL)
@@ -2346,13 +2350,13 @@ void CalcSatForces(TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfCalc)
                 Sat->FX[i] += -( Sat->X[i] - SlS->X[j]) *Sat->DeltaVX[i][j] * Sat->ForceDD[i][j]/Sat->Distance[i][j];
                 Sat->FY[i] += -( Sat->Y[i] - SlS->Y[j]) *Sat->DeltaVY[i][j]* Sat->ForceDD[i][j]/Sat->Distance[i][j];
 #else
-                Sat->FX[i] += -( Sat->X[i] - SlS->X[j])  * Sat->ForceDD[i][j]/Sat->Distance[i][j] + Sat->DeltaVX[i][j]*SlS->GM[j]/ Sat->Distance2[i][j];
-                Sat->FY[i] += -( Sat->Y[i] - SlS->Y[j])  * Sat->ForceDD[i][j]/Sat->Distance[i][j] + Sat->DeltaVY[i][j]*SlS->GM[j]/ Sat->Distance2[i][j];
+                Sat->FX[i] += -( Sat->X[i] - SlS->X[j])  * Sat->ForceDD[i][j]/Sat->Distance[i][j] + Sat->DeltaVX[i][j]*GM_MODEL/ Sat->Distance2[i][j];
+                Sat->FY[i] += -( Sat->Y[i] - SlS->Y[j])  * Sat->ForceDD[i][j]/Sat->Distance[i][j] + Sat->DeltaVY[i][j]*GM_MODEL/ Sat->Distance2[i][j];
 #endif
 #ifndef _ACCOUNT_SIN
                 Sat->FZ[i] += -( Sat->Z[i] - SlS->Z[j]) *Sat->DeltaVZ[i][j] * Sat->ForceDD[i][j]/Sat->Distance[i][j];
 #else
-                Sat->FZ[i] += -( Sat->Z[i] - SlS->Z[j])  * Sat->ForceDD[i][j]/Sat->Distance[i][j] + Sat->DeltaVZ[i][j]*SlS->GM[j]/ Sat->Distance2[i][j];
+                Sat->FZ[i] += -( Sat->Z[i] - SlS->Z[j])  * Sat->ForceDD[i][j]/Sat->Distance[i][j] + Sat->DeltaVZ[i][j]*GM_MODEL/ Sat->Distance2[i][j];
 #endif
             }
             else
@@ -2364,7 +2368,7 @@ void CalcSatForces(TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfCalc)
         }
     }
 }
-//#define VERY_BASIC
+#define VERY_BASIC
 #ifdef VERY_BASIC
 void IteraSolarSystem(BOOL ForceWasCalculated, TRAOBJ * SlS)
 {
@@ -2516,7 +2520,7 @@ void IteraSolarSystem(BOOL ForceWasCalculated, TRAOBJ * SlS)
     }
 }
 
-#if 0
+#if 1
 void IteraSat(int TimeDirection, TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfCalc)
 {
     int i;
@@ -6817,7 +6821,14 @@ DONE_WITH_LINE:
                         Betta = 1.0;
                     else
                         Betta = 2.0;
-                     CNK = sqrt(Betta*(2*(long double)n+1) * Factor1/Factor2) * C_S_nk[iCounter_nk_lm_Numbers][0];
+                    
+                     if (n==2 && k ==2)
+                     {
+                         C_S_nk[iCounter_nk_lm_Numbers][0]+=1.3*1.39e-8;
+                         //Sat.CNK[n][k]+=1.3*1.39e-8;
+                     }
+
+                    CNK = sqrt(Betta*(2*(long double)n+1) * Factor1/Factor2) * C_S_nk[iCounter_nk_lm_Numbers][0];
 
                      CNK = sqrt(Betta*(2*(long double)n+1) * Factor3) * C_S_nk[iCounter_nk_lm_Numbers][0];
                      
@@ -6832,6 +6843,19 @@ DONE_WITH_LINE:
                      nk_lm_Numbers[iCounter_nk_lm_Numbers][1] = k;
                      C_S_nk[iCounter_nk_lm_Numbers][0] =CNK;
                      C_S_nk[iCounter_nk_lm_Numbers][1] =SNK;
+
+                     /* some starange corrections
+                     if (n==2 && k == 0)
+                        C_S_nk[iCounter_nk_lm_Numbers][0] =0.108262982131e-2;
+                     if (n==4 && k == 0)
+                        C_S_nk[iCounter_nk_lm_Numbers][0] =-.237091120053e-05;
+                     if (n==6 && k == 0)
+                        C_S_nk[iCounter_nk_lm_Numbers][0] =0.608346498882e-8;
+                     if (n==8 && k == 0)
+                        C_S_nk[iCounter_nk_lm_Numbers][0] =-0.142681087920e-10;
+                     if (n==10 && k == 0)
+                        C_S_nk[iCounter_nk_lm_Numbers][0] =0.121439275882e-13;
+                    */
                      if (iCounter_nk_lm_Numbers++ >= TOTAL_COEF*TOTAL_COEF/2)
                      {
                          printf("\n something wrong with coef");
@@ -6914,6 +6938,11 @@ DONE_WITH_LINE:
                      nk_lm_Numbers[iCounter_nk_lm_Numbers][1] = k;
                      C_S_nk[iCounter_nk_lm_Numbers][0] =Sat.CNK[n][k];
                      C_S_nk[iCounter_nk_lm_Numbers][1] =Sat.SNK[n][k];
+                     //if (n==2 && k ==2)
+                     //{
+                     //    C_S_nk[iCounter_nk_lm_Numbers][0]+=1.3*1.39e-8;
+                     //    Sat.CNK[n][k]+=1.3*1.39e-8;
+                     //}
                      if (iCounter_nk_lm_Numbers++ >= TOTAL_COEF*TOTAL_COEF/2)
                      {
                          printf("\n something wrong with coef");
@@ -8733,7 +8762,7 @@ int main(int argc, char * argv[])
             double errorD = sqrt(tVX*tVX + tVY*tVY + tVZ*tVZ)/sqrt(tProbVX*tProbVX + tProbVY*tProbVY + tProbVZ*tProbVZ);
             double SinAngle = tZ / sqrt(tX*tX + tY*tY + tZ*tZ);
             double ErrorDD = sqrt(tVX*tVX + tVY*tVY + tVZ*tVZ) - sqrt(tProbVX*tProbVX + tProbVY*tProbVY + tProbVZ*tProbVZ);
-            if (iCurSec%(60) == 0)
+            if (iCurSec%(60*92) == 0)
             {
                     printf("\n%f err(X=%f V=%f pr=%f lv=%f) min=%d ",(asin(SinAngle)*180/M_PI),tttX,tttVX, errorD, ErrorDD,iCurSec/60);
             }
