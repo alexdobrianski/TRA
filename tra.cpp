@@ -190,28 +190,30 @@ long double C_S_nk[TOTAL_COEF*TOTAL_COEF/2][2];
 
 
 
-#define USE_MODEL_1
+
+
+#define USE_MODEL_LOAD
 #ifdef USE_MODEL_LOAD
-//long  double GM_MODEL = 3.986004415E5;
+//long  double GM_MODEL = 398600.4415E9;
 //#define R0_MODEL 6378136.30
 long double GM_MODEL = 398600.4418e9;
 #define R0_MODEL   6378137.00
 #endif
 #ifdef USE_MODEL_0
-long  double GM_MODEL = 3.986004415E5;
+long  double GM_MODEL = 398600.4415E9;
 #define R0_MODEL 6378137.0
 #endif
 
 #ifdef USE_MODEL_1
-long  double GM_MODEL = 3.986004415E5;
+long  double GM_MODEL = 398600.4415E9;
 #define R0_MODEL 6378136.30
 #endif
 #ifdef USE_MODEL_2
-long  double GM_MODEL = 3.986004415E5;
+long  double GM_MODEL = 398600.4415E9;
 #define R0_MODEL 6378136.30
 #endif
 #ifdef USE_MODEL_3
-long  double GM_MODEL = 3.986004418E5;
+long  double GM_MODEL = 398600.4418E95;
 #define R0_MODEL 6378137
 #endif 
 #ifdef USE_MODEL_3
@@ -829,7 +831,7 @@ typedef struct TraObj
         //Lambda = -Lambda +M_PI_;      // 6027 //51
         //Lambda = -Lambda +M_PI_/2;   // 6064 // 106
         //Lambda =  Lambda +M_PI_/2;   // 5931 // 109
-        //Lambda = - Lambda;    // 6256 // 259 // 107
+        Lambda = - Lambda;    // 6256 // 259 // 107
         //Lambda = Lambda + M_PI_; // 6094
         //Lambda =0 ;    // 0.000243
         //Lambda = 0.1;  // 0.000254
@@ -2164,7 +2166,7 @@ void CalcSatForces(TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfCalc)
             Sat->Distance[i][j] = tD_;
             Sat->ForceDD[i][j] = SlS->GM[j] /* Sat->M[i]*/ / Sat->Distance2[i][j]; // to get real force need to multiply on mass of the satellite
             //Sat->ForceDD[i][j] = SlS->GM[j] /* Sat->M[i]*/ / (R0_MODEL*R0_MODEL); // to get real force need to multiply on mass of the satellite
-//#define FAST_CALCULATIONS
+#define FAST_CALCULATIONS
 #ifdef FAST_CALCULATIONS
 
             Sat->ForceDD_ = Sat->ForceDD[i][j];
@@ -6757,10 +6759,10 @@ void ParamProb(char *szString)
             Sat.RunOne = TRUE;
 
 #ifdef USE_MODEL_LOAD
-            Sat.iLeg = 32;
+            Sat.iLeg = 64;
             iCounter_nk_lm_Numbers =0;
-            FILE *FileC_S = fopen("egm96","r");
-            //FILE *FileC_S = fopen("JGM3.txt","r");
+            //FILE *FileC_S = fopen("egm96","r");
+            FILE *FileC_S = fopen("JGM3.txt","r");
             if (FileC_S == NULL)
             {
                 printf("\n file with C and S dose not exsists");
@@ -8789,7 +8791,7 @@ int main(int argc, char * argv[])
             double errorD = sqrt(tVX*tVX + tVY*tVY + tVZ*tVZ)/sqrt(tProbVX*tProbVX + tProbVY*tProbVY + tProbVZ*tProbVZ);
             double SinAngle = tZ / sqrt(tX*tX + tY*tY + tZ*tZ);
             double ErrorDD = sqrt(tVX*tVX + tVY*tVY + tVZ*tVZ) - sqrt(tProbVX*tProbVX + tProbVY*tProbVY + tProbVZ*tProbVZ);
-            if (iCurSec%(60) == 0)
+            if (iCurSec%(60*92) == 0)
             {
                     printf("\n%f err(X=%f V=%f pr=%f lv=%f) min=%d ",(asin(SinAngle)*180/M_PI),tttX,tttVX, errorD, ErrorDD,iCurSec/60);
             }
