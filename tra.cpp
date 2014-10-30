@@ -190,7 +190,7 @@ long double C_S_nk[TOTAL_COEF*TOTAL_COEF/2][2];
 
 
 
-#define USE_MODEL_LOAD
+#define USE_MODEL_1
 #ifdef USE_MODEL_LOAD
 //long  double GM_MODEL = 3.986004415E5;
 //#define R0_MODEL 6378136.30
@@ -301,7 +301,7 @@ long double SlmNN[MAX_COEF_J][MAX_COEF_J] = {
 
 long double Clm[MAX_COEF_J][MAX_COEF_J] = {//2                 3                     4                        5                   6                   7                    8             9 10 11 12 13 14 15 16 17           
     0.0,                  0.0, -0.10826360229840e-02,   0.25325160653E-05,   0.16185636000E-05,    0.2266690830E-06,    -0.5390785906e-06,                    0,                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	0.0,                  0.0,       +0.2194691e-09,                    0,                    0,                    0,                    0,                    0,                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0.0,                  0.0,       -0.2194691e-09,                    0,                    0,                    0,                    0,                    0,                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	0.0,                  0.0,    0.15744102040e-05,                    0,                    0,                    0,                    0,                    0,                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	0.0,                  0.0,                  0.0,                    0,                    0,                    0,                    0,                    0,                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0.0,                  0.0,                  0.0,                  0.0,                    0,                    0,                    0,                    0,                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -777,7 +777,7 @@ typedef struct TraObj
     long double Pnk_tilda[MAX_COEF_J][MAX_COEF_J];
     //double Pnk[MAX_COEF_J][MAX_COEF_J];
     long double Qnk[MAX_COEF_J][MAX_COEF_J];
-    long double R0divR[MAX_COEF_J];
+    long double R0divR[TOTAL_COEF];
     long double ForceDD_;
     long double Lambda;
     long double DeltaVX[PLANET_COUNT][PLANET_COUNT];
@@ -817,16 +817,20 @@ typedef struct TraObj
         long double tempY;
         long double sinTetta, XdivR, YdivR, tempValX, tempValY;
         X = 0; Y = 0; Z = 0;
+        long double _x[TOTAL_COEF];
+        long double _y[TOTAL_COEF];
+        long double _z[TOTAL_COEF];
+        long double _x20,_y20,_z20;
 //#define M_PI_ 1.744761118*2
 #define M_PI_ M_PI
-        // Lambda                               // 0 - 143 2 - 165 4 - 049
-        //Lambda =  -Lambda -M_PI_/2;            // 0 - 162 2 - 152 4 - 101
-        //Lambda =  Lambda -M_PI_/2;//           // 0 - 164 2 - 143 4 - 147
-        //Lambda = -Lambda +M_PI_;               // 0 - 082 2 - 106 4 - 048
-        Lambda = -Lambda +M_PI_/2;             // 0 - 047 2 - 149 4 - 159
-        //Lambda =  Lambda +M_PI_/2;             // 0 - 052 2 - 059 4 - 149
-        //Lambda = - Lambda;                    // 0 - 161 2 - 134 4 - 161
-        //Lambda = Lambda + M_PI_;
+        // Lambda      // 6169 // 224
+        //Lambda =  -Lambda -M_PI_/2;  // 5793 // 222
+        //Lambda =  Lambda -M_PI_/2;  // 5730 //309
+        //Lambda = -Lambda +M_PI_;      // 6027 //51
+        //Lambda = -Lambda +M_PI_/2;   // 6064 // 106
+        //Lambda =  Lambda +M_PI_/2;   // 5931 // 109
+        //Lambda = - Lambda;    // 6256 // 259 // 107
+        //Lambda = Lambda + M_PI_; // 6094
         //Lambda =0 ;    // 0.000243
         //Lambda = 0.1;  // 0.000254
         //Lambda = 0.2;
@@ -970,9 +974,19 @@ typedef struct TraObj
             long double Ptilda_nk = n * P_m_1 + sinTetta * Ptilda_m_1[1];                        // P'[2]
 
             // J case
-            x += (-(n+1) *XdivRval * P_ * Qnk_ - Ptilda_nk *  Qnk_ * XdivRval * SinTetta   + P_ * ( D_Qnk_Dxr_*(1-XdivRval*XdivRval)- D_Qnk_Dyr_ * YdivRval*XdivRval     ));
-            y += (-(n+1) *YdivRval * P_ * Qnk_ - Ptilda_nk *  Qnk_ * YdivRval * SinTetta   + P_ * (-D_Qnk_Dxr_*XdivRval*YdivRval    + D_Qnk_Dyr_ * (1-YdivRval*YdivRval) ));
-            z += (-(n+1) *SinTetta * P_ * Qnk_ + Ptilda_nk *  Qnk_ * (1-SinTetta*SinTetta) + P_ * (-D_Qnk_Dxr_*XdivRval*SinTetta    - D_Qnk_Dyr_ * YdivRval*SinTetta     ));
+            if (ip == 0)
+            {
+                _x20 = (-(n+1) *XdivRval * P_ * Qnk_ - Ptilda_nk *  Qnk_ * XdivRval * SinTetta   + P_ * ( D_Qnk_Dxr_*(1-XdivRval*XdivRval)- D_Qnk_Dyr_ * YdivRval*XdivRval     ));
+                _y20 = (-(n+1) *YdivRval * P_ * Qnk_ - Ptilda_nk *  Qnk_ * YdivRval * SinTetta   + P_ * (-D_Qnk_Dxr_*XdivRval*YdivRval    + D_Qnk_Dyr_ * (1-YdivRval*YdivRval) ));
+                _z20 = (-(n+1) *SinTetta * P_ * Qnk_ + Ptilda_nk *  Qnk_ * (1-SinTetta*SinTetta) + P_ * (-D_Qnk_Dxr_*XdivRval*SinTetta    - D_Qnk_Dyr_ * YdivRval*SinTetta     ));
+            }
+            else
+            {
+                x = (-(n+1) *XdivRval * P_ * Qnk_ - Ptilda_nk *  Qnk_ * XdivRval * SinTetta   + P_ * ( D_Qnk_Dxr_*(1-XdivRval*XdivRval)- D_Qnk_Dyr_ * YdivRval*XdivRval     ));
+                y = (-(n+1) *YdivRval * P_ * Qnk_ - Ptilda_nk *  Qnk_ * YdivRval * SinTetta   + P_ * (-D_Qnk_Dxr_*XdivRval*YdivRval    + D_Qnk_Dyr_ * (1-YdivRval*YdivRval) ));
+                z = (-(n+1) *SinTetta * P_ * Qnk_ + Ptilda_nk *  Qnk_ * (1-SinTetta*SinTetta) + P_ * (-D_Qnk_Dxr_*XdivRval*SinTetta    - D_Qnk_Dyr_ * YdivRval*SinTetta     ));
+
+            }
             Ptilda_[1] = Ptilda_nk; // store P'[2] for use 
             //////////////////////////////////////////////////////////////////////////   k ==================1
             // next iteration by k
@@ -1035,12 +1049,24 @@ typedef struct TraObj
                 z += (-(n+1) *SinTetta * P_nk * Qnk_ + Ptilda_nk *  Qnk_ * (1-SinTetta*SinTetta) + P_nk * (-D_Qnk_Dxr_*XdivRval*SinTetta    - D_Qnk_Dyr_ * YdivRval*SinTetta     ));
                 Ptilda_[k+1] = Ptilda_nk; // store P'"[2] (third derivative) for next use
             }
-            X += x* R0divR_; Y += y *R0divR_; Z += z * R0divR_;
-            R0divR_ *= R0divR[1];
+            _x[n] = x;_y[n] = y;_z[n] = z;
+            R0divR[n] = R0divR_;
+
+            //X += x* R0divR_; Y += y *R0divR_; Z += z * R0divR_;
+            R0divR_*= R0divR[1];
             ////////////////////////////////////////////////////////////////////////////////////////
             // next iteration == k ==2
             ip++;
         }
+        for (n=2; n <= iLeg; n++)
+        {
+            _x[n] *= R0divR[n]; _y[n] *= R0divR[n]; _z[n] *= R0divR[n];
+        }
+        for (n=iLeg; n >=2; n--)
+        {
+            X += _x[n]; Y += _y[n]; Z += _z[n];
+        }
+        X += _x20*R0divR[2];  Y += _y20*R0divR[2];  Z += _z20*R0divR[2];
         tempX = cos(-Lambda) * X - sin(-Lambda) * Y;
         tempY = sin(-Lambda) * X + cos(-Lambda) * Y;
         X = tempX;
@@ -2138,7 +2164,7 @@ void CalcSatForces(TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfCalc)
             Sat->Distance[i][j] = tD_;
             Sat->ForceDD[i][j] = SlS->GM[j] /* Sat->M[i]*/ / Sat->Distance2[i][j]; // to get real force need to multiply on mass of the satellite
             //Sat->ForceDD[i][j] = SlS->GM[j] /* Sat->M[i]*/ / (R0_MODEL*R0_MODEL); // to get real force need to multiply on mass of the satellite
-#define FAST_CALCULATIONS
+//#define FAST_CALCULATIONS
 #ifdef FAST_CALCULATIONS
 
             Sat->ForceDD_ = Sat->ForceDD[i][j];
@@ -2173,6 +2199,7 @@ void CalcSatForces(TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfCalc)
             Sat->ForceDD_ = Sat->ForceDD[i][j];
             if (j == Sat->LegBody)
             {
+                 Sat->ForceDD[i][j] = GM_MODEL / Sat->Distance2[i][j];
                  Sat->R0divR[0] = 1;
                  Sat->R0divR[1] = R0_MODEL/tD_;
                  for (int n = 2; n <= (Sat->iLeg+1); n++)
@@ -2368,7 +2395,7 @@ void CalcSatForces(TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfCalc)
         }
     }
 }
-#define VERY_BASIC
+//#define VERY_BASIC
 #ifdef VERY_BASIC
 void IteraSolarSystem(BOOL ForceWasCalculated, TRAOBJ * SlS)
 {
@@ -2730,7 +2757,7 @@ void IteraSat(int TimeDirection, TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfC
         }
         else
         {
-#if 0
+#if 1
             Sat->VX_[i] = Sat->VXminus[i] + Sat->FXm[i]/3 + (3.0*Sat->FXm[i]- Sat->FXmm[i])/2;
             Sat->VY_[i] = Sat->VYminus[i] + Sat->FYm[i]/3 + (3.0*Sat->FYm[i]- Sat->FYmm[i])/2;
             Sat->VZ_[i] = Sat->VZminus[i] + Sat->FZm[i]/3 + (3.0*Sat->FZm[i]- Sat->FZmm[i])/2;
@@ -8762,7 +8789,7 @@ int main(int argc, char * argv[])
             double errorD = sqrt(tVX*tVX + tVY*tVY + tVZ*tVZ)/sqrt(tProbVX*tProbVX + tProbVY*tProbVY + tProbVZ*tProbVZ);
             double SinAngle = tZ / sqrt(tX*tX + tY*tY + tZ*tZ);
             double ErrorDD = sqrt(tVX*tVX + tVY*tVY + tVZ*tVZ) - sqrt(tProbVX*tProbVX + tProbVY*tProbVY + tProbVZ*tProbVZ);
-            if (iCurSec%(60*92) == 0)
+            if (iCurSec%(60) == 0)
             {
                     printf("\n%f err(X=%f V=%f pr=%f lv=%f) min=%d ",(asin(SinAngle)*180/M_PI),tttX,tttVX, errorD, ErrorDD,iCurSec/60);
             }
