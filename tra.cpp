@@ -831,10 +831,10 @@ typedef struct TraObj
         //Lambda = -Lambda +M_PI_;      // 6027 //51
         //Lambda = -Lambda +M_PI_/2;   // 6064 // 106
         //Lambda =  Lambda +M_PI_/2;   // 5931 // 109
-        Lambda = - Lambda;    // 6256 // 259 // 107
+        //Lambda = - Lambda;    // 6256 // 259 // 107
         //Lambda = Lambda + M_PI_; // 6094
         //Lambda =0 ;    // 0.000243
-        //Lambda = 0.1;  // 0.000254
+        //Lambda += 0.1;  // 0.000254
         //Lambda = 0.2;
         //Lambda = 0.3;
         //Lambda = 0.4;
@@ -897,9 +897,14 @@ typedef struct TraObj
         //Lambda = 6.2;
 
 
-        tempX = cos(Lambda) * ValX - sin(Lambda) * ValY;
-        tempY = sin(Lambda) * ValX + cos(Lambda) * ValY;
+#if 0
+            tempX = cos(Lambda) * ValX - sin(Lambda) * ValY;
+            tempY = sin(Lambda) * ValX + cos(Lambda) * ValY;
+#else
+            tempX = cos(Lambda) * ValX + sin(Lambda) * ValY;
+            tempY = -sin(Lambda) * ValX + cos(Lambda) * ValY;
 
+#endif
         sinTetta =ValZ/ValR;
 
         XdivR =   tempX/ValR;
@@ -910,24 +915,27 @@ typedef struct TraObj
         SinTetta = sinTetta;
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         n = 0;  //  initial
-        long double P_m_2 = 0;
-        long double P_m_1 = 0;
-        long double P_ = 1;
 
         long double Ptilda_m_2[TOTAL_COEF];
         long double Ptilda_m_1[TOTAL_COEF];
         long double Ptilda_[TOTAL_COEF];
         for (k = 0; k < TOTAL_COEF; k++) 
         {
-            Ptilda_[k] = 0;
+            Ptilda_[k] = 0;  Ptilda_m_1[k] =0;  Ptilda_m_2[k]=0;
         }
+        long double P_m_2 = 0;
+        long double P_m_1 = 0;
+        long double P_ = 1;
+        Ptilda_[0]= P_;
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         // next iteration by n
         n = 1;
         P_m_2 = P_m_1; P_m_1 = P_;
+        memcpy(Ptilda_m_2,Ptilda_m_1, sizeof(Ptilda_m_2)); memcpy(Ptilda_m_1,Ptilda_, sizeof(Ptilda_m_1));
         //P_ = sinTetta;
         P_ = sinTetta;
-        memcpy(Ptilda_m_2,Ptilda_m_1, sizeof(Ptilda_m_2)); memcpy(Ptilda_m_1,Ptilda_, sizeof(Ptilda_m_1));
+        Ptilda_[0]= P_;
+
         //Ptilda_[1] = n * P_m_1 + sinTetta * Ptilda_m_1[1]; // P'[1]  k == '
 
         // P = sin => d(P)/d(sin) = 1
@@ -949,7 +957,7 @@ typedef struct TraObj
             P_m_2 = P_m_1; P_m_1 = P_;
             memcpy(Ptilda_m_2,Ptilda_m_1, sizeof(Ptilda_m_2)); memcpy(Ptilda_m_1,Ptilda_, sizeof(Ptilda_m_1));
             P_ = ((2.0* n-1.0) *sinTetta * P_m_1 - (n-1)*P_m_2)/n;  // P[2]
-
+            Ptilda_[0]= P_;
             long double XkDxrPrev =0;
             long double XkDyrPrev =0;
             long double YkDxrPrev =0;
@@ -974,7 +982,7 @@ typedef struct TraObj
             long double D_Qnk_Dyr_ = 0;
             // k is derivative
             long double Ptilda_nk = n * P_m_1 + sinTetta * Ptilda_m_1[1];                        // P'[2]
-
+            Ptilda_[1] = Ptilda_nk; // store P'[2] for use 
             // J case
             if (ip == 0)
             {
@@ -989,7 +997,7 @@ typedef struct TraObj
                 z = (-(n+1) *SinTetta * P_ * Qnk_ + Ptilda_nk *  Qnk_ * (1-SinTetta*SinTetta) + P_ * (-D_Qnk_Dxr_*XdivRval*SinTetta    - D_Qnk_Dyr_ * YdivRval*SinTetta     ));
 
             }
-            Ptilda_[1] = Ptilda_nk; // store P'[2] for use 
+            
             //////////////////////////////////////////////////////////////////////////   k ==================1
             // next iteration by k
             ip++;
@@ -1014,11 +1022,11 @@ typedef struct TraObj
             long double P_nk = Ptilda_[1]; // P'[2] == (k= 1)
             //Ptilda_nk  = n * Ptilda_[1] + sinTetta * Ptilda_m_1[2]; // P"[2] 
             Ptilda_nk  = (2*n-1) * Ptilda_m_1[1] + Ptilda_m_2[2];
+            Ptilda_[2] = Ptilda_nk; // store P"[2] for next use
 
             x += (-(n+1) *XdivRval * P_nk * Qnk_ - Ptilda_nk *  Qnk_ * XdivRval * SinTetta   + P_nk * ( D_Qnk_Dxr_*(1-XdivRval*XdivRval)- D_Qnk_Dyr_ * YdivRval*XdivRval     ));
             y += (-(n+1) *YdivRval * P_nk * Qnk_ - Ptilda_nk *  Qnk_ * YdivRval * SinTetta   + P_nk * (-D_Qnk_Dxr_*XdivRval*YdivRval    + D_Qnk_Dyr_ * (1-YdivRval*YdivRval) ));
             z += (-(n+1) *SinTetta * P_nk * Qnk_ + Ptilda_nk *  Qnk_ * (1-SinTetta*SinTetta) + P_nk * (-D_Qnk_Dxr_*XdivRval*SinTetta    - D_Qnk_Dyr_ * YdivRval*SinTetta     ));
-            Ptilda_[2] = Ptilda_nk; // store P"[2] for next use
             ////////////////////////////////////////////////////////////////////////////////////////
             for (k = 2; k <=n; k++)
             {
@@ -1045,11 +1053,11 @@ typedef struct TraObj
 
                 P_nk = Ptilda_[k];
                 Ptilda_nk = (2*n-1) * Ptilda_m_1[k] + Ptilda_m_2[k+1];
-
+                Ptilda_[k+1] = Ptilda_nk; // store P'"[2] (third derivative) for next use
                 x += (-(n+1) *XdivRval * P_nk * Qnk_ - Ptilda_nk *  Qnk_ * XdivRval * SinTetta   + P_nk * ( D_Qnk_Dxr_*(1-XdivRval*XdivRval)- D_Qnk_Dyr_ * YdivRval*XdivRval     ));
                 y += (-(n+1) *YdivRval * P_nk * Qnk_ - Ptilda_nk *  Qnk_ * YdivRval * SinTetta   + P_nk * (-D_Qnk_Dxr_*XdivRval*YdivRval    + D_Qnk_Dyr_ * (1-YdivRval*YdivRval) ));
                 z += (-(n+1) *SinTetta * P_nk * Qnk_ + Ptilda_nk *  Qnk_ * (1-SinTetta*SinTetta) + P_nk * (-D_Qnk_Dxr_*XdivRval*SinTetta    - D_Qnk_Dyr_ * YdivRval*SinTetta     ));
-                Ptilda_[k+1] = Ptilda_nk; // store P'"[2] (third derivative) for next use
+                
             }
             _x[n] = x;_y[n] = y;_z[n] = z;
             R0divR[n] = R0divR_;
@@ -1069,8 +1077,13 @@ typedef struct TraObj
             X += _x[n]; Y += _y[n]; Z += _z[n];
         }
         X += _x20*R0divR[2];  Y += _y20*R0divR[2];  Z += _z20*R0divR[2];
+#if 0
         tempX = cos(-Lambda) * X - sin(-Lambda) * Y;
         tempY = sin(-Lambda) * X + cos(-Lambda) * Y;
+#else
+        tempX = cos(-Lambda) * X + sin(-Lambda) * Y;
+        tempY = -sin(-Lambda) * X + cos(-Lambda) * Y;
+#endif
         X = tempX;
         Y = tempY;
 
@@ -1090,7 +1103,7 @@ typedef struct TraObj
         //Lambda =  Lambda -3*M_PI/2;           // 0 - 052 2 - 059 4 - 149 5 - 038 6 - 103
         //Lambda = -Lambda +M_PI/2;             // 0 - 047 2 - 149 4 - 159
         //Lambda =  Lambda +M_PI/2;             // 0 - 052 2 - 059 4 - 149
-        Lambda = - Lambda;                    // 0 - 161 2 - 134 4 - 161
+        //Lambda = - Lambda;                    // 0 - 161 2 - 134 4 - 161
         //Lambda = - Lambda + M_PI; // 0 min - 082 2 - 059 4 - 149
         //Lambda =0 ;
         //Lambda = 0.1;
@@ -1162,9 +1175,14 @@ typedef struct TraObj
             //tempX = cos(Lambda) * XdivR - sin(Lambda) * YdivR;
             //tempY = sin(Lambda) * XdivR + cos(Lambda) * YdivR;
             //XdivR = tempX;YdivR = tempY;
-
+#if 0
             tempX = cos(Lambda) * ValX - sin(Lambda) * ValY;
             tempY = sin(Lambda) * ValX + cos(Lambda) * ValY;
+#else
+            tempX = cos(Lambda) * ValX + sin(Lambda) * ValY;
+            tempY = -sin(Lambda) * ValX + cos(Lambda) * ValY;
+
+#endif
             //ValX = tempX;
             //ValY = tempY;
 
@@ -2626,10 +2644,17 @@ void IteraSat(int TimeDirection, TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfC
 
         for (i = 0; i < Sat->Elem; i++)
         {
+#if 0
             Sat->X_[i] += Sat->VX_[i] + Sat->SFX[i]/2;
             Sat->Y_[i] += Sat->VY_[i] + Sat->SFY[i]/2;
             Sat->Z_[i] += Sat->VZ_[i] + Sat->SFZ[i]/2;
 
+#else
+            Sat->X_[i] += Sat->VX_[i] + (Sat->SFX[i]+Sat->FX[i])/4;
+            Sat->Y_[i] += Sat->VY_[i] + (Sat->SFY[i]+Sat->FY[i])/4;
+            Sat->Z_[i] += Sat->VZ_[i] + (Sat->SFZ[i]+Sat->FZ[i])/4;
+
+#endif
             Sat->X[i] = (Sat->X0divDt2[i] + Sat->CountNx*Sat->VX0divDt[i] + Sat->X_[i]) * TimeSl_2;
             Sat->Y[i] = (Sat->Y0divDt2[i] + Sat->CountNy*Sat->VY0divDt[i] + Sat->Y_[i]) * TimeSl_2;
             Sat->Z[i] = (Sat->Z0divDt2[i] + Sat->CountNz*Sat->VZ0divDt[i] + Sat->Z_[i]) * TimeSl_2;
@@ -2759,7 +2784,7 @@ void IteraSat(int TimeDirection, TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfC
         }
         else
         {
-#if 1
+#if 0
             Sat->VX_[i] = Sat->VXminus[i] + Sat->FXm[i]/3 + (3.0*Sat->FXm[i]- Sat->FXmm[i])/2;
             Sat->VY_[i] = Sat->VYminus[i] + Sat->FYm[i]/3 + (3.0*Sat->FYm[i]- Sat->FYmm[i])/2;
             Sat->VZ_[i] = Sat->VZminus[i] + Sat->FZm[i]/3 + (3.0*Sat->FZm[i]- Sat->FZmm[i])/2;
@@ -5463,17 +5488,42 @@ END
 // and returns the right ascension of Greenwich at epoch (in radians).
 long double GreenwichAscensionFromEpoch(long double EP)
 {
+    
 	//FUNCTION THETAG(EP)
 	//COMMON /E1/XMO,XNODEO,OMEGAO,EO,XINCL,XNO,XNDT2O,XNDD6O,BSTAR,
 	//1 X,Y,Z,XDOT,YDOT,ZDOT,EPOCH,DS50
 	//DOUBLE PRECISION EPOCH,D,THETA,TWOPI,YR,TEMP,EP,DS50
 	long double EPOCH,D,THETA,TWOPI,YR,TEMP,DS50;
+    long double THETAG;
+    long double DaysFrom2000;
+    long iDaysFrom2000;
+    long double CenturyFrom2000;
+    long double Tstar;
+    long double H0;
 	TWOPI=2.0*M_PI;//6.28318530717959D0
 	YR=(EP+2.e-7)*1.e-3;
 	int JY=YR;
+    
 	YR=JY;
 	D=EP-YR*1.e3;
 	//IF(JY.LT.10) JY=JY+80
+    if (JY < 20) // just from J2000
+    {
+        // from J2000:
+        // 24110.54841sec / 12/60/60 * M_PI= 1.7533685592332655129130610478964 
+        //8640184.812866
+        // 
+        int N=JY/4+1;
+        DaysFrom2000=365.0*(JY) +N + D;
+        iDaysFrom2000= DaysFrom2000;
+        CenturyFrom2000 = DaysFrom2000/36525.0;
+        Tstar =CenturyFrom2000;
+        H0 = 24110.54841 /*+ 8640184.812866*Tstar + 0.093104*Tstar*Tstar- 6.2e-10*Tstar*Tstar*Tstar*/ + DaysFrom2000*86401.84812866;
+        THETAG = H0/86400 * 2.0*M_PI;
+        THETAG =fmod(THETAG, (long double)2.0*M_PI);
+        return THETAG;
+    }
+
 	if(JY < 20) 
 		JY=JY+100;
 	int N=(JY-69)/4;
@@ -5481,11 +5531,18 @@ long double GreenwichAscensionFromEpoch(long double EP)
 	if (JY < 70) 
 		N=(JY-72)/4;
 	DS50=7305.0 + 365.0*(JY-70) +N + D;
+    // 6.3003880987 = 1.0027379093054531539043156765359
+    // 1.9801110581855904429828570117483 it is bigger then 1.72944494 (==in days = 0.27524971100626634345509703401275 in sec= 23781.575030941412074520383738702)
+    // difference from J2000 is 328.9733790585879254796162612984 sec == 5min+28.9733790585879254796162612984sec
+    // difference in 
+    // i.e 8640184.812866*Tstar + 0.093104*Tstar*Tstar- 6.2e-10*Tstar*Tstar*Tstar ==1239946.4147585845
+    // 
 	THETA=1.72944494 + 6.3003880987*DS50;
+    
 	TEMP=THETA/TWOPI;
 	int I=TEMP;
 	TEMP=I;
-	long double THETAG=THETA-TEMP*TWOPI;
+	THETAG=THETA-TEMP*TWOPI;
 	//IF(THETAG.LT.0.D0) THETAG=THETAG+TWOPI
 	if(THETAG < 0.0) 
 		THETAG=THETAG+TWOPI;
@@ -6759,10 +6816,10 @@ void ParamProb(char *szString)
             Sat.RunOne = TRUE;
 
 #ifdef USE_MODEL_LOAD
-            Sat.iLeg = 64;
+            Sat.iLeg = 16;
             iCounter_nk_lm_Numbers =0;
-            //FILE *FileC_S = fopen("egm96","r");
-            FILE *FileC_S = fopen("JGM3.txt","r");
+            FILE *FileC_S = fopen("egm96","r");
+            //FILE *FileC_S = fopen("JGM3.txt","r");
             if (FileC_S == NULL)
             {
                 printf("\n file with C and S dose not exsists");
@@ -8791,7 +8848,7 @@ int main(int argc, char * argv[])
             double errorD = sqrt(tVX*tVX + tVY*tVY + tVZ*tVZ)/sqrt(tProbVX*tProbVX + tProbVY*tProbVY + tProbVZ*tProbVZ);
             double SinAngle = tZ / sqrt(tX*tX + tY*tY + tZ*tZ);
             double ErrorDD = sqrt(tVX*tVX + tVY*tVY + tVZ*tVZ) - sqrt(tProbVX*tProbVX + tProbVY*tProbVY + tProbVZ*tProbVZ);
-            if (iCurSec%(60*92) == 0)
+            if (iCurSec%(60) == 0)
             {
                     printf("\n%f err(X=%f V=%f pr=%f lv=%f) min=%d ",(asin(SinAngle)*180/M_PI),tttX,tttVX, errorD, ErrorDD,iCurSec/60);
             }
