@@ -402,6 +402,30 @@ int iCurPortionOfTheSecond;
 
 typedef struct Long_Double_Intergal_Var
 {
+    long double X0;
+    long double Y0;
+    long double Z0;
+
+    long double X1;
+    long double Y1;
+    long double Z1;
+
+    long double X2;
+    long double Y2;
+    long double Z2;
+
+    long double X3;
+    long double Y3;
+    long double Z3;
+
+    long double X4;
+    long double Y4;
+    long double Z4;
+
+    long double X5;
+    long double Y5;
+    long double Z5;
+
     long double X;
     long double Y;
     long double Z;
@@ -423,15 +447,15 @@ typedef struct Long_Double_Intergal_Var
 
     long double x() 
         { 
-           return X+X_h+X_hh; 
+           return X0+X+X_h+X_hh; 
         }
     long double y() 
         { 
-            return Y+Y_h+Y_hh; 
+            return Y0+Y+Y_h+Y_hh; 
         }
     long double z() 
         { 
-            return Z+Z_h+Z_hh; 
+            return Z0+Z+Z_h+Z_hh; 
         }
     void adjustX(long MaxVal, long MaxVal_h)
     {
@@ -483,6 +507,13 @@ typedef struct Long_Double_Intergal_Var
         X_hh =0.0;   Y_hh =0.0;   Z_hh =0.0;
         CountNx = 0; CountNy = 0; CountNz = 0;
         CountNx_h = 0; CountNy_h = 0; CountNz_h = 0;
+
+        X0 = 0.0;      Y0 = 0.0;      Z0 = 0.0;
+        X1 = 0.0;      Y1 = 0.0;      Z1 = 0.0;
+        X2 = 0.0;      Y2 = 0.0;      Z2 = 0.0;
+        X3 = 0.0;      Y3 = 0.0;      Z3 = 0.0;
+        X4 = 0.0;      Y4 = 0.0;      Z4 = 0.0;
+        X5 = 0.0;      Y5 = 0.0;      Z5 = 0.0;
     }
 } LONG_DOUBLE_INT_VAR, *PLONG_DOUBLE_INT_VAR;
 
@@ -605,6 +636,10 @@ typedef struct TraObj
 {
     int Elem;
     int flInUse[PLANET_COUNT];
+    LONG_DOUBLE_INT_VAR _position_[PLANET_COUNT];
+
+    LONG_DOUBLE_INT_VAR _velosity_[PLANET_COUNT];
+
     long double X[PLANET_COUNT];
     long double Y[PLANET_COUNT];
     long double Z[PLANET_COUNT];
@@ -781,7 +816,10 @@ typedef struct TraObj
     long double Qnk[MAX_COEF_J][MAX_COEF_J];
     long double R0divR[TOTAL_COEF];
     long double ForceDD_;
-    long double Lambda;
+    long double Lambda; // that is direction to a Greenwich
+    long double precEps; // that is epsilon in precession
+    long double precTet; // that is Tetta in precession
+    long double precZ;  // that is Z in precession
     long double DeltaVX[PLANET_COUNT][PLANET_COUNT];
     long double DeltaVY[PLANET_COUNT][PLANET_COUNT];
     long double DeltaVZ[PLANET_COUNT][PLANET_COUNT];
@@ -817,6 +855,7 @@ typedef struct TraObj
         int n,k;
         long double tempX;
         long double tempY;
+        long double tempZ;
         long double sinTetta, XdivR, YdivR, tempValX, tempValY;
         X = 0; Y = 0; Z = 0;
         long double _x[TOTAL_COEF];
@@ -901,6 +940,32 @@ typedef struct TraObj
             tempX = cos(Lambda) * ValX - sin(Lambda) * ValY;
             tempY = sin(Lambda) * ValX + cos(Lambda) * ValY;
 #else
+
+        // matrix Deps
+            //| cos(eps)   sin(eps) 0 |
+            //| -sin(eps)  cos(eps) 0 |
+            //|   0           0     1 |
+            tempX =  cos(precEps) * ValX + sin(precEps) * ValY;
+            tempY = -sin(precEps) * ValX + cos(precEps) * ValY;
+            ValX = tempX; ValY = tempY;
+       // matrix Dtet
+            //| cos(tet)   0 sin(tet) | 
+            //|   0        1        0 |
+            //|- sin(tet)  0 cos(tet) |
+            tempX =  cos(precTet) * ValX + sin(precTet) * ValZ;
+            tempZ = -sin(precTet) * ValX + cos(precTet) * ValZ;
+            ValX = tempX; ValZ = tempZ;
+       // matrix Dz
+            //| cos(z)  -sin(z) 0 | 
+            //| sin(z)   cos(z) 0 |
+            //|   0      0     1 |
+            tempX =  cos(precZ) * ValX - sin(precZ) * ValY;
+            tempY =  sin(precZ) * ValX + cos(precZ) * ValY;
+            ValX = tempX; ValY = tempY;
+            // matrix B:
+            //| cos(h)   sin(h) 0 |  |
+            //| -sin(h)  cos(h) 0 |
+            //|   0       0     1 |
             tempX = cos(Lambda) * ValX + sin(Lambda) * ValY;
             tempY = -sin(Lambda) * ValX + cos(Lambda) * ValY;
 
@@ -1102,11 +1167,39 @@ typedef struct TraObj
         tempX = cos(-Lambda) * X - sin(-Lambda) * Y;
         tempY = sin(-Lambda) * X + cos(-Lambda) * Y;
 #else
-        tempX = cos(-Lambda) * X + sin(-Lambda) * Y;
-        tempY = -sin(-Lambda) * X + cos(-Lambda) * Y;
+
+        // matrix (T) B:
+        //| cos(h)   -sin(h) 0 |  |
+        //| sin(h)   cos(h) 0 |
+        //|   0        0     1 |
+        tempX = cos(Lambda) * X - sin(Lambda) * Y;
+        tempY = sin(Lambda) * X + cos(Lambda) * Y;
+        X = tempX; Y = tempY;
+
+        // matrix (T) Dz
+            //| cos(z)   sin(z) 0 | 
+            //|-sin(z)   cos(z) 0 |
+            //|   0      0     1 |
+            tempX =  cos(precZ) * X + sin(precZ) * Y;
+            tempY = -sin(precZ) * X + cos(precZ) * Y;
+            X = tempX; Y = tempY;
+        // matrix(T) Dtet
+            //| cos(tet)   0 -sin(tet) | 
+            //|   0        1        0  |
+            //| sin(tet)   0  cos(tet) |
+            tempX =  cos(precTet) * X - sin(precTet) * Z;
+            tempZ =  sin(precTet) * X + cos(precTet) * Z;
+            X = tempX; Z = tempZ;
+
+        // matrix (T) Deps
+            //| cos(eps)   -sin(eps) 0 |
+            //| sin(eps)    cos(eps) 0 |
+            //|   0           0     1 |
+            tempX =  cos(precEps) * X - sin(precEps) * Y;
+            tempY =  sin(precEps) * X + cos(precEps) * Y;
+            X = tempX; Y = tempY;
+
 #endif
-        X = tempX;
-        Y = tempY;
 
     }
 #else
@@ -2468,7 +2561,7 @@ void CalcPlanetForces(TRAOBJ * SlS)
     }
 
 }
-long double GreenwichAscensionFromTLEEpoch(long double EP);
+long double GreenwichAscensionFromTLEEpoch(long double EP, long double &preEps, long double &preTetta, long double &preZ);
 void CalcSatForces(TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfCalc)
 {
     int i;
@@ -2572,11 +2665,11 @@ void CalcSatForces(TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfCalc)
                         {
                             while(DoIterations)
                             {
-                                Sat->Lambda = GreenwichAscensionFromTLEEpoch(TimeOfCalc - stepsAproximations*(StepsValInDay));
+                                Sat->Lambda = GreenwichAscensionFromTLEEpoch(TimeOfCalc - stepsAproximations*(StepsValInDay),Sat->precEps,Sat->precTet,Sat->precZ);
                                 if ((iRet= Sat->CalcP(ValX0,ValY0,ValZ0,Sat->Distance[i][j])) == 0)
                                 {
                                     Sat->SummXYZ(i, DXx1,DYy1,DZz1);
-                                    Sat->Lambda = GreenwichAscensionFromTLEEpoch(TimeOfCalc + stepsAproximations*(StepsValInDay));
+                                    Sat->Lambda = GreenwichAscensionFromTLEEpoch(TimeOfCalc + stepsAproximations*(StepsValInDay),Sat->precEps,Sat->precTet,Sat->precZ);
                                     if ((iRet= Sat->CalcP(ValX0,ValY0,ValZ0,Sat->Distance[i][j])) == 0)
                                     {
                                         Sat->SummXYZ(i, DXx2,DYy2,DZz2);
@@ -2608,7 +2701,7 @@ void CalcSatForces(TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfCalc)
                             BOOL DoByX = TRUE;
                             while(DoIterations)
                             {
-                                Sat->Lambda = GreenwichAscensionFromTLEEpoch(TimeOfCalc); // same place on longitude
+                                Sat->Lambda = GreenwichAscensionFromTLEEpoch(TimeOfCalc,Sat->precEps,Sat->precTet,Sat->precZ); // same place on longitude
                                 if (DoByX)
                                 {
                                     tempX = cos(-stepsAproximations*OneSecond) * ValX0 - sin(-stepsAproximations*OneSecond) * ValZ0;
@@ -2624,7 +2717,7 @@ void CalcSatForces(TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfCalc)
                                 if ((iRet= Sat->CalcP(tempX,tempY,tempZ,Sat->Distance[i][j])) == 0)
                                 {
                                     Sat->SummXYZ(i, DXx1,DYy1,DZz1);
-                                    Sat->Lambda = GreenwichAscensionFromTLEEpoch(TimeOfCalc);
+                                    Sat->Lambda = GreenwichAscensionFromTLEEpoch(TimeOfCalc,Sat->precEps,Sat->precTet,Sat->precZ);
                                     if (DoByX)
                                     {
                                         tempX = cos(+stepsAproximations*OneSecond) * ValX0 - sin(+stepsAproximations*OneSecond) * ValZ0;
@@ -2729,7 +2822,7 @@ void CalcSatForces(TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfCalc)
         }
     }
 }
-//#define VERY_BASIC
+#define VERY_BASIC
 #ifdef VERY_BASIC
 void IteraSolarSystem(BOOL ForceWasCalculated, TRAOBJ * SlS)
 {
@@ -2751,27 +2844,85 @@ void IteraSolarSystem(BOOL ForceWasCalculated, TRAOBJ * SlS)
 
     }
 }
-
+#if 0
 void IteraSat(int TimeDirection, TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfCalc)
 {
     int i;
     //int j;
-    Sat->Lambda = GreenwichAscensionFromTLEEpoch(TimeOfCalc);
+    Sat->Lambda = GreenwichAscensionFromTLEEpoch(TimeOfCalc,Sat->precEps,Sat->precTet,Sat->precZ);
 
     CalcSatForces(SlS, Sat, TimeOfCalc);
 
     for (i = 0; i < Sat->Elem; i++)
     {
+        Sat->X[i] +=Sat->VX[i]*TimeSl +Sat->FX[i] * TimeSl_2;
+        Sat->Y[i] +=Sat->VY[i]*TimeSl +Sat->FY[i] * TimeSl_2;
+        Sat->Z[i] +=Sat->VZ[i]*TimeSl +Sat->FZ[i] * TimeSl_2;
+
         Sat->VX[i] += Sat->FX[i] * TimeSl /* Sat->M[i]*/;
         Sat->VY[i] += Sat->FY[i] * TimeSl /* Sat->M[i]*/;
         Sat->VZ[i] += Sat->FZ[i] * TimeSl /* Sat->M[i]*/;
 
-        Sat->X[i] +=Sat->VX[i]*TimeSl;
-        Sat->Y[i] +=Sat->VY[i]*TimeSl;
-        Sat->Z[i] +=Sat->VZ[i]*TimeSl;
 
     }
 }
+#else
+void IteraSat(int TimeDirection, TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfCalc)
+{
+    int i;
+    //int j;
+    Sat->Lambda = GreenwichAscensionFromTLEEpoch(TimeOfCalc,Sat->precEps,Sat->precTet,Sat->precZ);
+
+    CalcSatForces(SlS, Sat, TimeOfCalc);
+
+    if (Sat->RunOne == FALSE)
+    {
+        for (i = 0; i < Sat->Elem; i++)
+        {
+            Sat->_position_[i].X  += Sat->_velosity_[i].x() + Sat->FX[i];
+            Sat->_position_[i].Y  += Sat->_velosity_[i].y() + Sat->FY[i];
+            Sat->_position_[i].Z  += Sat->_velosity_[i].z() + Sat->FZ[i];
+
+            Sat->_velosity_[i].X += Sat->FX[i];
+            Sat->_velosity_[i].Y += Sat->FY[i];
+            Sat->_velosity_[i].Z += Sat->FZ[i];
+            Sat->_position_[i].adjustX(10103,10163);      Sat->_position_[i].adjustY(10463,10559);      Sat->_position_[i].adjustZ(10607,10667);
+            Sat->_velosity_[i].adjustX(10799,10883);      Sat->_velosity_[i].adjustY(11279,11423);      Sat->_velosity_[i].adjustZ(11483,11699);
+            Sat->X[i] = Sat->_position_[i].x()* TimeSl_2;   Sat->Y[i] = Sat->_position_[i].y()* TimeSl_2;   Sat->Z[i] = Sat->_position_[i].z()* TimeSl_2;
+            Sat->VX[i] = Sat->_velosity_[i].x()* TimeSl;    Sat->VY[i] = Sat->_velosity_[i].y()* TimeSl;    Sat->VZ[i] = Sat->_velosity_[i].z()* TimeSl;
+        }
+
+    }
+    else
+    {
+        Sat->RunOne = FALSE;
+        for (i = 0; i < Sat->Elem; i++)
+        {
+            Sat->_position_[i].ZeroIntegral();
+            Sat->_velosity_[i].ZeroIntegral();
+
+            Sat->_position_[i].X0 = Sat->X[i]/ TimeSl_2 + Sat->VX[i]/TimeSl;
+            Sat->_position_[i].Y0 = Sat->Y[i]/ TimeSl_2 + Sat->VY[i]/TimeSl;
+            Sat->_position_[i].Z0 = Sat->Z[i]/ TimeSl_2 + Sat->VZ[i]/TimeSl;
+
+            Sat->_position_[i].X = Sat->FX[i];
+            Sat->_position_[i].Y = Sat->FY[i];
+            Sat->_position_[i].Z = Sat->FZ[i];
+
+            Sat->_velosity_[i].X0 = Sat->VX[i]/TimeSl;
+            Sat->_velosity_[i].Y0 = Sat->VY[i]/TimeSl;
+            Sat->_velosity_[i].Z0 = Sat->VZ[i]/TimeSl;
+
+            Sat->_velosity_[i].X =  Sat->FX[i] ;
+            Sat->_velosity_[i].Y =  Sat->FY[i] ;
+            Sat->_velosity_[i].Z =  Sat->FZ[i] ;
+            Sat->X[i] = Sat->_position_[i].x()* TimeSl_2;   Sat->Y[i] = Sat->_position_[i].y()* TimeSl_2;   Sat->Z[i] = Sat->_position_[i].z()* TimeSl_2;
+            Sat->VX[i] = Sat->_velosity_[i].x()* TimeSl;    Sat->VY[i] = Sat->_velosity_[i].y()* TimeSl;    Sat->VZ[i] = Sat->_velosity_[i].z()* TimeSl;
+        }
+    }
+}
+
+#endif
 #else
 #ifdef BETTER_BUT_MANY_ITERATIONS
 void IteraSolarSystem(BOOL ForceWasCalculated, TRAOBJ * SlS)
@@ -2887,7 +3038,7 @@ void IteraSat(int TimeDirection, TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfC
 {
     int i;
     //int j;
-    Sat->Lambda = GreenwichAscensionFromTLEEpoch(TimeOfCalc);
+    Sat->Lambda = GreenwichAscensionFromTLEEpoch(TimeOfCalc,Sat->precEps,Sat->precTet,Sat->precZ);
     // IteraSat called first - calculations of the forses btw planets will be done at this place
     // just needs to preserv it 
     CalcPlanetForces(SlS);
@@ -2948,7 +3099,7 @@ void IteraSat(int TimeDirection, TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfC
             SlS->Z[i] = (SlS->Z0divDt2[i] + (SlS->CountNz+1)*SlS->VZ0divDt[i] + (SlS->Z_[i] + SlS->VZ_[i] + SlS->FZ[i]/2)) * TimeSl_2/ SlS->M[i];
         }
         CalcPlanetForces(SlS);
-        Sat->Lambda = GreenwichAscensionFromTLEEpoch(TimeOfCalc+StepsValInDay);
+        Sat->Lambda = GreenwichAscensionFromTLEEpoch(TimeOfCalc+StepsValInDay,Sat->precEps,Sat->precTet,Sat->precZ);
         CalcSatForces(SlS, Sat, TimeOfCalc+StepsValInDay);
         // now restore origial plant's positions and forces
         for (i = 0; i < SlS->Elem; i++)
@@ -3025,7 +3176,7 @@ void IteraSat(int TimeDirection, TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfC
     // IteraSat called first - calculations of the forses btw planets will be done at this place
     // just needs to preserv it 
     CalcPlanetForces(SlS);
-    Sat->Lambda = GreenwichAscensionFromTLEEpoch(TimeOfCalc);
+    Sat->Lambda = GreenwichAscensionFromTLEEpoch(TimeOfCalc,Sat->precEps,Sat->precTet,Sat->precZ);
     CalcSatForces(SlS, Sat, TimeOfCalc);
     Sat->CountNx++; Sat->CountNy++; Sat->CountNz++;
     if (Sat->RunOne == FALSE)
@@ -3149,7 +3300,7 @@ void IteraSat(int TimeDirection, TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfC
     }
 
     // calc new forces in new point
-    Sat->Lambda = GreenwichAscensionFromTLEEpoch(TimeOfCalc+StepsValInDay);
+    Sat->Lambda = GreenwichAscensionFromTLEEpoch(TimeOfCalc+StepsValInDay,Sat->precEps,Sat->precTet,Sat->precZ);
     CalcSatForces(SlS, Sat, TimeOfCalc+StepsValInDay);
     // now restore origial plant's positions and forces
     for (i = 0; i < SlS->Elem; i++)
@@ -3509,7 +3660,7 @@ void IteraSat(int TimeDirection, TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfC
         Sat->Z[i] = (Sat->Zminus[i] + Sat->VZ_[i]/3.0)* TimeSl_2;
     }
     // calc new forces in new point
-    Sat->Lambda = GreenwichAscensionFromTLEEpoch(TimeOfCalc+StepsValInDay);
+    Sat->Lambda = GreenwichAscensionFromTLEEpoch(TimeOfCalc+StepsValInDay,Sat->precEps,Sat->precTet,Sat->precZ);
     CalcSatForces(SlS, Sat, TimeOfCalc+StepsValInDay);
 
     //================================================================
@@ -5801,7 +5952,7 @@ END
 // The function subroutine THETAG is passed the epoch time exactly as it appears on the input element cards.
 // The routine converts this time to days since 1950 Jan 0.0 UTC, stores this in the COMMON E1,
 // and returns the right ascension of Greenwich at epoch (in radians).
-long double GreenwichAscensionFromTLEEpoch(long double EP)
+long double GreenwichAscensionFromTLEEpoch(long double EP, long double &preEps, long double &preTetta, long double &preZ)
 {
     
 	//FUNCTION THETAG(EP)
@@ -5823,6 +5974,10 @@ long double GreenwichAscensionFromTLEEpoch(long double EP)
 	YR=JY;
 	D=EP-YR*1.e3;
 	//IF(JY.LT.10) JY=JY+80
+    preEps = 0;
+    preTetta = 0;
+    preZ = 0;
+
 #if 1    
     if (JY < 20) // just from J2000
     {
@@ -5843,6 +5998,13 @@ long double GreenwichAscensionFromTLEEpoch(long double EP)
         H0 = 24110.54841 + 8640184.812866*Tstar + 0.093104*Tstar*Tstar/*- 6.2e-10*Tstar*Tstar*Tstar*/ + DaysFrom2000*86401.84812866;
         THETAG = H0/86400 * 2.0*M_PI;
         THETAG =fmod(THETAG, (long double)2.0*M_PI);
+        preEps = (2306.2181 + (0.30188 + 0.017998*Tstar)*Tstar)*Tstar; // in seconds
+        preTetta = (2004.3109  + (0.42665 - 0.041833*Tstar)* Tstar)*Tstar; // in seconds
+        preZ = preEps + 0.79280* Tstar*Tstar;  // in seconds
+        // now in radians;
+        preEps = preEps *M_PI*2 / (360*60*60);
+        preTetta = preTetta * M_PI*2 / (360*60*60);
+        preZ = preZ * M_PI*2 / (360*60*60);
         return THETAG;
     }
 #endif
@@ -6796,7 +6958,7 @@ void ParamProb(char *szString)
 			
 			// just cheking GST must be eq GreenwichA
 			SUN_08 (1950,1,0,0,0,GST,SLONG,SRASN,SDEC);
-			dStartGreenwichA = GreenwichAscensionFromTLEEpoch(50000.0); // 50 000.0 == 1950, day 1( first of january), 00:00:00 
+			dStartGreenwichA = GreenwichAscensionFromTLEEpoch(50000.0,Sat.precEps,Sat.precTet,Sat.precZ); // 50 000.0 == 1950, day 1( first of january), 00:00:00 
             // error is:
             //   GST =  1.7466460286076149
             // dStartGreenwichA = -0.0000017029127985
@@ -6808,7 +6970,7 @@ void ParamProb(char *szString)
             // dStartJD = 2456784.8527777777
             // dStartEpoch = 14127.352777777705
             SUN_08 (ThatTime.wYear,Days_in_Year,ThatTime.wHour,ThatTime.wMinute,ThatTime.wSecond,GST,SLONG,SRASN,SDEC);
-            dStartGreenwichA = GreenwichAscensionFromTLEEpoch(dStartTLEEpoch);
+            dStartGreenwichA = GreenwichAscensionFromTLEEpoch(dStartTLEEpoch,Sat.precEps,Sat.precTet,Sat.precZ);
             // error is:
             // GST = 6.1453506996084499
             // dStartGreenwichA 6.1454312968999147
@@ -6819,7 +6981,7 @@ void ParamProb(char *szString)
             // at dStartEpoch it will be on another
             // to account in graviational potential the shape of the earth 
             // needs to know this position
-            //dStartGreenwichA = GreenwichAscensionFromTLEEpoch(Sat.ProbEpoch[0]);
+            //dStartGreenwichA = GreenwichAscensionFromTLEEpoch(Sat.ProbEpoch[0],Sat->precEps,Sat->precTet,Sat->precZ);
             for (int nSat = 0; nSat <Sat.Elem; nSat++)
             {
 			    
@@ -7138,7 +7300,7 @@ void ParamProb(char *szString)
             Sat.RunOne = TRUE;
 
 #ifdef USE_MODEL_LOAD
-            Sat.iLeg = 16;
+            Sat.iLeg = 36;
             iCounter_nk_lm_Numbers =0;
             FILE *FileC_S = fopen("egm96","r");
             //FILE *FileC_S = fopen("JGM3.txt","r");
@@ -7818,7 +7980,7 @@ void dumpTRAvisual(long i)
                     ConvertJulianDayToDateAndTime(dStartJD + ((double)(i))/(24.0*60.0*60.0), &ThatTime);
                     int Iret = GetTimeZoneInformation(&tmzone); 
                     double dTLEEpoch = ConvertDateTimeToTLEEpoch(ThatTime.wDay, ThatTime.wMonth, ThatTime.wYear, ThatTime.wHour, ThatTime.wMinute, ThatTime.wSecond, ThatTime.wMilliseconds);
-                    double dGreenwichA = GreenwichAscensionFromTLEEpoch(dTLEEpoch);
+                    double dGreenwichA = GreenwichAscensionFromTLEEpoch(dTLEEpoch,Sat.precEps,Sat.precTet,Sat.precZ);
                     SUN_08 (ThatTime.wYear,
                                 iDayOfTheYearZeroBase(ThatTime.wDay, ThatTime.wMonth, ThatTime.wYear)+1 ,// in that function specified that 1 day is january 1
                                 ThatTime.wHour,ThatTime.wMinute,ThatTime.wSecond,
@@ -7846,7 +8008,7 @@ void dumpTRAvisual(long i)
             SYSTEMTIME ThatTime; 
             ConvertJulianDayToDateAndTime(dStartJD + ((double)i)/(24.0*60.0*60.0), &ThatTime);
             double dEpoch = ConvertDateTimeToTLEEpoch(ThatTime.wDay, ThatTime.wMonth, ThatTime.wYear, ThatTime.wHour, ThatTime.wMinute, ThatTime.wSecond, ThatTime.wMilliseconds);
-            double long dGreenwichA = GreenwichAscensionFromTLEEpoch(dEpoch);
+            double long dGreenwichA = GreenwichAscensionFromTLEEpoch(dEpoch,Sat.precEps,Sat.precTet,Sat.precZ);
             SUN_08 (ThatTime.wYear,
                 iDayOfTheYearZeroBase(ThatTime.wDay, ThatTime.wMonth, ThatTime.wYear) + 1 , // in fucntion spec that 1 Jan == 1 
                 ThatTime.wHour,ThatTime.wMinute,ThatTime.wSecond,
@@ -8593,6 +8755,7 @@ int main(int argc, char * argv[])
                 }
                 IteraSat(1, &SolarSystem, &Sat,dStartTLEEpoch + (iCurSec +   (long double)iCurPortionOfTheSecond/(long double)iItearationsPerSec) /86400.0) ;
                 IteraSolarSystem(TRUE, &SolarSystem);
+
                 EarthX = SolarSystem.X[EARTH];
                 EarthY = SolarSystem.Y[EARTH];
                 EarthZ = SolarSystem.Z[EARTH];
