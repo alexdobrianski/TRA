@@ -402,6 +402,7 @@ int iCurPortionOfTheSecond;
 
 typedef struct Long_Double_Intergal_Var
 {
+    long long nX0;
     long double X0;
     long double Y0;
     long double Z0;
@@ -447,15 +448,15 @@ typedef struct Long_Double_Intergal_Var
 
     long double x() 
         { 
-           return X0+X+X_h+X_hh; 
+           return X+X_h+X_hh; 
         }
     long double y() 
         { 
-            return Y0+Y+Y_h+Y_hh; 
+            return Y+Y_h+Y_hh; 
         }
     long double z() 
         { 
-            return Z0+Z+Z_h+Z_hh; 
+            return Z+Z_h+Z_hh; 
         }
     void adjustX(long MaxVal, long MaxVal_h)
     {
@@ -502,6 +503,7 @@ typedef struct Long_Double_Intergal_Var
 
     void ZeroIntegral (void)
     {
+        nX0 = 0;
         X = 0.0;      Y = 0.0;      Z = 0.0;
         X_h =0.0;    Y_h =0.0;    Z_h =0.0;
         X_hh =0.0;   Y_hh =0.0;   Z_hh =0.0;
@@ -936,10 +938,6 @@ typedef struct TraObj
         //Lambda = 6.2;
 
 
-#if 0
-            tempX = cos(Lambda) * ValX - sin(Lambda) * ValY;
-            tempY = sin(Lambda) * ValX + cos(Lambda) * ValY;
-#else
 
         // matrix Deps
             //| cos(eps)   sin(eps) 0 |
@@ -969,7 +967,6 @@ typedef struct TraObj
             tempX = cos(Lambda) * ValX + sin(Lambda) * ValY;
             tempY = -sin(Lambda) * ValX + cos(Lambda) * ValY;
 
-#endif
         sinTetta =ValZ/ValR;
 
         XdivR =   tempX/ValR;
@@ -1163,10 +1160,6 @@ typedef struct TraObj
             X += _x[n]; Y += _y[n]; Z += _z[n];
         }
         X += _x20*R0divR[2];  Y += _y20*R0divR[2];  Z += _z20*R0divR[2];
-#if 0
-        tempX = cos(-Lambda) * X - sin(-Lambda) * Y;
-        tempY = sin(-Lambda) * X + cos(-Lambda) * Y;
-#else
 
         // matrix (T) B:
         //| cos(h)   -sin(h) 0 |  |
@@ -1198,9 +1191,6 @@ typedef struct TraObj
             tempX =  cos(precEps) * X - sin(precEps) * Y;
             tempY =  sin(precEps) * X + cos(precEps) * Y;
             X = tempX; Y = tempY;
-
-#endif
-
     }
 #else
     void FastSummXYZ( long double ValX, long double ValY, long double ValZ, long double ValR, long double &X, long double &Y, long double &Z)
@@ -2879,27 +2869,38 @@ void IteraSat(int TimeDirection, TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfC
     {
         for (i = 0; i < Sat->Elem; i++)
         {
-            Sat->_position_[i].X  += Sat->_velosity_[i].x() + Sat->FX[i];
-            Sat->_position_[i].Y  += Sat->_velosity_[i].y() + Sat->FY[i];
-            Sat->_position_[i].Z  += Sat->_velosity_[i].z() + Sat->FZ[i];
+            Sat->_position_[i].X  += (Sat->_velosity_[i].x()) + Sat->FX[i];
+            Sat->_position_[i].Y  += (Sat->_velosity_[i].y()) + Sat->FY[i];
+            Sat->_position_[i].Z  += (Sat->_velosity_[i].z()) + Sat->FZ[i];
 
             Sat->_velosity_[i].X += Sat->FX[i];
             Sat->_velosity_[i].Y += Sat->FY[i];
             Sat->_velosity_[i].Z += Sat->FZ[i];
             Sat->_position_[i].adjustX(10103,10163);      Sat->_position_[i].adjustY(10463,10559);      Sat->_position_[i].adjustZ(10607,10667);
             Sat->_velosity_[i].adjustX(10799,10883);      Sat->_velosity_[i].adjustY(11279,11423);      Sat->_velosity_[i].adjustZ(11483,11699);
-            Sat->X[i] = Sat->_position_[i].x()* TimeSl_2;   Sat->Y[i] = Sat->_position_[i].y()* TimeSl_2;   Sat->Z[i] = Sat->_position_[i].z()* TimeSl_2;
-            Sat->VX[i] = Sat->_velosity_[i].x()* TimeSl;    Sat->VY[i] = Sat->_velosity_[i].y()* TimeSl;    Sat->VZ[i] = Sat->_velosity_[i].z()* TimeSl;
-        }
+            Sat->X[i] = (Sat->_position_[i].x()+Sat->_position_[i].X0+ Sat->_velosity_[i].X0 *Sat->_velosity_[i].nX0)* TimeSl_2;   
+            Sat->Y[i] = (Sat->_position_[i].y()+Sat->_position_[i].Y0+ Sat->_velosity_[i].Y0 *Sat->_velosity_[i].nX0)* TimeSl_2;   
+            Sat->Z[i] = (Sat->_position_[i].z()+Sat->_position_[i].Z0+ Sat->_velosity_[i].Z0 *Sat->_velosity_[i].nX0)* TimeSl_2;
+            Sat->VX[i] = (Sat->_velosity_[i].x()+Sat->_velosity_[i].X0)* TimeSl;    
+            Sat->VY[i] = (Sat->_velosity_[i].y()+Sat->_velosity_[i].Y0)* TimeSl;    
+            Sat->VZ[i] = (Sat->_velosity_[i].z()+Sat->_velosity_[i].Z0)* TimeSl;
+            Sat->_position_[i].nX0++;
+            Sat->_velosity_[i].nX0++;
 
+        }
     }
     else
     {
         Sat->RunOne = FALSE;
+        
         for (i = 0; i < Sat->Elem; i++)
         {
+           
             Sat->_position_[i].ZeroIntegral();
             Sat->_velosity_[i].ZeroIntegral();
+
+            Sat->_position_[i].nX0 = 1;
+            Sat->_velosity_[i].nX0 = 1;
 
             Sat->_position_[i].X0 = Sat->X[i]/ TimeSl_2 + Sat->VX[i]/TimeSl;
             Sat->_position_[i].Y0 = Sat->Y[i]/ TimeSl_2 + Sat->VY[i]/TimeSl;
@@ -2916,8 +2917,13 @@ void IteraSat(int TimeDirection, TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfC
             Sat->_velosity_[i].X =  Sat->FX[i] ;
             Sat->_velosity_[i].Y =  Sat->FY[i] ;
             Sat->_velosity_[i].Z =  Sat->FZ[i] ;
-            Sat->X[i] = Sat->_position_[i].x()* TimeSl_2;   Sat->Y[i] = Sat->_position_[i].y()* TimeSl_2;   Sat->Z[i] = Sat->_position_[i].z()* TimeSl_2;
-            Sat->VX[i] = Sat->_velosity_[i].x()* TimeSl;    Sat->VY[i] = Sat->_velosity_[i].y()* TimeSl;    Sat->VZ[i] = Sat->_velosity_[i].z()* TimeSl;
+
+            Sat->X[i] = (Sat->_position_[i].x()+Sat->_position_[i].X0)* TimeSl_2;   
+            Sat->Y[i] = (Sat->_position_[i].y()+Sat->_position_[i].Y0)* TimeSl_2;   
+            Sat->Z[i] = (Sat->_position_[i].z()+Sat->_position_[i].Z0)* TimeSl_2;
+            Sat->VX[i] = (Sat->_velosity_[i].x()+Sat->_velosity_[i].X0)* TimeSl;    
+            Sat->VY[i] = (Sat->_velosity_[i].y()+Sat->_velosity_[i].Y0)* TimeSl;    
+            Sat->VZ[i] = (Sat->_velosity_[i].z()+Sat->_velosity_[i].Z0)* TimeSl;
         }
     }
 }
@@ -5966,7 +5972,10 @@ long double GreenwichAscensionFromTLEEpoch(long double EP, long double &preEps, 
     long double PartOfTheDay;
     long double CenturyFrom2000;
     long double Tstar;
+    long double dFeta;
+    long double Epsilon;
     long double H0;
+    long double DeltaH;
 	TWOPI=2.0*M_PI;//6.28318530717959D0
 	YR=(EP+2.e-7)*1.e-3;
 	int JY=YR;
@@ -5995,16 +6004,21 @@ long double GreenwichAscensionFromTLEEpoch(long double EP, long double &preEps, 
         CenturyFrom2000 = DaysFrom2000/36525.0;
         Tstar =CenturyFrom2000;
         PartOfTheDay = D - (double long)(long)D;
-        H0 = 24110.54841 + 8640184.812866*Tstar + 0.093104*Tstar*Tstar/*- 6.2e-10*Tstar*Tstar*Tstar*/ + DaysFrom2000*86401.84812866;
+        dFeta = -0.0048*sin((125-0.05295*DaysFrom2000)*M_PI/180) - 0.002*cos((200.9 +1.97129*DaysFrom2000)*M_PI/180);
+        //dFeta = dFeta *M_PI / 180;
+        Epsilon = 23.43921111 + (-0.013004167 - 0.000000164*Tstar)*Tstar;
+        Epsilon = Epsilon *M_PI / 180;
+        DeltaH = dFeta * cos(Epsilon)/360.0;
+        H0 = 24110.54841 + (8640184.812866 + (0.093104- 6.2e-10*Tstar)*Tstar)*Tstar + (DaysFrom2000-DeltaH)*86401.84812866;
         THETAG = H0/86400 * 2.0*M_PI;
         THETAG =fmod(THETAG, (long double)2.0*M_PI);
         preEps = (2306.2181 + (0.30188 + 0.017998*Tstar)*Tstar)*Tstar; // in seconds
         preTetta = (2004.3109  + (0.42665 - 0.041833*Tstar)* Tstar)*Tstar; // in seconds
-        preZ = preEps + 0.79280* Tstar*Tstar;  // in seconds
+        preZ = preEps + (0.79280 + 0.018203* Tstar)* Tstar*Tstar;  // in seconds
         // now in radians;
-        preEps = preEps *M_PI*2 / (360*60*60);
-        preTetta = preTetta * M_PI*2 / (360*60*60);
-        preZ = preZ * M_PI*2 / (360*60*60);
+        preEps = preEps *M_PI / (180*60*60);
+        preTetta = preTetta * M_PI / (180*60*60);
+        preZ = preZ * M_PI*2 / (180*60*60);
         return THETAG;
     }
 #endif
@@ -7027,9 +7041,11 @@ void ParamProb(char *szString)
 			    // second one does not use XNDT2O,XNDD6O
                 // in next call XN0 and ProbMeanMotion connected by a formula:
                 // Sat.ProbMeanMotion[nSat] = XNO / (2*pi) * 1440.0
+#if 0
                 BSTAR = 0.0;
                 XNDD6O = 0.0;
                 XNDT2O =0.0;
+#endif
 			    SGP4((dStartJD - Sat.ProbJD[nSat])*XMNPDA, XNDT2O,XNDD6O,BSTAR,Sat.ProbIncl[nSat], Sat.ProbAscNode[nSat],Sat.ProbEcc[nSat], 
                     Sat.ProbArgPer[nSat], Sat.ProbMeanAnom[nSat],XNO, 
 				    tProbX,tProbY,tProbZ,tProbVX,tProbVY,tProbVZ);
@@ -7300,7 +7316,7 @@ void ParamProb(char *szString)
             Sat.RunOne = TRUE;
 
 #ifdef USE_MODEL_LOAD
-            Sat.iLeg = 36;
+            Sat.iLeg = 64;
             iCounter_nk_lm_Numbers =0;
             FILE *FileC_S = fopen("egm96","r");
             //FILE *FileC_S = fopen("JGM3.txt","r");
@@ -9304,7 +9320,7 @@ int main(int argc, char * argv[])
 			long double BSTAR=Sat.ProbDragterm[iCheck]/AE;
             long double tProbX,tProbY,tProbZ,tProbVX,tProbVY,tProbVZ;
             // next lines has to be removed ==> today they are included only to avoid drag effect
-#if 1
+#if 0
             BSTAR = 0.0;
             XNDD6O = 0.0;
             XNDT2O =0.0;
