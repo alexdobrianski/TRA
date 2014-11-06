@@ -3074,12 +3074,11 @@ void CalcSatForces(TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfCalc)
                 long double AirFY = Sat->VY[i] - SlS->VY[j];
                 long double AirFZ = Sat->VZ[i] - SlS->VZ[j];
                 long double AirNorm = sqrt(AirFX*AirFX + AirFY*AirFY + AirFZ*AirFZ);
-                long double AbsAirFX = AirNorm*AirNorm* Sat->Ro * 5*TimeSl;
-                long double AbsAirFY = AirNorm*AirNorm* Sat->Ro * 5*TimeSl;
-                long double AbsAirFZ = AirNorm*AirNorm* Sat->Ro * 5*TimeSl;
-                Sat->FX[i] -=AirFX/AirNorm *AbsAirFX;
-                Sat->FY[i] -=AirFY/AirNorm *AbsAirFY;
-                Sat->FZ[i] -=AirFZ/AirNorm *AbsAirFZ;
+                long double AbsAir = AirNorm* Sat->Ro * 1568.8395*TimeSl_2; // is it? Is ISS looks like square with side= 56.014 m? => S area= 3137.679m^2
+                //long double AbsAir = AirNorm* Sat->Ro * 500.0*TimeSl_2; // is it? Is ISS looks like square with side= 56.014 m? => S area= 3137.679m^2
+                Sat->FX[i] -=AirFX *AbsAir;
+                Sat->FY[i] -=AirFY *AbsAir;
+                Sat->FZ[i] -=AirFZ *AbsAir;
 #endif
             }
             else
