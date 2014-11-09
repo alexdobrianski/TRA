@@ -1119,6 +1119,10 @@ typedef struct TraObj
         long double _y[TOTAL_COEF];
         long double _z[TOTAL_COEF];
         long double _x20,_y20,_z20;
+        long double cos_precEps, sin_precEps;
+        long double cos_precTet, sin_precTet;
+        long double cos_precZ, sin_precZ;
+        long double cos_Lambda, sin_Lambda;
 //#define M_PI_ 1.744761118*2
 #define M_PI_ M_PI
         // Lambda      // 6169 // 224
@@ -1195,38 +1199,42 @@ typedef struct TraObj
 
 
         // matrix Deps
+            cos_precEps= cos(precEps); sin_precEps= sin(precEps);
             //| cos(eps)   sin(eps) 0 |
             //| -sin(eps)  cos(eps) 0 |
             //|   0           0     1 |
-            tempX =  cos(precEps) * ValX + sin(precEps) * ValY;
-            tempY = -sin(precEps) * ValX + cos(precEps) * ValY;
+            tempX =  cos_precEps * ValX + sin_precEps * ValY;
+            tempY = -sin_precEps * ValX + cos_precEps * ValY;
             ValX = tempX; ValY = tempY;
        // matrix Dtet
+            cos_precTet = cos(precTet); sin_precTet = sin(precTet);
             //| cos(tet)   0 sin(tet) | 
             //|   0        1        0 |
             //|- sin(tet)  0 cos(tet) |
-            tempX =  cos(precTet) * ValX + sin(precTet) * ValZ;
-            tempZ = -sin(precTet) * ValX + cos(precTet) * ValZ;
+            tempX =  cos_precTet * ValX + sin_precTet * ValZ;
+            tempZ = -sin_precTet * ValX + cos_precTet * ValZ;
             ValX = tempX; ValZ = tempZ;
        // matrix Dz
+            cos_precZ =  cos(precZ); sin_precZ = sin(precZ);
             //| cos(z)  -sin(z) 0 | 
             //| sin(z)   cos(z) 0 |
             //|   0      0     1 |
-            tempX =  cos(precZ) * ValX - sin(precZ) * ValY;
-            tempY =  sin(precZ) * ValX + cos(precZ) * ValY;
+            tempX =  cos_precZ * ValX - sin_precZ * ValY;
+            tempY =  sin_precZ * ValX + cos_precZ * ValY;
             ValX = tempX; ValY = tempY;
             // matrix B:
+            cos_Lambda = cos(Lambda); sin_Lambda = sin(Lambda);
             //| cos(h)   sin(h) 0 |  |
             //| -sin(h)  cos(h) 0 |
             //|   0       0     1 |
-            tempX = cos(Lambda) * ValX + sin(Lambda) * ValY;
-            tempY = -sin(Lambda) * ValX + cos(Lambda) * ValY;
+            tempX = cos_Lambda * ValX + sin_Lambda * ValY;
+            tempY = -sin_Lambda * ValX + cos_Lambda * ValY;
 
         // now earth in Terre Ref System
         // it is possible to calculate H to get air force
         if (--iAtm == 0)
         {
-            iAtm = 1000; // onc per 1000 iteration == 1 per sec
+            iAtm = 479; // onc per 1000 iteration == 1 per sec
             H =GetH(tempX, tempY, tempZ, 6378245.000, 6356863.019);
             Ro=GetDens(); // 15C
         }
@@ -1429,31 +1437,31 @@ typedef struct TraObj
         //| cos(h)   -sin(h) 0 |  |
         //| sin(h)   cos(h) 0 |
         //|   0        0     1 |
-        tempX = cos(Lambda) * X - sin(Lambda) * Y;
-        tempY = sin(Lambda) * X + cos(Lambda) * Y;
+        tempX = cos_Lambda * X - sin_Lambda * Y;
+        tempY = sin_Lambda * X + cos_Lambda * Y;
         X = tempX; Y = tempY;
 
         // matrix (T) Dz
             //| cos(z)   sin(z) 0 | 
             //|-sin(z)   cos(z) 0 |
             //|   0      0     1 |
-            tempX =  cos(precZ) * X + sin(precZ) * Y;
-            tempY = -sin(precZ) * X + cos(precZ) * Y;
+            tempX =  cos_precZ * X + sin_precZ * Y;
+            tempY = -sin_precZ * X + cos_precZ * Y;
             X = tempX; Y = tempY;
         // matrix(T) Dtet
             //| cos(tet)   0 -sin(tet) | 
             //|   0        1        0  |
             //| sin(tet)   0  cos(tet) |
-            tempX =  cos(precTet) * X - sin(precTet) * Z;
-            tempZ =  sin(precTet) * X + cos(precTet) * Z;
+            tempX =  cos_precTet * X - sin_precTet * Z;
+            tempZ =  sin_precTet * X + cos_precTet * Z;
             X = tempX; Z = tempZ;
 
         // matrix (T) Deps
             //| cos(eps)   -sin(eps) 0 |
             //| sin(eps)    cos(eps) 0 |
             //|   0           0     1 |
-            tempX =  cos(precEps) * X - sin(precEps) * Y;
-            tempY =  sin(precEps) * X + cos(precEps) * Y;
+            tempX =  cos_precEps * X - sin_precEps * Y;
+            tempY =  sin_precEps * X + cos_precEps * Y;
             X = tempX; Y = tempY;
     }
 #else
@@ -3074,7 +3082,7 @@ void CalcSatForces(TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfCalc)
                 long double AirFY = Sat->VY[i] - SlS->VY[j];
                 long double AirFZ = Sat->VZ[i] - SlS->VZ[j];
                 long double AirNorm = sqrt(AirFX*AirFX + AirFY*AirFY + AirFZ*AirFZ);
-                long double AbsAir = AirNorm* Sat->Ro * 1568.8395*TimeSl_2; // is it? Is ISS looks like square with side= 56.014 m? => S area= 3137.679m^2
+                long double AbsAir = AirNorm* Sat->Ro * 2004.0*TimeSl_2; // is it? Is ISS looks like square with side= 56.014 m? => S area= 3137.679m^2
                 //long double AbsAir = AirNorm* Sat->Ro * 500.0*TimeSl_2; // is it? Is ISS looks like square with side= 56.014 m? => S area= 3137.679m^2
                 Sat->FX[i] -=AirFX *AbsAir;
                 Sat->FY[i] -=AirFY *AbsAir;
@@ -9629,7 +9637,12 @@ int main(int argc, char * argv[])
             double ErrorDD = sqrt(tVX*tVX + tVY*tVY + tVZ*tVZ) - sqrt(tProbVX*tProbVX + tProbVY*tProbVY + tProbVZ*tProbVZ);
             if (iCurSec%(60*92) == 0)
             {
-                    printf("\n%f err(X=%f V=%f pr=%f lv=%f) min=%d ",(asin(SinAngle)*180/M_PI),tttX,tttVX, errorD, ErrorDD,iCurSec/60);
+                  //  printf("\n%f err(X=%f V=%f pr=%f lv=%f) min=%d ",(asin(SinAngle)*180/M_PI),tttX,tttVX, errorD, ErrorDD,iCurSec/60);
+                 printf("\n%8.4f X=%13.5f,%13.5f,%13.5f V=%13.5f,%13.5f,%13.5f e= %f %f  %d",(asin(SinAngle)*180/M_PI),
+                 tProbX - tX, tProbY - tY, tProbZ - tZ,
+                 tProbVX - tVX,tProbVY - tVY,tProbVZ - tVZ,
+                 tttX,tttVX,iCurSec/60);
+
             }
             //Sat.X[0] = tProbX + SolarSystem.X[EARTH]; Sat.Y[0] = tProbY + SolarSystem.Y[EARTH]; Sat.Z[0] = tProbZ + SolarSystem.Z[EARTH];
             //Sat.VX[0] = tProbVX + SolarSystem.VX[EARTH]; Sat.VY[0] = tProbVY + SolarSystem.VY[EARTH]; Sat.VZ[0] = tProbVZ + SolarSystem.VZ[EARTH];
