@@ -2652,7 +2652,7 @@ char szMoonKeplerLine1[1024];
 char szMoonKeplerLine2[1024];
 char szMoonKeplerLine3[1024];
 
-char UseSatDtat[1024] = {"SGP4"};  // allowed initial data:
+char UseSatData[1024] = {"SGP4"};  // allowed initial data:
                                    // SGP - use SGP from Space Track Report 3 to calculate position and velocity based on TLE
                                    // SGP4 - use SPG4 to calulate initial position and velocity from TLE
                                    // SGP8 - use SGP8
@@ -6798,8 +6798,276 @@ M_19:
 //RETURN
 //END
 }
+// 8 THE SGP8 MODEL
+// The NORAD mean element sets can be used for prediction with SGP8. All symbols not defned
+// below are defned in the list of symbols in Section Twelve. The original mean motion (n00) and o
+// semimajor axis (a00) are frst recovered from the input elements by the equations
+// * SGP8 14 NOV 80
+//SUBROUTINE SGP8(IFLAG,TSINCE)
+void SGP8(long double TSINCE,/*double EPOCH,*/ 
+          long double nuXNDT2O, 
+          long double nuXNDD6O,/*IEXP,*/
+          long double BSTAR,/*IBEXP,*/
+	      long double XINCL,  // the mean inclination at epoch
+          long double XNODEO, //the mean longitude of ascending node at epoch
+          long double EO,     // the mean eccentricity at epoch
+          long double OMEGAO, // the mean argument of perigee at epoch
+          long double XMO,   // (M0) the mean mean anomaly at epoch
+          long double XNO,   // (k0) the SGP type mean mean motion at epoch
+		  long double &X,long double &Y,long double &Z,long double &XDOT,long double &YDOT,long double &ZDOT)
+{
+//COMMON/E1/XMO,XNODEO,OMEGAO,EO,XINCL,XNO,XNDT2O,
+//1 XNDD6O,BSTAR,X,Y,Z,XDOT,YDOT,ZDOT,EPOCH,DS50
+//COMMON/C1/CK2,CK4,E6A,QOMS2T,S,TOTHRD,
+//1 XJ3,XKE,XKMPER,XMNPDA,AE
+//DOUBLE PRECISION EPOCH, DS50
+//DATA RHO/.15696615/
+    long double TOTHRD= .6666666666666;
+    long double RHO =.15696615;
+	long double XKE = BIG_XKE;//.743669161E-1;
+	long double XKMPER = 6378.1350;
+	long double XJ2 = 1.082616E-3; //the second gravitational zonal harmonic of the Earth
+	long double XJ3 = -.253881E-5; // the third gravitational zonal harmonic of the Earth
+	long double XJ4 = -1.65597E-6; // the fourth gravitational zonal harmonic of the Earth
+	long double AE = 1.0;          // the equatorial radius of the Earth - actualy it is not true it is one == everything measuared in that radiuses
+	long double QO =120.0;         // parameter for the SGP4/SGP8 density function
+	long double SO = 78.0;         // parameter for the SGP4/SGP8 density function
 
+     long double CK2=.5*XJ2*AE*AE;
+     long double CK4=-.375*XJ4*AE*AE*AE*AE;
+	long double QOMS2T=pow(((QO-SO)*AE/XKMPER),(long double)4.0);
+	long double S=AE*(1.+SO/XKMPER);
+    long double XMNPDA = 24.0*60.0;//1440.0; // XMNPDA time units(minutes) /day 1440.0
+    double E6A = 1.E-6;
+//IF (IFLAG .EQ. 0) GO TO 100
+//* RECOVER ORIGINAL MEAN MOTION (XNODP) AND SEMIMAJOR AXIS (AODP)
+//* FROM INPUT ELEMENTS --------- CALCULATE BALLISTIC COEFFICIENT
+//* (B TERM) FROM INPUT B* DRAG TERM
+long double A1=pow((XKE/XNO),TOTHRD);
+long double COSI=cos(XINCL);
+long double THETA2=COSI*COSI;
+long double TTHMUN=3.*THETA2-1.;
+long double EOSQ=EO*EO;
+long double BETAO2=1.-EOSQ;
+long double BETAO=sqrt(BETAO2);
+long double DEL1=1.5*CK2*TTHMUN/(A1*A1*BETAO*BETAO2);
+long double AO=A1*(1.-DEL1*(.5*TOTHRD+DEL1*(1.+134./81.*DEL1)));
+long double  DELO=1.5*CK2*TTHMUN/(AO*AO*BETAO*BETAO2);
+long double AODP=AO/(1.-DELO);
+long double XNODP=XNO/(1.+DELO);
+long double B=2.*BSTAR/RHO;
+//* INITIALIZATION
+int ISIMP=0;
+long double PO=AODP*BETAO2;
+long double POM2=1./(PO*PO);
+long double SINI=sin(XINCL);
+long double __SING=sin(OMEGAO);
+long double COSG=cos(OMEGAO);
+long double TEMP=.5*XINCL;
+long double SINIO2=sin(TEMP);
+long double COSIO2=cos(TEMP);
+long double THETA4=THETA2*THETA2;
+long double UNM5TH=1.-5.*THETA2;
+long double UNMTH2=1.-THETA2;
+long double A3COF=-XJ3/CK2*AE*AE*AE;
+long double PARDT1=3.*CK2*POM2*XNODP;
+long double PARDT2=PARDT1*CK2*POM2;
+long double PARDT4=1.25*CK4*POM2*POM2*XNODP;
+long double XMDT1=.5*PARDT1*BETAO*TTHMUN;
+// page 41
+long double XGDT1=-.5*PARDT1*UNM5TH;
+long double XHDT1=-PARDT1*COSI;
+long double XLLDOT=XNODP+XMDT1+.0625*PARDT2*BETAO*(13.-78.*THETA2+137.*THETA4);
+long double OMGDT=XGDT1+.0625*PARDT2*(7.-114.*THETA2+395.*THETA4)+PARDT4*(3.-36.*THETA2+49.*THETA4);
+long double XNODOT=XHDT1+(.5*PARDT2*(4.-19.*THETA2)+2.*PARDT4*(3.-7.*THETA2))*COSI;
+long double TSI=1./(PO-S);
+long double ETA=EO*S*TSI;
+long double ETA2=ETA*ETA;
+long double PSIM2=fabs(1./(1.-ETA2));
+long double ALPHA2=1.+EOSQ;
+long double EETA=EO*ETA;
+long double COS2G=2.*COSG*COSG-1.0;
+long double D5=TSI*PSIM2;
+long double D1=D5/PO;
+long double D2=12.+ETA2*(36.+4.5*ETA2);
+long double D3=ETA2*(15.+2.5*ETA2);
+long double D4=ETA*(5.+3.75*ETA2);
+long double B1=CK2*TTHMUN;
+long double B2=-CK2*UNMTH2;
+long double B3=A3COF*SINI;
+long double C0=.5*B*RHO*QOMS2T*XNODP*AODP*pow((long double)TSI,(long double)4.0)*pow((long double)PSIM2,(long double)3.5)/sqrt(ALPHA2);
+long double C1=1.5*XNODP*ALPHA2*ALPHA2*C0;
+long double C4=D1*D3*B2;
+long double C5=D5*D4*B3;
+long double XNDT=C1*((2.+ETA2*(3.+34.*EOSQ)+5.*EETA*(4.+ETA2)+8.5*EOSQ)+D1*D2*B1+ C4*COS2G+C5*__SING);
+long double XNDTN=XNDT/XNODP;
+//* IF DRAG IS VERY SMALL, THE ISIMP FLAG IS SET AND THE
+//* EQUATIONS ARE TRUNCATED TO LINEAR VARIATION IN MEAN
+//* MOTION AND QUADRATIC VARIATION IN MEAN ANOMALY
+//IF(ABS(XNDTN*XMNPDA) .LT. 2.16E-3) GO TO 50
+if (fabs(XNDTN*XMNPDA) < 2.16E-3) goto M_50;
+long double D6=ETA*(30.+22.5*ETA2);
+long double D7=ETA*(5.+12.5*ETA2);
+long double D8=1.+ETA2*(6.75+ETA2);
+long double C8=D1*D7*B2;
+long double C9=D5*D8*B3;
+long double EDOT=-C0*(ETA*(4.+ETA2+EOSQ*(15.5+7.*ETA2))+EO*(5.+15.*ETA2)+ D1*D6*B1 + C8*COS2G+C9*__SING);
+long double D20=.5*TOTHRD*XNDTN;
+// page 42
+long double ALDTAL=EO*EDOT/ALPHA2;
+long double TSDTTS=2.*AODP*TSI*(D20*BETAO2+EO*EDOT);
+long double ETDT=(EDOT+EO*TSDTTS)*TSI*S;
+long double PSDTPS=-ETA*ETDT*PSIM2;
+long double SIN2G=2.*__SING*COSG;
+long double C0DTC0=D20+4.*TSDTTS-ALDTAL-7.*PSDTPS;
+long double C1DTC1=XNDTN+4.*ALDTAL+C0DTC0;
+long double D9=ETA*(6.+68.*EOSQ)+EO*(20.+15.*ETA2);
+long double D10=5.*ETA*(4.+ETA2)+EO*(17.+68.*ETA2);
+long double D11=ETA*(72.+18.*ETA2);
+long double D12=ETA*(30.+10.*ETA2);
+long double D13=5.+11.25*ETA2;
+long double D14=TSDTTS-2.*PSDTPS;
+long double D15=2.*(D20+EO*EDOT/BETAO2);
+long double D1DT=D1*(D14+D15);
+long double D2DT=ETDT*D11;
+long double D3DT=ETDT*D12;
+long double D4DT=ETDT*D13;
+long double D5DT=D5*D14;
+long double C4DT=B2*(D1DT*D3+D1*D3DT);
+long double C5DT=B3*(D5DT*D4+D5*D4DT);
+long double D16= D9*ETDT+D10*EDOT + B1*(D1DT*D2+D1*D2DT) + C4DT*COS2G+C5DT*__SING+XGDT1*(C5*COSG-2.*C4*SIN2G);
+long double XNDDT=C1DTC1*XNDT+C1*D16;
+long double EDDOT=C0DTC0*EDOT-C0*( (4.+3.*ETA2+30.*EETA+EOSQ*(15.5+21.*ETA2))*ETDT+(5.+15.*ETA2 +EETA*(31.+14.*ETA2))*EDOT + B1*(D1DT*D6+D1*ETDT*(30.+67.5*ETA2)) + B2*(D1DT*D7+D1*ETDT*(5.+37.5*ETA2))*COS2G+ B3*(D5DT*D8+D5*ETDT*ETA*(13.5+4.*ETA2))*__SING+XGDT1*(C9* COSG-2.*C8*SIN2G));
+long double D25=EDOT*EDOT;
+long double D17=XNDDT/XNODP-XNDTN*XNDTN;
+long double TSDDTS=2.*TSDTTS*(TSDTTS-D20)+AODP*TSI*(TOTHRD*BETAO2*D17-4.*D20* EO*EDOT+2.*(D25+EO*EDDOT));
+long double ETDDT =(EDDOT+2.*EDOT*TSDTTS)*TSI*S+TSDDTS*ETA;
+long double D18=TSDDTS-TSDTTS*TSDTTS;
+long double D19=-PSDTPS*PSDTPS/ETA2-ETA*ETDDT*PSIM2-PSDTPS*PSDTPS;
+long double D23=ETDT*ETDT;
+long double D1DDT=D1DT*(D14+D15)+D1*(D18-2.*D19+TOTHRD*D17+2.*(ALPHA2*D25 /BETAO2+EO*EDDOT)/BETAO2);
+long double XNTRDT=XNDT*(2.*TOTHRD*D17+3.* (D25+EO*EDDOT)/ALPHA2-6.*ALDTAL*ALDTAL + 4.*D18-7.*D19 ) + C1DTC1*XNDDT+C1*(C1DTC1*D16+ D9*ETDDT+D10*EDDOT+D23*(6.+30.*EETA+68.*EOSQ)+ ETDT*EDOT*(40.+30.* ETA2+272.*EETA)+D25*(17.+68.*ETA2) + B1*(D1DDT*D2+2.*D1DT*D2DT+D1*(ETDDT*D11+D23*(72.+54.*ETA2))) + B2*(D1DDT*D3+2.*D1DT*D3DT+D1*(ETDDT*D12+D23*(30.+30.*ETA2))) * COS2G+ B3*((D5DT*D14+D5*(D18-2.*D19)) * D4+2.*D4DT*D5DT+D5*(ETDDT*D13+22.5*ETA*D23)) *__SING+XGDT1* ((7.*D20+4.*EO*EDOT/BETAO2)* (C5*COSG-2.*C4*SIN2G) +((2.*C5DT*COSG-4.*C4DT*SIN2G)-XGDT1*(C5*SING+4.* C4*COS2G))));
+long double TMNDDT=XNDDT*1.E9;
+TEMP=TMNDDT*TMNDDT-XNDT*1.E18*XNTRDT;
+long double PP=(TEMP+TMNDDT*TMNDDT)/TEMP;
+long double GAMMA=-XNTRDT/(XNDDT*(PP-2.));
+long double XND=XNDT/(PP*GAMMA);
+long double QQ=1.-EDDOT/(EDOT*GAMMA);
+long double ED=EDOT/(QQ*GAMMA);
+long double OVGPP=1./(GAMMA*(PP+1.));
+    goto M_70;
+M_50:
+    ISIMP=1;
+EDOT=-TOTHRD*XNDTN*(1.-EO);
+M_70:
+//IFLAG=0;
+//* UPDATE FOR SECULAR GRAVITY AND ATMOSPHERIC DRAG
+M_100:
+long double XMAM=FMOD2P(XMO+XLLDOT*TSINCE);
+long double OMGASM=OMEGAO+OMGDT*TSINCE;
+long double XNODES=XNODEO+XNODOT*TSINCE;
+//IF(ISIMP .EQ. 1) GO TO 105
+if(ISIMP == 1) goto M_105;
+TEMP=1.-GAMMA*TSINCE;
+//TEMP1=TEMP**PP
+long double TEMP1=pow(TEMP,PP);
+long double XN=XNODP+XND*(1.-TEMP1);
+//EM=EO+ED*(1.-TEMP**QQ)
+long double EM=EO+ED*(1.-pow(TEMP,QQ));
+long double Z1=XND*(TSINCE+OVGPP*(TEMP*TEMP1-1.));
+goto M_108;
+M_105:
+XN=XNODP+XNDT*TSINCE;
+EM=EO+EDOT*TSINCE;
+Z1=.5*XNDT*TSINCE*TSINCE;
+M_108:
+long double Z7=3.5*TOTHRD*Z1/XNODP;
+XMAM=FMOD2P(XMAM+Z1+Z7*XMDT1);
+OMGASM=OMGASM+Z7*XGDT1;
+XNODES=XNODES+Z7*XHDT1;
+//* SOLVE KEPLERS EQUATION
+long double ZC2=XMAM+EM*sin(XMAM)*(1.+EM*cos(XMAM));
+long double SINE;
+long double COSE;
+long double ZC5;
+long double CAPE;
 
+//DO 130 I=1,10
+for (int i = 0; i< 10; i++)
+{
+
+    SINE=sin(ZC2);
+    COSE=cos(ZC2);
+    ZC5=1./(1.-EM*COSE);
+    CAPE=(XMAM+EM*SINE-ZC2)* ZC5+ZC2;
+    //IF(ABS(CAPE-ZC2) .LE. E6A) GO TO 140
+    if (fabs(CAPE-ZC2) < E6A) break;//GO TO 140
+M_130:
+ZC2=CAPE;
+}
+//* SHORT PERIOD PRELIMINARY QUANTITIES
+M_140:
+long double AM=pow((XKE/XN),TOTHRD);
+long double BETA2M=1.-EM*EM;
+long double SINOS=sin(OMGASM);
+long double COSOS=cos(OMGASM);
+long double AXNM=EM*COSOS;
+long double AYNM=EM*SINOS;
+long double PM=AM*BETA2M;
+long double G1=1./PM;
+long double G2=.5*CK2*G1;
+long double G3=G2*G1;
+long double BETA=sqrt(BETA2M);
+long double G4=.25*A3COF*SINI;
+long double G5=.25*A3COF*G1;
+long double SNF=BETA*SINE*ZC5;
+long double CSF=(COSE-EM)*ZC5;
+//FM=ACTAN(SNF,CSF)
+long double FM=ACTAN(SNF,CSF);
+long double SNFG=SNF*COSOS+CSF*SINOS;
+long double CSFG=CSF*COSOS-SNF*SINOS;
+long double SN2F2G=2.*SNFG*CSFG;
+long double CS2F2G=2.*CSFG*CSFG-1.0;
+long double ECOSF=EM*CSF;
+long double G10=FM-XMAM+EM*SNF;
+long double RM=PM/(1.+ECOSF);
+long double AOVR=AM/RM;
+long double G13=XN*AOVR;
+long double G14=-G13*AOVR;
+long double DR=G2*(UNMTH2*CS2F2G-3.*TTHMUN)-G4*SNFG;
+long double DIWC=3.*G3*SINI*CS2F2G-G5*AYNM;
+long double DI=DIWC*COSI;
+//* UPDATE FOR SHORT PERIOD PERIODICS
+long double SNI2DU=SINIO2*( G3*(.5*(1.-7.*THETA2)*SN2F2G-3.*UNM5TH*G10)-G5*SINI*CSFG*(2.+ ECOSF))-.5*G5*THETA2*AXNM/COSIO2;
+long double XLAMB=FM+OMGASM+XNODES+G3*(.5*(1.+6.*COSI-7.*THETA2)*SN2F2G-3.* (UNM5TH+2.*COSI)*G10)+G5*SINI*(COSI*AXNM/(1.+COSI)-(2. +ECOSF)*CSFG);
+
+long double Y4=SINIO2*SNFG+CSFG*SNI2DU+.5*SNFG*COSIO2*DI;
+long double Y5=SINIO2*CSFG-SNFG*SNI2DU+.5*CSFG*COSIO2*DI;
+long double R=RM+DR;
+long double RDOT=XN*AM*EM*SNF/BETA+G14*(2.*G2*UNMTH2*SN2F2G+G4*CSFG);
+long double RVDOT=XN*AM*AM*BETA/RM+ G14*DR+AM*G13*SINI*DIWC;
+//* ORIENTATION VECTORS
+long double SNLAMB=sin(XLAMB);
+long double CSLAMB=cos(XLAMB);
+TEMP=2.*(Y5*SNLAMB-Y4*CSLAMB);
+long double UX=Y4*TEMP+CSLAMB;
+long double VX=Y5*TEMP-SNLAMB;
+TEMP=2.*(Y5*CSLAMB+Y4*SNLAMB);
+long double UY=-Y4*TEMP+SNLAMB;
+long double VY=-Y5*TEMP+CSLAMB;
+TEMP=2.*sqrt(1.-Y4*Y4-Y5*Y5);
+long double UZ=Y4*TEMP;
+long double VZ=Y5*TEMP;
+//* POSITION AND VELOCITY
+X=R*UX;
+Y=R*UY;
+Z=R*UZ;
+XDOT=RDOT*UX+RVDOT*VX;
+YDOT=RDOT*UY+RVDOT*VY;
+ZDOT=RDOT*UZ+RVDOT*VZ;
+//RETURN
+//END
+}
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //   TRA.XML processing => all data about the MOON
 //
@@ -7288,65 +7556,87 @@ void ParamProb(char *szString)
             //dStartGreenwichA = GreenwichAscensionFromTLEEpoch(Sat.ProbEpoch[0],Sat->precEps,Sat->precTet,Sat->precZ,Sat->nutEpsilon,Sat->nutDFeta);
             for (int nSat = 0; nSat <Sat.Elem; nSat++)
             {
-			    
-                //Sat.ProbEpochOnStart[nSat] =fmod(dStartJD - Sat.ProbJD[nSat],1.0/Sat.ProbMeanMotion[nSat]);
-			    long double AE = 1.0;
-			    long double XKMPER = 6378.1350; //XKMPER kilometers/Earth radii 6378.135
-			    long double XKE = BIG_XKE;//.743669161E-1;
-                //XKE = sqrt(Gbig * SolarSystem.M[EARTH])*pow(AE/*(long double)6378.1350*//(long double)1440.0, (long double)3.0/(long double)2.0);;
-			    long double XJ2 = 1.082616E-3;
-			    long double CK2=.5*XJ2*AE*AE;
-			    //double XMNPDA = 1440.0;
-			    //double TEMP=2.0*M_PI/XMNPDA/XMNPDA;
-			    //double XNO=ProbMeanMotion*TEMP*XMNPDA;
+                long double AE = 1.0;
+                long double BSTAR=Sat.ProbDragterm[nSat]/AE;
+			    if ((strcmp(UseSatData, "SGP4")==0) || (strcmp(UseSatData, "SGP")==0) || (strcmp(UseSatData, "SGP4")==0))
+                {
+                    //Sat.ProbEpochOnStart[nSat] =fmod(dStartJD - Sat.ProbJD[nSat],1.0/Sat.ProbMeanMotion[nSat]);
+			        
+			        long double XKMPER = 6378.1350; //XKMPER kilometers/Earth radii 6378.135
+			        long double XKE = BIG_XKE;//.743669161E-1;
+                    //XKE = sqrt(Gbig * SolarSystem.M[EARTH])*pow(AE/*(long double)6378.1350*//(long double)1440.0, (long double)3.0/(long double)2.0);;
+			        long double XJ2 = 1.082616E-3;
+			        long double CK2=.5*XJ2*AE*AE;
+			        //double XMNPDA = 1440.0;
+			        //double TEMP=2.0*M_PI/XMNPDA/XMNPDA;
+			        //double XNO=ProbMeanMotion*TEMP*XMNPDA;
 
-    			long double XMNPDA = 1440.0; // XMNPDA time units(minutes) in day is 1440.0 minutes
-	    		long double TEMP=2*M_PI/XMNPDA/XMNPDA; // 2*pi / (1440 **2)
-		    	long double XNO=Sat.ProbMeanMotion[nSat]*TEMP*XMNPDA; // rotation per day * 2*pi /1440 == rotation per day on 1 unit (1 min)
-			    long double XNDT2O=Sat.ProbFirstDervMeanMotion[nSat]*TEMP;
-			    long double XNDD6O=Sat.ProbSecondDervmeanMotion[nSat]*TEMP/XMNPDA;
+    			    long double XMNPDA = 1440.0; // XMNPDA time units(minutes) in day is 1440.0 minutes
+	    		    long double TEMP=2*M_PI/XMNPDA/XMNPDA; // 2*pi / (1440 **2)
+		    	    long double XNO=Sat.ProbMeanMotion[nSat]*TEMP*XMNPDA; // rotation per day * 2*pi /1440 == rotation per day on 1 unit (1 min)
+			        long double XNDT2O=Sat.ProbFirstDervMeanMotion[nSat]*TEMP;
+			        long double XNDD6O=Sat.ProbSecondDervmeanMotion[nSat]*TEMP/XMNPDA;
 
-			    /*
-			    long double A1=pow((XKE/XNO),(long double)2.0/(long double)3.0);
-			    TEMP=1.5*CK2*(3.*cos(Sat.ProbIncl[nSat])*cos(ProbIncl)-1.)/pow((1.-Sat.ProbEcc[nSat]*Sat.ProbEcc[nSat]),(long double)1.5);
-			    long double DEL1=TEMP/(A1*A1);
-			    long double AO=A1*(1.-DEL1*(.5*(2.0/3.0)+DEL1*(1.+134./81.*DEL1)));
-			    long double DELO=TEMP/(AO*AO);
-			    long double XNODP=XNO/(1.+DELO);
-			    //IF((TWOPI/XNODP/XMNPDA) .GE. .15625) IDEEP=1
-                */
-			    long double BSTAR=Sat.ProbDragterm[nSat]/AE;
-			    //TSINCE=TS
-			    //IFLAG=1
-			    // first one does not use BSTAR
-			    //SGP((Sat.ProbEpochOnStart[nSat])*XMNPDA, XNDT2O,XNDD6O,BSTAR,Sat.ProbIncl[nSat], Sat.ProbAscNode[nSat],Sat.ProbEcc[nSat], 
-                //               Sat.ProbArgPer[nSat], Sat.ProbMeanAnom[nSat],XNO, 
-			    //	tProbX,tProbY,tProbZ,tProbVX,tProbVY,tProbVZ);
-			    //tProbX=tProbX*XKMPER/AE*1000.0;
-			    //tProbY=tProbY*XKMPER/AE*1000.0;
-			    //tProbZ=tProbZ*XKMPER/AE*1000.0;
-			    //tProbVX=tProbVX*XKMPER/AE*XMNPDA/86400.*1000.0;
-			    //tProbVY=tProbVY*XKMPER/AE*XMNPDA/86400.*1000.0;
-			    //tProbVZ=tProbVZ*XKMPER/AE*XMNPDA/86400.*1000.0;
-			    // second one does not use XNDT2O,XNDD6O
-                // in next call XN0 and ProbMeanMotion connected by a formula:
-                // Sat.ProbMeanMotion[nSat] = XNO / (2*pi) * 1440.0
+    			    /*
+	    		    long double A1=pow((XKE/XNO),(long double)2.0/(long double)3.0);
+		    	    TEMP=1.5*CK2*(3.*cos(Sat.ProbIncl[nSat])*cos(ProbIncl)-1.)/pow((1.-Sat.ProbEcc[nSat]*Sat.ProbEcc[nSat]),(long double)1.5);
+			        long double DEL1=TEMP/(A1*A1);
+			        long double AO=A1*(1.-DEL1*(.5*(2.0/3.0)+DEL1*(1.+134./81.*DEL1)));
+			        long double DELO=TEMP/(AO*AO);
+			        long double XNODP=XNO/(1.+DELO);
+			        //IF((TWOPI/XNODP/XMNPDA) .GE. .15625) IDEEP=1
+                    */
+			        
+			        //TSINCE=TS
+			        //IFLAG=1
+			        // first one does not use BSTAR
+			        //SGP((Sat.ProbEpochOnStart[nSat])*XMNPDA, XNDT2O,XNDD6O,BSTAR,Sat.ProbIncl[nSat], Sat.ProbAscNode[nSat],Sat.ProbEcc[nSat], 
+                    //               Sat.ProbArgPer[nSat], Sat.ProbMeanAnom[nSat],XNO, 
+			        //	tProbX,tProbY,tProbZ,tProbVX,tProbVY,tProbVZ);
+			        //tProbX=tProbX*XKMPER/AE*1000.0;
+			        //tProbY=tProbY*XKMPER/AE*1000.0;
+			        //tProbZ=tProbZ*XKMPER/AE*1000.0;
+			        //tProbVX=tProbVX*XKMPER/AE*XMNPDA/86400.*1000.0;
+			        //tProbVY=tProbVY*XKMPER/AE*XMNPDA/86400.*1000.0;
+			        //tProbVZ=tProbVZ*XKMPER/AE*XMNPDA/86400.*1000.0;
+			        // second one does not use XNDT2O,XNDD6O
+                    // in next call XN0 and ProbMeanMotion connected by a formula:
+                    // Sat.ProbMeanMotion[nSat] = XNO / (2*pi) * 1440.0
 #if 0
-                BSTAR = 0.0;
-                XNDD6O = 0.0;
-                XNDT2O =0.0;
+                    BSTAR = 0.0;
+                    XNDD6O = 0.0;
+                    XNDT2O =0.0;
 #endif
-			    SGP4((dStartJD - Sat.ProbJD[nSat])*XMNPDA, XNDT2O,XNDD6O,BSTAR,Sat.ProbIncl[nSat], Sat.ProbAscNode[nSat],Sat.ProbEcc[nSat], 
-                    Sat.ProbArgPer[nSat], Sat.ProbMeanAnom[nSat],XNO, 
-				    tProbX,tProbY,tProbZ,tProbVX,tProbVY,tProbVZ);
-			    tProbX=tProbX*XKMPER/AE*1000.0;
-			    tProbY=tProbY*XKMPER/AE*1000.0;
-			    tProbZ=tProbZ*XKMPER/AE*1000.0;
-			    tProbVX=tProbVX*XKMPER/AE*XMNPDA/86400.*1000.0;
-			    tProbVY=tProbVY*XKMPER/AE*XMNPDA/86400.*1000.0;
-			    tProbVZ=tProbVZ*XKMPER/AE*XMNPDA/86400.*1000.0;
+                    if (strcmp(UseSatData, "SGP4")==0)
+			            SGP4((dStartJD - Sat.ProbJD[nSat])*XMNPDA, XNDT2O,XNDD6O,BSTAR,Sat.ProbIncl[nSat], Sat.ProbAscNode[nSat],Sat.ProbEcc[nSat], 
+                            Sat.ProbArgPer[nSat], Sat.ProbMeanAnom[nSat],XNO, 
+	    			        tProbX,tProbY,tProbZ,tProbVX,tProbVY,tProbVZ);
+                    else if (strcmp(UseSatData, "SGP")==0)
+                        SGP((dStartJD - Sat.ProbJD[nSat])*XMNPDA, XNDT2O,XNDD6O,BSTAR,Sat.ProbIncl[nSat], Sat.ProbAscNode[nSat],Sat.ProbEcc[nSat], 
+                            Sat.ProbArgPer[nSat], Sat.ProbMeanAnom[nSat],XNO, 
+	    			        tProbX,tProbY,tProbZ,tProbVX,tProbVY,tProbVZ);
+                    else if (strcmp(UseSatData, "SGP8")==0)
+                        SGP8((dStartJD - Sat.ProbJD[nSat])*XMNPDA, XNDT2O,XNDD6O,BSTAR,Sat.ProbIncl[nSat], Sat.ProbAscNode[nSat],Sat.ProbEcc[nSat], 
+                            Sat.ProbArgPer[nSat], Sat.ProbMeanAnom[nSat],XNO, 
+	    			        tProbX,tProbY,tProbZ,tProbVX,tProbVY,tProbVZ);
 
-                KeplerPosition(Sat.ProbJD[nSat],dStartJD,      // prob epoch, and curent time
+		    	    tProbX=tProbX*XKMPER/AE*1000.0;
+			        tProbY=tProbY*XKMPER/AE*1000.0;
+			        tProbZ=tProbZ*XKMPER/AE*1000.0;
+			        tProbVX=tProbVX*XKMPER/AE*XMNPDA/86400.*1000.0;
+			        tProbVY=tProbVY*XKMPER/AE*XMNPDA/86400.*1000.0;
+			        tProbVZ=tProbVZ*XKMPER/AE*XMNPDA/86400.*1000.0;
+                    // SGP4
+                    Sat.X[nSat] = tProbX + SolarSystem.X[EARTH];
+                    Sat.Y[nSat] = tProbY + SolarSystem.Y[EARTH];
+                    Sat.Z[nSat] = tProbZ + SolarSystem.Z[EARTH];
+                    Sat.VX[nSat] = tProbVX + SolarSystem.VX[EARTH];
+                    Sat.VY[nSat] = tProbVY + SolarSystem.VY[EARTH];
+                    Sat.VZ[nSat] = tProbVZ + SolarSystem.VZ[EARTH];
+                }
+                else // Kepler
+                {
+                    KeplerPosition(Sat.ProbJD[nSat],dStartJD,      // prob epoch, and curent time
 	    			    Sat.ProbTSec[nSat], // - orbit period in sec
 		    		    Sat.ProbEcc[nSat],             // - Eccentricity
                         Sat.ProbIncl[nSat],            // - Inclination
@@ -7357,58 +7647,67 @@ void ParamProb(char *szString)
                         Gbig *SolarSystem.M[EARTH],0,
                         tempProbX,tempProbY,tempProbZ,tempProbVX,tempProbVY,tempProbVZ, Sat.ProbMeanMotion[nSat]);
 
-			    long double tProbTSec = 0;
-			    long double tProbEcc = 0;
-                long double tProbIncl = 0;
-                long double tProbAscNode = 0;
-                long double tProbArgPer = 0;
-                long double tProbMeanAnom = 0;
-            
-    			/*
-	    		//long double e_ecc = Sat.ProbEcc[nSat];
-		    	//long double e_incl = Sat.ProbIncl[nSat];
-			    //long double e_asc_node = Sat.ProbAscNode[nSat];
-			    //long double e_arg_per = Sat.ProbArgPer[nSat];
-			    //long double e_mean_anomaly = Sat.ProbMeanAnom[nSat];
-			    long double e_q=0.0;
-			    long double e_major_axis=0.0;
-			    long double e_t0=0.0;
-			    long double e_w0=0.0;
-			    long double e_angular_momentum=0.0;
-			    long double e_perih_time=0.0;
-			    long double e_minor_to_major=0.0;
-			    long double e_lon_per=0.0;
-			    long double e_sideways_x=0.0;
-			    long double e_sideways_y=0.0;
-			    long double e_sideways_z=0.0;
-			    long double vec_x=0.0;
-			    long double vec_y=0.0;
-			    long double vec_z=0.0;
-			    long double e_perih_vec_x=0.0,e_perih_vec_y=0.0,e_perih_vec_z=0.0;
-			    long double loc_x=0.0, loc_y=0.0, loc_z=0.0, loc_r=0.0,vel_x=0.0,vel_y=0.0,vel_z=0.0,t=0.0;
-    
-	    		// first (mass) from NASA and second is just convinient constant
-		    	long double gm = SolarSystem.M[EARTH] * Gbig;
+                    //Sat.Lambda = dStartGreenwichA;
+                    //Sat.Lambda  = M_PI * 15.0 / 8.0; //3.0 / 8.0; 11.0 / 8.0;
+                    //Sat.M[0] = ProbM;
+                    Sat.X[nSat] = tempProbX + SolarSystem.X[EARTH];
+                    Sat.Y[nSat] = tempProbY + SolarSystem.Y[EARTH];
+                    Sat.Z[nSat] = tempProbZ + SolarSystem.Z[EARTH];
+                    Sat.VX[nSat] = tempProbVX + SolarSystem.VX[EARTH];
+                    Sat.VY[nSat] = tempProbVY + SolarSystem.VY[EARTH];
+                    Sat.VZ[nSat] = tempProbVZ + SolarSystem.VZ[EARTH];
 
-    			long double e_epoch = Sat.ProbEpoch[Sat.Elem]*24.0*60.0*60.0;
+			        long double tProbTSec = 0;
+			        long double tProbEcc = 0;
+                    long double tProbIncl = 0;
+                    long double tProbAscNode = 0;
+                    long double tProbArgPer = 0;
+                    long double tProbMeanAnom = 0;
+            
+    			    /*
+	    		    //long double e_ecc = Sat.ProbEcc[nSat];
+		    	    //long double e_incl = Sat.ProbIncl[nSat];
+			        //long double e_asc_node = Sat.ProbAscNode[nSat];
+			        //long double e_arg_per = Sat.ProbArgPer[nSat];
+			        //long double e_mean_anomaly = Sat.ProbMeanAnom[nSat];
+			        long double e_q=0.0;
+			        long double e_major_axis=0.0;
+			        long double e_t0=0.0;
+			        long double e_w0=0.0;
+			        long double e_angular_momentum=0.0;
+			        long double e_perih_time=0.0;
+			        long double e_minor_to_major=0.0;
+			        long double e_lon_per=0.0;
+			        long double e_sideways_x=0.0;
+			        long double e_sideways_y=0.0;
+			        long double e_sideways_z=0.0;
+			        long double vec_x=0.0;
+			        long double vec_y=0.0;
+			        long double vec_z=0.0;
+			        long double e_perih_vec_x=0.0,e_perih_vec_y=0.0,e_perih_vec_z=0.0;
+			        long double loc_x=0.0, loc_y=0.0, loc_z=0.0, loc_r=0.0,vel_x=0.0,vel_y=0.0,vel_z=0.0,t=0.0;
+    
+    	    		// first (mass) from NASA and second is just convinient constant
+	    	    	long double gm = SolarSystem.M[EARTH] * Gbig;
+
+    	    		long double e_epoch = Sat.ProbEpoch[Sat.Elem]*24.0*60.0*60.0;
                     
-			    do_element_setup( e_epoch, Sat.ProbEcc[nSat], Sat.ProbIncl[nSat], Sat.ProbAscNode[nSat], Sat.ProbArgPer[nSat],Sat.ProbMeanAnom[nSat],
+			        do_element_setup( e_epoch, Sat.ProbEcc[nSat], Sat.ProbIncl[nSat], Sat.ProbAscNode[nSat], Sat.ProbArgPer[nSat],Sat.ProbMeanAnom[nSat],
 								e_q, e_major_axis,e_t0,e_w0,e_angular_momentum,e_perih_time,
 								e_minor_to_major, e_lon_per,
 								e_sideways_x, e_sideways_y, e_sideways_z,
 								vec_x, vec_y,vec_z, gm, Sat.ProbTSec[Sat.Elem]);
-			    // this will reset mean anomaly to time == dStartJD*24.0*60.0*60.0
-			    posn_and_vel( e_epoch, Sat.ProbEcc[nSat], Sat.ProbIncl[nSat], Sat.ProbAscNode[nSat], Sat.ProbArgPer[nSat],Sat.ProbMeanAnom[nSat],
+			        // this will reset mean anomaly to time == dStartJD*24.0*60.0*60.0
+			        posn_and_vel( e_epoch, Sat.ProbEcc[nSat], Sat.ProbIncl[nSat], Sat.ProbAscNode[nSat], Sat.ProbArgPer[nSat],Sat.ProbMeanAnom[nSat],
 						e_q, e_major_axis,e_t0,e_w0,e_angular_momentum,e_perih_time,
 						e_minor_to_major, e_lon_per,
 						e_sideways_x, e_sideways_y, e_sideways_z,
 						vec_x,vec_y,vec_z,
 						loc_x, loc_y, loc_z, loc_r,vel_x,vel_y,vel_z,dStartJD*24.0*60.0*60.0, gm);
 						*/
-			    long double tVX = tempProbVX;
-			    long double tVY = tempProbVY;
-			    long double tVZ = tempProbVZ;
-			    {
+			        long double tVX = tempProbVX;
+			        long double tVY = tempProbVY;
+			        long double tVZ = tempProbVZ;
 // that is for debugging GPS sattelites only
 #if 0
 
@@ -7511,6 +7810,7 @@ void ParamProb(char *szString)
 		            // tProbTSec	27795.543500545853	double
                     // position and Keplers does not match == something wrong - also wrong inclanation that sattelite must be 55 degree
 #endif
+#if 0
     				// mean amomaly on curent time
 	    			DumpKeplers(tProbTSec, // - orbit period in sec
 		    		    tProbEcc,             // - Eccentricity
@@ -7555,6 +7855,7 @@ void ParamProb(char *szString)
 	    			printf("\n angle =%f",VecAngle);
 		    		*/
 			    	//printf(" 
+#endif
 			    }
 
                 //printf("\n Was ProbPer = %f", ProbPer);
@@ -7564,22 +7865,6 @@ void ParamProb(char *szString)
                 // for today only one sattelite
                 //Sat.Elem = 1;
                 Sat.flInUse[nSat] = 1;
-                //Sat.Lambda = dStartGreenwichA;
-                //Sat.Lambda  = M_PI * 15.0 / 8.0; //3.0 / 8.0; 11.0 / 8.0;
-                //Sat.M[0] = ProbM;
-                Sat.X[nSat] = tempProbX + SolarSystem.X[EARTH];
-                Sat.Y[nSat] = tempProbY + SolarSystem.Y[EARTH];
-                Sat.Z[nSat] = tempProbZ + SolarSystem.Z[EARTH];
-                Sat.VX[nSat] = tempProbVX + SolarSystem.VX[EARTH];
-                Sat.VY[nSat] = tempProbVY + SolarSystem.VY[EARTH];
-                Sat.VZ[nSat] = tempProbVZ + SolarSystem.VZ[EARTH];
-                // SGP4
-                Sat.X[nSat] = tProbX + SolarSystem.X[EARTH];
-                Sat.Y[nSat] = tProbY + SolarSystem.Y[EARTH];
-                Sat.Z[nSat] = tProbZ + SolarSystem.Z[EARTH];
-                Sat.VX[nSat] = tProbVX + SolarSystem.VX[EARTH];
-                Sat.VY[nSat] = tProbVY + SolarSystem.VY[EARTH];
-                Sat.VZ[nSat] = tProbVZ + SolarSystem.VZ[EARTH];
             }    
             // this is done to reduce errors and avoid unnessary 5 mul/div operations
             // temporary X_, VX_ will just added (in paralel calculations can be done actualy faster) 
@@ -7834,7 +8119,10 @@ DONE_WITH_LINE:
             Sat.LegBody = EARTH;
             
         }
-
+        IF_XML_READ(UseSatData)
+        {
+            strcpy(UseSatData, pszQuo);
+        }
         IF_XML_READ(Targetlongitude) // dolgota
         {
             Targetlongitude = atof(pszQuo);
