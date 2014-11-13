@@ -27,6 +27,8 @@
 #include <malloc.h>
 #include "ephem_read.h"
 
+#define _CRT_SECURE_NO_WARNINGS 1
+
 //////////////////////////////////////////////////////////////////////////////
 //   predefine vaiable to build different flavor
 //#define FIND_IMPULSE_TIME 1
@@ -1136,7 +1138,7 @@ typedef struct TraObj
         long double tempX;
         long double tempY;
         long double tempZ;
-        long double sinTetta, XdivR, YdivR, tempValX, tempValY;
+        long double sinTetta, XdivR, YdivR;
         X = 0; Y = 0; Z = 0;
         long double _x[TOTAL_COEF];
         long double _y[TOTAL_COEF];
@@ -1267,7 +1269,7 @@ typedef struct TraObj
             long double YkDyrPrev =0;
             long double XkPrev =1;
             long double YkPrev =0;
-            long double XkDxr, XkDyr, YkDxr, YkDyr;
+            //long double XkDxr, XkDyr, YkDxr, YkDyr;
             long double XSumD, YSumD;
             long double Xk =1;
             long double Yk =0;
@@ -1678,7 +1680,7 @@ typedef struct TraObj
         int n,k;
         long double tempX;
         long double tempY;
-        long double sinTetta, XdivR, YdivR, tempValX, tempValY;
+        long double sinTetta, XdivR, YdivR;
         // Lambda                               // 0 - 143 2 - 165 4 - 049
         //Lambda =  -Lambda -M_PI/2;            // 0 - 162 2 - 152 4 - 101
         //Lambda =  Lambda -M_PI/2;//           // 0 - 164 2 - 143 4 - 147
@@ -2384,35 +2386,35 @@ typedef struct TraObj
 #else
     long double v3v5OddX(long long lOdd, long double a6, long double a5, long double a7, int i)
     {
-        long double n = (lOdd-1)/2; long double ldTemp_ssOdd;
+        long double n = (long double)((lOdd-1)/2); long double ldTemp_ssOdd;
         ssEven[i].X  += a6; ssOdd[i].X   += a5; ssfEven[i].X += ssEven[i].x(); ldTemp_ssOdd = ssOdd[i].x(); ssfOdd[i].X  += ldTemp_ssOdd;
         V35OddX[i] = n*VX1divDt[i] + (n*A1_X[i] + 4.0*ssfEven[i].x() + 2.0*ssfOdd[i].x() + ldTemp_ssOdd + a7)/3;
         return V35OddX[i];
     }
     long double v3v5OddY(long long lOdd, long double a6, long double a5, long double a7, int i)
     {
-        long double n = (lOdd-1)/2; long double ldTemp_ssOdd;
+        long double n = (long double)((lOdd-1)/2); long double ldTemp_ssOdd;
         ssEven[i].Y  += a6; ssOdd[i].Y   += a5; ssfEven[i].Y += ssEven[i].y(); ldTemp_ssOdd = ssOdd[i].y(); ssfOdd[i].Y  += ldTemp_ssOdd;
         V35OddY[i] = n*VY1divDt[i] + (n*A1_Y[i] + 4.0*ssfEven[i].y() + 2.0*ssfOdd[i].y() + ldTemp_ssOdd + a7)/3;
         return V35OddY[i];
     }
     long double v3v5OddZ(long long lOdd, long double a6, long double a5, long double a7, int i)
     {
-        long double n = (lOdd-1)/2; long double ldTemp_ssOdd;
+        long double n = (long double)((lOdd-1)/2); long double ldTemp_ssOdd;
         ssEven[i].Z  += a6; ssOdd[i].Z   += a5; ssfEven[i].Z += ssEven[i].z(); ldTemp_ssOdd = ssOdd[i].z(); ssfOdd[i].Z  += ldTemp_ssOdd;
         V35OddZ[i] = n*VZ1divDt[i] + (n*A1_Z[i] + 4.0*ssfEven[i].z() + 2.0*ssfOdd[i].z() + ldTemp_ssOdd + a7)/3;
         return V35OddZ[i];
     }
     long double v2v4EvenX(long long lEven, long double a5, long double a4, long double a6, int i)
     {
-        long double n = lEven/2;    long double ldTemp_sEven;
+        long double n = (long double)(lEven/2);    long double ldTemp_sEven;
         sOdd[i].X += a5; sEven[i].X += a4; sfOdd[i].X += sOdd[i].x(); ldTemp_sEven = sEven[i].x(); sfEven[i].X += ldTemp_sEven;
         V24EvenX[i] = n*VX0divDt[i] + (n*A0_X[i] + 4.0* sfOdd[i].x() + 2.0* sfEven[i].x() + ldTemp_sEven + a6)/3;
         return V24EvenX[i];
     }
     long double v2EvenX(long long lEven, long double a1, long double a0, long double a2, int i)
     {
-        long double n = lEven/2;
+        long double n = (long double)(lEven/2);
         sOdd[i].X += a1; sfOdd[i].X += sOdd[i].x(); 
         V24EvenX[i] = n*VX0divDt[i] + (n*A0_X[i] + 4.0* sfOdd[i].x() +  a2)/3;
         return V24EvenX[i];
@@ -2420,14 +2422,14 @@ typedef struct TraObj
 
     long double v2v4EvenY(long long lEven, long double a5, long double a4, long double a6, int i)
     {
-        long double n = lEven/2;    long double ldTemp_sEven;
+        long double n = (long double)(lEven/2);    long double ldTemp_sEven;
         sOdd[i].Y += a5; sEven[i].Y += a4; sfOdd[i].Y += sOdd[i].y(); ldTemp_sEven = sEven[i].y(); sfEven[i].Y += ldTemp_sEven;
         V24EvenY[i] = n*VY0divDt[i] + (n*A0_Y[i] + 4.0* sfOdd[i].y() + 2.0* sfEven[i].y() + ldTemp_sEven + a6)/3;
         return V24EvenY[i];
     }
     long double v2EvenY(long long lEven, long double a1, long double a0, long double a2, int i)
     {
-        long double n = lEven/2;
+        long double n = (long double)(lEven/2);
         sOdd[i].Y += a1; sfOdd[i].Y += sOdd[i].y(); 
         V24EvenY[i] = n*VY0divDt[i] + (n*A0_Y[i] + 4.0* sfOdd[i].y() +  a2)/3;
         return V24EvenY[i];
@@ -2435,14 +2437,14 @@ typedef struct TraObj
 
     long double v2v4EvenZ(long long lEven, long double a5, long double a4, long double a6, int i)
     {
-        long double n = lEven/2;    long double ldTemp_sEven;
+        long double n = (long double)(lEven/2);    long double ldTemp_sEven;
         sOdd[i].Z += a5; sEven[i].Z += a4; sfOdd[i].Z += sOdd[i].z(); ldTemp_sEven = sEven[i].z(); sfEven[i].Z += ldTemp_sEven;
         V24EvenZ[i] = n*VZ0divDt[i] + (n*A0_Z[i] + 4.0* sfOdd[i].z() + 2.0* sfEven[i].z() + ldTemp_sEven + a6)/3;
         return V24EvenZ[i];
     }
     long double v2EvenZ(long long lEven, long double a1, long double a0, long double a2, int i)
     {
-        long double n = lEven/2;
+        long double n = (long double)(lEven/2);
         sOdd[i].Z += a1; sfOdd[i].Z += sOdd[i].z(); 
         V24EvenZ[i] = n*VZ0divDt[i] + (n*A0_Z[i] + 4.0* sfOdd[i].z() +  a2)/3;
         return V24EvenZ[i];
@@ -2649,6 +2651,53 @@ BOOL OutLast = FALSE;
 char szMoonKeplerLine1[1024];
 char szMoonKeplerLine2[1024];
 char szMoonKeplerLine3[1024];
+
+char UseSatDtat[1024] = {"SGP4"};  // allowed initial data:
+                                   // SGP - use SGP from Space Track Report 3 to calculate position and velocity based on TLE
+                                   // SGP4 - use SPG4 to calulate initial position and velocity from TLE
+                                   // SGP8 - use SGP8
+                                   // KEPLER - use internal "kepler" fucntion to calulate position
+                                   // use internal data
+                                   // ProbTime=<time>, ProbC=<count of integral iterations>, ProbT=<delta time of iterations>
+                                   // ProbX0=<X0>, ProbY0=<Y0>, ProbZ0=<Z0>, ProbVX0=<VX0>, ProbVY0=<VY0>, ProbVZ0=<VZ0>, 
+                                   //   ProbIFX1=<integral Fx>, ProbIFY1=<integral Fy>, ProbIFZ1=<integral Fz>
+                                   //   ProbIFX2=<integral Fx>, ProbIFY2=<integral Fy>, ProbIFZ2=<integral Fz>
+                                   //   ProbIFX3=<integral Fx>, ProbIFY3=<integral Fy>, ProbIFZ3=<integral Fz>
+                                   //   ProbIVX1=<integral VX>, ProbIVY1=<integral VY>, ProbIVZ1=<integral VZ>
+                                   //   ProbIVX2=<integral VX>, ProbIVY2=<integral VY>, ProbIVZ2=<integral VZ>
+                                   //   ProbIVX3=<integral VX>, ProbIVY3=<integral VY>, ProbIVZ3=<integral VZ>
+
+char Mode[1024]={"PROP"}; // allowed modes:
+                          //    PROP == (default) proparation of the orbit
+                          //    SIM ==  simulation of the data from satellite
+                          //    CALC == calculation of the orbit based on any of the data : PING, GPS, PULSAR 
+                          //    OPTIM = calculation of the engines firing to reach the moon
+char SimulationType[1024];
+                          //    aloowed simulation modes
+                          //    TLE - data == read TLE and calculate position on the specific time
+                          //    PING - data == simulate ping messages from ground station to satellite (at spesific time from all ground stations)
+                          //    GPS  - data == simulate GPS's raw data from GPS satellites at specific time from GPS satellites
+                          //    PULSAR - data == simulate PULSAR receving signal from all pulsars at specific time
+                          // TLE and PING output data is the same: for PING:
+                          //     Time=<time>, TimeErr=<time(d)>, PosX=<X(m)>, PosY=<Y(m)>, PosZ=<Z(m)>, PosErr=<error(m)> pingD1=<time(d) from GS->sat>, PingD11Err=<time(d)>
+                          //         PingDel=<time(d) of processing data on sat>, PingDelErr=<time(d)>, PingD2=<time(d) from Sat to GS>, PingD2Err=<time(d)>
+                          // for TLE:
+                          //   Time=<time-from-simulation-output-time>, TimeErr=0, 
+                          //           PosX=<X(m) position of the sat related to the earth>, PosY=<Y(m)>, PosZ=<Z(m)>, PosErr=<error(m) of the position>
+                          //           pingD1=0, PingD11Err=0, PingDel=0, PingDelErr=0, PingD2=0, PingD2Err=0
+                          // for GPS:
+                          //  Time=<time-from-simulation-output-time>, GPS=<ID>, UTC=<time UTC from SAT>,
+                          //       RawX=<X(m)> RawY=<Y(m)> RawZ=<Z(m)> RawVX=<VX(m)> RawVY=<VY(m)> RawVZ=<VZ(m)>
+                          // for PULSAR:
+                          //  Time=<time-from-simulation-output-time>, PULSAR=<ID>, DaltaT=<time btw two pulsars signals>
+                          
+#define MAX_OUTPUT_TIMES 64
+int SimulationOutputCount = 0;
+long double SimulationOutputTime[MAX_OUTPUT_TIMES];
+
+char SimulationOutputFile[1024];
+
+char CalulationOutputFile[1024]; // in CALC mode the output file with 
 
 int EnginesCount = 0;
 #define MAX_ENGINES 6
@@ -4251,7 +4300,7 @@ void DrawFinalBody(TRAOBJ *SlS, int iBodyReference, TRAOBJ *Sat, int iSec,char *
 void DrawAnimationSequence(TRAOBJ *SlS, TRAOBJ *Sat, int iSec,char *szInitName, TRAOBJ *XYZReference, int iXYZReference, double Scale, int &StartSequence, int storeNow)
 {
     int i;
-    int j;
+    //int j;
 
     if ((StartSequence == 0) && (storeNow ==0))
     {
@@ -5411,7 +5460,7 @@ M_110:
 	TettaDelta = CurTime - SatEpoch;
 	TettaDelta  *= (24.0 * 60.0 * 60.0);
 	TettaDelta /= T;
-	int iTettaDelta = TettaDelta;
+	int iTettaDelta = (int)TettaDelta;
 	TettaDelta -= iTettaDelta;
 	TettaDelta *= 2.0 * M_PI;
 
@@ -5535,7 +5584,7 @@ M_110:
 
 long double ConvertJulianDayToDateAndTime(double JulianDay, SYSTEMTIME *ThatTime)
 {
-    long daysfrom2000 = JulianDay - 2451544.5;
+    long daysfrom2000 = (long)(JulianDay - 2451544.5);
     long double flInDay = (JulianDay - 2451544.5) - (long double)daysfrom2000; 
     long double RetTime = flInDay;
     int iYear = 0;
@@ -5608,10 +5657,10 @@ long double ConvertJulianDayToDateAndTime(double JulianDay, SYSTEMTIME *ThatTime
     }
     int iDay  = daysfrom2000;//+1;
     
-    int iHour = flInDay*24;
+    int iHour = (int)(flInDay*24);
     int iMinutes = ((flInDay - ((double)iHour)/24.0))*(24.0*60.0);
-    int iSec =   ((flInDay - ((double)iHour)/24.0) - ((double)iMinutes)/(24.0*60.0))*(24.0*60.0*60.0);
-    int iMils = (flInDay - ((double)iHour)/(24.0) - ((double)iMinutes)/(24.0*60.0) - ((double)iSec)/(24.0*60.0*60.0))*(24.0*60.0*60.0*1000.0);
+    int iSec =  (int)( ((flInDay - ((double)iHour)/24.0) - ((double)iMinutes)/(24.0*60.0))*(24.0*60.0*60.0));
+    int iMils = (int)((flInDay - ((double)iHour)/(24.0) - ((double)iMinutes)/(24.0*60.0) - ((double)iSec)/(24.0*60.0*60.0))*(24.0*60.0*60.0*1000.0));
     ThatTime->wMonth = iMonth;
     ThatTime->wDay = iDay;
     ThatTime->wHour = iHour;
@@ -5624,7 +5673,7 @@ long double ConvertJulianDayToDateAndTime(double JulianDay, SYSTEMTIME *ThatTime
 long double ConverTLEEpochDate2JulianDay(long double KeplerDate)
 {
     // TLE elements is 1 day based - needs to minus at the end one day
-    int iYear = KeplerDate /1000;
+    int iYear = (int)(KeplerDate /1000);
     // date as it is = 2000/01/01     2451544.5, 2451910.5, 2452275.5, 2452640.5, 2453005.5, 2453371.5, 2453736.5, 2013-2456293.5
     // 
     double t2000_01_01_01 = 2451544.5;
@@ -5748,8 +5797,8 @@ double ConvertDateTimeToTLEEpoch(int iDay, int iMonth, int iYear, int iHour, int
 
 long double SubEpoch(long double One, long double Two)
 {
-    int Y1 = One /1000;
-    int Y2 = Two /1000;
+    int Y1 = (int)(One /1000);
+    int Y2 = (int)(Two /1000);
     if (Y1 < 20)
         Y1 +=100;
     if (Y2 < 20)
@@ -5858,7 +5907,7 @@ void ParamCommon(char *szString)
 			}
 			else
 			{
-				int iYear = dStartJD/1000;
+				int iYear = (int)(dStartJD/1000);
 				if ((iYear > 0) && (iYear < 24)) // this is a <TRA:setting name="dStartJD" value="11291.79166666" />
 				{
 					dStartJD = ConverTLEEpochDate2JulianDay(dStartJD);
@@ -5898,7 +5947,7 @@ void ParamCommon(char *szString)
         IF_XML_READ(IterPerSec)
         {
              IterPerSec = atol(pszQuo);
-             iItearationsPerSec = IterPerSec;
+             iItearationsPerSec = (int)(IterPerSec);
              TimeSl = 1.0 / IterPerSec;
              TimeSl_2 = 1.0 / ((long double)IterPerSec*(long double)IterPerSec);
              StepsValInDay = (1.0/((long double)IterPerSec))/24.0/60.0/60.0;
@@ -5919,11 +5968,11 @@ void ParamCommon(char *szString)
             // TBD
             EarthCurTimeS = EarthCurTime;
         }
-        IF_XML_READ(EarthSmAxAU)
-        {
-            EarthSmAxAU = atof(pszQuo);
-            AUcalc = EarthSmAx / EarthSmAxAU;
-        }
+        //IF_XML_READ(EarthSmAxAU)
+        //{
+        //    EarthSmAxAU = atof(pszQuo);
+        //    AUcalc = EarthSmAx / EarthSmAxAU;
+        //}
         IF_XML_READ(TRAVisual)
         {
             strcpy(szTraVisualFileName,pszQuo);
@@ -6180,7 +6229,7 @@ long double GreenwichAscensionFromTLEEpoch(long double EP, long double &preEps, 
     long double DeltaH;
 	TWOPI=2.0*M_PI;//6.28318530717959D0
 	YR=(EP+2.e-7)*1.e-3;
-	int JY=YR;
+	int JY=(int)(YR);
     
 	YR=JY;
 	D=EP-YR*1.e3;
@@ -6202,7 +6251,7 @@ long double GreenwichAscensionFromTLEEpoch(long double EP, long double &preEps, 
         else 
             N = (JY-1)/4+1;
         DaysFrom2000=365.0*(JY) +N + D-1;  // tle epoch jan 1 (0 day of the year) is the day number 1
-        iDaysFrom2000= DaysFrom2000;
+        iDaysFrom2000= (long)(DaysFrom2000);
         CenturyFrom2000 = DaysFrom2000/36525.0;
         Tstar =CenturyFrom2000;
         PartOfTheDay = D - (double long)(long)D;
@@ -6245,7 +6294,7 @@ long double GreenwichAscensionFromTLEEpoch(long double EP, long double &preEps, 
 	THETA=1.72944494 + 6.3003880987*DS50;
     
 	TEMP=THETA/TWOPI;
-	int I=TEMP;
+	int I=(int)(TEMP);
 	TEMP=I;
 	THETAG=THETA-TEMP*TWOPI;
 	//IF(THETAG.LT.0.D0) THETAG=THETAG+TWOPI
@@ -6266,7 +6315,7 @@ long double FMOD2P(long double X)
 	int I;
 	FMOD2P=X;
 	//I=FMOD2P/TWOPI;
-	I=FMOD2P/(2.0*M_PI);
+	I=(int)(FMOD2P/(2.0*M_PI));
 	//FMOD2P=FMOD2P-I*TWOPI;
 	FMOD2P=FMOD2P-I*(2.0*M_PI);
 	//IF(FMOD2P.LT.0) FMOD2P=FMOD2P+TWOPI
@@ -6767,47 +6816,47 @@ void ParamMoon(char *szString)
         XML_READ(MoonVZ);
 
         XML_READ(MoonR);
-        XML_READ(MoonRP);
-        XML_READ(MoonRE);
-        XML_READ(MoonM);
-        XML_READ(GMMoon);
-        XML_READ(GMEarthMoon);
+        //XML_READ(MoonRP);
+        //XML_READ(MoonRE);
+        //XML_READ(MoonM);
+        //XML_READ(GMMoon);
+        //XML_READ(GMEarthMoon);
 
 
-        IF_XML_READ(MassRatioEarthToMoon)
-        {
-            MassRatioEarthToMoon = atof(pszQuo);
-            //if (MassRatioSunToEarthPlusMoon)
-            {
-                double Temp = SunM / MassRatioSunToEarthPlusMoon;
-                if (GMEarth != 0.0 && GMMoon != 0.0 && GMSun != 0.0)
-                {
-                    printf("\n calculation mass based on GMSun GMMoon and GMEarth");
-                    printf("\n Was  GMSun = %f", GMSun);
-                    printf("\n Was  GMEarth = %f", GMEarth);
-                    printf("\n Was  GMMoon = %f", GMMoon);
-                    printf("\n Was  SunM = %f", SunM);
-                    SunM = GMSun /Gbig;
-                    printf("\n Calc SunM = %f", SunM);                    
-                    printf("\n Was  EarthM = %f", EarthM);
-                    EarthM = GMEarth / Gbig;
-                    printf("\n Calc EarthM = %f", EarthM);
-                    printf("\n Was  MoonM = %f", MoonM);
-                    MoonM = GMMoon / Gbig;
-                    printf("\n Calc MoonM = %f", MoonM);
-                }
-                else
-                {
-                    printf("\n calculation mass based on mass ratio earth to moon");
-                    printf("\n Was  MoonM = %f", MoonM);
-                    MoonM = Temp / (1.0 + MassRatioEarthToMoon);
-                    printf("\n Calc MoonM = %f", MoonM);
-                    printf("\n Was  EarthM = %f", EarthM);
-                    EarthM = MoonM * MassRatioEarthToMoon;
-                    printf("\n Calc EarthM = %f", EarthM);
-                }
-            }
-        }
+        //IF_XML_READ(MassRatioEarthToMoon)
+        //{
+        //    MassRatioEarthToMoon = atof(pszQuo);
+        //    //if (MassRatioSunToEarthPlusMoon)
+        //    {
+        //        double Temp = SunM / MassRatioSunToEarthPlusMoon;
+        //        if (GMEarth != 0.0 && GMMoon != 0.0 && GMSun != 0.0)
+        //        {
+        //            printf("\n calculation mass based on GMSun GMMoon and GMEarth");
+        //            printf("\n Was  GMSun = %f", GMSun);
+        //            printf("\n Was  GMEarth = %f", GMEarth);
+        //            printf("\n Was  GMMoon = %f", GMMoon);
+        //            printf("\n Was  SunM = %f", SunM);
+        //            SunM = GMSun /Gbig;
+        //            printf("\n Calc SunM = %f", SunM);                    
+        //            printf("\n Was  EarthM = %f", EarthM);
+        //            EarthM = GMEarth / Gbig;
+        //            printf("\n Calc EarthM = %f", EarthM);
+        //            printf("\n Was  MoonM = %f", MoonM);
+        //            MoonM = GMMoon / Gbig;
+        //            printf("\n Calc MoonM = %f", MoonM);
+        //        }
+        //        else
+        //        {
+        //            printf("\n calculation mass based on mass ratio earth to moon");
+        //            printf("\n Was  MoonM = %f", MoonM);
+        //            MoonM = Temp / (1.0 + MassRatioEarthToMoon);
+        //            printf("\n Calc MoonM = %f", MoonM);
+        //            printf("\n Was  EarthM = %f", EarthM);
+        //            EarthM = MoonM * MassRatioEarthToMoon;
+        //            printf("\n Calc EarthM = %f", EarthM);
+        //        }
+        //    }
+        //}
     XML_SECTION_END;
     XML_END;
 }
@@ -6851,14 +6900,14 @@ void ParamSun(char *szString)
         XML_READ(SunY);
         XML_READ(SunZ);
 		XML_READ(SunR);
-        XML_READ(SunM);
-        IF_XML_READ(GMSun) 
-        {
-            GMSun = atof(pszQuo);
-            printf("\n Was  SunM= %f", SunM);
-            SunM = GMSun / Gbig;
-            printf("\n Calc SunM= %f", SunM);
-        }
+        //XML_READ(SunM);
+        //IF_XML_READ(GMSun) 
+        //{
+        //    GMSun = atof(pszQuo);
+        //    printf("\n Was  SunM= %f", SunM);
+        //    SunM = GMSun / Gbig;
+        //    printf("\n Calc SunM= %f", SunM);
+        //}
     XML_SECTION_END;
     XML_END;
 }
@@ -6877,26 +6926,26 @@ void ParamEarth(char *szString)
         XML_READ(EarthVY);
         XML_READ(EarthVZ);
         XML_READ(EarthR);
-        XML_READ(EarthRP);
-        XML_READ(EarthRE);
-        XML_READ(EarthM);
+        //XML_READ(EarthRP);
+        //XML_READ(EarthRE);
+        //XML_READ(EarthM);
         XML_READ(AU);
-        XML_READ(EarthTSolSec);
-        XML_READ(EarthSmAx);
+        //XML_READ(EarthTSolSec);
+        //XML_READ(EarthSmAx);
         double Temp = 0.0;
-        IF_XML_READ(EarthTDays)  
-        {
-            
-            EarthTDays  = atof(pszQuo);
-            printf("\n calc EarthTDays=%f ", EarthTDays);
-            EarthTSec = EarthTDays * 24.0*60.0*60.0;
-            printf("\n calc EarthTSec =%f ", EarthTSec);
-            Temp = EarthTSec / EarthTSolSec;
+        //IF_XML_READ(EarthTDays)  
+        //{
+        //    
+        //    EarthTDays  = atof(pszQuo);
+        //    printf("\n calc EarthTDays=%f ", EarthTDays);
+        //    EarthTSec = EarthTDays * 24.0*60.0*60.0;
+        //    printf("\n calc EarthTSec =%f ", EarthTSec);
+        //    Temp = EarthTSec / EarthTSolSec;
 
-        }
+        //}
 
-        XML_READ(GMEarth);
-        XML_READ(MassRatioSunToEarthPlusMoon);
+        //XML_READ(GMEarth);
+        //XML_READ(MassRatioSunToEarthPlusMoon);
         IF_XML_READ(EarthCalcKepler)  
         {
             // not used - left for verification in debug mode only            
@@ -6967,7 +7016,37 @@ void ParamProb(char *szString)
     
     char szTemp[128] = {"0."};;
     XML_BEGIN;
-    XML_SECTION(TraInfo);
+    XML_SECTION(ModeInfo);
+    IF_XML_READ(Mode)
+    {
+        strcpy(Mode, pszQuo);
+    }
+    IF_XML_READ(SimulationType)
+    {
+        strcpy(SimulationType, pszQuo);
+    }
+    IF_XML_READ(SimulationOutputFile)
+    {
+        strcpy(SimulationOutputFile, pszQuo);
+    }
+    IF_XML_READ(CalculationOutputFile)
+    {
+        strcpy(SimulationOutputFile, pszQuo);
+    }
+    IF_XML_READ(SimulationOutputTime)
+    {
+        if (++SimulationOutputCount <= MAX_OUTPUT_TIMES)
+            {
+            }
+            else
+            {
+                SimulationOutputCount--;
+                printf("\n Max output times for simulation limit reached - .XML file is incorrect");
+            }
+    }
+    XML_SECTION_END;
+
+    XML_SECTION(probs);
     // pisition of the prob (active by firing engines) can be set by X,Y,Z   VX,VY,VZ
         IF_XML_READ(ProbX)
         {
@@ -7103,6 +7182,10 @@ void ParamProb(char *szString)
 			COPYKEPLER(Sat.ProbRevAtEpoch[Sat.Elem],&Sat.Kepler3[Sat.Elem][63],6);
             Sat.Elem++;  // next satellite
         }
+    XML_SECTION_END;
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    XML_SECTION(TraInfo);
         // finding the tag "UseJPLxyz" will force to retrive all solar sistem parameters from the JPL data
         IF_XML_READ(UseJPLxyz)
         {
@@ -8357,29 +8440,29 @@ void dumpXMLParam(TRAOBJ *Sat, TRAIMPLOBJ *MyEngine, int iNumbOfEng)
         fprintf(EnginesFile,"\n<!-- target point on the Moon -->");
         XML_DUMPF(Targetlongitude);
         XML_DUMPF(Targetlatitude);
-        XML_DUMPF(SunM);
+        //XML_DUMPF(SunM);
         XML_DUMPF(EarthR);
-        XML_DUMPF(EarthRP);
-        XML_DUMPF(EarthRE);
-        XML_DUMPF(EarthM);
-        XML_DUMPF(MassRatioSunToEarthPlusMoon);
+        //XML_DUMPF(EarthRP);
+        //XML_DUMPF(EarthRE);
+        //XML_DUMPF(EarthM);
+        //XML_DUMPF(MassRatioSunToEarthPlusMoon);
         XML_DUMPF(EarthTSolSec);
         XML_DUMPF(EarthSmAx);
-        XML_DUMPF(EarthSmAxAU);
-        XML_DUMPF(EarthTDays);
+        //XML_DUMPF(EarthSmAxAU);
+        //XML_DUMPF(EarthTDays);
 
         XML_DUMPF(MoonR);
-        XML_DUMPF(MoonRP);
-        XML_DUMPF(MoonRE);
-        XML_DUMPF(MoonM);
+        //XML_DUMPF(MoonRP);
+        //XML_DUMPF(MoonRE);
+        //XML_DUMPF(MoonM);
         fprintf(EnginesFile,"\n\n<!--next line will force recalculation of SunM based on G constant -->");
-        XML_DUMPF(GMSun);
-        XML_DUMPF(GMEarthMoon);
-        XML_DUMPF(GMEarth);
-        XML_DUMPF(GMMoon);
+        //XML_DUMPF(GMSun);
+        //XML_DUMPF(GMEarthMoon);
+        //XML_DUMPF(GMEarth);
+        //XML_DUMPF(GMMoon);
         fprintf(EnginesFile,"\n\n<!-- next line will force calculation of a Earth and Moon mass -->");
         fprintf(EnginesFile,"\n<!-- it is not in use - value just for reference and fo trigger -->");
-        XML_DUMPF(MassRatioEarthToMoon);
+        //XML_DUMPF(MassRatioEarthToMoon);
         fprintf(EnginesFile,"\n    <TRA:setting name=\"MoonKeplerLine1\" value=\"%s",szMoonKeplerLine1);
         fprintf(EnginesFile,"    <TRA:setting name=\"MoonKeplerLine2\" value=\"%s",szMoonKeplerLine2);
         fprintf(EnginesFile,"    <TRA:setting name=\"MoonKeplerLine3\" value=\"%s",szMoonKeplerLine3);

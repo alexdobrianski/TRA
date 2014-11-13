@@ -97,39 +97,6 @@
 
     <TRA:setting name="EarthCurTime" value="11036.971719672511" />
     <TRA:setting name="AU" value="149597870697.39999" />
-    <TRA:setting name="ProbM" value="67.5" />
-    <TRA:setting name="ProbKeplerLine1" value="0 ISS (ZARYA)" />
-    <TRA:setting name="@ProbKeplerLine2" value="1 25544U 98067A   11062.66968330  .00024457  00000-0  18183-3 0  9357" />
-    <TRA:setting name="@ProbKeplerLine3" value="2 25544 051.6480 342.0829 0005279 039.9625 033.1957 15.72669582704292" />
-    <TRA:setting name="@ProbKeplerLine2" value="1 25544U 98067A   11291.79166666  .00024457  00000-0  18183-3 0  9357" />
-    <TRA:setting name="@ProbKeplerLine3" value="2 25544 051.6480 342.0829 0005279 039.9625 033.1957 15.72669582704292" />
-
-     <TRA:setting name="@ProbKeplerLine2" value="1 88888U 98067A   11291.79166666  .00073094  13844-3  66816-4 0  8" />
-     <TRA:setting name="@ProbKeplerLine3" value="2 88888 072.8435 115.9689 0086731 052.6988 110.5714 16.05824518704292" />
-
-     <TRA:setting name="ProbKeplerLine2" value="1 25544U 98067A   13331.09576263  .00014981  00000-0  26452-3 0  1086" />
-     <TRA:setting name="ProbKeplerLine3" value="2 25544 051.6512 021.2013 0001143 099.6314 347.0821 15.50581010859971" />
-
-      <TRA:setting name="@ProbKeplerLine1" value="0 NAVSTAR 15 (USA 42)" />
-      <TRA:setting name="@ProbKeplerLine2" value="1 20185U 89064A   13331.47286605 -.00000027  00000-0  00000+0 0  3478" />
-      <TRA:setting name="@ProbKeplerLine3" value="2 20185 054.3952 246.8636 0014123 263.2077 345.0976 01.86084982170883" />
-
-      <TRA:setting name="@ProbKeplerLine1" value="0 NAVSTAR 16 (USA 47)" />
-      <TRA:setting name="@ProbKeplerLine2" value="1 20302U 89085A   13330.73772122 -.00000050  00000-0  00000+0 0  5517" />
-      <TRA:setting name="@ProbKeplerLine3" value="2 20302 055.8526 346.5927 0006697 002.9190 179.6262 01.89423001171667" />
-
-      <TRA:setting name="@ProbKeplerLine1" value="0 NAVSTAR 17 (USA 49)" />
-      <TRA:setting name="@ProbKeplerLine2" value="1 20361U 89097A   13331.33166777  .00000103  00000-0  00000+0 0   495" />
-      <TRA:setting name="@ProbKeplerLine3" value="2 20361 053.9231 173.6164 0018695 245.7484 013.3052 01.89174493162614" />
-
-      <TRA:setting name="@ProbKeplerLine1" value="0 BRIZ-M" />
-      <TRA:setting name="@ProbKeplerLine2" value="1 39286U 13056B   13330.80981764 -.00000059  00000-0  00000+0 0   250" />
-      <TRA:setting name="@ProbKeplerLine3" value="2 39286 023.5285 332.4959 6042427 021.7647 355.7158 02.18174083  1258" />
-
-      <TRA:setting name="@ProbKeplerLine1" value="0 BRIZ-M" />
-      <TRA:setting name="@ProbKeplerLine2" value="1 39285U 13056A   13331.57553947  .00000152  00000-0  00000+0 0   514" />
-      <TRA:setting name="@ProbKeplerLine3" value="2 39285 000.0853 291.4426 0001368 317.1482 068.8134 01.00273241   614" />
-
 
          <TRA:setting name="GRSTNNAME" value="vancouver" />
          <TRA:setting name="GRSTNLat" value="49.257735" />
@@ -173,32 +140,15 @@
     <TRA:setting name="Targetlongitude" value="-15" />
     <TRA:setting name="Targetlatitude" value="-2" />
 <!-- Mass and dimentions -->
-    <TRA:setting name="SunM" value="1.9884158296478392e+030" />
     <TRA:setting name="EarthR" value="6371000" />
-    <TRA:setting name="EarthRP" value="6356800" />
-    <TRA:setting name="EarthRE" value="6378100" />
-    <TRA:setting name="EarthM" value="5.9721863856475894e+024" />
-    <TRA:setting name="MassRatioSunToEarthPlusMoon" value="328900.56" />
-    <TRA:setting name="EarthTSolSec" value="86164.098903691003" />
-    <TRA:setting name="EarthSmAx" value="149597887500" />
-    <TRA:setting name="EarthSmAxAU" value="1.0000001124" />
-    <TRA:setting name="EarthTDays" value="365.25636600000001" />
     <TRA:setting name="MoonR" value="1737100" />
-    <TRA:setting name="MoonRP" value="1735970" />
-    <TRA:setting name="MoonRE" value="1738140" />
-    <TRA:setting name="MoonM" value="7.3458114403351352e+022" />
+
 
 <!--next line will force recalculation of SunM based on G constant -->
-    <TRA:setting name="GMSun" value="1.327124400350198e+020" />
     <TRA:setting name="SunR" value="696342000" />
-    <TRA:setting name="GMEarthMoon" value="403503241737999.87" />
-    <TRA:setting name="GMEarth" value="398600441499999.87" />
-    <TRA:setting name="GMMoon" value="4902800237999.998" />
 
 <!-- next line will force calculation of a Earth and Moon mass -->
 <!-- it is not in use - value just for reference and fo trigger -->
-    <TRA:setting name="MassRatioEarthToMoon" value="81.300567461545441" />
-
 
 <!-- next line (value == "1.0") will force calculation
                          of a Earth kepler position -->
@@ -218,6 +168,40 @@
 <!-- no engines fired just everything is flying -->
    <TRA:setting name="JustFlySimulation" value="1" />
 
+</TRA:section>
+<TRA:section name="probs" value="0.0">
+    <TRA:setting name="ProbM" value="67.5" />
+    <TRA:setting name="ProbKeplerLine1" value="0 ISS (ZARYA)" />
+    <TRA:setting name="@ProbKeplerLine2" value="1 25544U 98067A   11062.66968330  .00024457  00000-0  18183-3 0  9357" />
+    <TRA:setting name="@ProbKeplerLine3" value="2 25544 051.6480 342.0829 0005279 039.9625 033.1957 15.72669582704292" />
+    <TRA:setting name="@ProbKeplerLine2" value="1 25544U 98067A   11291.79166666  .00024457  00000-0  18183-3 0  9357" />
+    <TRA:setting name="@ProbKeplerLine3" value="2 25544 051.6480 342.0829 0005279 039.9625 033.1957 15.72669582704292" />
+
+     <TRA:setting name="@ProbKeplerLine2" value="1 88888U 98067A   11291.79166666  .00073094  13844-3  66816-4 0  8" />
+     <TRA:setting name="@ProbKeplerLine3" value="2 88888 072.8435 115.9689 0086731 052.6988 110.5714 16.05824518704292" />
+
+     <TRA:setting name="ProbKeplerLine2" value="1 25544U 98067A   13331.09576263  .00014981  00000-0  26452-3 0  1086" />
+     <TRA:setting name="ProbKeplerLine3" value="2 25544 051.6512 021.2013 0001143 099.6314 347.0821 15.50581010859971" />
+
+      <TRA:setting name="@ProbKeplerLine1" value="0 NAVSTAR 15 (USA 42)" />
+      <TRA:setting name="@ProbKeplerLine2" value="1 20185U 89064A   13331.47286605 -.00000027  00000-0  00000+0 0  3478" />
+      <TRA:setting name="@ProbKeplerLine3" value="2 20185 054.3952 246.8636 0014123 263.2077 345.0976 01.86084982170883" />
+
+      <TRA:setting name="@ProbKeplerLine1" value="0 NAVSTAR 16 (USA 47)" />
+      <TRA:setting name="@ProbKeplerLine2" value="1 20302U 89085A   13330.73772122 -.00000050  00000-0  00000+0 0  5517" />
+      <TRA:setting name="@ProbKeplerLine3" value="2 20302 055.8526 346.5927 0006697 002.9190 179.6262 01.89423001171667" />
+
+      <TRA:setting name="@ProbKeplerLine1" value="0 NAVSTAR 17 (USA 49)" />
+      <TRA:setting name="@ProbKeplerLine2" value="1 20361U 89097A   13331.33166777  .00000103  00000-0  00000+0 0   495" />
+      <TRA:setting name="@ProbKeplerLine3" value="2 20361 053.9231 173.6164 0018695 245.7484 013.3052 01.89174493162614" />
+
+      <TRA:setting name="@ProbKeplerLine1" value="0 BRIZ-M" />
+      <TRA:setting name="@ProbKeplerLine2" value="1 39286U 13056B   13330.80981764 -.00000059  00000-0  00000+0 0   250" />
+      <TRA:setting name="@ProbKeplerLine3" value="2 39286 023.5285 332.4959 6042427 021.7647 355.7158 02.18174083  1258" />
+
+      <TRA:setting name="@ProbKeplerLine1" value="0 BRIZ-M" />
+      <TRA:setting name="@ProbKeplerLine2" value="1 39285U 13056A   13331.57553947  .00000152  00000-0  00000+0 0   514" />
+      <TRA:setting name="@ProbKeplerLine3" value="2 39285 000.0853 291.4426 0001368 317.1482 068.8134 01.00273241   614" />
 </TRA:section>
 <TRA:section name="pulsars" value="0.0">
    <TRA:setting name="N" value="88"/>
