@@ -5410,7 +5410,7 @@ M_90:
 	//IFLAG=0;
 	//* UPDATE FOR SECULAR GRAVITY AND ATMOSPHERIC DRAG
 M_100:
-    long double TSINCE = (CurTime - SatEpoch)*(24.0 * 60.0 * 60.0);
+    long double TSINCE = (CurTime - SatEpoch)*(24.0 * 60.0* 60.0);
 	long double XMDF=MeanAnm+XMDOT*TSINCE;
 	long double OMGADF=ArgPer+OMGDOT*TSINCE;
 	long double XNODDF=AssNode+XNODOT*TSINCE;
@@ -5462,16 +5462,18 @@ M_110:
 	TettaDelta /= T;
 	int iTettaDelta = (int)TettaDelta;
 	TettaDelta -= iTettaDelta;
+    TettaDelta *= T;
+    TettaDelta /= 24.0*60.0*60.0;
 	TettaDelta *= 2.0 * M_PI;
 
 
 	long double M = MeanAnm + TettaDelta;
     if (doCorrection)
     {
-        M = XMP;
+        //M = XMP;
         Ecc = Eee;
-        ArgPer = OMEGA;
-        AssNode = XNODE;
+        //ArgPer = OMEGA;
+        //AssNode = XNODE;
     }
     //// find E
     long double E = M;
@@ -5503,7 +5505,7 @@ M_110:
     //A= EarthSmAx;
     long double B = A * sqrt(1.0 - Ecc * Ecc);
 
-    printf("\n Calc A      = %f", A);
+    //printf("\n Calc A      = %f", A);
 	// calulates R
     // X - pointed right and to perihelion
     // Y - pointed down
@@ -7558,7 +7560,7 @@ void ParamProb(char *szString)
             {
                 long double AE = 1.0;
                 long double BSTAR=Sat.ProbDragterm[nSat]/AE;
-			    if ((strcmp(UseSatData, "SGP4")==0) || (strcmp(UseSatData, "SGP")==0) || (strcmp(UseSatData, "SGP4")==0))
+			    if ((memcmp(UseSatData, "SGP4",4)==0) || (memcmp(UseSatData, "SGP",3)==0) || (memcmp(UseSatData, "SGP4",4)==0))
                 {
                     //Sat.ProbEpochOnStart[nSat] =fmod(dStartJD - Sat.ProbJD[nSat],1.0/Sat.ProbMeanMotion[nSat]);
 			        
@@ -7607,18 +7609,23 @@ void ParamProb(char *szString)
                     XNDD6O = 0.0;
                     XNDT2O =0.0;
 #endif
-                    if (strcmp(UseSatData, "SGP4")==0)
+                    if (memcmp(UseSatData, "SGP4",4)==0)
 			            SGP4((dStartJD - Sat.ProbJD[nSat])*XMNPDA, XNDT2O,XNDD6O,BSTAR,Sat.ProbIncl[nSat], Sat.ProbAscNode[nSat],Sat.ProbEcc[nSat], 
                             Sat.ProbArgPer[nSat], Sat.ProbMeanAnom[nSat],XNO, 
 	    			        tProbX,tProbY,tProbZ,tProbVX,tProbVY,tProbVZ);
-                    else if (strcmp(UseSatData, "SGP")==0)
-                        SGP((dStartJD - Sat.ProbJD[nSat])*XMNPDA, XNDT2O,XNDD6O,BSTAR,Sat.ProbIncl[nSat], Sat.ProbAscNode[nSat],Sat.ProbEcc[nSat], 
-                            Sat.ProbArgPer[nSat], Sat.ProbMeanAnom[nSat],XNO, 
-	    			        tProbX,tProbY,tProbZ,tProbVX,tProbVY,tProbVZ);
-                    else if (strcmp(UseSatData, "SGP8")==0)
+                    else if (memcmp(UseSatData, "SGP8",4)==0)
                         SGP8((dStartJD - Sat.ProbJD[nSat])*XMNPDA, XNDT2O,XNDD6O,BSTAR,Sat.ProbIncl[nSat], Sat.ProbAscNode[nSat],Sat.ProbEcc[nSat], 
                             Sat.ProbArgPer[nSat], Sat.ProbMeanAnom[nSat],XNO, 
 	    			        tProbX,tProbY,tProbZ,tProbVX,tProbVY,tProbVZ);
+                    else if (memcmp(UseSatData, "SGP",3)==0)
+                        SGP((dStartJD - Sat.ProbJD[nSat])*XMNPDA, XNDT2O,XNDD6O,BSTAR,Sat.ProbIncl[nSat], Sat.ProbAscNode[nSat],Sat.ProbEcc[nSat], 
+                            Sat.ProbArgPer[nSat], Sat.ProbMeanAnom[nSat],XNO, 
+	    			        tProbX,tProbY,tProbZ,tProbVX,tProbVY,tProbVZ);
+                    else
+                    {
+                        printf("\n error in UseSatData == unknown value");
+                        exit(99);
+                    }
 
 		    	    tProbX=tProbX*XKMPER/AE*1000.0;
 			        tProbY=tProbY*XKMPER/AE*1000.0;
@@ -7644,7 +7651,7 @@ void ParamProb(char *szString)
                         Sat.ProbArgPer[nSat],          // - Argument of perihelion
                         Sat.ProbMeanAnom[nSat],        // - Mean Anomaly (degrees)
                         BSTAR,
-                        Gbig *SolarSystem.M[EARTH],0,
+                        Gbig *SolarSystem.M[EARTH],1,
                         tempProbX,tempProbY,tempProbZ,tempProbVX,tempProbVY,tempProbVZ, Sat.ProbMeanMotion[nSat]);
 
                     //Sat.Lambda = dStartGreenwichA;
@@ -8122,6 +8129,10 @@ DONE_WITH_LINE:
         IF_XML_READ(UseSatData)
         {
             strcpy(UseSatData, pszQuo);
+            if (strchr(UseSatData, '\"'))
+            {
+                *strchr(UseSatData, '\"')=0;
+            }
         }
         IF_XML_READ(Targetlongitude) // dolgota
         {
@@ -9906,11 +9917,43 @@ int main(int argc, char * argv[])
 
             //long double TimeFromEpochOfSatInDays = fmod(Sat.ProbEpochOnStart[iCheck] + Time_SecondsFromStart/24.0/60.0/60.0, 1.0/Sat.ProbMeanMotion[iCheck]);
             // first parameter in in minutes from epoch
-			SGP4((dStartJD - Sat.ProbJD[iCheck]+Time_SecondsFromStart/24.0/60.0/60.0)*XMNPDA, 
-                XNDT2O,XNDD6O,BSTAR,Sat.ProbIncl[iCheck], Sat.ProbAscNode[iCheck],Sat.ProbEcc[iCheck], Sat.ProbArgPer[iCheck], Sat.ProbMeanAnom[iCheck],XNO, 
-				tProbX,tProbY,tProbZ,tProbVX,tProbVY,tProbVZ);
-			tProbX=tProbX*XKMPER/AE*1000.0;                 tProbY=tProbY*XKMPER/AE*1000.0;                 tProbZ=tProbZ*XKMPER/AE*1000.0;
-			tProbVX=tProbVX*XKMPER/AE*XMNPDA/86400.*1000.0;	tProbVY=tProbVY*XKMPER/AE*XMNPDA/86400.*1000.0;	tProbVZ=tProbVZ*XKMPER/AE*XMNPDA/86400.*1000.0;
+            if (memcmp(UseSatData, "SGP",4)==0) 
+            {
+                if (memcmp(UseSatData, "SGP4",4)==0)
+                {
+			        SGP4((dStartJD - Sat.ProbJD[iCheck]+Time_SecondsFromStart/24.0/60.0/60.0)*XMNPDA, 
+                        XNDT2O,XNDD6O,BSTAR,Sat.ProbIncl[iCheck], Sat.ProbAscNode[iCheck],Sat.ProbEcc[iCheck], Sat.ProbArgPer[iCheck], Sat.ProbMeanAnom[iCheck],XNO, 
+				        tProbX,tProbY,tProbZ,tProbVX,tProbVY,tProbVZ);
+                }
+                else if (memcmp(UseSatData, "SGP8",4)==0)
+                {
+			        SGP8((dStartJD - Sat.ProbJD[iCheck]+Time_SecondsFromStart/24.0/60.0/60.0)*XMNPDA, 
+                        XNDT2O,XNDD6O,BSTAR,Sat.ProbIncl[iCheck], Sat.ProbAscNode[iCheck],Sat.ProbEcc[iCheck], Sat.ProbArgPer[iCheck], Sat.ProbMeanAnom[iCheck],XNO, 
+				        tProbX,tProbY,tProbZ,tProbVX,tProbVY,tProbVZ);
+                }
+                else if  (memcmp(UseSatData, "SGP",3)==0)
+                {
+			        SGP((dStartJD - Sat.ProbJD[iCheck]+Time_SecondsFromStart/24.0/60.0/60.0)*XMNPDA, 
+                    XNDT2O,XNDD6O,BSTAR,Sat.ProbIncl[iCheck], Sat.ProbAscNode[iCheck],Sat.ProbEcc[iCheck], Sat.ProbArgPer[iCheck], Sat.ProbMeanAnom[iCheck],XNO, 
+				    tProbX,tProbY,tProbZ,tProbVX,tProbVY,tProbVZ);
+                }
+                tProbX=tProbX*XKMPER/AE*1000.0;                 tProbY=tProbY*XKMPER/AE*1000.0;                 tProbZ=tProbZ*XKMPER/AE*1000.0;
+			    tProbVX=tProbVX*XKMPER/AE*XMNPDA/86400.*1000.0;	tProbVY=tProbVY*XKMPER/AE*XMNPDA/86400.*1000.0;	tProbVZ=tProbVZ*XKMPER/AE*XMNPDA/86400.*1000.0;
+            }
+            else
+            {
+                KeplerPosition(Sat.ProbJD[iCheck],dStartJD+Time_SecondsFromStart/24.0/60.0/60.0,      // prob epoch, and curent time
+	    			    Sat.ProbTSec[iCheck], // - orbit period in sec
+		    		    Sat.ProbEcc[iCheck],             // - Eccentricity
+                        Sat.ProbIncl[iCheck],            // - Inclination
+                        Sat.ProbAscNode[iCheck],         // - Longitude of ascending node
+                        Sat.ProbArgPer[iCheck],          // - Argument of perihelion
+                        Sat.ProbMeanAnom[iCheck],        // - Mean Anomaly (degrees)
+                        BSTAR,
+                        Gbig *SolarSystem.M[EARTH],1,
+                        tProbX,tProbY,tProbZ,tProbVX,tProbVY,tProbVZ, Sat.ProbMeanMotion[iCheck]);
+
+            }
 
             tX = Sat.X[iCheck] - SolarSystem.X[EARTH];      tY = Sat.Y[iCheck] - SolarSystem.Y[EARTH];      tZ = Sat.Z[iCheck] - SolarSystem.Z[EARTH];
 		    tVX = Sat.VX[iCheck] - SolarSystem.VX[EARTH];   tVY = Sat.VY[iCheck] - SolarSystem.VY[EARTH];   tVZ = Sat.VZ[iCheck] - SolarSystem.VZ[EARTH];

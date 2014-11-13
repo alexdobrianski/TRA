@@ -79,11 +79,11 @@
     <TRA:setting name="dStartJDb" value="07/05/14 22:10:48:940" />
 
     <TRA:setting name="dStartJD0" value="07/05/14 08:28:00:000" />
-    <TRA:setting name="dStartJD1" value="07/05/14 09:47:33:056" />
+    <TRA:setting name="dStartJD" value="07/05/14 09:47:33:056" />
 
 
 
-    <TRA:setting name="dStartJD" value="07/05/14 22:10:34:837" />
+    <TRA:setting name="dStartJD9" value="07/05/14 22:10:34:837" />
 
     <TRA:setting name="dStartJD*" value="07/05/14 10:00:52:000" />
     <TRA:setting name="dStartJD*" value="07/05/14 11:20:52:000" />
@@ -113,7 +113,8 @@
 <!-- scale in m -->
     <TRA:setting name="RGBScale" value="90000000" />
 
-    <TRA:setting name="UseSatData" value="SGP4" />
+    <TRA:setting name="UseSatData" value="SGP8" />
+
     <TRA:setting name="IterPerSec" value="479" />
     <TRA:setting name="IterPerSec1" value="1013" />
     <TRA:setting name="IterPerSec3" value="1523" />
