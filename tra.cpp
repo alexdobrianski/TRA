@@ -883,6 +883,7 @@ typedef struct TraObj
     long double ProbTDays[PLANET_COUNT];
     long double ProbTSec[PLANET_COUNT];
     long double ProbRevAtEpoch[PLANET_COUNT];
+    long double ProbSquare[PLANET_COUNT];
     // satelitte close to body
     // it can be only one body
     int iLeg;
@@ -911,6 +912,8 @@ typedef struct TraObj
     long double ro[PLANET_COUNT];
     long double H;
     long double Ro;
+    long double d;// days from the begining of the year
+
     //long double Sc[PLANET_COUNT];
     //long double Fp[PLANET_COUNT];
     int iAtm[PLANET_COUNT];
@@ -1082,15 +1085,41 @@ typedef struct TraObj
 
             // from GOST P 25645.166-2004
 #define _RO_0 1.58868e-8
-            int SA = 1;
-            int Hr = 0;
+            long double F10_7 = 115;
             long double F81 = 115;
-            long double F0 = 100; 
-            long double RoH = _RO_0 * pow((long double)_E_CONST, __AO[Hr][0][SA] + (__AO[Hr][1][SA] + (__AO[Hr][2][SA] + (__AO[Hr][3][SA] + (__AO[Hr][4][SA]+ (__AO[Hr][5][SA]+ __AO[Hr][6][SA]*Hkm)*Hkm)*Hkm)*Hkm) *Hkm)*Hkm);
-            long double K0 = 1 + (__L0[Hr][0][SA] + (__L0[Hr][1][SA]+(__L0[Hr][2][SA]+(__L0[Hr][3][SA]+(__L0[Hr][4][SA])*Hkm)*Hkm)*Hkm)*Hkm)*(F81-F0)/F0;
+            long double F0 = 75.0; 
+            int SA = 0;
+            int Hr_for_AO = 0;
+            int Hr_for_L0 = 0;
+            int Hr_for_B0 = 0;
+            for (SA = 0; SA < 6; SA++)
+            {
+                if ((F0+25.0) > F81)
+                    break;
+                F0 += 25.0;
+            }
+            if ((__AH[Hr_for_AO][SA] < Hkm) && (__AH[Hr_for_AO+1][SA] > Hkm))
+                ;
+            else
+                Hr_for_AO = 1;
+            if ((__LH[Hr_for_L0][SA] < Hkm) && (__LH[Hr_for_L0+1][SA] > Hkm))
+                ;
+            else
+                Hr_for_L0 = 1;
+
+            if ((__BH[Hr_for_B0][SA] < Hkm) && (__BH[Hr_for_B0+1][SA] > Hkm))
+                ;
+            else
+                Hr_for_B0 = 1;
+            
+
+            long double RoH = _RO_0 * pow((long double)_E_CONST, __AO[Hr_for_AO][0][SA] + (__AO[Hr_for_AO][1][SA] + (__AO[Hr_for_AO][2][SA] + (__AO[Hr_for_AO][3][SA] + (__AO[Hr_for_AO][4][SA]+ (__AO[Hr_for_AO][5][SA]+ __AO[Hr_for_AO][6][SA]*Hkm)*Hkm)*Hkm)*Hkm) *Hkm)*Hkm);
+            long double K0 = 1 + (__L0[Hr_for_L0][0][SA] + (__L0[Hr_for_L0][1][SA]+(__L0[Hr_for_L0][2][SA]+(__L0[Hr_for_L0][3][SA]+(__L0[Hr_for_L0][4][SA])*Hkm)*Hkm)*Hkm)*Hkm)*(F81-F0)/F0;
             long double K1 = 0;
             long double K2 = 0;
             long double K3 = 0;
+            if (F10_7 != F81)
+                K3 = (__BO[Hr_for_B0][0][SA] + (__BO[Hr_for_B0][1][SA]+(__BO[Hr_for_B0][2][SA]+(__BO[Hr_for_B0][3][SA]+(__BO[Hr_for_B0][4][SA])*Hkm)*Hkm)*Hkm)*Hkm)*(F10_7 - F81)/(F81+fabs(F10_7-F81));
             long double K4 = 0;
             Ro = RoH * K0 * (1 + K1 + K2 + K3 + K4);
         }
@@ -3040,17 +3069,20 @@ void CalcSatForces(TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfCalc)
                 Sat->FZ[i] += -( Sat->Z[i] - SlS->Z[j])  * Sat->ForceDD[i][j]/Sat->Distance[i][j] + Sat->DeltaVZ[i][j]*GM_MODEL/ Sat->Distance2[i][j];
 #endif
 #if 1
-                // account Air force:
-                long double AirFX = Sat->VX[i] - SlS->VX[j];
-                long double AirFY = Sat->VY[i] - SlS->VY[j];
-                long double AirFZ = Sat->VZ[i] - SlS->VZ[j];
-                long double AirNorm = sqrt(AirFX*AirFX + AirFY*AirFY + AirFZ*AirFZ);
-                long double AbsAir = AirNorm* Sat->ro[i] * 1674.0*TimeSl_2;
-                //long double AbsAir = AirNorm* Sat->ro[i] * 2004.0*TimeSl_2; // is it? Is ISS looks like square with side= 56.014 m? => S area= 3137.679m^2
-                //long double AbsAir = AirNorm* Sat->Ro * 1568.8395*TimeSl_2; // is it? Is ISS looks like square with side= 56.014 m? => S area= 3137.679m^2
-                Sat->FX[i] -=AirFX *AbsAir;
-                Sat->FY[i] -=AirFY *AbsAir;
-                Sat->FZ[i] -=AirFZ *AbsAir;
+                if (Sat->ProbSquare[i])
+                {
+                    // account Air force:
+                    long double AirFX = Sat->VX[i] - SlS->VX[j];
+                    long double AirFY = Sat->VY[i] - SlS->VY[j];
+                    long double AirFZ = Sat->VZ[i] - SlS->VZ[j];
+                    long double AirNorm = sqrt(AirFX*AirFX + AirFY*AirFY + AirFZ*AirFZ);
+                    long double AbsAir = AirNorm* Sat->ro[i] * Sat->ProbSquare[i]/2*TimeSl_2;
+                    //long double AbsAir = AirNorm* Sat->ro[i] * 2004.0*TimeSl_2; // is it? Is ISS looks like square with side= 56.014 m? => S area= 3137.679m^2
+                    //long double AbsAir = AirNorm* Sat->Ro * 1568.8395*TimeSl_2; // is it? Is ISS looks like square with side= 56.014 m? => S area= 3137.679m^2
+                    Sat->FX[i] -=AirFX *AbsAir;
+                    Sat->FY[i] -=AirFY *AbsAir;
+                    Sat->FZ[i] -=AirFZ *AbsAir;
+                }
 #endif
             }
             else
@@ -7355,6 +7387,10 @@ void ParamProb(char *szString)
         {
             strcpy(Sat.Kepler2[Sat.Elem], pszQuo);
         }
+        IF_XML_READ(ProbSquare)
+        {
+            Sat.ProbSquare[Sat.Elem] = atof(pszQuo);
+        }
         IF_XML_READ(ProbKeplerLine3)
         {
             char szTempo[1024];
@@ -7560,7 +7596,7 @@ void ParamProb(char *szString)
             {
                 long double AE = 1.0;
                 long double BSTAR=Sat.ProbDragterm[nSat]/AE;
-			    if ((memcmp(UseSatData, "SGP4",4)==0) || (memcmp(UseSatData, "SGP",3)==0) || (memcmp(UseSatData, "SGP4",4)==0))
+			    if ( memcmp(UseSatData, "SGP",3)==0)
                 {
                     //Sat.ProbEpochOnStart[nSat] =fmod(dStartJD - Sat.ProbJD[nSat],1.0/Sat.ProbMeanMotion[nSat]);
 			        
@@ -9917,7 +9953,7 @@ int main(int argc, char * argv[])
 
             //long double TimeFromEpochOfSatInDays = fmod(Sat.ProbEpochOnStart[iCheck] + Time_SecondsFromStart/24.0/60.0/60.0, 1.0/Sat.ProbMeanMotion[iCheck]);
             // first parameter in in minutes from epoch
-            if (memcmp(UseSatData, "SGP",4)==0) 
+            if (memcmp(UseSatData, "SGP",3)==0) 
             {
                 if (memcmp(UseSatData, "SGP4",4)==0)
                 {
