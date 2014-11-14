@@ -276,6 +276,8 @@ long double C_S_nk[TOTAL_COEF*TOTAL_COEF/2][2];
 
 #define USE_MODEL_LOAD
 #ifdef USE_MODEL_LOAD
+char EarthModelFile[1024]={"egm96"};
+int EarthModelCoefs = 16;
 //long  double GM_MODEL = 398600.4415E9;
 //#define R0_MODEL 6378136.30
 long double GM_MODEL = 398600.4418e9;
@@ -470,6 +472,10 @@ long double Slm[MAX_COEF_J][MAX_COEF_J] = {
 
 
 #endif
+// just for convinience to proper orbit clculation
+double EngCoeff = 1.0;
+
+
 long double GST,SLONG,SRASN, SDEC;
 long double dStartGreenwichA = 0.0;
 long double TotalDays;
@@ -481,7 +487,6 @@ long iCurSec; // current second from begining of the simulation
 int iCurPortionOfTheSecond;
 
 #define ADJUST(__INIT,__FORMULA,__ADDON) ldTemp=(__INIT+(__FORMULA))+__ADDON;ldTemp2=ldTemp-(__INIT +(__FORMULA));__INIT=ldTemp;__ADDON-=ldTemp2;
-
 typedef struct Long_Double_Intergal_Var
 {
     long long nX0;
@@ -529,17 +534,17 @@ typedef struct Long_Double_Intergal_Var
     long CountNz_h;
 
     long double x() 
-        { 
+    { 
            return X+X_h+X_hh; 
-        }
+    };
     long double y() 
-        { 
+    { 
             return Y+Y_h+Y_hh; 
-        }
+    };
     long double z() 
-        { 
+    { 
             return Z+Z_h+Z_hh; 
-        }
+    };
     void adjustX(long MaxVal, long MaxVal_h)
     {
         long double ldTemp, ldTemp2;
@@ -553,7 +558,7 @@ typedef struct Long_Double_Intergal_Var
                 ADJUST(X_hh, 0, X_h);
             }
         }
-    }
+    };
     void adjustY(long MaxVal, long MaxVal_h)
     {
         long double ldTemp, ldTemp2;
@@ -567,7 +572,7 @@ typedef struct Long_Double_Intergal_Var
                 ADJUST(Y_hh, 0, Y_h);
             }
         }
-    }
+    };
     void adjustZ(long MaxVal, long MaxVal_h)
     {
         long double ldTemp, ldTemp2;
@@ -581,7 +586,7 @@ typedef struct Long_Double_Intergal_Var
                 ADJUST(Z_hh, 0, Z_h);
             }
         }
-    }
+    };
 
     void ZeroIntegral (void)
     {
@@ -598,7 +603,7 @@ typedef struct Long_Double_Intergal_Var
         X3 = 0.0;      Y3 = 0.0;      Z3 = 0.0;
         X4 = 0.0;      Y4 = 0.0;      Z4 = 0.0;
         X5 = 0.0;      Y5 = 0.0;      Z5 = 0.0;
-    }
+    };
 } LONG_DOUBLE_INT_VAR, *PLONG_DOUBLE_INT_VAR;
 
 typedef struct Long_Double_Intergal_Var4
@@ -631,20 +636,18 @@ typedef struct Long_Double_Intergal_Var4
     long CountNx_hh;
     long CountNy_hh;
     long CountNz_hh;
-
-
     long double x() 
-        { 
+	{
            return X+X_h+X_hh+X_hhh; 
-        }
+    };
     long double y() 
-        { 
+	{
             return Y+Y_h+Y_hh+Y_hhh; 
-        }
+    };
     long double z() 
-        { 
+    { 
             return Z+Z_h+Z_hh+Z_hhh; 
-        }
+    };
     void adjustX(long MaxVal, long MaxVal_h)
     {
         long double ldTemp, ldTemp2;
@@ -663,7 +666,7 @@ typedef struct Long_Double_Intergal_Var4
                 }
             }
         }
-    }
+    };
     void adjustY(long MaxVal, long MaxVal_h)
     {
         long double ldTemp, ldTemp2;
@@ -682,7 +685,7 @@ typedef struct Long_Double_Intergal_Var4
                 }
             }
         }
-    }
+    };
     void adjustZ(long MaxVal, long MaxVal_h)
     {
         long double ldTemp, ldTemp2;
@@ -701,7 +704,7 @@ typedef struct Long_Double_Intergal_Var4
                 }
             }
         }
-    }
+    };
 
     void ZeroIntegral (void)
     {
@@ -712,7 +715,7 @@ typedef struct Long_Double_Intergal_Var4
         CountNx = 0; CountNy = 0; CountNz = 0;
         CountNx_h = 0; CountNy_h = 0; CountNz_h = 0;
         CountNx_hh = 0; CountNy_hh = 0; CountNz_hh = 0;
-    }
+    };
 } LONG_DOUBLE_INT_VAR4, *PLONG_DOUBLE_INT_VAR4;
 
 typedef struct TraObj
@@ -806,6 +809,7 @@ typedef struct TraObj
     long double A1_X[PLANET_COUNT];
     long double A1_Y[PLANET_COUNT];
     long double A1_Z[PLANET_COUNT];
+
 
 //  =====================================================================
 //  in integration vraiable's group all variables are trippled
@@ -1158,7 +1162,7 @@ typedef struct TraObj
             return r/cos(lat) -n;
         else
             return Z/sin(lat) - n*(1.0-e_tilda_2);
-}
+	};
 
 #if 1
     void FastSummXYZ( long double ValX, long double ValY, long double ValZ, long double ValR, long double &X, long double &Y, long double &Z, int iCurSat)
@@ -1481,7 +1485,7 @@ typedef struct TraObj
             tempX =  cos_precEps * X - sin_precEps * Y;
             tempY =  sin_precEps * X + cos_precEps * Y;
             X = tempX; Y = tempY;
-    }
+    };
 #else
     void FastSummXYZ( long double ValX, long double ValY, long double ValZ, long double ValR, long double &X, long double &Y, long double &Z, int iCurSat)
     {
@@ -1701,7 +1705,7 @@ typedef struct TraObj
         X = tempX;
         Y = tempY;
 
-    }
+    };
 #endif    
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     int CalcP( long double ValX, long double ValY, long double ValZ, long double ValR)
@@ -1993,7 +1997,7 @@ typedef struct TraObj
         }
 #endif
         return 0;
-    }
+    };
 
     void SummXYZ(int SatCalc, long double &X, long double &Y, long double &Z)
     {
@@ -2381,7 +2385,7 @@ typedef struct TraObj
             }
         }
 #endif
-    }
+    };
     long double SummJ(void)
     {
         // this is a formula for gravitation potential (NOT a force)
@@ -2410,7 +2414,7 @@ typedef struct TraObj
         }
 
         return Summ;
-    }
+    };
 #ifdef _BETTER_BUT_MANY_ITERATIONS
 #else
     long double v3v5OddX(long long lOdd, long double a6, long double a5, long double a7, int i)
@@ -2419,35 +2423,35 @@ typedef struct TraObj
         ssEven[i].X  += a6; ssOdd[i].X   += a5; ssfEven[i].X += ssEven[i].x(); ldTemp_ssOdd = ssOdd[i].x(); ssfOdd[i].X  += ldTemp_ssOdd;
         V35OddX[i] = n*VX1divDt[i] + (n*A1_X[i] + 4.0*ssfEven[i].x() + 2.0*ssfOdd[i].x() + ldTemp_ssOdd + a7)/3;
         return V35OddX[i];
-    }
+    };
     long double v3v5OddY(long long lOdd, long double a6, long double a5, long double a7, int i)
     {
         long double n = (long double)((lOdd-1)/2); long double ldTemp_ssOdd;
         ssEven[i].Y  += a6; ssOdd[i].Y   += a5; ssfEven[i].Y += ssEven[i].y(); ldTemp_ssOdd = ssOdd[i].y(); ssfOdd[i].Y  += ldTemp_ssOdd;
         V35OddY[i] = n*VY1divDt[i] + (n*A1_Y[i] + 4.0*ssfEven[i].y() + 2.0*ssfOdd[i].y() + ldTemp_ssOdd + a7)/3;
         return V35OddY[i];
-    }
+    };
     long double v3v5OddZ(long long lOdd, long double a6, long double a5, long double a7, int i)
     {
         long double n = (long double)((lOdd-1)/2); long double ldTemp_ssOdd;
         ssEven[i].Z  += a6; ssOdd[i].Z   += a5; ssfEven[i].Z += ssEven[i].z(); ldTemp_ssOdd = ssOdd[i].z(); ssfOdd[i].Z  += ldTemp_ssOdd;
         V35OddZ[i] = n*VZ1divDt[i] + (n*A1_Z[i] + 4.0*ssfEven[i].z() + 2.0*ssfOdd[i].z() + ldTemp_ssOdd + a7)/3;
         return V35OddZ[i];
-    }
+    };
     long double v2v4EvenX(long long lEven, long double a5, long double a4, long double a6, int i)
     {
         long double n = (long double)(lEven/2);    long double ldTemp_sEven;
         sOdd[i].X += a5; sEven[i].X += a4; sfOdd[i].X += sOdd[i].x(); ldTemp_sEven = sEven[i].x(); sfEven[i].X += ldTemp_sEven;
         V24EvenX[i] = n*VX0divDt[i] + (n*A0_X[i] + 4.0* sfOdd[i].x() + 2.0* sfEven[i].x() + ldTemp_sEven + a6)/3;
         return V24EvenX[i];
-    }
+    };
     long double v2EvenX(long long lEven, long double a1, long double a0, long double a2, int i)
     {
         long double n = (long double)(lEven/2);
         sOdd[i].X += a1; sfOdd[i].X += sOdd[i].x(); 
         V24EvenX[i] = n*VX0divDt[i] + (n*A0_X[i] + 4.0* sfOdd[i].x() +  a2)/3;
         return V24EvenX[i];
-    }
+    };
 
     long double v2v4EvenY(long long lEven, long double a5, long double a4, long double a6, int i)
     {
@@ -2455,14 +2459,14 @@ typedef struct TraObj
         sOdd[i].Y += a5; sEven[i].Y += a4; sfOdd[i].Y += sOdd[i].y(); ldTemp_sEven = sEven[i].y(); sfEven[i].Y += ldTemp_sEven;
         V24EvenY[i] = n*VY0divDt[i] + (n*A0_Y[i] + 4.0* sfOdd[i].y() + 2.0* sfEven[i].y() + ldTemp_sEven + a6)/3;
         return V24EvenY[i];
-    }
+    };
     long double v2EvenY(long long lEven, long double a1, long double a0, long double a2, int i)
     {
         long double n = (long double)(lEven/2);
         sOdd[i].Y += a1; sfOdd[i].Y += sOdd[i].y(); 
         V24EvenY[i] = n*VY0divDt[i] + (n*A0_Y[i] + 4.0* sfOdd[i].y() +  a2)/3;
         return V24EvenY[i];
-    }
+    };
 
     long double v2v4EvenZ(long long lEven, long double a5, long double a4, long double a6, int i)
     {
@@ -2470,18 +2474,20 @@ typedef struct TraObj
         sOdd[i].Z += a5; sEven[i].Z += a4; sfOdd[i].Z += sOdd[i].z(); ldTemp_sEven = sEven[i].z(); sfEven[i].Z += ldTemp_sEven;
         V24EvenZ[i] = n*VZ0divDt[i] + (n*A0_Z[i] + 4.0* sfOdd[i].z() + 2.0* sfEven[i].z() + ldTemp_sEven + a6)/3;
         return V24EvenZ[i];
-    }
+    };
     long double v2EvenZ(long long lEven, long double a1, long double a0, long double a2, int i)
     {
         long double n = (long double)(lEven/2);
         sOdd[i].Z += a1; sfOdd[i].Z += sOdd[i].z(); 
         V24EvenZ[i] = n*VZ0divDt[i] + (n*A0_Z[i] + 4.0* sfOdd[i].z() +  a2)/3;
         return V24EvenZ[i];
-    }
+    };
 #endif
 } TRAOBJ, *PTRAOBJ;
 
 #define MAX_IMPULSE_LINES 100
+
+
 typedef struct TraImplObj
 {
     int iLine;
@@ -2685,7 +2691,7 @@ char UseSatData[1024] = {"SGP4"};  // allowed initial data:
                                    // SGP - use SGP from Space Track Report 3 to calculate position and velocity based on TLE
                                    // SGP4 - use SPG4 to calulate initial position and velocity from TLE
                                    // SGP8 - use SGP8
-                                   // KEPLER - use internal "kepler" fucntion to calulate position
+                                   // KEPLER - use internal "kepler" function to calculate position
                                    // use internal data
                                    // ProbTime=<time>, ProbC=<count of integral iterations>, ProbT=<delta time of iterations>
                                    // ProbX0=<X0>, ProbY0=<Y0>, ProbZ0=<Z0>, ProbVX0=<VX0>, ProbVY0=<VY0>, ProbVZ0=<VZ0>, 
@@ -7306,8 +7312,6 @@ void ParamEarth(char *szString)
     XML_SECTION_END;
     XML_END;
 }
-// just for convinience to proper orbit clculation
-double EngCoeff = 1.0;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //       TRA.XML processing => all data about satellite
@@ -7492,6 +7496,18 @@ void ParamProb(char *szString)
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     XML_SECTION(TraInfo);
+        IF_XML_READ(EarthModelFile)
+        {
+            strcpy(EarthModelFile, pszQuo);
+            if (strchr(EarthModelFile, '\"'))
+            {
+                *strchr(EarthModelFile, '\"')=0;
+            }
+        }
+        IF_XML_READ(EarthModelCoefs)
+        {
+            EarthModelCoefs = atoi(pszQuo);
+        }
         // finding the tag "UseJPLxyz" will force to retrive all solar sistem parameters from the JPL data
         IF_XML_READ(UseJPLxyz)
         {
@@ -7936,7 +7952,7 @@ void ParamProb(char *szString)
 #ifdef USE_MODEL_LOAD
             Sat.iLeg = 36;
             iCounter_nk_lm_Numbers =0;
-            FILE *FileC_S = fopen("egm96","r");
+            FILE *FileC_S = fopen(EarthModelFile,"r");
             //FILE *FileC_S = fopen("JGM3.txt","r");
             if (FileC_S == NULL)
             {
@@ -8166,9 +8182,13 @@ DONE_WITH_LINE:
         {
             strcpy(UseSatData, pszQuo);
             if (strchr(UseSatData, '\"'))
-            {
                 *strchr(UseSatData, '\"')=0;
-            }
+        }
+        IF_XML_READ(Mode)
+        {
+            strcpy(Mode, pszQuo);
+            if (strchr(Mode, '\"'))
+                *strchr(Mode, '\"')=0;
         }
         IF_XML_READ(Targetlongitude) // dolgota
         {
@@ -8413,6 +8433,7 @@ DONE_WITH_LINE:
                 }
             }
         }
+
         IF_XML_READ(Period)
         {
             if (iOptPtr < MAX_OPTIM)
@@ -9028,50 +9049,579 @@ int CheckWhatnext(TRAOPTIMOBJ* Opt, TRAOBJ *Sat, TRAIMPLOBJ *Eng, TRAIMPLOBJ *En
 #define TEST_RUN_CALC_YEAR 1
 #define TEST_RUN_ERROR 1
 #define TEST_RUN_EARTH_ERROR 1
+void FindImpulses(void)
+{
+#ifdef FIND_IMPULSE_TIME
+                    // apogee and prerigee search each time
+                    if (Apog < (dRE - EarthR))
+                    {
+                        Apog = (dRE - EarthR);
+                        iApog = 1;
+                    }
+                    else
+                    {
+                        if (iApog)
+                        {
+                            if (i + j*TimeSl - ApogPergTime >100)
+                            {
+                                printf("\n Apog = %f km DT = %f at=%d sec", Apog/1000.0, i + j*TimeSl - ApogPergTime, i);
+                                if ((EngineToOptimize == 0) || 
+                                    (EngineToOptimize > 0 && EngineToOptimize < MAX_ENGINES && (Engine[EngineToOptimize].EngineDone==0) && (Engine[EngineToOptimize-1].EngineDone!=0))
+                                   )
+                                //if (EngineToOptimize >=0 && EngineToOptimize < MAX_ENGINES)
+                                {
+                                    if (Engine[EngineToOptimize].iCountApogPerig ==0) // frist apogee skip
+                                        Engine[EngineToOptimize].iCountApogPerig = 1;
+                                    else
+                                    {
+                                        // on second apogee store value
+                                        Engine[EngineToOptimize].SeartchForPeriod = i + j*TimeSl - ApogPergTime;
+                                        Engine[EngineToOptimize].iCountApogPerig = 2;
+                                    }
+                                }
+                                iApog = 0;
+                                Perig = (dRE - EarthR);
+                                ApogPergTime = i + j*TimeSl;
+                                printf(", Disatnce from a Moon %f km",dRM/1000.0);
+                            }
+                        }
+                    }
+                    if (Perig > (dRE - EarthR))
+                    {
+                        Perig = (dRE - EarthR);
+                        iPerig = 1;
+
+                    }
+                    else
+                    {
+                        if (iPerig)
+                        {
+                            if (i + j*TimeSl - ApogPergTime >100)
+                            {
+                                printf("\n Perig = %f km DT = %f", Perig/1000.0, i + j*TimeSl - ApogPergTime);
+                                if ((EngineToOptimize == 0) || 
+                                    (EngineToOptimize > 0 && EngineToOptimize < MAX_ENGINES && (Engine[EngineToOptimize].EngineDone==0) && (Engine[EngineToOptimize-1].EngineDone!=0))
+                                   )
+                                //if (EngineToOptimize >=0 && EngineToOptimize < MAX_ENGINES)
+                                {
+
+                                    if (Engine[EngineToOptimize].iCountApogPerig == 2) // this will be second perigee
+                                    {
+                                        Engine[EngineToOptimize].SeartchForPeriod += i + j*TimeSl - ApogPergTime;
+                                        //Engine[EngineToOptimize].Period = Engine[EngineToOptimize].SeartchForPeriod;
+                                        Opt[iOptimizationStep].Period = Engine[EngineToOptimize].SeartchForPeriod;
+                                        Engine[EngineToOptimize].iCountApogPerig = 3;
+                                        if (Engine[EngineToOptimize].iCalculate == CALC_INIT_PERIOD)
+                                        {
+                                            if (CheckWhatnext(&Opt[0],&Sat, &Engine[0], &MyEngine[0], EngineToOptimize, TrajectoryOptimizationType, LastEngine, EnginesCount,i + j*TimeSl) == 0)
+                                            {
+                                                exit(0);
+                                            }
+                                        }
+                                    }
+                                }
+                                iPerig = 0;
+                                Apog = (dRE - EarthR);
+                                ApogPergTime = i + j*TimeSl;
+                            }
+                        }
+                    }
+                    if ((LastEngine >= 0) && (LastEngine <= MAX_ENGINES) && (Engine[LastEngine].EngineDone))
+                    {
+                        SCH_Dist = sqrt(
+                            (ProbX - SolarSystem.X[Engine[LastEngine].NearBody])*(ProbX - SolarSystem.X[Engine[LastEngine].NearBody])+
+                            (ProbY - SolarSystem.Y[Engine[LastEngine].NearBody])*(ProbY - SolarSystem.Y[Engine[LastEngine].NearBody])+
+                            (ProbZ - SolarSystem.Z[Engine[LastEngine].NearBody])*(ProbZ - SolarSystem.Z[Engine[LastEngine].NearBody])
+                            );
+                        dREMV = sqrt((SolarSystem.VX[Engine[LastEngine].NearBody]-Sat.VX[0])*(SolarSystem.VX[Engine[LastEngine].NearBody]-Sat.VX[0])+
+                                     (SolarSystem.VY[Engine[LastEngine].NearBody]-Sat.VY[0])*(SolarSystem.VY[Engine[LastEngine].NearBody]-Sat.VY[0])+
+                                     (SolarSystem.VZ[Engine[LastEngine].NearBody]-Sat.VZ[0])*(SolarSystem.VZ[Engine[LastEngine].NearBody]-Sat.VZ[0]));
+                        if (Engine[LastEngine].iCalculate == CALC_APOGEE) // value 1
+                        {
+                            if (SCH_Apg < SCH_Dist)
+                            {
+                                SCH_Apg = SCH_Dist;
+                                iSCH_Apg = 1;
+                            }
+                            else
+                            {
+                                if (iSCH_Apg)
+                                {
+                                    printf("\n SCHApogee = %f km (%f) DT = %f at=%d sec", SCH_Apg/1000.0,
+                                        (SCH_Apg - GetRadius(&SolarSystem, Engine[LastEngine].NearBody, &Sat, 0))/1000.0,
+                                        i + j*TimeSl - SCH_ApgPerTime, i);
+                                    iSCH_Apg = 0;
+                                    SCH_Per = SCH_Apg;
+                                    SCH_ApgPerTime = (int)(i + j*TimeSl);
+                                    printf("====engine==i=%d====<fire at=%f=>===",i,Engine[EngineToOptimize].FireTime);
+                                    // SCH_Per is a parameter for that "call"
+                                    goto NextTry;
+                                }
+                            }
+                        }
+                        else if (Engine[LastEngine].iCalculate == CALC_PERIGEE) // value 0
+                        {
+                            if (SCH_Per > SCH_Dist)
+                            {
+                                SCH_Per = SCH_Dist;
+                                iSCH_Per = 1;
+                            }
+                            else
+                            {
+                                if (iSCH_Per)
+                                {
+                                    if (SCH_Per < 300000000.0)
+                                    {
+                                        printf("\n SCHPerigee = %f km (%f)DT = %f at=%d sec", SCH_Per/1000.0, 
+                                        (SCH_Per-GetRadius(&SolarSystem, Engine[LastEngine].NearBody, &Sat, 0))/1000.0, 
+                                        i + j*TimeSl - SCH_ApgPerTime, i);
+                                        iSCH_Apg = 0;
+                                        SCH_Apg = SCH_Per;
+                                        SCH_ApgPerTime = (int)(i + j*TimeSl);
+                                        printf("====engine==i=%d====<fire at=%f=>===",i,Engine[EngineToOptimize].FireTime);
+                                        // SCH_Per is a parameter for that "call"
+                                        goto NextTry;
+                                    }
+                                }
+                            }
+                        }
+                        else if (Engine[LastEngine].iCalculate == CALC_TARGET_PRACTICE) // value 3
+                        {
+                            double dREM = sqrt((MoonX - EarthX)*(MoonX - EarthX)+
+                                                (MoonY - EarthY)*(MoonY - EarthY)+
+                                                (MoonZ - EarthZ)*(MoonZ - EarthZ));
+                            // for target practice next check is fly out of moon-earth distance anyway this is a missing target
+                            if (dREM < dRE)
+						    {
+							    printf("\n Target practice get to Moon = %f km ", PerigMoon/1000.0);
+                                printf("===i=%d===========<==%f=>==v=%f=",i,Engine[EngineToOptimize].FireTime-dRMDelta,dREMV);
+                                SCH_Per = SCH_Dist;
+                                // SCH_Per is a parameter for that "call"
+                                goto NextTry;
+						    }
+                            if (SCH_Per > SCH_Dist )
+                            {
+                                SCH_Per = SCH_Dist;
+                            }
+                            else
+                            {
+                                if (SCH_Per < 300000000.0)
+                                {
+                                    printf("\n Traget practice Perigee Moon = %f km ", SCH_Per/1000.0);
+                                    printf("===i==%d===========<==%f=>==v=%f=",i,Engine[EngineToOptimize].FireTime-dRMDelta,dREMV);
+                                    // SCH_Per is a parameter for that "call"
+                                    goto NextTry;
+                                }
+                            }
+                        }
+                        else if (Engine[LastEngine].iCalculate == CALC_TARGET_POINT)  // value 5
+                        {
+							
+							double dREM = sqrt((MoonX - EarthX)*(MoonX - EarthX)+
+                                                (MoonY - EarthY)*(MoonY - EarthY)+
+                                                (MoonZ - EarthZ)*(MoonZ - EarthZ))+20.0*MoonR;
+                            // for target practice next check is fly out of moon-earth distance anyway this is a missing target
+                            if (dREM < dRE)
+						    {
+							    printf("\n Target practice get to Moon = %f km ", PerigMoon/1000.0);
+                                printf("===i=%d===========<==%f=>==v=%f=",i,Engine[EngineToOptimize].FireTime-dRMDelta,dREMV);
+                                SCH_Per = SCH_Dist;
+                                // SCH_Per is a parameter for that "call"
+                                goto NextTry;
+						    }
+							if (SCH_Dist < MoonR*2)
+							{
+								double PosXMoon = 0;
+								double PosYMoon = 0;
+								double PosZMoon = 0;
+
+                                // first Longitude second latitute
+                                 // dolgota,  shirota
+
+		                        getXYZMoon(Targetlongitude,Targetlatitude,PosXMoon,PosYMoon,PosZMoon,&SolarSystem,MOON,EARTH,MoonR);
+								if (SCH_Dist < MoonR)
+								{
+									SCH_Dist = sqrt(
+				                    (ProbX - PosXMoon)*(ProbX - PosXMoon)+
+						            (ProbY - PosYMoon)*(ProbY - PosYMoon)+
+								    (ProbZ - PosZMoon)*(ProbZ - PosZMoon)
+									);
+									SCH_Per = SCH_Dist;
+									printf("\n Traget practice Point on a Moon = %f km ", SCH_Per/1000.0);
+									printf("===i==%d===========<==%f=>==v=%f=",i,Engine[EngineToOptimize].FireTime-dRMDelta,dREMV);
+										// SCH_Per is a parameter for that "call"
+										goto NextTry;
+								}
+		                        SCH_Dist = sqrt(
+				                    (ProbX - PosXMoon)*(ProbX - PosXMoon)+
+						            (ProbY - PosYMoon)*(ProbY - PosYMoon)+
+								    (ProbZ - PosZMoon)*(ProbZ - PosZMoon)
+									);
+							}
+                            if (SCH_Per > SCH_Dist )
+                            {
+                                SCH_Per = SCH_Dist;
+								iSCH_Per = 1;
+                            }
+                            else
+                            {
+								if (iSCH_Per)
+								{
+									if (SCH_Per < 300000000.0)
+									{
+										printf("\n Traget practice Point on a Moon = %f km ", SCH_Per/1000.0);
+										printf("===i==%d===========<==%f=>==v=%f=",i,Engine[EngineToOptimize].FireTime-dRMDelta,dREMV);
+										// SCH_Per is a parameter for that "call"
+										goto NextTry;
+									}
+                                }
+                            }
+                        }
+                        else if (Engine[LastEngine].iCalculate == CALC_PERIOD) // value 6
+                        {
+                            if (Engine[LastEngine].iCountApogPerig == 3)
+                            {
+                                if (CheckWhatnext(&Opt[0], &Sat, &Engine[0], NULL, EngineToOptimize, TrajectoryOptimizationType, LastEngine, EnginesCount,i + j*TimeSl) == 0)
+                                {
+                                    exit(0);
+                                }
+                            }
+                        }
+                        else if (Engine[LastEngine].iCalculate == CALC_AT_APOGEE_DIFF_TO_3_4_DIST) // 12
+                        {
+                            if (SCH_Dist > 400000000*1.25)
+                                SCH_Dist = 400000000*1.25;
+                            if (SCH_Apg < SCH_Dist)
+                            {
+                                SCH_Apg = SCH_Dist;
+                                iSCH_Apg = 1;
+                            }
+                            else
+                            {
+                                if (iSCH_Apg)
+                                {
+                                    printf("\n SCHApogee = %f km (%f) DT = %f at=%d sec", SCH_Apg/1000.0,
+                                        (SCH_Apg - GetRadius(&SolarSystem, Engine[LastEngine].NearBody, &Sat, 0))/1000.0,
+                                        i + j*TimeSl - SCH_ApgPerTime, i);
+                                    iSCH_Apg = 0;
+                                    SCH_Per = SCH_Apg;
+                                    SCH_ApgPerTime = (int)(i + j*TimeSl);
+                                    SCH_Per = abs(SCH_Per - 400000000*0.75);
+                                    printf("====engine==i=%d====<weight at=%f=>===",i,Engine[EngineToOptimize].Weight);
+                                    // SCH_Per is a parameter for that "call"
+                                    goto NextTry;
+                                }
+                            }
+                        }
+                    }
+#endif
+}
+void RunSimulation(long double ldFrom, long long llIteartions)
+{
+	/*
+for (iCurSec = 0; iCurSec < iTotalSec; iCurSec++)
+		{
+            for (iCurPortionOfTheSecond = 0; iCurPortionOfTheSecond < iItearationsPerSec; iCurPortionOfTheSecond++)
+			{
+                if (JustFlySimulation == 0)
+                {
+                    if (RunOrVoidEngine(1, &Engine[0], &SolarSystem, &Sat, iCurSec, iCurPortionOfTheSecond, iItearationsPerSec, dStartJD))
+                    {
+                        // engine is running
+                    }
+                    else
+                    {
+                        if (StartLandingIteraPerSec != 0.0)
+                        {
+                            if (StartLandingIteraPerSec <= (iCurSec + iCurPortionOfTheSecond*TimeSl))
+                            {
+                                if (iStartLandingIteraPerSec == 0)
+                                {
+                                    TimeSl = 0.1;
+                                    iItearationsPerSec = 10;
+                                    iStartLandingIteraPerSec = 1;
+                                }
+                            }
+                        }
+                    }
+                }
+                IteraSat(1, &SolarSystem, &Sat,dStartTLEEpoch + (iCurSec +   (long double)iCurPortionOfTheSecond/(long double)iItearationsPerSec) /86400.0) ;
+                IteraSolarSystem(TRUE, &SolarSystem);
+
+                EarthX = SolarSystem.X[EARTH];
+                EarthY = SolarSystem.Y[EARTH];
+                EarthZ = SolarSystem.Z[EARTH];
+                MoonX = SolarSystem.X[MOON];
+                MoonY = SolarSystem.Y[MOON];
+                MoonZ = SolarSystem.Z[MOON];
+                double ProbX = Sat.X[0];
+                double ProbY = Sat.Y[0];
+                double ProbZ = Sat.Z[0];
+                {
+                    dRE = sqrt(
+                        (ProbX - EarthX)*(ProbX - EarthX)+
+                        (ProbY - EarthY)*(ProbY - EarthY)+
+                        (ProbZ - EarthZ)*(ProbZ - EarthZ)
+                        );
+                    dRM = sqrt(
+                        (ProbX - MoonX)*(ProbX - MoonX)+
+                        (ProbY - MoonY)*(ProbY - MoonY)+
+                        (ProbZ - MoonZ)*(ProbZ - MoonZ)
+                        );
+                    dRM0 = dRM;
+                    if (dRE < EarthR) // TBD Earth is not round!!!
+                    {
+                        //printf("\n Landed on Earth at sec = %d", iCurSec);
+                        Sat.flInUse[0] = 0;
+                    }
+
+                    if (dRM < MoonR) // TBD Moon is not round!!!
+                    {
+                        double LongOnMoon = 0.0; // dolgota
+                        double LatiOnMoon = 0.0; // shirota
+                        double PosXMoon = 0;
+                        double PosYMoon = 0;
+                        double PosZMoon = 0;
+                        getLongLatiMoon(LongOnMoon,LatiOnMoon,&SolarSystem,MOON,EARTH,&Sat,0);
+                        getXYZMoon(LongOnMoon,LatiOnMoon,PosXMoon,PosYMoon,PosZMoon,&SolarSystem,MOON,EARTH,dRM);
+                        dREMV = sqrt((SolarSystem.VX[MOON]-Sat.VX[0])*(SolarSystem.VX[MOON]-Sat.VX[0])+(SolarSystem.VY[MOON]-Sat.VY[0])*(SolarSystem.VY[MOON]-Sat.VY[0])+(SolarSystem.VZ[MOON]-Sat.VZ[0])*(SolarSystem.VZ[MOON]-Sat.VZ[0]));
+                        printf("\n Landed on Moon at sec = %f x=%f Y=%f z=%f V=%f", 
+                            ((double)iCurSec) + TimeSl*((double)iCurPortionOfTheSecond), Sat.X[0] -SolarSystem.X[MOON], Sat.Y[0] -SolarSystem.Y[MOON], Sat.Z[0] -SolarSystem.Z[MOON],dREMV);
+                        printf("\n Longitute = %f Latitute %f", LongOnMoon, LatiOnMoon);
+                        printf("\n Landed weight = %f from initial = %f (%f percent)", Sat.M[0], MyTrySat.M[0],Sat.M[0]/MyTrySat.M[0]);
+#ifdef _DO_VISUALIZATION
+                        // store last image 
+                        //DrawAnimationSequence(&SolarSystem,&Sat, i,"TRA",&SolarSystem, RGBReferenceBody, dRGBScale, StartSequence, 1);
+                        DrawFinalBody(&SolarSystem, MOON, &Sat, iCurSec,"TRA", &SolarSystem, RGBReferenceBody, dRGBScale, StartSequence);
+#endif
+                        dumpXMLParam(&MyTrySat, &Engine[0],EnginesCount);
+                        Sat.flInUse[0] = 0;
+                        exit(0);
+                    }
+                }
+            }
+
+            // this is 1 day position 
+            if (iCurSec%(60*60*24) ==0)
+            {
+                 iDay++;
+                 printf("\nd=%d x=%f y=%f z=%f \tMx=%f y=%f z= %f", iDay, MinMaxX, MinMaxY, MinMaxZ, 
+                        SolarSystem.X[MOON] - SolarSystem.X[EARTH], 
+                        SolarSystem.Y[MOON] - SolarSystem.Y[EARTH], 
+                        SolarSystem.Z[MOON] - SolarSystem.X[EARTH]);
+            }
+            // this flag switch on/off comparation of calculated data against JPL 410
+           if (flFindFirst1KmError)
+           {
+                Interpolate_State( dStartJD+((double)(iCurSec+1))/(24.0*60.0*60.0) , EARTH , &StateEarth );
+                Interpolate_State( dStartJD+((double)(iCurSec+1))/(24.0*60.0*60.0) , MOON , &StateMoon );
+                MoonX = SolarSystem.X[MOON];
+                MoonY = SolarSystem.Y[MOON];
+                MoonZ = SolarSystem.Z[MOON];
+
+                EarthX = SolarSystem.X[EARTH];
+                EarthY = SolarSystem.Y[EARTH];
+                EarthZ = SolarSystem.Z[EARTH];
+#ifdef  TEST_RUN_EARTH_ERROR
+                // this error checks position of earth-moon
+                // barycentre against JPL
+                double EarthBSX = (EarthX*SolarSystem.M[EARTH] + MoonX*SolarSystem.M[MOON])/(SolarSystem.M[EARTH]+SolarSystem.M[MOON]);
+                double EarthBSY = (EarthY*SolarSystem.M[EARTH] + MoonY*SolarSystem.M[MOON])/(SolarSystem.M[EARTH]+SolarSystem.M[MOON]);
+                double EarthBSZ = (EarthZ*SolarSystem.M[EARTH] + MoonZ*SolarSystem.M[MOON])/(SolarSystem.M[EARTH]+SolarSystem.M[MOON]);
+
+                double EarthBSNX =  StateEarth.Position[0]*1000.0 ;
+                double EarthBSNY =  StateEarth.Position[1]*1000.0 ;
+                double EarthBSNZ =  StateEarth.Position[2]*1000.0 ;
+
+#else
+                // otherwise it will be Moon position
+                double EarthBSX = ( MoonX - EarthX);
+                double EarthBSY = ( MoonY - EarthY);
+                double EarthBSZ = ( MoonZ - EarthZ);
+
+                double EarthBSNX =  StateMoon.Position[0]*1000.0 ;
+                double EarthBSNY =  StateMoon.Position[1]*1000.0 ;
+                double EarthBSNZ =  StateMoon.Position[2]*1000.0 ;
+
+#endif
+                double tDeltaEarthNASA = (( EarthBSX - EarthBSNX)*( EarthBSX - EarthBSNX) +
+                                             ( EarthBSY - EarthBSNY)*( EarthBSY - EarthBSNY) +
+                                             ( EarthBSZ - EarthBSNZ)*( EarthBSZ - EarthBSNZ)
+                                            );
+                //if (iCurSec > 772040)
+                //{
+                //    printf(".");
+                //}
+                if (tDeltaEarthNASA> dErrorValue)
+                {
+                    // error bigger then 1000 M
+                    double flX;
+                    double flY;
+                    double flZ;
+                    MoonVX = SolarSystem.VX_[MOON]*TimeSl / SolarSystem.M[MOON];
+                    MoonVY = SolarSystem.VY_[MOON]*TimeSl / SolarSystem.M[MOON];
+                    MoonVZ = SolarSystem.VZ_[MOON]*TimeSl / SolarSystem.M[MOON];
+
+                    EarthVX = SolarSystem.VX_[EARTH]*TimeSl / SolarSystem.M[EARTH];
+                    EarthVY = SolarSystem.VY_[EARTH]*TimeSl / SolarSystem.M[EARTH];
+                    EarthVZ = SolarSystem.VZ_[EARTH]*TimeSl / SolarSystem.M[EARTH];
+#ifdef TEST_RUN_EARTH_ERROR
+                    double EarthBSVX = EarthVX;
+                    double EarthBSVY = EarthVY;
+                    double EarthBSVZ = EarthVZ;
+
+                    double EarthBSNVX =  StateEarth.Velocity[0]*1000.0 ;
+                    double EarthBSNVY =  StateEarth.Velocity[1]*1000.0 ;
+                    double EarthBSNVZ =  StateEarth.Velocity[2]*1000.0 ;
+                    printf("\n Error in Earth position bigger then %f M", sqrt(tDeltaEarthNASA));
+#else
+                    double EarthBSVX = ( MoonVX - EarthVX);
+                    double EarthBSVY = ( MoonVY - EarthVY);
+                    double EarthBSVZ = ( MoonVZ - EarthVZ);
+
+                    double EarthBSNVX =  StateMoon.Velocity[0]*1000.0 ;
+                    double EarthBSNVY =  StateMoon.Velocity[1]*1000.0 ;
+                    double EarthBSNVZ =  StateMoon.Velocity[2]*1000.0 ;
+                    printf("\n Error in Moon position bigger then %f M", sqrt(dErrorValue));
+#endif
+
+                    
+                    dErrorValue*=2.0;
+                    printf("\n=%f \nx=%f y=%f z=%f ; JPL EPHEMERIDES:\nx=%f y=%f z=%f %ld sec + %f - %f sec ", 
+                                    sqrt(tDeltaEarthNASA),
+                                    EarthBSX, EarthBSY, EarthBSZ, EarthBSNX, EarthBSNY, EarthBSNZ,
+                                    iCurSec, 
+                                    TimeSl*iCurPortionOfTheSecond, TimeSl*(iCurPortionOfTheSecond+1));
+                    MoonXYZCalc(flX, flY, flZ, (dStartJD+((double)(iCurSec+1))/(24.0*60.0*60.0) - 2451544.0)/36525.0);
+                    printf("\nMoon position by sin/cos approximation\n x=%f  y=%f  z=%f\nvx=%f vy=%f vz=%f ; JPL EPHEMERIDES:\nvx=%f vy=%f vz=%f ", 
+                                    flX,flY,flZ,
+                                    EarthBSVX, EarthBSVY, EarthBSVZ, EarthBSNVX, EarthBSNVY, EarthBSNVZ
+                                    );
+
+                    //Target0 = tDeltaEarthNASA;
+                    //break;
+                }
+                else
+                {
+                    //printf("\n tttt");
+                }
+
+           }
+#ifdef _DO_VISUALIZATION
+           DrawAnimationSequence(&SolarSystem,&Sat, iCurSec,"TRA",&SolarSystem, RGBReferenceBody, dRGBScale, StartSequence, 0); 
+#endif
+           // on first sattelite do compare of the calculated position and SGP4 
+           int iCheck = 0;
+           Time_SecondsFromStart = (long double) (iCurSec+1);
+            long double AE = 1.0;
+            long double XKMPER = 6378.1350; //XKMPER kilometers/Earth radii 6378.135
+			long double XKE = BIG_XKE;//.743669161E-1;
+
+			long double XJ2 = 1.082616E-3;
+			long double CK2=.5*XJ2*AE*AE;
+
+			long double XMNPDA = 1440.0; // XMNPDA time units(minutes) /day 1440.0
+			long double TEMP=2*M_PI/XMNPDA/XMNPDA; // 2*pi / (1440 **2)
+            long double ProbMeanMotion = Sat.ProbMeanMotion[iCheck];
+			long double XNO=ProbMeanMotion*TEMP*XMNPDA; // rotation per day * 2*pi /1440 == rotation per day on 1 unit (1 min)
+			long double XNDT2O=Sat.ProbFirstDervMeanMotion[iCheck]*TEMP;
+			long double XNDD6O=Sat.ProbSecondDervmeanMotion[iCheck]*TEMP/XMNPDA;
+			long double BSTAR=Sat.ProbDragterm[iCheck]/AE;
+            long double tProbX,tProbY,tProbZ,tProbVX,tProbVY,tProbVZ;
+            // next lines has to be removed ==> today they are included only to avoid drag effect
+#if 0
+            BSTAR = 0.0;
+            XNDD6O = 0.0;
+            XNDT2O =0.0;
+#endif
+
+            //long double TimeFromEpochOfSatInDays = fmod(Sat.ProbEpochOnStart[iCheck] + Time_SecondsFromStart/24.0/60.0/60.0, 1.0/Sat.ProbMeanMotion[iCheck]);
+            // first parameter in in minutes from epoch
+            if (memcmp(UseSatData, "SGP",3)==0) 
+            {
+                if (memcmp(UseSatData, "SGP4",4)==0)
+                {
+			        SGP4((dStartJD - Sat.ProbJD[iCheck]+Time_SecondsFromStart/24.0/60.0/60.0)*XMNPDA, 
+                        XNDT2O,XNDD6O,BSTAR,Sat.ProbIncl[iCheck], Sat.ProbAscNode[iCheck],Sat.ProbEcc[iCheck], Sat.ProbArgPer[iCheck], Sat.ProbMeanAnom[iCheck],XNO, 
+				        tProbX,tProbY,tProbZ,tProbVX,tProbVY,tProbVZ);
+                }
+                else if (memcmp(UseSatData, "SGP8",4)==0)
+                {
+			        SGP8((dStartJD - Sat.ProbJD[iCheck]+Time_SecondsFromStart/24.0/60.0/60.0)*XMNPDA, 
+                        XNDT2O,XNDD6O,BSTAR,Sat.ProbIncl[iCheck], Sat.ProbAscNode[iCheck],Sat.ProbEcc[iCheck], Sat.ProbArgPer[iCheck], Sat.ProbMeanAnom[iCheck],XNO, 
+				        tProbX,tProbY,tProbZ,tProbVX,tProbVY,tProbVZ);
+                }
+                else if  (memcmp(UseSatData, "SGP",3)==0)
+                {
+			        SGP((dStartJD - Sat.ProbJD[iCheck]+Time_SecondsFromStart/24.0/60.0/60.0)*XMNPDA, 
+                    XNDT2O,XNDD6O,BSTAR,Sat.ProbIncl[iCheck], Sat.ProbAscNode[iCheck],Sat.ProbEcc[iCheck], Sat.ProbArgPer[iCheck], Sat.ProbMeanAnom[iCheck],XNO, 
+				    tProbX,tProbY,tProbZ,tProbVX,tProbVY,tProbVZ);
+                }
+                tProbX=tProbX*XKMPER/AE*1000.0;                 tProbY=tProbY*XKMPER/AE*1000.0;                 tProbZ=tProbZ*XKMPER/AE*1000.0;
+			    tProbVX=tProbVX*XKMPER/AE*XMNPDA/86400.*1000.0;	tProbVY=tProbVY*XKMPER/AE*XMNPDA/86400.*1000.0;	tProbVZ=tProbVZ*XKMPER/AE*XMNPDA/86400.*1000.0;
+            }
+            else
+            {
+                KeplerPosition(Sat.ProbJD[iCheck],dStartJD+Time_SecondsFromStart/24.0/60.0/60.0,      // prob epoch, and curent time
+	    			    Sat.ProbTSec[iCheck], // - orbit period in sec
+		    		    Sat.ProbEcc[iCheck],             // - Eccentricity
+                        Sat.ProbIncl[iCheck],            // - Inclination
+                        Sat.ProbAscNode[iCheck],         // - Longitude of ascending node
+                        Sat.ProbArgPer[iCheck],          // - Argument of perihelion
+                        Sat.ProbMeanAnom[iCheck],        // - Mean Anomaly (degrees)
+                        BSTAR,
+                        Gbig *SolarSystem.M[EARTH],1,
+                        tProbX,tProbY,tProbZ,tProbVX,tProbVY,tProbVZ, Sat.ProbMeanMotion[iCheck]);
+
+            }
+
+            tX = Sat.X[iCheck] - SolarSystem.X[EARTH];      tY = Sat.Y[iCheck] - SolarSystem.Y[EARTH];      tZ = Sat.Z[iCheck] - SolarSystem.Z[EARTH];
+		    tVX = Sat.VX[iCheck] - SolarSystem.VX[EARTH];   tVY = Sat.VY[iCheck] - SolarSystem.VY[EARTH];   tVZ = Sat.VZ[iCheck] - SolarSystem.VZ[EARTH];
+
+            ttProbX	= tX - tProbX;ttProbY= tY - tProbY; ttProbZ	= tZ - tProbZ;
+            ttProbVX	= tVX - tProbVX; ttProbVY	= tVY - tProbVY; ttProbVZ	= tVZ - tProbVZ;
+
+            tttX = sqrt(ttProbX*ttProbX + ttProbY*ttProbY + ttProbZ*ttProbZ);
+            tttVX = sqrt(ttProbVX*ttProbVX + ttProbVY*ttProbVY + ttProbVZ*ttProbVZ);
+            double errorCos = (tVX*tProbVX + tVY*tProbVY + tVZ*tProbVZ)/
+                (sqrt(tVX*tVX +tVY*tVY + tVZ*tVZ)*
+                sqrt(tProbVX*tProbVX + tProbVY*tProbVY + tProbVZ*tProbVZ));
+            double errAngle =  acos(errorCos);
+            double errorD = sqrt(tVX*tVX + tVY*tVY + tVZ*tVZ)/sqrt(tProbVX*tProbVX + tProbVY*tProbVY + tProbVZ*tProbVZ);
+            double SinAngle = tZ / sqrt(tX*tX + tY*tY + tZ*tZ);
+            double ErrorDD = sqrt(tVX*tVX + tVY*tVY + tVZ*tVZ) - sqrt(tProbVX*tProbVX + tProbVY*tProbVY + tProbVZ*tProbVZ);
+            if (iCurSec%(60*92) == 0)
+            {
+                  //  printf("\n%f err(X=%f V=%f pr=%f lv=%f) min=%d ",(asin(SinAngle)*180/M_PI),tttX,tttVX, errorD, ErrorDD,iCurSec/60);
+                 printf("\n%8.4f X=%13.5f,%13.5f,%13.5f V=%13.5f,%13.5f,%13.5f e= %f %f  %d",(asin(SinAngle)*180/M_PI),
+                 tProbX - tX, tProbY - tY, tProbZ - tZ,
+                 tProbVX - tVX,tProbVY - tVY,tProbVZ - tVZ,
+                 tttX,tttVX,iCurSec/60);
+
+            }
+            //Sat.X[0] = tProbX + SolarSystem.X[EARTH]; Sat.Y[0] = tProbY + SolarSystem.Y[EARTH]; Sat.Z[0] = tProbZ + SolarSystem.Z[EARTH];
+            //Sat.VX[0] = tProbVX + SolarSystem.VX[EARTH]; Sat.VY[0] = tProbVY + SolarSystem.VY[EARTH]; Sat.VZ[0] = tProbVZ + SolarSystem.VZ[EARTH];
+
+			// needs to dump data for visualization each XX sec
+            if (iCurSec%(60) == 0) // each min output data to XML file
+			    dumpTRAvisual(iCurSec);
+		}
+		OutLast = TRUE;
+		dumpTRAvisual(iCurSec);
+		printf("\n iteration done");
+#ifdef _DO_VISUALIZATION
+            // store last image 
+            //DrawAnimationSequence(&SolarSystem,&Sat, i,"TRA",&SolarSystem, RGBReferenceBody, dRGBScale, StartSequence, 1);
+            DrawFinalBody(&SolarSystem, MOON, &Sat, i,"TRA", &SolarSystem, RGBReferenceBody, dRGBScale, StartSequence);
+            //if (++iProfile > 1)
+            //    iProfile = 0;
+#endif
+			*/
+}
 int main(int argc, char * argv[])
 {
-    //char szSatelite[] = {"ISS (ZARYA)\
-//0         1         2         3         4         5         6         7
-//01234567890123456789012345678901234567890123456789012345678901234567890
-//1 25544U 98067A   04236.56031392  .00020137  00000-0  16538-3 0  5135\
-//2 25544  51.6335 341.7760 0007976 126.2523 325.9359 15.70406856328903"
-//    };
-    // "ISS (ZARYA)"    The common name for the object based on information from the SatCat.
-    // "1"              Line Number
-    // "25544"          Object Identification Number
-    // "U"              Elset Classification
-    // "98067A"         International Designator
-    //  98                   - designate the launch year of the object
-    //    067                - launch number, starting from the beginning of the year
-    //       A               - indicates the piece of the launch: "A" is a payload 
-    // "04236.56031392" Element Set Epoch (UTC)
-    //  04                   - year
-    //    236.56031392       - day
-    // "_.00020137"      1st Derivative of the Mean Motion with respect to Time
-    // "_00000-0"        2nd Derivative of the Mean Motion with respect to Time (decimal point assumed)
-    // "_16538-3"        B* Drag Term
-    // "0"              Element Set Type
-    // "_513"            Element Number
-    // "5"              Checksum
-    //                        The checksum is the sum of all of the character in the data line, modulo 10. 
-    //                        In this formula, the following non-numeric characters are assigned the indicated values: 
-    //                        Blanks, periods, letters, '+' signs -> 0
-    //                        '-' signs -> 1
-    // "2"             Line Number
-    // "25544"         Object Identification Number
-    // "_51.6335"       Orbit Inclination (degrees)
-    // "341.7760"      Right Ascension of Ascending Node (degrees)
-    // "0007976"       Eccentricity (decimal point assumed)
-    // "126.2523"      Argument of Perigee (degrees)
-    // "325.9359"      Mean Anomaly (degrees)
-    // "15.70406856"    Mean Motion (revolutions/day)
-    // "328903"        Revolution Number at Epoch
     int iDay;
-//    int iHour;
-//    int iSecond;
     int iFlag = 0;
-//    long i;
-//    int j;
     int flFindMax;
     int flFindMin;
     int OptimMin = 1;
@@ -9357,21 +9907,6 @@ int main(int argc, char * argv[])
 		{
             for (iCurPortionOfTheSecond = 0; iCurPortionOfTheSecond < iItearationsPerSec; iCurPortionOfTheSecond++)
 			{
-#ifndef CALC_SOLAR_SYSTEM
-#endif
-#ifdef TEST_RUN_CALC_YEAR
-                if (iFirstMinMax == 0)
-                {
-                    iFirstMinMax = 1;
-                    FirstMinMaxX2 = MinMaxX;
-                    FirstMinMaxY2 = MinMaxY;
-                    FirstMinMaxZ2 = MinMaxZ;
-                    maxDeltaMinMaxD = 0.0;
-                    flFindMax = 1;
-                    flFindMin = 0;
-                    iCountMin = 1000;
-                }
-#endif
                 if (JustFlySimulation == 0)
                 {
                     if (RunOrVoidEngine(1, &Engine[0], &SolarSystem, &Sat, iCurSec, iCurPortionOfTheSecond, iItearationsPerSec, dStartJD))
@@ -9418,274 +9953,8 @@ int main(int argc, char * argv[])
                         (ProbZ - MoonZ)*(ProbZ - MoonZ)
                         );
                     dRM0 = dRM;
-#ifdef FIND_IMPULSE_TIME
-                    // apogee and prerigee search each time
-                    if (Apog < (dRE - EarthR))
-                    {
-                        Apog = (dRE - EarthR);
-                        iApog = 1;
-                    }
-                    else
-                    {
-                        if (iApog)
-                        {
-                            if (i + j*TimeSl - ApogPergTime >100)
-                            {
-                                printf("\n Apog = %f km DT = %f at=%d sec", Apog/1000.0, i + j*TimeSl - ApogPergTime, i);
-                                if ((EngineToOptimize == 0) || 
-                                    (EngineToOptimize > 0 && EngineToOptimize < MAX_ENGINES && (Engine[EngineToOptimize].EngineDone==0) && (Engine[EngineToOptimize-1].EngineDone!=0))
-                                   )
-                                //if (EngineToOptimize >=0 && EngineToOptimize < MAX_ENGINES)
-                                {
-                                    if (Engine[EngineToOptimize].iCountApogPerig ==0) // frist apogee skip
-                                        Engine[EngineToOptimize].iCountApogPerig = 1;
-                                    else
-                                    {
-                                        // on second apogee store value
-                                        Engine[EngineToOptimize].SeartchForPeriod = i + j*TimeSl - ApogPergTime;
-                                        Engine[EngineToOptimize].iCountApogPerig = 2;
-                                    }
-                                }
-                                iApog = 0;
-                                Perig = (dRE - EarthR);
-                                ApogPergTime = i + j*TimeSl;
-                                printf(", Disatnce from a Moon %f km",dRM/1000.0);
-                            }
-                        }
-                    }
-                    if (Perig > (dRE - EarthR))
-                    {
-                        Perig = (dRE - EarthR);
-                        iPerig = 1;
-
-                    }
-                    else
-                    {
-                        if (iPerig)
-                        {
-                            if (i + j*TimeSl - ApogPergTime >100)
-                            {
-                                printf("\n Perig = %f km DT = %f", Perig/1000.0, i + j*TimeSl - ApogPergTime);
-                                if ((EngineToOptimize == 0) || 
-                                    (EngineToOptimize > 0 && EngineToOptimize < MAX_ENGINES && (Engine[EngineToOptimize].EngineDone==0) && (Engine[EngineToOptimize-1].EngineDone!=0))
-                                   )
-                                //if (EngineToOptimize >=0 && EngineToOptimize < MAX_ENGINES)
-                                {
-
-                                    if (Engine[EngineToOptimize].iCountApogPerig == 2) // this will be second perigee
-                                    {
-                                        Engine[EngineToOptimize].SeartchForPeriod += i + j*TimeSl - ApogPergTime;
-                                        //Engine[EngineToOptimize].Period = Engine[EngineToOptimize].SeartchForPeriod;
-                                        Opt[iOptimizationStep].Period = Engine[EngineToOptimize].SeartchForPeriod;
-                                        Engine[EngineToOptimize].iCountApogPerig = 3;
-                                        if (Engine[EngineToOptimize].iCalculate == CALC_INIT_PERIOD)
-                                        {
-                                            if (CheckWhatnext(&Opt[0],&Sat, &Engine[0], &MyEngine[0], EngineToOptimize, TrajectoryOptimizationType, LastEngine, EnginesCount,i + j*TimeSl) == 0)
-                                            {
-                                                exit(0);
-                                            }
-                                        }
-                                    }
-                                }
-                                iPerig = 0;
-                                Apog = (dRE - EarthR);
-                                ApogPergTime = i + j*TimeSl;
-                            }
-                        }
-                    }
-                    if ((LastEngine >= 0) && (LastEngine <= MAX_ENGINES) && (Engine[LastEngine].EngineDone))
-                    {
-                        SCH_Dist = sqrt(
-                            (ProbX - SolarSystem.X[Engine[LastEngine].NearBody])*(ProbX - SolarSystem.X[Engine[LastEngine].NearBody])+
-                            (ProbY - SolarSystem.Y[Engine[LastEngine].NearBody])*(ProbY - SolarSystem.Y[Engine[LastEngine].NearBody])+
-                            (ProbZ - SolarSystem.Z[Engine[LastEngine].NearBody])*(ProbZ - SolarSystem.Z[Engine[LastEngine].NearBody])
-                            );
-                        dREMV = sqrt((SolarSystem.VX[Engine[LastEngine].NearBody]-Sat.VX[0])*(SolarSystem.VX[Engine[LastEngine].NearBody]-Sat.VX[0])+
-                                     (SolarSystem.VY[Engine[LastEngine].NearBody]-Sat.VY[0])*(SolarSystem.VY[Engine[LastEngine].NearBody]-Sat.VY[0])+
-                                     (SolarSystem.VZ[Engine[LastEngine].NearBody]-Sat.VZ[0])*(SolarSystem.VZ[Engine[LastEngine].NearBody]-Sat.VZ[0]));
-                        if (Engine[LastEngine].iCalculate == CALC_APOGEE) // value 1
-                        {
-                            if (SCH_Apg < SCH_Dist)
-                            {
-                                SCH_Apg = SCH_Dist;
-                                iSCH_Apg = 1;
-                            }
-                            else
-                            {
-                                if (iSCH_Apg)
-                                {
-                                    printf("\n SCHApogee = %f km (%f) DT = %f at=%d sec", SCH_Apg/1000.0,
-                                        (SCH_Apg - GetRadius(&SolarSystem, Engine[LastEngine].NearBody, &Sat, 0))/1000.0,
-                                        i + j*TimeSl - SCH_ApgPerTime, i);
-                                    iSCH_Apg = 0;
-                                    SCH_Per = SCH_Apg;
-                                    SCH_ApgPerTime = (int)(i + j*TimeSl);
-                                    printf("====engine==i=%d====<fire at=%f=>===",i,Engine[EngineToOptimize].FireTime);
-                                    // SCH_Per is a parameter for that "call"
-                                    goto NextTry;
-                                }
-                            }
-                        }
-                        else if (Engine[LastEngine].iCalculate == CALC_PERIGEE) // value 0
-                        {
-                            if (SCH_Per > SCH_Dist)
-                            {
-                                SCH_Per = SCH_Dist;
-                                iSCH_Per = 1;
-                            }
-                            else
-                            {
-                                if (iSCH_Per)
-                                {
-                                    if (SCH_Per < 300000000.0)
-                                    {
-                                        printf("\n SCHPerigee = %f km (%f)DT = %f at=%d sec", SCH_Per/1000.0, 
-                                        (SCH_Per-GetRadius(&SolarSystem, Engine[LastEngine].NearBody, &Sat, 0))/1000.0, 
-                                        i + j*TimeSl - SCH_ApgPerTime, i);
-                                        iSCH_Apg = 0;
-                                        SCH_Apg = SCH_Per;
-                                        SCH_ApgPerTime = (int)(i + j*TimeSl);
-                                        printf("====engine==i=%d====<fire at=%f=>===",i,Engine[EngineToOptimize].FireTime);
-                                        // SCH_Per is a parameter for that "call"
-                                        goto NextTry;
-                                    }
-                                }
-                            }
-                        }
-                        else if (Engine[LastEngine].iCalculate == CALC_TARGET_PRACTICE) // value 3
-                        {
-                            double dREM = sqrt((MoonX - EarthX)*(MoonX - EarthX)+
-                                                (MoonY - EarthY)*(MoonY - EarthY)+
-                                                (MoonZ - EarthZ)*(MoonZ - EarthZ));
-                            // for target practice next check is fly out of moon-earth distance anyway this is a missing target
-                            if (dREM < dRE)
-						    {
-							    printf("\n Target practice get to Moon = %f km ", PerigMoon/1000.0);
-                                printf("===i=%d===========<==%f=>==v=%f=",i,Engine[EngineToOptimize].FireTime-dRMDelta,dREMV);
-                                SCH_Per = SCH_Dist;
-                                // SCH_Per is a parameter for that "call"
-                                goto NextTry;
-						    }
-                            if (SCH_Per > SCH_Dist )
-                            {
-                                SCH_Per = SCH_Dist;
-                            }
-                            else
-                            {
-                                if (SCH_Per < 300000000.0)
-                                {
-                                    printf("\n Traget practice Perigee Moon = %f km ", SCH_Per/1000.0);
-                                    printf("===i==%d===========<==%f=>==v=%f=",i,Engine[EngineToOptimize].FireTime-dRMDelta,dREMV);
-                                    // SCH_Per is a parameter for that "call"
-                                    goto NextTry;
-                                }
-                            }
-                        }
-                        else if (Engine[LastEngine].iCalculate == CALC_TARGET_POINT)  // value 5
-                        {
-							
-							double dREM = sqrt((MoonX - EarthX)*(MoonX - EarthX)+
-                                                (MoonY - EarthY)*(MoonY - EarthY)+
-                                                (MoonZ - EarthZ)*(MoonZ - EarthZ))+20.0*MoonR;
-                            // for target practice next check is fly out of moon-earth distance anyway this is a missing target
-                            if (dREM < dRE)
-						    {
-							    printf("\n Target practice get to Moon = %f km ", PerigMoon/1000.0);
-                                printf("===i=%d===========<==%f=>==v=%f=",i,Engine[EngineToOptimize].FireTime-dRMDelta,dREMV);
-                                SCH_Per = SCH_Dist;
-                                // SCH_Per is a parameter for that "call"
-                                goto NextTry;
-						    }
-							if (SCH_Dist < MoonR*2)
-							{
-								double PosXMoon = 0;
-								double PosYMoon = 0;
-								double PosZMoon = 0;
-
-                                // first Longitude second latitute
-                                 // dolgota,  shirota
-
-		                        getXYZMoon(Targetlongitude,Targetlatitude,PosXMoon,PosYMoon,PosZMoon,&SolarSystem,MOON,EARTH,MoonR);
-								if (SCH_Dist < MoonR)
-								{
-									SCH_Dist = sqrt(
-				                    (ProbX - PosXMoon)*(ProbX - PosXMoon)+
-						            (ProbY - PosYMoon)*(ProbY - PosYMoon)+
-								    (ProbZ - PosZMoon)*(ProbZ - PosZMoon)
-									);
-									SCH_Per = SCH_Dist;
-									printf("\n Traget practice Point on a Moon = %f km ", SCH_Per/1000.0);
-									printf("===i==%d===========<==%f=>==v=%f=",i,Engine[EngineToOptimize].FireTime-dRMDelta,dREMV);
-										// SCH_Per is a parameter for that "call"
-										goto NextTry;
-								}
-		                        SCH_Dist = sqrt(
-				                    (ProbX - PosXMoon)*(ProbX - PosXMoon)+
-						            (ProbY - PosYMoon)*(ProbY - PosYMoon)+
-								    (ProbZ - PosZMoon)*(ProbZ - PosZMoon)
-									);
-							}
-                            if (SCH_Per > SCH_Dist )
-                            {
-                                SCH_Per = SCH_Dist;
-								iSCH_Per = 1;
-                            }
-                            else
-                            {
-								if (iSCH_Per)
-								{
-									if (SCH_Per < 300000000.0)
-									{
-										printf("\n Traget practice Point on a Moon = %f km ", SCH_Per/1000.0);
-										printf("===i==%d===========<==%f=>==v=%f=",i,Engine[EngineToOptimize].FireTime-dRMDelta,dREMV);
-										// SCH_Per is a parameter for that "call"
-										goto NextTry;
-									}
-                                }
-                            }
-                        }
-                        else if (Engine[LastEngine].iCalculate == CALC_PERIOD) // value 6
-                        {
-                            if (Engine[LastEngine].iCountApogPerig == 3)
-                            {
-                                if (CheckWhatnext(&Opt[0], &Sat, &Engine[0], NULL, EngineToOptimize, TrajectoryOptimizationType, LastEngine, EnginesCount,i + j*TimeSl) == 0)
-                                {
-                                    exit(0);
-                                }
-                            }
-                        }
-                        else if (Engine[LastEngine].iCalculate == CALC_AT_APOGEE_DIFF_TO_3_4_DIST) // 12
-                        {
-                            if (SCH_Dist > 400000000*1.25)
-                                SCH_Dist = 400000000*1.25;
-                            if (SCH_Apg < SCH_Dist)
-                            {
-                                SCH_Apg = SCH_Dist;
-                                iSCH_Apg = 1;
-                            }
-                            else
-                            {
-                                if (iSCH_Apg)
-                                {
-                                    printf("\n SCHApogee = %f km (%f) DT = %f at=%d sec", SCH_Apg/1000.0,
-                                        (SCH_Apg - GetRadius(&SolarSystem, Engine[LastEngine].NearBody, &Sat, 0))/1000.0,
-                                        i + j*TimeSl - SCH_ApgPerTime, i);
-                                    iSCH_Apg = 0;
-                                    SCH_Per = SCH_Apg;
-                                    SCH_ApgPerTime = (int)(i + j*TimeSl);
-                                    SCH_Per = abs(SCH_Per - 400000000*0.75);
-                                    printf("====engine==i=%d====<weight at=%f=>===",i,Engine[EngineToOptimize].Weight);
-                                    // SCH_Per is a parameter for that "call"
-                                    goto NextTry;
-                                }
-                            }
-                        }
-                    }
-
-#endif
                     if (dRE < EarthR) // TBD Earth is not round!!!
                     {
-
                         //printf("\n Landed on Earth at sec = %d", iCurSec);
                         Sat.flInUse[0] = 0;
                     }
@@ -9704,8 +9973,6 @@ int main(int argc, char * argv[])
                             ((double)iCurSec) + TimeSl*((double)iCurPortionOfTheSecond), Sat.X[0] -SolarSystem.X[MOON], Sat.Y[0] -SolarSystem.Y[MOON], Sat.Z[0] -SolarSystem.Z[MOON],dREMV);
                         printf("\n Longitute = %f Latitute %f", LongOnMoon, LatiOnMoon);
                         printf("\n Landed weight = %f from initial = %f (%f percent)", Sat.M[0], MyTrySat.M[0],Sat.M[0]/MyTrySat.M[0]);
-                        
-                        
 #ifdef _DO_VISUALIZATION
                         // store last image 
                         //DrawAnimationSequence(&SolarSystem,&Sat, i,"TRA",&SolarSystem, RGBReferenceBody, dRGBScale, StartSequence, 1);
@@ -9716,93 +9983,6 @@ int main(int argc, char * argv[])
                         exit(0);
                     }
                 }
-
-
-
-#ifdef TEST_RUN_CALC_YEAR
-                // this is for debug only - checking changes of the orbit points
-                MinMaxX = (MoonX * MoonM + EarthX * EarthM) / (MoonM + EarthM);
-                MinMaxY = (MoonY * MoonM + EarthY * EarthM) / (MoonM + EarthM);
-                MinMaxZ = (MoonZ * MoonM + EarthZ * EarthM) / (MoonM + EarthM);
-
-                double dDi = sqrt(
-                    (MinMaxX - SolarSystem.X[SUN])* (MinMaxX - SolarSystem.X[SUN]) +
-                    (MinMaxY - SolarSystem.Y[SUN])* (MinMaxY - SolarSystem.Y[SUN]) +
-                    (MinMaxZ - SolarSystem.Z[SUN])* (MinMaxZ - SolarSystem.Z[SUN]) );
-                MinMaxX = ((MinMaxX - SolarSystem.X[SUN])/ dDi);
-                MinMaxY = ((MinMaxY - SolarSystem.Y[SUN])/ dDi);
-                MinMaxZ = ((MinMaxZ - SolarSystem.Z[SUN])/ dDi);
-                if (iFirstMinMax == 1)
-                {
-                    double tDeltaMinMaxD = (( MinMaxX - FirstMinMaxX2)*( MinMaxX - FirstMinMaxX2) +
-                                            ( MinMaxY - FirstMinMaxY2)*( MinMaxY - FirstMinMaxY2) +
-                                            ( MinMaxZ - FirstMinMaxZ2)*( MinMaxZ - FirstMinMaxZ2)
-                                                );
-                    if (flFindMax)
-                    {
-                        if (maxDeltaMinMaxD  < tDeltaMinMaxD)
-                        {
-                            maxDeltaMinMaxD  = tDeltaMinMaxD;
-                            iCountMin = 1000;
-                        }
-                        else
-                        {
-                            if (iCountMin < 1000)
-                            {
-                                iCountMin++;
-                                maxDeltaMinMaxD  = tDeltaMinMaxD;
-                            }
-                            else
-                            {
-                                /*
-                                printf("\nchange(to min)=%f x=%f y=%f z=%f (d=%f) at changed sign at %ld sec + %f - %f sec ", 
-                                    sqrt(maxDeltaMinMaxD),
-                                    MinMaxX, MinMaxY, MinMaxZ, sqrt(MinMaxX*MinMaxX+MinMaxY*MinMaxY+MinMaxZ*MinMaxZ),
-                                    iCurSec, 
-                                    TimeSl*iCurPortionOfTheSecond, TimeSl*(iCurPortionOfTheSecond+1));
-                                    */
-                                flFindMax = 0;
-                                flFindMin = 1;
-                                minDeltaMinMaxD = tDeltaMinMaxD;
-                                iCountMin = 0;
-                            }
-                        }
-                    }
-                    else if (flFindMin)
-                    {                  
-                        if (minDeltaMinMaxD  > tDeltaMinMaxD)
-                        {
-                            minDeltaMinMaxD  = tDeltaMinMaxD;
-                            iCountMin = 1000;
-                        }
-                        else
-                        {
-                            if (iCountMin < 1000)
-                            {
-                                iCountMin++;
-                                minDeltaMinMaxD  = tDeltaMinMaxD;
-                            }
-                            else
-                            {
-                                /*
-                                printf("\nchange(to max)=%f x=%f y=%f z=%f (d=%f) at changed sign at %ld sec + %f - %f sec ", 
-                                    sqrt(minDeltaMinMaxD),
-                                    MinMaxX, MinMaxY, MinMaxZ, sqrt(MinMaxX*MinMaxX+MinMaxY*MinMaxY+MinMaxZ*MinMaxZ),
-                                    iCurSec, 
-                                    TimeSl*iCurPortionOfTheSecond, TimeSl*(iCurPortionOfTheSecond+1));
-                                Interpolate_State( dStartJD+((double)(iCurSec+1))/(24.0*60.0*60.0)+TimeSl*((double)iCurPortionOfTheSecond) , EARTH , &StateEarth );
-                                printf("\n JPL=%f %f %f ",StateEarth.Position[0],StateEarth.Position[1],StateEarth.Position[2]);
-                                */
-                                flFindMax = 1;
-                                flFindMin = 0;
-                                maxDeltaMinMaxD = tDeltaMinMaxD;
-                                iCountMin = 0;
-                            }
-                        }
-                    }
-                    
-                }
-#endif
             }
 
             // this is 1 day position 
@@ -9911,18 +10091,6 @@ int main(int argc, char * argv[])
                 }
 
            }
-           if (iCurSec == 31558149)
-           {
-               double tDeltaMinMaxD = (( MinMaxX - FirstMinMaxX2)*( MinMaxX - FirstMinMaxX2) +
-                                             ( MinMaxY - FirstMinMaxY2)*( MinMaxY - FirstMinMaxY2) +
-                                             ( MinMaxZ - FirstMinMaxZ2)*( MinMaxZ - FirstMinMaxZ2)
-                                                );
-               printf("\n=======%f x=%f y=%f z=%f (d=%f) at changed sign at %ld sec + %f - %f sec ", 
-                                    sqrt(maxDeltaMinMaxD),
-                                    MinMaxX, MinMaxY, MinMaxZ, sqrt(MinMaxX*MinMaxX+MinMaxY*MinMaxY+MinMaxZ*MinMaxZ),
-                                    iCurSec, 
-                                    TimeSl*iCurPortionOfTheSecond, TimeSl*(iCurPortionOfTheSecond+1));
-           }
 #ifdef _DO_VISUALIZATION
            DrawAnimationSequence(&SolarSystem,&Sat, iCurSec,"TRA",&SolarSystem, RGBReferenceBody, dRGBScale, StartSequence, 0); 
 #endif
@@ -10025,61 +10193,16 @@ int main(int argc, char * argv[])
 		OutLast = TRUE;
 		dumpTRAvisual(iCurSec);
 		printf("\n iteration done");
-		tProbTSec = 0;
-		tProbEcc = 0;
-        tProbIncl = 0;
-        tProbAscNode = 0;
-        tProbArgPer = 0;
-        tProbMeanAnom = 0;
-            
-		tX = Sat.X[0] - SolarSystem.X[EARTH];
-		tY = Sat.Y[0] - SolarSystem.Y[EARTH];
-		tZ = Sat.Z[0] - SolarSystem.Z[EARTH];
-		tVX = Sat.VX[0] - SolarSystem.VX[EARTH];
-		tVY = Sat.VY[0] - SolarSystem.VY[EARTH];
-		tVZ = Sat.VZ[0] - SolarSystem.VZ[EARTH];
-			// mean amomaly on curent time
-		DumpKeplers(tProbTSec, // - orbit period in sec
-				    tProbEcc,             // - Eccentricity
-                    tProbIncl,            // - Inclination
-                    tProbAscNode,         // - Longitude of ascending node
-                    tProbArgPer,          // - Argument of perihelion
-                    tProbMeanAnom,        // - Mean Anomaly (degrees)
-                    SolarSystem.M[EARTH],0.0,
-                    tX,tY,tZ,tVX,tVY,tVZ);
-		tProbIncl = tProbIncl / M_PI * 180;
-		tProbAscNode = tProbAscNode / M_PI * 180;
-		tProbArgPer = tProbArgPer / M_PI * 180;
-		tProbMeanAnom = tProbMeanAnom / M_PI * 180;
-        // NO DRAG COMPARATION:
-        ttProbX	= tX - (2321904.7964419187);
-        ttProbY	= tY - (-6005011.6680821748);
-        ttProbZ	= tZ - (1696686.3456158256);
-        ttProbVX	= tVX - (2898.9465363029231);
-        ttProbVY	= tVY - (-964.7411305511611);
-        ttProbVZ	= tVZ - (-7098.2955155539603);
+#ifdef _DO_VISUALIZATION
+       // store last image 
+       //DrawAnimationSequence(&SolarSystem,&Sat, i,"TRA",&SolarSystem, RGBReferenceBody, dRGBScale, StartSequence, 1);
+       DrawFinalBody(&SolarSystem, MOON, &Sat, iCurSec,"TRA", &SolarSystem, RGBReferenceBody, dRGBScale, StartSequence);
+       //if (++iProfile > 1)
+       //    iProfile = 0;
+#endif
 
-        // no drug 1 day atget:
-        //ttProbX	= tX - (2734383.4756962131);
-        //ttProbY	= tY - (-6085363.2719152933);
-        //ttProbZ	= tZ - (-294685.77944232832);
-        //ttProbVX	= tVX - (1964.3006721124766);
-        //ttProbVY	= tVY - (1175.6494914836899);
-        //ttProbVZ	= tVZ - (-7357.5774951035146);
-
-        tttX = sqrt(ttProbX*ttProbX + ttProbY*ttProbY + ttProbZ*ttProbZ);
-        tttVX = sqrt(ttProbVX*ttProbVX + ttProbVY*ttProbVY + ttProbVZ*ttProbVZ);
-
-		printf("\n tProbTSec=%f tProbEcc=%f tProbIncl=%f tProbAscNode%f tProbArgPer=%f tProbMeanAnom=%f",tProbTSec,tProbEcc,tProbIncl,tProbAscNode,tProbArgPer,tProbMeanAnom);
 #ifdef FIND_IMPULSE_TIME
 NextTry:
-#ifdef _DO_VISUALIZATION
-            // store last image 
-            //DrawAnimationSequence(&SolarSystem,&Sat, i,"TRA",&SolarSystem, RGBReferenceBody, dRGBScale, StartSequence, 1);
-            DrawFinalBody(&SolarSystem, MOON, &Sat, i,"TRA", &SolarSystem, RGBReferenceBody, dRGBScale, StartSequence);
-            //if (++iProfile > 1)
-            //    iProfile = 0;
-#endif
             SolarSystem = MyTry;
             Sat = MyTrySat;
             Engine[0] = MyEngine[0];Engine[1] = MyEngine[1];Engine[2] = MyEngine[2];Engine[3] = MyEngine[3];Engine[4] = MyEngine[4];Engine[5] = MyEngine[5]; 

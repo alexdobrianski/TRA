@@ -96,6 +96,7 @@
     <TRA:setting name="TRAVisual1" value="travisual.xml" />
     <TRA:setting name="TRAVisual" value="http://96.49.96.50/SatCtrl/PostTra.aspx" />
 
+
     <TRA:setting name="RGBImageW" value="1280" />
     <TRA:setting name="RGBImageH" value="720" />
 <!-- int iProfile = 0; 
@@ -103,8 +104,8 @@
               // 0 or XY is a view from North to south, 5 (- XY) is a view from south to north
               // 1 or YZ is a view to easter -->
     <TRA:setting name="RGBView" value="0" />
-<!--  EARTH 2 MOON  9 -->
 
+<!--  EARTH 2 MOON  9 -->
     <TRA:setting name="RGBReferenceBody" value="2" />
 <!-- max amount of pictures -->
     <TRA:setting name="RGBMaxPictures" value="128" />
@@ -114,6 +115,9 @@
     <TRA:setting name="RGBScale" value="90000000" />
 
     <TRA:setting name="UseSatData" value="SGP8" />
+
+    <TRA:setting name="EarthModelFile" value="egm96" />
+    <TRA:setting name="EarthModelCoefs" value="16" />
 
     <TRA:setting name="IterPerSec" value="479" />
     <TRA:setting name="IterPerSec1" value="1013" />
