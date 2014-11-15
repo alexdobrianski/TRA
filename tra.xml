@@ -1,9 +1,40 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <data version="1.00" xmlns:TRA="http://www.adobri.com/tra">
+<TRA:section name="ModeInfo" value="0.0">
+<!-- char [] Mode
+                          //    PROP == (default) proparation of the orbit
+                          //    SIM ==  simulation of the data from satellite
+                          //    CALC == calculation of the orbit based on any of the data : PING, GPS, PULSAR 
+                          //    OPTIM = calculation of the engines firing to reach the moon
+               -->
+    <TRA:setting name="Mode" value="PROP" />
+
+</TRA:section>
+<TRA:section name="SimInfo" value="0.0">
+    <TRA:setting name="SimulationType" value="TLE" />
+
+    <TRA:setting name="SimulationOutputTime" value="07/05/14 08:28:00:000" />
+    <TRA:setting name="SimulationOutputTime" value="07/05/14 10:00:52:000" />
+    <TRA:setting name="SimulationOutputTime" value="07/05/14 11:33:44:000" />
+    <TRA:setting name="SimulationOutputTime" value="07/05/14 14:39:28:000" />
+    <TRA:setting name="SimulationOutputTime" value="07/05/14 16:12:20:000" />
+    <TRA:setting name="SimulationOutputTime" value="07/05/14 17:45:12:000" />
+    <TRA:setting name="SimulationOutputTime" value="07/05/14 19:18:04:000" />
+    <TRA:setting name="SimulationOutputTime" value="07/05/14 20:50:56:000" />
+    <TRA:setting name="SimulationOutputTime" value="07/05/14 22:23:48:000" />
+    <TRA:setting name="SimulationOutputTime" value="07/05/14 23:56:41:000" />
+    <TRA:setting name="SimulationOutputTime" value="08/05/14 01:29:33:000" />
+    <TRA:setting name="SimulationOutputTime" value="08/05/14 03:02:25:000" />
+    <TRA:setting name="SimulationOutputTime" value="08/05/14 04:35:17:000" />
+    <TRA:setting name="SimulationOutputTime" value="08/05/14 06:08:09:000" />
+    <TRA:setting name="SimulationOutputTime" value="08/05/14 07:41:01:000" />
+    <TRA:setting name="SimulationOutputTime" value="08/05/14 09:13:53:000" />
+</TRA:section>
 
 <TRA:section name="probs" value="0.0">
     <TRA:setting name="ProbM" value="67.5" />
     <TRA:setting name="ProbKeplerLine1" value="0 ISS (ZARYA)" />
+    <TRA:setting name="ProbSquare" value="-1" />
     <TRA:setting name="@ProbKeplerLine2" value="1 25544U 98067A   11062.66968330  .00024457  00000-0  18183-3 0  9357" />
     <TRA:setting name="@ProbKeplerLine3" value="2 25544 051.6480 342.0829 0005279 039.9625 033.1957 15.72669582704292" />
     <TRA:setting name="@ProbKeplerLine2" value="1 25544U 98067A   11291.79166666  .00024457  00000-0  18183-3 0  9357" />
@@ -114,10 +145,29 @@
 <!-- scale in m -->
     <TRA:setting name="RGBScale" value="90000000" />
 
+<!--                               // SGP - use SGP from Space Track Report 3 to calculate position and velocity based on TLE
+                                   // SGP4 - use SPG4 to calulate initial position and velocity from TLE
+                                   // SGP8 - use SGP8
+                                   // KEPLER - use internal "kepler" function to calculate position
+                                   // INTERNAL use of internal data
+                                   // ProbTime=<time>, ProbC=<count of integral iterations>, ProbT=<delta time of iterations>
+                                   // ProbX0=<X0>, ProbY0=<Y0>, ProbZ0=<Z0>, ProbVX0=<VX0>, ProbVY0=<VY0>, ProbVZ0=<VZ0>, 
+                                   //   ProbIFX1=<integral Fx>, ProbIFY1=<integral Fy>, ProbIFZ1=<integral Fz>
+                                   //   ProbIFX2=<integral Fx>, ProbIFY2=<integral Fy>, ProbIFZ2=<integral Fz>
+                                   //   ProbIFX3=<integral Fx>, ProbIFY3=<integral Fy>, ProbIFZ3=<integral Fz>
+                                   //   ProbIVX1=<integral VX>, ProbIVY1=<integral VY>, ProbIVZ1=<integral VZ>
+                                   //   ProbIVX2=<integral VX>, ProbIVY2=<integral VY>, ProbIVZ2=<integral VZ>
+                                   //   ProbIVX3=<integral VX>, ProbIVY3=<integral VY>, ProbIVZ3=<integral VZ>
+-->
     <TRA:setting name="UseSatData" value="SGP8" />
 
+<!-- Cnk and Snk file data -->
     <TRA:setting name="EarthModelFile" value="egm96" />
-    <TRA:setting name="EarthModelCoefs" value="16" />
+    <TRA:setting name="GM_MODEL" value="398600.4418e9" />
+    <TRA:setting name="R0_MODEL" value="6378137.00" />
+
+<!-- Cnk and Snk file data n max value do be used from the file  -->
+    <TRA:setting name="EarthModelCoefs" value="32" />
 
     <TRA:setting name="IterPerSec" value="479" />
     <TRA:setting name="IterPerSec1" value="1013" />
@@ -132,7 +182,7 @@
     <TRA:setting name="Gbig" value="6.6742799999999995e-011" />
     <TRA:setting name="Gbig0" value="6.6738177929210037e-011" />
     <TRA:setting name="TotalDays0" value="1" />
-    <TRA:setting name="TotalDays" value="32" />
+    <TRA:setting name="TotalDays" value="16" />
 
     <TRA:setting name="TotalDays0" value="0.062337962962962962962962962962963" />
     <TRA:setting name="TotalDays0" value="0.124675925925925925925925925924" />
