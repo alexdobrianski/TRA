@@ -16,6 +16,8 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>
 ************************************************************************/
 
+#define _CRT_SECURE_NO_WARNINGS 1
+//#define _WIN32_WINNT 0x05010000
 
 #include "stdafx.h"
 #include <afxinet.h>
@@ -27,13 +29,10 @@
 #include <malloc.h>
 #include "ephem_read.h"
 
-#define _CRT_SECURE_NO_WARNINGS 1
-
 //////////////////////////////////////////////////////////////////////////////
 //   predefine vaiable to build different flavor
 //#define FIND_IMPULSE_TIME 1
 //////////////////////////////////////////////////////////////////////////////
-
 
 #ifdef _DO_VISUALIZATION
 #include "JPEGLIB.H"
@@ -606,6 +605,7 @@ typedef struct Long_Double_Intergal_Var
     };
 } LONG_DOUBLE_INT_VAR, *PLONG_DOUBLE_INT_VAR;
 
+
 typedef struct Long_Double_Intergal_Var4
 {
     long double X;
@@ -717,6 +717,7 @@ typedef struct Long_Double_Intergal_Var4
         CountNx_hh = 0; CountNy_hh = 0; CountNz_hh = 0;
     };
 } LONG_DOUBLE_INT_VAR4, *PLONG_DOUBLE_INT_VAR4;
+
 
 typedef struct TraObj
 {
@@ -1168,6 +1169,7 @@ typedef struct TraObj
 	};
 
 #if 1
+
     void FastSummXYZ( long double ValX, long double ValY, long double ValZ, long double ValR, long double &X, long double &Y, long double &Z, int iCurSat)
     {
         int n,k;
@@ -2726,9 +2728,15 @@ int SimulationOutputCount = 0;
 long double SimulationOutputTime[MAX_OUTPUT_TIMES];
 char SimulationTempOutputFile[1024]={"@trasimoutput.xml"};
 char SimulationOutputFile[1024]={"@tra_sim_output.xml"};;
+int UrlTraSimPort=80; 
+char szURLTraSimFileName[1024];
+char szTraSimFileName[1024];
 
 char CalulationTempOutputFile[1024]={"@tracalc.xml"}; // in CALC mode the output file with 
 char CalulationOutputFile[1024]={"@tra_calc.xml"}; // in CALC mode the output file with 
+int UrlTraCalcPort=80; 
+char szURLTraCalcFileName[1024];
+char szTraCalcFileName[1024];
 
 int EnginesCount = 0;
 #define MAX_ENGINES 6
@@ -4323,7 +4331,7 @@ void DrawFinalBody(TRAOBJ *SlS, int iBodyReference, TRAOBJ *Sat, int iSec,char *
     {
         char szName[256];
         sprintf(szName, "%s%s%05d.jpg", szInitName, &szXYZ[iProfile],StartSequence-1);
-        write_JPEG_file (szName, 80, bRGBImageW, bRGBImageH, 3,  bRGBImage, JCS_RGB);
+        write_JPEG_file(szName, 80, bRGBImageW, bRGBImageH, 3,  bRGBImage, JCS_RGB);
     }
     // draw North pole on a moon
     if (iBodyReference == MOON)
@@ -5757,36 +5765,6 @@ long double ConverTLEEpochDate2JulianDay(long double KeplerDate)
 }
 
 
-///////////////////////////////////////////////////////////////////////////
-// quick XML parser
-///
-char szSection[1024] =  {0};
-#define XML_READ(XML_PARAM) if (CallXMLPars(szString, #XML_PARAM)) XML_PARAM = atof(pszQuo);
-#define IF_XML_READ(XML_PARAM) if (CallXMLPars(szString, #XML_PARAM))
-#define XML_BEGIN char *pszQuo;
-#define XML_END ;
-#define XML_SECTION(XML_SEC_NAME)     if (strcmp(szSection, #XML_SEC_NAME)==0)\
-    {\
-        pszQuo = strstr(szString, "value=\"");\
-        if (pszQuo != NULL)\
-        {\
-            pszQuo += sizeof("value=\"") -1;
-
-#define XML_SECTION_END         }\
-    }\
-
-
-int CallXMLPars(char *szString, char *XML_Params)
-{
-    char szFullComapre[1024] = {"name=\""};
-    strcat(szFullComapre, XML_Params);
-    strcat(szFullComapre, "\"");
-    if (strstr(szString, szFullComapre) != NULL)   
-        return 1;
-    else
-        return 0;
-
-}
 int iDayOfTheYearZeroBase(int iDay, int iMonth, int iYear)
 {
 	int iDays = iDay-1;
@@ -6953,11 +6931,72 @@ ZDOT=RDOT*UZ+RVDOT*VZ;
 //END
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//   TRA.XMl processing => common data
-//
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 int iGr = 0;
+
+///////////////////////////////////////////////////////////////////////////
+// quick XML parser
+///
+char szSection[1024] =  {0};
+char szGroup[1024] =  {0};
+#define XML_READ(XML_PARAM) if (CallXMLPars(szString, #XML_PARAM)) XML_PARAM = atof(pszQuo);
+#define IF_XML_READ(XML_PARAM) if (CallXMLPars(szString, #XML_PARAM))
+#define XML_BEGIN char *pszQuo;
+#define XML_END ;
+#define XML_SECTION(XML_SEC_NAME) if (strcmp(szSection, #XML_SEC_NAME)==0){pszQuo = strstr(szString, "value=\"");if (pszQuo != NULL){pszQuo += sizeof("value=\"") -1;
+#define XML_SECTION_END }}
+#define XML_SECTION_GROUP_SEPARATOR } else {
+
+#define XML_GROUP(XML_ELEMENT) if (pszQuo=CallGroupPars(szString,#XML_ELEMENT)) strcpy(szGroup, pszQuo); if (strcmp(szGroup, #XML_ELEMENT) ==0) {
+#define XML_GROUP_END }
+
+#define IF_XML_ELEMENT(XML_ELEMENT) if (pszQuo=CallElementPars(szString,#XML_ELEMENT))
+
+int CallXMLPars(char *szString, char *XML_Params)
+{
+    char szFullComapre[1024] = {"name=\""};
+    strcat(szFullComapre, XML_Params);
+    strcat(szFullComapre, "\"");
+    if (strstr(szString, szFullComapre) != NULL)   
+        return 1;
+    else
+        return 0;
+}
+
+char *CallElementPars(char *szString, char *XML_Params)
+{
+    char szFullComapre[1024] = {"<"};
+    char szFullComapre2[1024] = {"</"};
+    strcat(szFullComapre, XML_Params);
+    strcat(szFullComapre2, XML_Params);
+    strcat(szFullComapre, ">");
+    strcat(szFullComapre2, ">");
+    if (strstr(szString, szFullComapre) != NULL)   
+    {
+        if (strstr(szString, szFullComapre2) != NULL)
+        {
+            char *szPrt = strstr(szString, szFullComapre);
+            szPrt += strlen(szFullComapre);
+            return szPrt;
+        }
+        return NULL;
+    }
+    else
+        return NULL;
+}
+
+char *CallGroupPars(char *szString, char *XML_Params)
+{
+    char szFullComapre[1024] = {"<"};
+    strcat(szFullComapre, XML_Params);
+    strcat(szFullComapre, ">");
+    if (strstr(szString, szFullComapre) != NULL)   
+    {
+        char *szPrt = strstr(szString, szFullComapre);
+        return XML_Params;
+    }
+    else
+        return NULL;
+}
 
 void ParamCommon(char *szString)
 {
@@ -7177,6 +7216,7 @@ void ParamMoon(char *szString)
     XML_SECTION_END;
     XML_END;
 }
+
 void MoonXYZCalc(double &flX, double &flY, double &flZ, double tsec)
 {
     flX = (383.0*sin( 8399.685*tsec + 5.381)+
@@ -7204,10 +7244,6 @@ void MoonXYZCalc(double &flX, double &flY, double &flZ, double tsec)
              1.8*sin( 8399.116*tsec + 6.248))*1.0E6;
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//   TRA.XMl processing => all data abou SUN (now it is not really used)
-//
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void ParamSun(char *szString)
 {
     XML_BEGIN;
@@ -7228,10 +7264,7 @@ void ParamSun(char *szString)
     XML_SECTION_END;
     XML_END;
 }
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//   TRA.XML processing => all earth data
-//
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 void ParamEarth(char *szString)
 {
     XML_BEGIN;
@@ -7249,7 +7282,7 @@ void ParamEarth(char *szString)
         XML_READ(AU);
         //XML_READ(EarthTSolSec);
         //XML_READ(EarthSmAx);
-        double Temp = 0.0;
+        //double Temp = 0.0;
         //IF_XML_READ(EarthTDays)  
         //{
         //    
@@ -7322,14 +7355,12 @@ void ParamEarth(char *szString)
     XML_END;
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//       TRA.XML processing => all data about satellite
-//
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 void ParamProb(char *szString)
 {
     
     char szTemp[128] = {"0."};;
+    char valX, valY, valZ, valT;
     XML_BEGIN;
     ///////////////////////////////////////////////////////////////////////////////////////Calcinfo
     XML_SECTION(CalcInfo);
@@ -7338,11 +7369,39 @@ void ParamProb(char *szString)
         strcpy(CalulationOutputFile, pszQuo);
         if (strchr(CalulationOutputFile, '\"'))
             *strchr(CalulationOutputFile, '\"')=0;
+        if (ParsURL(CalulationOutputFile, &UrlTraCalcPort, szURLTraCalcFileName,  szTraCalcFileName))
+        {
+        }
+        else
+            UrlTraCalcPort = 0;
     }
+    XML_SECTION_GROUP_SEPARATOR
+//} else {
+    XML_GROUP(gCRSmeasure)
+        IF_XML_ELEMENT(X)
+        {
+            valX = atof(pszQuo);
+        }
 
-    XML_SECTION_END;
+        IF_XML_ELEMENT(Y)
+        {
+            valY = atof(pszQuo);
+        }
+
+        IF_XML_ELEMENT(Z)
+        {
+            valZ = atof(pszQuo);
+        }
+
+        IF_XML_ELEMENT(T)
+        {
+            valT = atof(pszQuo);
+        }
+    XML_GROUP_END
+    XML_SECTION_END
+
     ///////////////////////////////////////////////////////////////////////////////////////SimInfo
-    XML_SECTION(SimInfo);
+    XML_SECTION(SimInfo)
     IF_XML_READ(SimulationType)
     {
         strcpy(SimulationType, pszQuo);
@@ -7354,12 +7413,21 @@ void ParamProb(char *szString)
         strcpy(SimulationOutputFile, pszQuo);
         if (strchr(SimulationOutputFile, '\"'))
             *strchr(SimulationOutputFile, '\"')=0;
+
+        if (ParsURL(SimulationOutputFile, &UrlTraSimPort, szURLTraSimFileName,  szTraSimFileName))
+        {
+        }
+        else
+            UrlTraSimPort = 0;
+
     }
+
+
     IF_XML_READ(SimulationOutputTime)
     {
         if (++SimulationOutputCount <= MAX_OUTPUT_TIMES)
         {
-            long double ld1,ld2;
+            long double ld1=0,ld2=0;
             ConvertDateFromXML(pszQuo, ld1, SimulationOutputTime[SimulationOutputCount-1], ld2);
         }
         else
@@ -7369,9 +7437,9 @@ void ParamProb(char *szString)
         }
     }
 
-    XML_SECTION_END;
+    XML_SECTION_END
     ///////////////////////////////////////////////////////////////////////////////////////ModeInfo
-    XML_SECTION(ModeInfo);
+    XML_SECTION(ModeInfo)
     IF_XML_READ(Mode)
     {
         strcpy(Mode, pszQuo);
@@ -7379,9 +7447,9 @@ void ParamProb(char *szString)
             *strchr(Mode, '\"')=0;
     }
 
-    XML_SECTION_END;
+    XML_SECTION_END
     ////////////////////////////////////////////////////////////////////////////////////////probs
-    XML_SECTION(probs);
+    XML_SECTION(probs)
     // pisition of the prob (active by firing engines) can be set by X,Y,Z   VX,VY,VZ
         IF_XML_READ(ProbX)
         {
@@ -7526,10 +7594,10 @@ void ParamProb(char *szString)
 			COPYKEPLER(Sat.ProbRevAtEpoch[Sat.Elem],&Sat.Kepler3[Sat.Elem][63],6);
             Sat.Elem++;  // next satellite
         }
-    XML_SECTION_END;
+    XML_SECTION_END
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////TraInfo
-    XML_SECTION(TraInfo);
+    XML_SECTION(TraInfo)
         IF_XML_READ(EarthModelFile)
         {
             strcpy(EarthModelFile, pszQuo);
@@ -8237,9 +8305,9 @@ DONE_WITH_LINE:
             Targetlatitude = atof(pszQuo);
         }
 
-    XML_SECTION_END;
+    XML_SECTION_END
     ///////////////////////////////////////////////////////////////////////////////////////////////Engine
-    XML_SECTION(Engine);
+    XML_SECTION(Engine)
         // this will switch on engine 0,1,2,3 and etc.
         IF_XML_READ(EngineNumber)
         {
@@ -8407,11 +8475,11 @@ DONE_WITH_LINE:
         //    Engine[EnginesCount-1].dValTry[Engine[EnginesCount-1].iNumberOfTryValues++] = atof(pszQuo);
         //}
     
-    XML_SECTION_END;
+    XML_SECTION_END
 
             
     ///////////////////////////////////////////////////////////////////////////////////////////////////Optim
-    XML_SECTION(Optim);
+    XML_SECTION(Optim)
         IF_XML_READ(EngineToOptimize)
         {
             if (++iOptPtr < MAX_OPTIM)
@@ -8478,7 +8546,7 @@ DONE_WITH_LINE:
                 Opt[iOptPtr-1].Period = atof(pszQuo);
             }
         }
-    XML_SECTION_END;
+    XML_SECTION_END
     XML_END;
 }
 // TRA.XML processing
@@ -9375,7 +9443,7 @@ void FindImpulses(void)
                         }
                     }
 #endif
-                    #ifdef FIND_IMPULSE_TIME
+#ifdef FIND_IMPULSE_TIME
 NextTry:
             SolarSystem = MyTry;
             Sat = MyTrySat;
@@ -9684,33 +9752,96 @@ NextTry:
 }
 void RunSim(TRAOBJ *SlS, TRAOBJ *Sat,TRAIMPLOBJ *Eng, long double ldFrom,long double ldFromTLEEpoch, long long iAllSec, int iItPerS, long double tSl)
 {
-    if (memcmp(SimulationType,"TLE",3) == 0)
+    FILE *FileOut = fopen(SimulationTempOutputFile,"w");
+    if (FileOut)
     {
-        for (int i = 0; i < SimulationOutputCount; i++)
+        if (memcmp(SimulationType,"TLE",3) == 0)
+        {
+            int iCheck = 0;
+            long double AE = 1.0;
+            long double XKMPER = 6378.1350; //XKMPER kilometers/Earth radii 6378.135
+		    long double XKE = BIG_XKE;//.743669161E-1;
+            long double XJ2 = 1.082616E-3;
+            long double CK2=.5*XJ2*AE*AE;
+            long double XMNPDA = 1440.0; // XMNPDA time units(minutes) /day 1440.0
+            long double TEMP=2*M_PI/XMNPDA/XMNPDA; // 2*pi / (1440 **2)
+            long double ProbMeanMotion = Sat->ProbMeanMotion[iCheck];
+            long double XNO=ProbMeanMotion*TEMP*XMNPDA; // rotation per day * 2*pi /1440 == rotation per day on 1 unit (1 min)
+            long double XNDT2O=Sat->ProbFirstDervMeanMotion[iCheck]*TEMP;
+            long double XNDD6O=Sat->ProbSecondDervmeanMotion[iCheck]*TEMP/XMNPDA;
+            long double BSTAR=Sat->ProbDragterm[iCheck]/AE;
+            long double tProbX,tProbY,tProbZ,tProbVX,tProbVY,tProbVZ;
+            // next lines has to be removed ==> today they are included only to avoid drag effect
+            for (int i = 0; i < SimulationOutputCount; i++)
+            {
+                if (memcmp(UseSatData, "SGP",3)==0) 
+                {
+                    if (memcmp(UseSatData, "SGP4",4)==0)
+                    {
+			            SGP4((SimulationOutputTime[i] - Sat->ProbJD[iCheck])*XMNPDA, 
+                            XNDT2O,XNDD6O,BSTAR,Sat->ProbIncl[iCheck], Sat->ProbAscNode[iCheck],Sat->ProbEcc[iCheck], Sat->ProbArgPer[iCheck], Sat->ProbMeanAnom[iCheck],XNO, 
+				            tProbX,tProbY,tProbZ,tProbVX,tProbVY,tProbVZ);
+                    }
+                    else if (memcmp(UseSatData, "SGP8",4)==0)
+                    {
+			            SGP8((SimulationOutputTime[i] - Sat->ProbJD[iCheck])*XMNPDA, 
+                            XNDT2O,XNDD6O,BSTAR,Sat->ProbIncl[iCheck], Sat->ProbAscNode[iCheck],Sat->ProbEcc[iCheck], Sat->ProbArgPer[iCheck], Sat->ProbMeanAnom[iCheck],XNO, 
+				            tProbX,tProbY,tProbZ,tProbVX,tProbVY,tProbVZ);
+                    }
+                    else if  (memcmp(UseSatData, "SGP",3)==0)
+                    {
+			            SGP((SimulationOutputTime[i] - Sat->ProbJD[iCheck])*XMNPDA, 
+                            XNDT2O,XNDD6O,BSTAR,Sat->ProbIncl[iCheck], Sat->ProbAscNode[iCheck],Sat->ProbEcc[iCheck], Sat->ProbArgPer[iCheck], Sat->ProbMeanAnom[iCheck],XNO, 
+				        tProbX,tProbY,tProbZ,tProbVX,tProbVY,tProbVZ);
+                    }
+                    tProbX=tProbX*XKMPER/AE*1000.0;                 tProbY=tProbY*XKMPER/AE*1000.0;                 tProbZ=tProbZ*XKMPER/AE*1000.0;
+			        tProbVX=tProbVX*XKMPER/AE*XMNPDA/86400.*1000.0;	tProbVY=tProbVY*XKMPER/AE*XMNPDA/86400.*1000.0;	tProbVZ=tProbVZ*XKMPER/AE*XMNPDA/86400.*1000.0;
+                }
+                else
+                {
+                    KeplerPosition(Sat->ProbJD[iCheck],SimulationOutputTime[i],      // prob epoch, and curent time
+	    			    Sat->ProbTSec[iCheck], Sat->ProbEcc[iCheck], Sat->ProbIncl[iCheck], Sat->ProbAscNode[iCheck],  Sat->ProbArgPer[iCheck], Sat->ProbMeanAnom[iCheck], BSTAR,
+                        Gbig *SolarSystem.M[EARTH],1, tProbX,tProbY,tProbZ,tProbVX,tProbVY,tProbVZ, Sat->ProbMeanMotion[iCheck]);
+
+                }
+
+                if (strcmp(SimulationType,"TLE_G_CRS")==0) // it was request to generate position data with reference to geocentric CRS 
+                {
+                    //<Sat0>
+                    //   <X>-1939661.2958679199</X>
+                    //   <Y>6293776.5908203125</Y>
+                    //   <Z>1596212.7329940796</Z>
+                    //</Sat0>
+                    //     <TRA:setting name="dStartJD0" value="2451544.5" />
+                    fprintf(FileOut,"\n\t<gCRSmeasure>");
+                    fprintf(FileOut,"\n\t\t<T>%.8f</T>\n\t\t<X>%.5f</X> <Y>%.5f</Y> <Z>%.5f</Z>", SimulationOutputTime[i],tProbX, tProbY, tProbZ);
+                }
+                else if (strcmp(SimulationType,"TLE_G_TRS")==0) // it was request to generate position data with reference to geocentric TRS 
+                {
+                }
+                else if (strcmp(SimulationType,"TLE_H_CRS")==0) // it was request to generate position data with reference to solar system CRS
+                {
+                }
+            }
+       }
+        else if (memcmp(SimulationType,"PING", 4) ==0) // simulate ping messages from ground station to satellite (at spesific time from all ground stations)
         {
 
         }
-        if (strcmp(SimulationType,"TLE_EARTH_CRS")==0) // it was request to generate position data with reference to geocentric CRS 
+        else if (memcmp(SimulationType,"GPS",3) ==0) // simulate GPS's raw data from GPS satellites at specific time from GPS satellites
         {
+
         }
-        else if (strcmp(SimulationType,"TLE_EARTH_TRS")==0) // it was request to generate position data with reference to geocentric TRS 
+        else if (memcmp(SimulationType,"PULSAR",6) ==0) //simulate PULSAR receving signal from all pulsars at specific time
         {
+
         }
-        else if (strcmp(SimulationType,"TLE_SOLAR_CRS")==0) // it was request to generate position data with reference to solar system CRS
+        fclose(FileOut);
+        FileOut = NULL;
+        if (UrlTraSimPort!= 0) // yes! it is agly - that is a case when visualization output must to be submit to some server
         {
+            PostXMLToServer(SimulationOutputFile, UrlTraSimPort, szURLTraSimFileName, szTraSimFileName);
         }
-    }
-    else if (memcmp(SimulationType,"PING", 4) ==0) // simulate ping messages from ground station to satellite (at spesific time from all ground stations)
-    {
-
-    }
-    else if (memcmp(SimulationType,"GPS",3) ==0) // simulate GPS's raw data from GPS satellites at specific time from GPS satellites
-    {
-
-    }
-    else if (memcmp(SimulationType,"PULSAR",6) ==0) //simulate PULSAR receving signal from all pulsars at specific time
-    {
-
     }
 }
 void RunProp(TRAOBJ *SlS, TRAOBJ *Sat,TRAIMPLOBJ *Eng, long double ldFrom,long double ldFromTLEEpoch, long long iAllSec, int iItPerS, long double tSl)
@@ -10061,6 +10192,7 @@ int main(int argc, char * argv[])
             strcpy(szXMLFileName,argv[1]);
         }
     }
+
     if (strstr(szXMLFileName,"http://"))
     {
         // needs to copy original http file from server to a local with temporary name, than process temporary

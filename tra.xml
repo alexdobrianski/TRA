@@ -31,6 +31,18 @@
     <TRA:setting name="SimulationOutputTime" value="08/05/14 09:13:53:000" />
 </TRA:section>
 
+<TRA:section name="CalcInfo" value="0.0">
+	<gCRSmeasure>
+		<T>12345.12345</T>
+		<X>-1939661.2958679199</X>
+		<Y>6293776.5908203125</Y>
+		<Z>1596212.7329940796</Z>
+		<E>1000.0</E>
+		<D1>1000.0</D1>
+	</gCRSmeasure>
+</TRA:section>
+
+
 <TRA:section name="probs" value="0.0">
     <TRA:setting name="ProbM" value="67.5" />
     <TRA:setting name="ProbKeplerLine1" value="0 ISS (ZARYA)" />
