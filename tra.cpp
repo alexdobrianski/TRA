@@ -955,6 +955,121 @@ typedef struct TraObj
     long double D_Qnk_Dxr[MAX_COEF_J][MAX_COEF_J];
     long double D_Qnk_Dyr[MAX_COEF_J][MAX_COEF_J];
 
+    long double cos_precEps, sin_precEps;
+    long double cos_precTet, sin_precTet;
+    long double cos_precZ, sin_precZ;
+    long double cos_Lambda, sin_Lambda;
+    long double cos_nutEpsilon, sin_nutEpsilon;
+    long double cos_nutDFeta, sin_nutDFeta;
+
+
+    void gcrs_2_trs(long double &X, long double &Y, long double &Z)
+    {
+        long double tempX;
+        long double tempY;
+        long double tempZ;
+        // matrix Deps
+            cos_precEps= cos(precEps); sin_precEps= sin(precEps);
+            //| cos(eps)   sin(eps) 0 |
+            //| -sin(eps)  cos(eps) 0 |
+            //|   0           0     1 |
+            tempX =  cos_precEps * X + sin_precEps * Y;
+            tempY = -sin_precEps * X + cos_precEps * Y;
+            X = tempX; Y = tempY;
+       // matrix Dtet
+            cos_precTet = cos(precTet); sin_precTet = sin(precTet);
+            //| cos(tet)   0 sin(tet) | 
+            //|   0        1        0 |
+            //|- sin(tet)  0 cos(tet) |
+            tempX =  cos_precTet * X + sin_precTet * Z;
+            tempZ = -sin_precTet * X + cos_precTet * Z;
+            X = tempX; Z = tempZ;
+       // matrix Dz
+            cos_precZ =  cos(precZ); sin_precZ = sin(precZ);
+            //| cos(z)  -sin(z) 0 | 
+            //| sin(z)   cos(z) 0 |
+            //|   0      0     1 |
+            tempX =  cos_precZ * X - sin_precZ * Y;
+            tempY =  sin_precZ * X + cos_precZ * Y;
+            X = tempX; Y = tempY;
+
+       // matrix C nut Epsilon
+            cos_nutEpsilon = cos(nutEpsilon); sin_nutEpsilon = sin(nutEpsilon);
+            tempY =    cos_nutEpsilon * Y + sin_nutEpsilon * Z;
+            tempZ =  - sin_nutEpsilon * Y + cos_nutEpsilon * Z;
+            Y = tempY; Z = tempZ;
+            
+       // matrix C nut dFeta
+            cos_nutDFeta = cos(nutDFeta); sin_nutDFeta=sin(nutDFeta);
+            tempX =  cos_nutDFeta * X - sin_nutDFeta * Y;
+            tempY =  sin_nutDFeta * X + cos_nutDFeta * Y;
+            X = tempX; Y = tempY;
+
+       // matrix C nut Epsilon Trans
+            tempY =    cos_nutEpsilon * Y - sin_nutEpsilon * Z;
+            tempZ =    sin_nutEpsilon * Y + cos_nutEpsilon * Z;
+            Y = tempY; Z = tempZ;
+
+            // matrix B:
+            cos_Lambda = cos(Lambda); sin_Lambda = sin(Lambda);
+            //| cos(h)   sin(h) 0 |  |
+            //| -sin(h)  cos(h) 0 |
+            //|   0       0     1 |
+            tempX = cos_Lambda * X + sin_Lambda * Y;
+            tempY = -sin_Lambda * X + cos_Lambda * Y;
+            X = tempX; Y = tempY;
+    };
+    void trs_2_gcrs(long double &X, long double &Y, long double &Z)
+    {
+        long double tempX;
+        long double tempY;
+        long double tempZ;
+        // matrix (T) B:
+        //| cos(h)   -sin(h) 0 |  |
+        //| sin(h)   cos(h) 0 |
+        //|   0        0     1 |
+        tempX = cos_Lambda * X - sin_Lambda * Y;
+        tempY = sin_Lambda * X + cos_Lambda * Y;
+        X = tempX; Y = tempY;
+
+       // matrix (T) C nut Epsilon Trans
+            tempY =    cos_nutEpsilon * Y + sin_nutEpsilon * Z;
+            tempZ =  - sin_nutEpsilon * Y + cos_nutEpsilon * Z;
+            Y = tempY; Z = tempZ;
+
+       // matrix (T)C nut dFeta
+            tempX =  cos_nutDFeta * X + sin_nutDFeta * Y;
+            tempY = -sin_nutDFeta * X + cos_nutDFeta * Y;
+            X = tempX; Y = tempY;
+
+       // matrix C (T) nut Epsilon
+            tempY =    cos_nutEpsilon * Y - sin_nutEpsilon * Z;
+            tempZ =    sin_nutEpsilon * Y + cos_nutEpsilon * Z;
+            Y = tempY; Z = tempZ;
+
+        // matrix (T) Dz
+            //| cos(z)   sin(z) 0 | 
+            //|-sin(z)   cos(z) 0 |
+            //|   0      0     1 |
+            tempX =  cos_precZ * X + sin_precZ * Y;
+            tempY = -sin_precZ * X + cos_precZ * Y;
+            X = tempX; Y = tempY;
+        // matrix(T) Dtet
+            //| cos(tet)   0 -sin(tet) | 
+            //|   0        1        0  |
+            //| sin(tet)   0  cos(tet) |
+            tempX =  cos_precTet * X - sin_precTet * Z;
+            tempZ =  sin_precTet * X + cos_precTet * Z;
+            X = tempX; Z = tempZ;
+
+        // matrix (T) Deps
+            //| cos(eps)   -sin(eps) 0 |
+            //| sin(eps)    cos(eps) 0 |
+            //|   0           0     1 |
+            tempX =  cos_precEps * X - sin_precEps * Y;
+            tempY =  sin_precEps * X + cos_precEps * Y;
+            X = tempX; Y = tempY;
+    }
     long double GetDens(void)
     {
 #define _E_CONST 2.71828182845904523536028
@@ -1134,12 +1249,26 @@ typedef struct TraObj
 #endif
         return Ro;
     };
-    // do not remember == from where it was taken?  Some source code
-    long double GetH(long double X, long double Y, long double Z, long double a, long double b)
+        // LAT  == shirota
+        // LON == dolgota
+        // (1) sin(LAT) = z/R  => LAT = arcsin(z/R)
+        //
+        // (2) sin(LON) = - X / (R * cos(LAT))
+        //     LON = arcsin(- X / (R * cos(LAT)))
+        //     cos(LON) = Y / (R * cos(LAT))
+        //                                             AY
+        //      0-> PI/2     sin(LON)<0 cos(LON)>0     | sin(LON) >0 cos(LON) >0      0 -> -PI/2
+        //      -------------------------------------------------------------------------------> X
+        //      PI/2->PI     sin(LON)<0 cos(LON)<0     | sin(LON)>0 cos(LON) <0    -PI/2 -> -PI
+
+    // do not remember == from where code (below) was taken?  Some source code probably
+    long double GetH(long double X, long double Y, long double Z, long double a, long double b, long double &ldLAT, long double &ldLON)
     {
         long double r = sqrt(X*X + Y*Y);
         if (r ==0.0)
         {
+            ldLAT = 180.0/M_PI* asin(Z/sqrt(X*X + Y*Y + Z*Z));
+            ldLON = 0;
             return fabs(Z)-b;
         }
     
@@ -1161,6 +1290,8 @@ typedef struct TraObj
             tg_B0 = (Z+e_tilda_2*b*sin_3)/(r-e2*a*cos_3);
         }
         long double lat = atan(tg_B0);
+        ldLAT = lat*180/M_PI;
+        ldLON = - X / (sqrt(X*X + Y*Y + Z*Z) * cos(lat))*180/M_PI;
         long double n = c /sqrt(1.0 +e_tilda_2* cos(lat)*cos(lat));
         if (fabs(tg_B0) <=1.0)
             return r/cos(lat) -n;
@@ -1182,13 +1313,11 @@ typedef struct TraObj
         long double _y[TOTAL_COEF];
         long double _z[TOTAL_COEF];
         long double _x20,_y20,_z20;
-        long double cos_precEps, sin_precEps;
-        long double cos_precTet, sin_precTet;
-        long double cos_precZ, sin_precZ;
-        long double cos_Lambda, sin_Lambda;
-        long double cos_nutEpsilon, sin_nutEpsilon;
-        long double cos_nutDFeta, sin_nutDFeta;
 
+#if 1
+        gcrs_2_trs(ValX, ValY, ValZ);
+        tempX = ValX; tempY = ValY; tempZ = ValZ;
+#else
         // matrix Deps
             cos_precEps= cos(precEps); sin_precEps= sin(precEps);
             //| cos(eps)   sin(eps) 0 |
@@ -1239,16 +1368,18 @@ typedef struct TraObj
             tempX = cos_Lambda * ValX + sin_Lambda * ValY;
             tempY = -sin_Lambda * ValX + cos_Lambda * ValY;
 
-        // now earth in Terra Ref System
-        // it is possible to calculate H to get air drag
-        if (--iAtm[iCurSat] == 0)
-        {
-            iAtm[iCurSat] = 479; // onc per 1000 iteration == 1 per sec
-            h[iCurSat] = H =GetH(tempX, tempY, tempZ, 6378245.000, 6356863.019);
-            ro[iCurSat] = Ro=GetDens(); // 15C
-        }
+#endif
+       // now earth in Terra Ref System
+       // it is possible to calculate H to get air drag
+       if (--iAtm[iCurSat] == 0)
+       {
+           long double dlLAT, dlLON;
+           iAtm[iCurSat] = 479; // onc per 1000 iteration == 1 per sec
+           h[iCurSat] = H =GetH(tempX, tempY, tempZ, 6378245.000, 6356863.019,dlLAT,dlLON);
+           ro[iCurSat] = Ro=GetDens(); // 15C
+       }
 
-        sinTetta =ValZ/ValR;
+       sinTetta =ValZ/ValR;
 
         XdivR =   tempX/ValR;
         YdivR =   tempY/ValR;
@@ -1442,6 +1573,9 @@ typedef struct TraObj
         }
         X += _x20*R0divR[2];  Y += _y20*R0divR[2];  Z += _z20*R0divR[2];
 
+#if 1
+        trs_2_gcrs(X, Y, Z);
+#else
         // matrix (T) B:
         //| cos(h)   -sin(h) 0 |  |
         //| sin(h)   cos(h) 0 |
@@ -1490,6 +1624,7 @@ typedef struct TraObj
             tempX =  cos_precEps * X - sin_precEps * Y;
             tempY =  sin_precEps * X + cos_precEps * Y;
             X = tempX; Y = tempY;
+#endif
     };
 #else
     void FastSummXYZ( long double ValX, long double ValY, long double ValZ, long double ValR, long double &X, long double &Y, long double &Z, int iCurSat)
@@ -9797,7 +9932,7 @@ void RunSim(TRAOBJ *SlS, TRAOBJ *Sat,TRAIMPLOBJ *Eng, long double ldFrom,long do
                     tProbX=tProbX*XKMPER/AE*1000.0;                 tProbY=tProbY*XKMPER/AE*1000.0;                 tProbZ=tProbZ*XKMPER/AE*1000.0;
 			        tProbVX=tProbVX*XKMPER/AE*XMNPDA/86400.*1000.0;	tProbVY=tProbVY*XKMPER/AE*XMNPDA/86400.*1000.0;	tProbVZ=tProbVZ*XKMPER/AE*XMNPDA/86400.*1000.0;
                 }
-                else
+                else    
                 {
                     KeplerPosition(Sat->ProbJD[iCheck],SimulationOutputTime[i],      // prob epoch, and curent time
 	    			    Sat->ProbTSec[iCheck], Sat->ProbEcc[iCheck], Sat->ProbIncl[iCheck], Sat->ProbAscNode[iCheck],  Sat->ProbArgPer[iCheck], Sat->ProbMeanAnom[iCheck], BSTAR,
@@ -9807,20 +9942,50 @@ void RunSim(TRAOBJ *SlS, TRAOBJ *Sat,TRAIMPLOBJ *Eng, long double ldFrom,long do
 
                 if (strcmp(SimulationType,"TLE_G_CRS")==0) // it was request to generate position data with reference to geocentric CRS 
                 {
-                    //<Sat0>
-                    //   <X>-1939661.2958679199</X>
-                    //   <Y>6293776.5908203125</Y>
-                    //   <Z>1596212.7329940796</Z>
-                    //</Sat0>
-                    //     <TRA:setting name="dStartJD0" value="2451544.5" />
                     fprintf(FileOut,"\n\t<gCRSmeasure>");
-                    fprintf(FileOut,"\n\t\t<T>%.8f</T>\n\t\t<X>%.5f</X> <Y>%.5f</Y> <Z>%.5f</Z>", SimulationOutputTime[i],tProbX, tProbY, tProbZ);
+                    fprintf(FileOut,"\n\t\t<T>%.11f</T>\n\t\t<X>%.5f</X>\n\t\t<Y>%.5f</Y>\n\t\t<Z>%.5f</Z>", SimulationOutputTime[i],tProbX, tProbY, tProbZ);
+                    fprintf(FileOut,"\n\t\t<E>1000</E1>\n\t\t<D1>0.0</D1>\n\t\t<E1>0.0</E1>\n\t\t<T2>0.0</T2>\n\t\t<E2>0.0</E2>\n\t\t<D3>0.0</D3>\n\t\t<E3>0.0</E3>");
+                    fprintf(FileOut,"\n\t</gCRSmeasure>");
                 }
                 else if (strcmp(SimulationType,"TLE_G_TRS")==0) // it was request to generate position data with reference to geocentric TRS 
                 {
+                    SYSTEMTIME ThatTime;
+                    long double dSimTLEEpoch = ConvertJulianDayToDateAndTime(SimulationOutputTime[i], &ThatTime);
+                    Sat->Lambda = GreenwichAscensionFromTLEEpoch(dSimTLEEpoch,Sat->precEps,Sat->precTet,Sat->precZ,Sat->nutEpsilon,Sat->nutDFeta);
+                    Sat->gcrs_2_trs(tProbX, tProbY, tProbZ);
+                    long double dlLAT, dlLON;
+                    long double H = Sat->GetH(tProbX, tProbY, tProbZ, 6378245.000, 6356863.019,dlLAT, dlLON);
+                    fprintf(FileOut,"\n\t<gTRSmeasure>");
+                    fprintf(FileOut,"\n\t\t<T>%.11f</T>\n\t\t<X>%.5f</X>\n\t\t<Y>%.5f</Y>\n\t\t<Z>%.5f</Z>", SimulationOutputTime[i],tProbX, tProbY, tProbZ);
+                    fprintf(FileOut,"\n\t\t<H>%.5f</H>\n\t\t<LAT>%.5f</LAT>\n\t\t<LON>%.5f</LON>", H,dlLAT, dlLON);
+                    fprintf(FileOut,"\n\t\t<E>1000</E1>\n\t\t<D1>0.0</D1>\n\t\t<E1>0.0</E1>\n\t\t<T2>0.0</T2>\n\t\t<E2>0.0</E2>\n\t\t<D3>0.0</D3>\n\t\t<E3>0.0</E3>");
+                    fprintf(FileOut,"\n\t</gTRSmeasure>");
                 }
                 else if (strcmp(SimulationType,"TLE_H_CRS")==0) // it was request to generate position data with reference to solar system CRS
                 {
+                    stateType  StateEarth;
+                    stateType  StateMoon;
+                    double dEMRAT = Find_DataInHeader("EMRAT ");
+                    double dAU = Find_DataInHeader("AU    ")*1000.0;
+
+                    Interpolate_State( SimulationOutputTime[i], EARTH , &StateEarth );
+                    Interpolate_State( SimulationOutputTime[i], MOON , &StateMoon );
+                    MoonX = SolarSystem.X[MOON];    MoonY = SolarSystem.Y[MOON];    MoonZ = SolarSystem.Z[MOON];
+
+                    EarthX = SolarSystem.X[EARTH];  EarthY = SolarSystem.Y[EARTH];  EarthZ = SolarSystem.Z[EARTH];
+                    // this error checks position of earth-moon
+                    // barycentre against JPL
+
+                    double BSX = StateEarth.Position[0]*1000.0 ;
+                    double BSY = StateEarth.Position[1]*1000.0 ;
+                    double BSZ = StateEarth.Position[2]*1000.0 ;
+                    SlS->X[EARTH] = BSX - (StateMoon.Position[0]*1000.0/(dEMRAT+1));//*SlS->M[MOON]/(SlS->M[EARTH]+SlS->M[MOON]));
+                    SlS->Y[EARTH] = BSY - (StateMoon.Position[1]*1000.0/(dEMRAT+1));//*SlS->M[MOON]/(SlS->M[EARTH]+SlS->M[MOON]));
+                    SlS->Z[EARTH] = BSZ - (StateMoon.Position[2]*1000.0/(dEMRAT+1));//*SlS->M[MOON]/(SlS->M[EARTH]+SlS->M[MOON]));
+                    fprintf(FileOut,"\n\t<hCRSmeasure>");
+                    fprintf(FileOut,"\n\t\t<T>%.11f</T>\n\t\t<X>%.5f</X>\n\t\t<Y>%.5f</Y>\n\t\t<Z>%.5f</Z>", SimulationOutputTime[i],tProbX+SlS->X[EARTH], tProbY+SlS->Y[EARTH], tProbZ+SlS->Z[EARTH]);
+                    fprintf(FileOut,"\n\t\t<E>1000</E1>\n\t\t<D1>0.0</D1>\n\t\t<E1>0.0</E1>\n\t\t<T2>0.0</T2>\n\t\t<E2>0.0</E2>\n\t\t<D3>0.0</D3>\n\t\t<E3>0.0</E3>");
+                    fprintf(FileOut,"\n\t</hCRSmeasure>");
                 }
             }
        }
