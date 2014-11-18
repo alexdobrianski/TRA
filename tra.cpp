@@ -2872,6 +2872,27 @@ char CalulationOutputFile[1024]={"@tra_calc.xml"}; // in CALC mode the output fi
 int UrlTraCalcPort=80; 
 char szURLTraCalcFileName[1024];
 char szTraCalcFileName[1024];
+typedef struct Mesurement
+{
+    int NearBody;
+
+    long double T;
+    long double X, Y, Z;
+    long double H,LAT, LON;
+    long double Err;
+    long double D1, Err1;
+    long double T2, ErrT2;
+    long double D3, ErrD3;
+    long double VX;
+    long double VY;
+    long double VZ;
+
+
+} MESAUREMENT, *PMEASUREMENT;
+
+#define MAX_MEASURES 128
+MESAUREMENT measures[MAX_MEASURES];
+int iMAxMesaures;
 
 int EnginesCount = 0;
 #define MAX_ENGINES 6
@@ -7498,7 +7519,7 @@ void ParamProb(char *szString)
     char valX, valY, valZ, valT;
     XML_BEGIN;
     ///////////////////////////////////////////////////////////////////////////////////////Calcinfo
-    XML_SECTION(CalcInfo);
+    XML_SECTION(CalcInfo)
     IF_XML_READ(CalculationOutputFile)
     {
         strcpy(CalulationOutputFile, pszQuo);
@@ -7511,28 +7532,136 @@ void ParamProb(char *szString)
             UrlTraCalcPort = 0;
     }
     XML_SECTION_GROUP_SEPARATOR
-//} else {
-    XML_GROUP(gCRSmeasure)
-        IF_XML_ELEMENT(X)
-        {
-            valX = atof(pszQuo);
-        }
-
-        IF_XML_ELEMENT(Y)
-        {
-            valY = atof(pszQuo);
-        }
-
-        IF_XML_ELEMENT(Z)
-        {
-            valZ = atof(pszQuo);
-        }
-
+    //===============================================================gCRSmeasure Geocent Cel ref Sys
+    XML_GROUP(gTRSmeasure)
         IF_XML_ELEMENT(T)
         {
-            valT = atof(pszQuo);
+            if (++iMAxMesaures>MAX_MEASURES)
+                iMAxMesaures--;
+            long double ld1=0,ld2=0;
+            ConvertDateFromXML(pszQuo, ld1, measures[iMAxMesaures-1].T, ld2);
+            measures[iMAxMesaures-1].X =0;
+            measures[iMAxMesaures-1].Y =0;
+            measures[iMAxMesaures-1].Z =0;
         }
+        IF_XML_ELEMENT(M)
+            measures[iMAxMesaures-1].NearBody =atoi(pszQuo);
+        IF_XML_ELEMENT(X)
+            measures[iMAxMesaures-1].X =atof(pszQuo);
+        IF_XML_ELEMENT(Y)
+            measures[iMAxMesaures-1].Y =atof(pszQuo);
+        IF_XML_ELEMENT(Z)
+            measures[iMAxMesaures-1].Z =atof(pszQuo);
+        IF_XML_ELEMENT(H)
+            measures[iMAxMesaures-1].H =atof(pszQuo);
+        IF_XML_ELEMENT(LAT)
+            measures[iMAxMesaures-1].LAT =atof(pszQuo);
+        IF_XML_ELEMENT(LON)
+            measures[iMAxMesaures-1].LON =atof(pszQuo);
+        IF_XML_ELEMENT(E)
+            measures[iMAxMesaures-1].Err =atof(pszQuo);
+        IF_XML_ELEMENT(D1)
+            measures[iMAxMesaures-1].D1 =atof(pszQuo);
+        IF_XML_ELEMENT(E1)
+            measures[iMAxMesaures-1].Err1 =atof(pszQuo);
+        IF_XML_ELEMENT(T2)
+            measures[iMAxMesaures-1].T2 =atof(pszQuo);
+        IF_XML_ELEMENT(E2)
+            measures[iMAxMesaures-1].ErrT2 =atof(pszQuo);
+        IF_XML_ELEMENT(D3)
+            measures[iMAxMesaures-1].D3 =atof(pszQuo);
+        IF_XML_ELEMENT(E3)
+            measures[iMAxMesaures-1].ErrD3 =atof(pszQuo);
     XML_GROUP_END
+
+    XML_GROUP(gCRSmeasure)
+        IF_XML_ELEMENT(T)
+        {
+            if (++iMAxMesaures>MAX_MEASURES)
+                iMAxMesaures--;
+            long double ld1=0,ld2=0;
+            ConvertDateFromXML(pszQuo, ld1, measures[iMAxMesaures-1].T, ld2);
+        }
+        IF_XML_ELEMENT(M)
+            measures[iMAxMesaures-1].NearBody =atoi(pszQuo);
+        IF_XML_ELEMENT(X)
+            measures[iMAxMesaures-1].X =atof(pszQuo);
+        IF_XML_ELEMENT(Y)
+            measures[iMAxMesaures-1].Y =atof(pszQuo);
+        IF_XML_ELEMENT(Z)
+        {
+            measures[iMAxMesaures-1].Z =atof(pszQuo);
+            measures[iMAxMesaures-1].H =0;
+            measures[iMAxMesaures-1].LAT =0;
+            measures[iMAxMesaures-1].LON =0;
+        }
+        IF_XML_ELEMENT(E)
+            measures[iMAxMesaures-1].Err =atof(pszQuo);
+        IF_XML_ELEMENT(D1)
+            measures[iMAxMesaures-1].D1 =atof(pszQuo);
+        IF_XML_ELEMENT(E1)
+            measures[iMAxMesaures-1].Err1 =atof(pszQuo);
+        IF_XML_ELEMENT(T2)
+            measures[iMAxMesaures-1].T2 =atof(pszQuo);
+        IF_XML_ELEMENT(E2)
+            measures[iMAxMesaures-1].ErrT2 =atof(pszQuo);
+        IF_XML_ELEMENT(D3)
+            measures[iMAxMesaures-1].D3 =atof(pszQuo);
+        IF_XML_ELEMENT(E3)
+            measures[iMAxMesaures-1].ErrD3 =atof(pszQuo);
+    XML_GROUP_END
+
+    XML_GROUP(hCRSmeasure)
+        IF_XML_ELEMENT(T)
+        {
+            if (++iMAxMesaures>MAX_MEASURES)
+                iMAxMesaures--;
+            long double ld1=0,ld2=0;
+            ConvertDateFromXML(pszQuo, ld1, measures[iMAxMesaures-1].T, ld2);
+            measures[iMAxMesaures-1].X =0;
+            measures[iMAxMesaures-1].Y =0;
+            measures[iMAxMesaures-1].Z =0;
+            measures[iMAxMesaures-1].H =0;
+            measures[iMAxMesaures-1].LAT =0;
+            measures[iMAxMesaures-1].LON =0;
+            measures[iMAxMesaures-1].Err =0;
+            measures[iMAxMesaures-1].D1 =0;
+            measures[iMAxMesaures-1].Err1 =0;
+            measures[iMAxMesaures-1].T2 =0;
+            measures[iMAxMesaures-1].ErrT2 =0;
+            measures[iMAxMesaures-1].D3 =0;
+            measures[iMAxMesaures-1].ErrD3 =0;
+        }
+        IF_XML_ELEMENT(M)
+            measures[iMAxMesaures-1].NearBody =atoi(pszQuo);
+        IF_XML_ELEMENT(X)
+            measures[iMAxMesaures-1].X =atof(pszQuo);
+        IF_XML_ELEMENT(Y)
+            measures[iMAxMesaures-1].Y =atof(pszQuo);
+        IF_XML_ELEMENT(Z)
+            measures[iMAxMesaures-1].Z =atof(pszQuo);
+        IF_XML_ELEMENT(H)
+            measures[iMAxMesaures-1].H =atof(pszQuo);
+        IF_XML_ELEMENT(LAT)
+            measures[iMAxMesaures-1].LAT =atof(pszQuo);
+        IF_XML_ELEMENT(LON)
+            measures[iMAxMesaures-1].LON =atof(pszQuo);
+        IF_XML_ELEMENT(E)
+            measures[iMAxMesaures-1].Err =atof(pszQuo);
+        IF_XML_ELEMENT(D1)
+            measures[iMAxMesaures-1].D1 =atof(pszQuo);
+        IF_XML_ELEMENT(E1)
+            measures[iMAxMesaures-1].Err1 =atof(pszQuo);
+        IF_XML_ELEMENT(T2)
+            measures[iMAxMesaures-1].T2 =atof(pszQuo);
+        IF_XML_ELEMENT(E2)
+            measures[iMAxMesaures-1].ErrT2 =atof(pszQuo);
+        IF_XML_ELEMENT(D3)
+            measures[iMAxMesaures-1].D3 =atof(pszQuo);
+        IF_XML_ELEMENT(E3)
+            measures[iMAxMesaures-1].ErrD3 =atof(pszQuo);
+    XML_GROUP_END
+
     XML_SECTION_END
 
     ///////////////////////////////////////////////////////////////////////////////////////SimInfo
@@ -9885,6 +10014,186 @@ NextTry:
 #endif
 
 }
+void JustRun(TRAOBJ *SlS, TRAOBJ *Sat,TRAIMPLOBJ *Eng, long double ldFrom,long double ldFromTLEEpoch, long long iAllSec, int iItPerS, int irestRun, long double tSl)
+{
+    SlS->TimeSl = tSl;
+    SlS->TimeSl_2 = tSl*tSl;
+
+    long long iSec;
+    int iPortionSec;
+    for (iSec = 0; iSec < iAllSec; iSec++)
+    {
+        for (iPortionSec = 0; iPortionSec < iItPerS; iPortionSec++)
+        {
+            IteraSat(1, SlS, Sat,ldFromTLEEpoch + (iSec +   (long double)iPortionSec/(long double)iItPerS) /86400.0) ;
+            IteraSolarSystem(TRUE, SlS);
+        }
+    }
+    for (iPortionSec = 0; iPortionSec < irestRun; iPortionSec++)
+    {
+        IteraSat(1, SlS, Sat,ldFromTLEEpoch + (iSec +   (long double)iPortionSec/(long double)iItPerS) /86400.0) ;
+        IteraSolarSystem(TRUE, SlS);
+    }
+}
+unsigned char bRandBuffer[2048];
+int iRa=sizeof(bRandBuffer)/sizeof(unsigned long);
+void Ra(unsigned char *bBuffer, int iBufferSize)
+{
+    HCRYPTPROV hCryptProv = 0;
+    if (!CryptAcquireContextW(&hCryptProv,0, 0, PROV_RSA_FULL, 0))
+    {
+        hCryptProv = NULL;
+        if (CryptAcquireContextW(&hCryptProv, 0, 0, PROV_RSA_FULL, CRYPT_NEWKEYSET))
+        {
+        }
+    }
+    if (hCryptProv)
+        CryptGenRandom(hCryptProv, iBufferSize, bRandBuffer);
+    if (hCryptProv)
+        CryptReleaseContext(hCryptProv, 0);
+}
+unsigned long ra(void)
+{
+    if (iRa >= (sizeof(bRandBuffer)/sizeof(unsigned long)))
+    {
+        Ra(bRandBuffer, sizeof(bRandBuffer));
+        iRa =0;
+    }
+    return ((unsigned long*)&bRandBuffer[0])[iRa++];
+}
+void GetRandomNVector(long double &Xn, long double &Yn, long double&Zn)
+{
+    Xn = -(long double)ra();
+    Yn = -(long double)ra();
+    Zn = -(long double)ra();
+    Xn += (long double)ra();
+    Yn += (long double)ra();
+    Zn += (long double)ra();
+    long double Rn = sqrt(Xn*Xn + Yn*Yn + Zn*Zn);
+    Xn = Xn/Rn; Yn = Yn/Rn; Zn = Zn/Rn;
+}
+void SetCalcSat(TRAOBJ *Sat, TRAOBJ *SlS, int iSat, long double X, long double Y, long double Z, long double VX, long double VY, long double VZ)
+{
+    Sat->X[iSat] += X; Sat->Y[iSat] += Y; Sat->Z[iSat] += Z;
+    Sat->VX[iSat] += VX; Sat->VY[iSat] += VY; Sat->Z[iSat] += Z;
+    Sat->X0divDt2[iSat]=Sat->X[iSat] /SlS->TimeSl_2;
+    Sat->Y0divDt2[iSat]=Sat->Y[iSat] /SlS->TimeSl_2;
+    Sat->Z0divDt2[iSat]=Sat->Z[iSat] /SlS->TimeSl_2;
+    Sat->VX0divDt[iSat]=Sat->VX[iSat] /SlS->TimeSl;
+    Sat->VY0divDt[iSat]=Sat->VY[iSat] /SlS->TimeSl;
+    Sat->VZ0divDt[iSat]=Sat->VZ[iSat] /SlS->TimeSl;
+    Sat->iAtm[iSat] = 1;
+    Sat->CountNx = 0; Sat->CountNy = 0; Sat->CountNz = 0;
+    Sat->RunOne = TRUE;
+}
+void RunCalc(TRAOBJ *SlS, TRAOBJ *Sat,TRAIMPLOBJ *Eng, long double ldFrom,long double ldFromTLEEpoch, long long iAllSec, int iItPerS, long double tSl)
+{
+    SlS->TimeSl = tSl;
+    SlS->TimeSl_2 = tSl*tSl;
+
+    // adjust 
+    for (int i =0; i< iMAxMesaures; i++)
+    {
+        if (measures[i].NearBody >0) //gCRSmeasure -> hCRSmeasure
+        {
+            stateType  StateEarth;
+            stateType  StateMoon;
+            double dEMRAT = Find_DataInHeader("EMRAT ");
+            double dAU = Find_DataInHeader("AU    ")*1000.0;
+
+            Interpolate_State( measures[i].T, EARTH , &StateEarth );
+            Interpolate_State( measures[i].T, MOON , &StateMoon );
+            double BSX = StateEarth.Position[0]*1000.0 ;
+            double BSY = StateEarth.Position[1]*1000.0 ;
+            double BSZ = StateEarth.Position[2]*1000.0 ;
+            SlS->X[EARTH] = BSX - (StateMoon.Position[0]*1000.0/(dEMRAT+1));//*SlS->M[MOON]/(SlS->M[EARTH]+SlS->M[MOON]));
+            SlS->Y[EARTH] = BSY - (StateMoon.Position[1]*1000.0/(dEMRAT+1));//*SlS->M[MOON]/(SlS->M[EARTH]+SlS->M[MOON]));
+            SlS->Z[EARTH] = BSZ - (StateMoon.Position[2]*1000.0/(dEMRAT+1));//*SlS->M[MOON]/(SlS->M[EARTH]+SlS->M[MOON]));
+            measures[i].X += SlS->X[EARTH];
+            measures[i].Y += SlS->Y[EARTH];
+            measures[i].Z += SlS->Z[EARTH];
+            if (i==0) // for the first measure on first sat set initial velocity
+            {
+                //Sat->VX[0] = StateEarth.Velocity[0] * 1000.0; Sat->VY[0] = StateEarth.Velocity[1] * 1000.0; Sat->VZ[0] = StateEarth.Velocity[3] * 1000.0;
+            }
+        }
+    }
+    // set ininials velositi is equal EARTH velocity
+    long double PError = measures[0].Err;
+    long double VelError = 0.07;
+    //for (int m = 0; m < iMAxMesaures; m++)
+    int m = 0;
+    for (int n=0; n <13; n++)
+    {
+        TRAOBJ SolS1=*SlS;
+        TRAOBJ Sat11= *Sat; // 1 error by position 1 error by velocity
+
+        long double ldRunFrom =ldFrom;
+        SYSTEMTIME ThatTime;
+        long double ldRunFromTLEEpoch = ConvertJulianDayToDateAndTime(ldRunFrom, &ThatTime);
+        long long iRunSec = (measures[m+1].T - measures[m].T)*(24*60*60);
+
+        int irestRun = (((measures[m+1].T - measures[m].T) - (long double)(iRunSec/(24.0*60.0*60.0))))*24.0*60.0*60.0* iItPerS*10;
+        irestRun +=1;
+        irestRun/=10;
+
+        long double XYZ_err = PError;
+        long double VXYZerr = VelError;
+        long double Xn[9], Yn[9], Zn[9];
+        long double VXn[9], VYn[9], VZn[9];
+        long double Xe[9], Ye[9], Ze[9];
+        LONG_DOUBLE_INT_VAR _position_[9];
+        LONG_DOUBLE_INT_VAR _velosity_[9];
+        int iC = 0;
+        long double rmin;
+        int iCmin = 0;
+        stateType  StateEarth;
+        Interpolate_State( ldRunFrom, EARTH , &StateEarth );
+        for (iC=0; iC < 9; iC++)
+        {
+            XYZ_err = PError * (long double)(0xffffff & ra())/((long double)(0xffffff & ra())+(long double)(0xffffff & ra()));
+            VXYZerr = VelError * (long double)(0xffffff & ra())/((long double)(0xffffff & ra())+(long double)(0xffffff & ra()));
+
+            if (iC)
+            {
+                GetRandomNVector(Xn[iC], Yn[iC], Zn[iC]);
+                Xn[iC]*= XYZ_err; Yn[iC]*= XYZ_err; Zn[iC]*= XYZ_err;
+
+                GetRandomNVector(VXn[iC], VYn[iC], VZn[iC]);
+                VXn[iC]*= VXYZerr; VYn[iC]*= VXYZerr; VZn[iC]*= VXYZerr;
+            }
+            else
+            {
+                Xn[iC] =0; Yn[iC] =0; Zn[iC] =0; VXn[iC] =0; VYn[iC] =0; VZn[iC] =0;
+            }
+            SolS1=*SlS; Sat11= *Sat;
+            SetCalcSat(&Sat11, &SolS1, 0, Xn[iC], Yn[iC], Zn[iC], VXn[iC], VYn[iC], VZn[iC]);
+            JustRun(&SolS1, &Sat11,Eng, ldRunFrom,ldRunFromTLEEpoch, iRunSec, iItPerS, irestRun, tSl);
+            Xe[iC] = Sat11.X[0]; Ye[iC] = Sat11.Y[0]; Ze[iC] = Sat11.Z[0];
+            _position_[iC] = Sat11._position_[0];_velosity_[iC] = Sat11._velosity_[0];
+            long double vrmin = sqrt((Xe[iC]-measures[1].X)*(Xe[iC]-measures[1].X)+(Ye[iC]-measures[1].Y)*(Ye[iC]-measures[1].Y)+(Ze[iC]-measures[1].Z)*(Ze[iC]-measures[1].Z));
+            if (iC==0)
+                rmin = vrmin;
+            else
+            {
+                if (vrmin < rmin)
+                {
+                    iCmin = iC; rmin = vrmin;
+                }
+            }
+                
+            printf("\n% dE=,%.5f,%.5f,%.5f,%.5f", n, Xe[iC]-measures[1].X, Ye[iC]-measures[1].Y,Ze[iC]-measures[1].Z,sqrt((Xe[iC]-measures[1].X)*(Xe[iC]-measures[1].X)+(Ye[iC]-measures[1].Y)*(Ye[iC]-measures[1].Y)+(Ze[iC]-measures[1].Z)*(Ze[iC]-measures[1].Z))
+                    );
+            printf("\n  X=%.5f,%.5f,%.5f,V=%.5f,%.5f,%.5f", Xn[iC],Yn[iC],Zn[iC], VXn[iC],VYn[iC],VZn[iC]);
+        }
+        Sat->X[0] += Xn[iCmin];   Sat->Y[0] += Yn[iCmin];   Sat->Z[0] += Zn[iCmin];
+        Sat->VX[0] += VXn[iCmin]; Sat->VY[0] += VYn[iCmin]; Sat->VZ[0] += VZn[iCmin];
+        if (iCmin)
+            VelError /=2;
+        else
+            VelError /=1.5;
+    }
+}
 void RunSim(TRAOBJ *SlS, TRAOBJ *Sat,TRAIMPLOBJ *Eng, long double ldFrom,long double ldFromTLEEpoch, long long iAllSec, int iItPerS, long double tSl)
 {
     FILE *FileOut = fopen(SimulationTempOutputFile,"w");
@@ -9943,8 +10252,9 @@ void RunSim(TRAOBJ *SlS, TRAOBJ *Sat,TRAIMPLOBJ *Eng, long double ldFrom,long do
                 if (strcmp(SimulationType,"TLE_G_CRS")==0) // it was request to generate position data with reference to geocentric CRS 
                 {
                     fprintf(FileOut,"\n\t<gCRSmeasure>");
+                    fprintf(FileOut,"\n\t <M>%d</M>",EARTH);
                     fprintf(FileOut,"\n\t\t<T>%.11f</T>\n\t\t<X>%.5f</X>\n\t\t<Y>%.5f</Y>\n\t\t<Z>%.5f</Z>", SimulationOutputTime[i],tProbX, tProbY, tProbZ);
-                    fprintf(FileOut,"\n\t\t<E>1000</E1>\n\t\t<D1>0.0</D1>\n\t\t<E1>0.0</E1>\n\t\t<T2>0.0</T2>\n\t\t<E2>0.0</E2>\n\t\t<D3>0.0</D3>\n\t\t<E3>0.0</E3>");
+                    fprintf(FileOut,"\n\t\t<E>1000</E>\n\t\t<D1>0.0</D1>\n\t\t<E1>0.0</E1>\n\t\t<T2>0.0</T2>\n\t\t<E2>0.0</E2>\n\t\t<D3>0.0</D3>\n\t\t<E3>0.0</E3>");
                     fprintf(FileOut,"\n\t</gCRSmeasure>");
                 }
                 else if (strcmp(SimulationType,"TLE_G_TRS")==0) // it was request to generate position data with reference to geocentric TRS 
@@ -9954,11 +10264,14 @@ void RunSim(TRAOBJ *SlS, TRAOBJ *Sat,TRAIMPLOBJ *Eng, long double ldFrom,long do
                     Sat->Lambda = GreenwichAscensionFromTLEEpoch(dSimTLEEpoch,Sat->precEps,Sat->precTet,Sat->precZ,Sat->nutEpsilon,Sat->nutDFeta);
                     Sat->gcrs_2_trs(tProbX, tProbY, tProbZ);
                     long double dlLAT, dlLON;
+                    // LON == negative it is east; positive is west
                     long double H = Sat->GetH(tProbX, tProbY, tProbZ, 6378245.000, 6356863.019,dlLAT, dlLON);
+
                     fprintf(FileOut,"\n\t<gTRSmeasure>");
+                    fprintf(FileOut,"\n\t <M>%d</M>",EARTH);
                     fprintf(FileOut,"\n\t\t<T>%.11f</T>\n\t\t<X>%.5f</X>\n\t\t<Y>%.5f</Y>\n\t\t<Z>%.5f</Z>", SimulationOutputTime[i],tProbX, tProbY, tProbZ);
-                    fprintf(FileOut,"\n\t\t<H>%.5f</H>\n\t\t<LAT>%.5f</LAT>\n\t\t<LON>%.5f</LON>", H,dlLAT, dlLON);
-                    fprintf(FileOut,"\n\t\t<E>1000</E1>\n\t\t<D1>0.0</D1>\n\t\t<E1>0.0</E1>\n\t\t<T2>0.0</T2>\n\t\t<E2>0.0</E2>\n\t\t<D3>0.0</D3>\n\t\t<E3>0.0</E3>");
+                    fprintf(FileOut,"\n\t\t<H>%.5f</H>\n\t\t<LAT>%.11f</LAT>\n\t\t<LON>%.11f</LON>", H,dlLAT, dlLON);
+                    fprintf(FileOut,"\n\t\t<E>1000</E>\n\t\t<D1>0.0</D1>\n\t\t<E1>0.0</E1>\n\t\t<T2>0.0</T2>\n\t\t<E2>0.0</E2>\n\t\t<D3>0.0</D3>\n\t\t<E3>0.0</E3>");
                     fprintf(FileOut,"\n\t</gTRSmeasure>");
                 }
                 else if (strcmp(SimulationType,"TLE_H_CRS")==0) // it was request to generate position data with reference to solar system CRS
@@ -9970,11 +10283,6 @@ void RunSim(TRAOBJ *SlS, TRAOBJ *Sat,TRAIMPLOBJ *Eng, long double ldFrom,long do
 
                     Interpolate_State( SimulationOutputTime[i], EARTH , &StateEarth );
                     Interpolate_State( SimulationOutputTime[i], MOON , &StateMoon );
-                    MoonX = SolarSystem.X[MOON];    MoonY = SolarSystem.Y[MOON];    MoonZ = SolarSystem.Z[MOON];
-
-                    EarthX = SolarSystem.X[EARTH];  EarthY = SolarSystem.Y[EARTH];  EarthZ = SolarSystem.Z[EARTH];
-                    // this error checks position of earth-moon
-                    // barycentre against JPL
 
                     double BSX = StateEarth.Position[0]*1000.0 ;
                     double BSY = StateEarth.Position[1]*1000.0 ;
@@ -9983,8 +10291,9 @@ void RunSim(TRAOBJ *SlS, TRAOBJ *Sat,TRAIMPLOBJ *Eng, long double ldFrom,long do
                     SlS->Y[EARTH] = BSY - (StateMoon.Position[1]*1000.0/(dEMRAT+1));//*SlS->M[MOON]/(SlS->M[EARTH]+SlS->M[MOON]));
                     SlS->Z[EARTH] = BSZ - (StateMoon.Position[2]*1000.0/(dEMRAT+1));//*SlS->M[MOON]/(SlS->M[EARTH]+SlS->M[MOON]));
                     fprintf(FileOut,"\n\t<hCRSmeasure>");
+                    fprintf(FileOut,"\n\t <M>-1</M>");
                     fprintf(FileOut,"\n\t\t<T>%.11f</T>\n\t\t<X>%.5f</X>\n\t\t<Y>%.5f</Y>\n\t\t<Z>%.5f</Z>", SimulationOutputTime[i],tProbX+SlS->X[EARTH], tProbY+SlS->Y[EARTH], tProbZ+SlS->Z[EARTH]);
-                    fprintf(FileOut,"\n\t\t<E>1000</E1>\n\t\t<D1>0.0</D1>\n\t\t<E1>0.0</E1>\n\t\t<T2>0.0</T2>\n\t\t<E2>0.0</E2>\n\t\t<D3>0.0</D3>\n\t\t<E3>0.0</E3>");
+                    fprintf(FileOut,"\n\t\t<E>1000</E>\n\t\t<D1>0.0</D1>\n\t\t<E1>0.0</E1>\n\t\t<T2>0.0</T2>\n\t\t<E2>0.0</E2>\n\t\t<D3>0.0</D3>\n\t\t<E3>0.0</E3>");
                     fprintf(FileOut,"\n\t</hCRSmeasure>");
                 }
             }
@@ -10519,6 +10828,7 @@ int main(int argc, char * argv[])
         }
         else if (memcmp(Mode,"CALC",4)==0)
         {
+            RunCalc(&SolarSystem,&Sat,&Engine[0], dStartJD,dStartTLEEpoch, iTotalSec, iItearationsPerSec, TimeSl);
         }
         else if (memcmp(Mode,"OPTIM",5)==0)
         {
