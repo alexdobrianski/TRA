@@ -738,6 +738,13 @@ typedef struct TraObj
     long double VY[PLANET_COUNT];
     long double VZ[PLANET_COUNT];
 
+    long double DX[PLANET_COUNT];
+    long double DY[PLANET_COUNT];
+    long double DZ[PLANET_COUNT];
+    long double DVX[PLANET_COUNT];
+    long double DVY[PLANET_COUNT];
+    long double DVZ[PLANET_COUNT];
+
     long double SX[PLANET_COUNT];
     long double SY[PLANET_COUNT];
     long double SZ[PLANET_COUNT];
@@ -7715,38 +7722,40 @@ void ParamProb(char *szString)
     ////////////////////////////////////////////////////////////////////////////////////////probs
     XML_SECTION(probs)
     // pisition of the prob (active by firing engines) can be set by X,Y,Z   VX,VY,VZ
-        IF_XML_READ(ProbX)
+        IF_XML_READ(ProbDX)
         {
-            Sat.X[Sat.Elem] = atof(pszQuo);
+            Sat.DX[Sat.Elem] = atof(pszQuo);
         }
-        IF_XML_READ(ProbY)
+        IF_XML_READ(ProbDY)
         {
-            Sat.Y[Sat.Elem] = atof(pszQuo);
+            Sat.DY[Sat.Elem] = atof(pszQuo);
         }
-        IF_XML_READ(ProbZ)
+        IF_XML_READ(ProbDZ)
         {
-            Sat.Z[Sat.Elem] = atof(pszQuo);
+            Sat.DZ[Sat.Elem] = atof(pszQuo);
         }
-        IF_XML_READ(ProbVX)
+        IF_XML_READ(ProbDVX)
         {
-            Sat.VX[Sat.Elem] = atof(pszQuo);
+            Sat.DVX[Sat.Elem] = atof(pszQuo);
         }
-        IF_XML_READ(ProbVY)
+        IF_XML_READ(ProbDVY)
         {
-            Sat.VY[Sat.Elem] = atof(pszQuo);
+            Sat.DVY[Sat.Elem] = atof(pszQuo);
         }
-        IF_XML_READ(ProbVZ)
+        IF_XML_READ(ProbDVZ)
         {
-            Sat.VZ[Sat.Elem] = atof(pszQuo);
+            Sat.DVZ[Sat.Elem] = atof(pszQuo);
         }
         IF_XML_READ(ProbM)
         {
+            // has to be first!!!!
             Sat.M[Sat.Elem] = atof(pszQuo);
         }
         // or by 3 punch card
         IF_XML_READ(ProbKeplerLine1)
         {
             strcpy(Sat.Kepler1[Sat.Elem], pszQuo);
+            Sat.DX[Sat.Elem] = 0;Sat.DY[Sat.Elem] = 0;Sat.DZ[Sat.Elem] = 0;Sat.DVX[Sat.Elem] = 0;Sat.DVY[Sat.Elem] = 0;Sat.DVZ[Sat.Elem] = 0;
         }
         IF_XML_READ(ProbKeplerLine2)
         {
@@ -8298,6 +8307,9 @@ void ParamProb(char *szString)
                 // for today only one sattelite
                 //Sat.Elem = 1;
                 Sat.flInUse[nSat] = 1;
+                Sat.X[nSat] += Sat.DX[nSat]; Sat.Y[nSat] += Sat.DY[nSat]; Sat.Z[nSat] += Sat.DZ[nSat];
+                Sat.VX[nSat] += Sat.DVX[nSat]; Sat.VY[nSat] += Sat.DVY[nSat]; Sat.VZ[nSat] += Sat.DVZ[nSat];
+
             }    
             // this is done to reduce errors and avoid unnessary 5 mul/div operations
             // temporary X_, VX_ will just added (in paralel calculations can be done actualy faster) 
@@ -10075,7 +10087,7 @@ void GetRandomNVector(long double &Xn, long double &Yn, long double&Zn)
 void SetCalcSat(TRAOBJ *Sat, TRAOBJ *SlS, int iSat, long double X, long double Y, long double Z, long double VX, long double VY, long double VZ)
 {
     Sat->X[iSat] += X; Sat->Y[iSat] += Y; Sat->Z[iSat] += Z;
-    Sat->VX[iSat] += VX; Sat->VY[iSat] += VY; Sat->Z[iSat] += Z;
+    Sat->VX[iSat] += VX; Sat->VY[iSat] += VY; Sat->VZ[iSat] += VZ;
     Sat->X0divDt2[iSat]=Sat->X[iSat] /SlS->TimeSl_2;
     Sat->Y0divDt2[iSat]=Sat->Y[iSat] /SlS->TimeSl_2;
     Sat->Z0divDt2[iSat]=Sat->Z[iSat] /SlS->TimeSl_2;
@@ -10120,10 +10132,10 @@ void RunCalc(TRAOBJ *SlS, TRAOBJ *Sat,TRAIMPLOBJ *Eng, long double ldFrom,long d
     }
     // set ininials velositi is equal EARTH velocity
     long double PError = measures[0].Err;
-    long double VelError = 0.07;
+    long double VelError = 10.0;//0.07;
     //for (int m = 0; m < iMAxMesaures; m++)
     int m = 0;
-    for (int n=0; n <13; n++)
+    for (int n=0; n <20; n++)
     {
         TRAOBJ SolS1=*SlS;
         TRAOBJ Sat11= *Sat; // 1 error by position 1 error by velocity
@@ -10139,20 +10151,21 @@ void RunCalc(TRAOBJ *SlS, TRAOBJ *Sat,TRAIMPLOBJ *Eng, long double ldFrom,long d
 
         long double XYZ_err = PError;
         long double VXYZerr = VelError;
-        long double Xn[9], Yn[9], Zn[9];
+        long double Xn[9], Yn[9], Zn[9], Rn[9];
         long double VXn[9], VYn[9], VZn[9];
         long double Xe[9], Ye[9], Ze[9];
         LONG_DOUBLE_INT_VAR _position_[9];
         LONG_DOUBLE_INT_VAR _velosity_[9];
         int iC = 0;
         long double rmin;
+        long double RnSumm = 0;
         int iCmin = 0;
         stateType  StateEarth;
         Interpolate_State( ldRunFrom, EARTH , &StateEarth );
         for (iC=0; iC < 9; iC++)
         {
-            XYZ_err = PError * (long double)(0xffffff & ra())/((long double)(0xffffff & ra())+(long double)(0xffffff & ra()));
-            VXYZerr = VelError * (long double)(0xffffff & ra())/((long double)(0xffffff & ra())+(long double)(0xffffff & ra()));
+            XYZ_err = PError * (long double)(0xffffff & ra())/((long double)(0xffffff));
+            VXYZerr = VelError * (long double)(0xffffff & ra())/((long double)(0xffffff));
 
             if (iC)
             {
@@ -10172,26 +10185,43 @@ void RunCalc(TRAOBJ *SlS, TRAOBJ *Sat,TRAIMPLOBJ *Eng, long double ldFrom,long d
             Xe[iC] = Sat11.X[0]; Ye[iC] = Sat11.Y[0]; Ze[iC] = Sat11.Z[0];
             _position_[iC] = Sat11._position_[0];_velosity_[iC] = Sat11._velosity_[0];
             long double vrmin = sqrt((Xe[iC]-measures[1].X)*(Xe[iC]-measures[1].X)+(Ye[iC]-measures[1].Y)*(Ye[iC]-measures[1].Y)+(Ze[iC]-measures[1].Z)*(Ze[iC]-measures[1].Z));
+            Rn[iC] = vrmin;
+            RnSumm += vrmin;
             if (iC==0)
                 rmin = vrmin;
             else
             {
                 if (vrmin < rmin)
                 {
-                    iCmin = iC; rmin = vrmin;
+                    iCmin = iC; rmin = vrmin;printf("\n min: %.5f",rmin);
                 }
             }
                 
             printf("\n% dE=,%.5f,%.5f,%.5f,%.5f", n, Xe[iC]-measures[1].X, Ye[iC]-measures[1].Y,Ze[iC]-measures[1].Z,sqrt((Xe[iC]-measures[1].X)*(Xe[iC]-measures[1].X)+(Ye[iC]-measures[1].Y)*(Ye[iC]-measures[1].Y)+(Ze[iC]-measures[1].Z)*(Ze[iC]-measures[1].Z))
                     );
-            printf("\n  X=%.5f,%.5f,%.5f,V=%.5f,%.5f,%.5f", Xn[iC],Yn[iC],Zn[iC], VXn[iC],VYn[iC],VZn[iC]);
+            printf("\n  X=%.12f,%.12f,%.12f,V=%.12f,%.12f,%.12f", Xn[iC],Yn[iC],Zn[iC], VXn[iC],VYn[iC],VZn[iC]);
         }
         Sat->X[0] += Xn[iCmin];   Sat->Y[0] += Yn[iCmin];   Sat->Z[0] += Zn[iCmin];
         Sat->VX[0] += VXn[iCmin]; Sat->VY[0] += VYn[iCmin]; Sat->VZ[0] += VZn[iCmin];
         if (iCmin)
+        {
             VelError /=2;
+            printf("\n (2.0) VelErr=%.12f",VelError);
+        }
         else
-            VelError /=1.5;
+        {
+            if (n == 0)
+            {
+                
+                VelError *= Rn[0]*9.0/ RnSumm;
+                printf("\n (main) VelErr=%.12f",VelError);
+            }
+            else
+            {
+                VelError /=1.5;
+                printf("\n (1.5) VelErr=%.12f",VelError);
+            }
+        }
     }
 }
 void RunSim(TRAOBJ *SlS, TRAOBJ *Sat,TRAIMPLOBJ *Eng, long double ldFrom,long double ldFromTLEEpoch, long long iAllSec, int iItPerS, long double tSl)
