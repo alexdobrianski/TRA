@@ -12,7 +12,6 @@
 </TRA:section>
 <TRA:section name="SimInfo" value="0.0">
     <TRA:setting name="SimulationType" value="TLE_H_CRS" />
-
     <TRA:setting name="SimulationOutputTime" value="07/05/14 08:28:00:000" />
     <TRA:setting name="SimulationOutputTime" value="07/05/14 10:00:52:000" />
     <TRA:setting name="SimulationOutputTime" value="07/05/14 11:33:44:000" />
@@ -29,6 +28,7 @@
     <TRA:setting name="SimulationOutputTime" value="08/05/14 06:08:09:000" />
     <TRA:setting name="SimulationOutputTime" value="08/05/14 07:41:01:000" />
     <TRA:setting name="SimulationOutputTime" value="08/05/14 09:13:53:000" />
+    <TRA:setting name="SimulationOutputTime" value="15/05/14 09:13:53:000" />
 </TRA:section>
 
 <TRA:section name="CalcInfo" value="0.0">
@@ -48,10 +48,220 @@
 	</hCRSmeasure>
 	<hCRSmeasure>
 	 <M>-1</M>
+		<T>2456784.91726851840</T>
+		<X>-103498246279.93242</X>
+		<Y>-100841793681.60497</Y>
+		<Z>-43731216024.91873</Z>
+		<E>1000</E>
+		<D1>0.0</D1>
+		<E1>0.0</E1>
+		<T2>0.0</T2>
+		<E2>0.0</E2>
+		<D3>0.0</D3>
+		<E3>0.0</E3>
+	</hCRSmeasure>
+	<hCRSmeasure>
+	 <M>-1</M>
+		<T>2456784.98175925950</T>
+		<X>-103380320733.33496</X>
+		<Y>-100946817395.92371</Y>
+		<Z>-43776858461.49793</Z>
+		<E>1000</E>
+		<D1>0.0</D1>
+		<E1>0.0</E1>
+		<T2>0.0</T2>
+		<E2>0.0</E2>
+		<D3>0.0</D3>
+		<E3>0.0</E3>
+	</hCRSmeasure>
+	<hCRSmeasure>
+	 <M>-1</M>
+		<T>2456785.11074074080</T>
+		<X>-103144098882.95723</X>
+		<Y>-101156506494.08800</Y>
+		<Z>-43867993761.16782</Z>
+		<E>1000</E>
+		<D1>0.0</D1>
+		<E1>0.0</E1>
+		<T2>0.0</T2>
+		<E2>0.0</E2>
+		<D3>0.0</D3>
+		<E3>0.0</E3>
+	</hCRSmeasure>
+	<hCRSmeasure>
+	 <M>-1</M>
+		<T>2456785.17523148140</T>
+		<X>-103025802834.86917</X>
+		<Y>-101261171761.79393</Y>
+		<Z>-43913486443.92390</Z>
+		<E>1000</E>
+		<D1>0.0</D1>
+		<E1>0.0</E1>
+		<T2>0.0</T2>
+		<E2>0.0</E2>
+		<D3>0.0</D3>
+		<E3>0.0</E3>
+	</hCRSmeasure>
+	<hCRSmeasure>
+	 <M>-1</M>
+		<T>2456785.23972222210</T>
+		<X>-102907383543.51326</X>
+		<Y>-101365717430.09129</Y>
+		<Z>-43958929025.57563</Z>
+		<E>1000</E>
+		<D1>0.0</D1>
+		<E1>0.0</E1>
+		<T2>0.0</T2>
+		<E2>0.0</E2>
+		<D3>0.0</D3>
+		<E3>0.0</E3>
+	</hCRSmeasure>
+	<hCRSmeasure>
+	 <M>-1</M>
+		<T>2456785.30421296270</T>
+		<X>-102788841138.73174</X>
+		<Y>-101470143439.54198</Y>
+		<Z>-44004321411.97469</Z>
+		<E>1000</E>
+		<D1>0.0</D1>
+		<E1>0.0</E1>
+		<T2>0.0</T2>
+		<E2>0.0</E2>
+		<D3>0.0</D3>
+		<E3>0.0</E3>
+	</hCRSmeasure>
+	<hCRSmeasure>
+	 <M>-1</M>
+		<T>2456785.36870370390</T>
+		<X>-102670175750.40663</X>
+		<Y>-101574449730.80785</Y>
+		<Z>-44049663508.00269</Z>
+		<E>1000</E>
+		<D1>0.0</D1>
+		<E1>0.0</E1>
+		<T2>0.0</T2>
+		<E2>0.0</E2>
+		<D3>0.0</D3>
+		<E3>0.0</E3>
+	</hCRSmeasure>
+	<hCRSmeasure>
+	 <M>-1</M>
+		<T>2456785.43319444450</T>
+		<X>-102551387511.03094</X>
+		<Y>-101678636242.19814</Y>
+		<Z>-44094955215.63825</Z>
+		<E>1000</E>
+		<D1>0.0</D1>
+		<E1>0.0</E1>
+		<T2>0.0</T2>
+		<E2>0.0</E2>
+		<D3>0.0</D3>
+		<E3>0.0</E3>
+	</hCRSmeasure>
+	<hCRSmeasure>
+	 <M>-1</M>
+		<T>2456785.49769675920</T>
+		<X>-102432460555.45937</X>
+		<Y>-101782718135.76031</Y>
+		<Z>-44140208815.14568</Z>
+		<E>1000</E>
+		<D1>0.0</D1>
+		<E1>0.0</E1>
+		<T2>0.0</T2>
+		<E2>0.0</E2>
+		<D3>0.0</D3>
+		<E3>0.0</E3>
+	</hCRSmeasure>
+	<hCRSmeasure>
+	 <M>-1</M>
+		<T>2456785.56218749980</T>
+		<X>-102313426984.38091</X>
+		<Y>-101886665008.86723</Y>
+		<Z>-44185399543.15050</Z>
+		<E>1000</E>
+		<D1>0.0</D1>
+		<E1>0.0</E1>
+		<T2>0.0</T2>
+		<E2>0.0</E2>
+		<D3>0.0</D3>
+		<E3>0.0</E3>
+	</hCRSmeasure>
+	<hCRSmeasure>
+	 <M>-1</M>
+		<T>2456785.62667824100</T>
+		<X>-102194270957.18248</X>
+		<Y>-101990491920.16429</Y>
+		<Z>-44230539581.67449</Z>
+		<E>1000</E>
+		<D1>0.0</D1>
+		<E1>0.0</E1>
+		<T2>0.0</T2>
+		<E2>0.0</E2>
+		<D3>0.0</D3>
+		<E3>0.0</E3>
+	</hCRSmeasure>
+	<hCRSmeasure>
+	 <M>-1</M>
+		<T>2456785.69116898160</T>
+		<X>-102074992609.16365</X>
+		<Y>-102094198805.30423</Y>
+		<Z>-44275628827.11666</Z>
+		<E>1000</E>
+		<D1>0.0</D1>
+		<E1>0.0</E1>
+		<T2>0.0</T2>
+		<E2>0.0</E2>
+		<D3>0.0</D3>
+		<E3>0.0</E3>
+	</hCRSmeasure>
+	<hCRSmeasure>
+	 <M>-1</M>
+		<T>2456785.75565972230</T>
+		<X>-101955592074.38834</X>
+		<Y>-102197785601.05344</Y>
+		<Z>-44320667176.08551</Z>
+		<E>1000</E>
+		<D1>0.0</D1>
+		<E1>0.0</E1>
+		<T2>0.0</T2>
+		<E2>0.0</E2>
+		<D3>0.0</D3>
+		<E3>0.0</E3>
+	</hCRSmeasure>
+	<hCRSmeasure>
+	 <M>-1</M>
+		<T>2456785.82015046290</T>
+		<X>-101836069488.26439</X>
+		<Y>-102301252242.78279</Y>
+		<Z>-44365654523.41824</Z>
+		<E>1000</E>
+		<D1>0.0</D1>
+		<E1>0.0</E1>
+		<T2>0.0</T2>
+		<E2>0.0</E2>
+		<D3>0.0</D3>
+		<E3>0.0</E3>
+	</hCRSmeasure>
+	<hCRSmeasure>
+	 <M>-1</M>
 		<T>2456785.88464120360</T>
 		<X>-101716424986.89853</X>
 		<Y>-102404598665.04692</Y>
 		<Z>-44410590762.71367</Z>
+		<E>1000</E>
+		<D1>0.0</D1>
+		<E1>0.0</E1>
+		<T2>0.0</T2>
+		<E2>0.0</E2>
+		<D3>0.0</D3>
+		<E3>0.0</E3>
+	</hCRSmeasure>
+	<hCRSmeasure>
+	 <M>-1</M>
+		<T>2456792.88464120360</T>
+		<X>-88029373786.37418</X>
+		<Y>-112878982103.04604</Y>
+		<Z>-48950614997.82649</Z>
 		<E>1000</E>
 		<D1>0.0</D1>
 		<E1>0.0</E1>
@@ -75,6 +285,14 @@
     <TRA:setting name="@ProbDVX" value="-0.005720251342" />
     <TRA:setting name="@ProbDVY" value="0.005191409569" />
     <TRA:setting name="@ProbDVZ" value="0.014146487564" />
+
+    <TRA:setting name="@ProbDX" value="-196.971282030832" />
+    <TRA:setting name="@ProbDY" value="74.97796182233" />
+    <TRA:setting name="@ProbDZ" value="14.289932868487" />
+
+    <TRA:setting name="@ProbDVX" value="-0.006863288927" />
+    <TRA:setting name="@ProbDVY" value="0.006594659128" />
+    <TRA:setting name="@ProbDVZ" value="0.017336409609" />
 
     <TRA:setting name="@ProbKeplerLine2" value="1 25544U 98067A   11062.66968330  .00024457  00000-0  18183-3 0  9357" />
     <TRA:setting name="@ProbKeplerLine3" value="2 25544 051.6480 342.0829 0005279 039.9625 033.1957 15.72669582704292" />
@@ -210,7 +428,8 @@
 <!-- Cnk and Snk file data n max value do be used from the file  -->
     <TRA:setting name="EarthModelCoefs" value="32" />
 
-    <TRA:setting name="IterPerSec" value="479" />
+    <TRA:setting name="IterPerSec" value="127" />
+    <TRA:setting name="IterPerSec0" value="479" />
     <TRA:setting name="IterPerSec1" value="1013" />
     <TRA:setting name="IterPerSec3" value="1523" />
     <TRA:setting name="IterPerSec3" value="3167" />

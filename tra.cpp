@@ -1381,7 +1381,7 @@ typedef struct TraObj
        if (--iAtm[iCurSat] == 0)
        {
            long double dlLAT, dlLON;
-           iAtm[iCurSat] = 479; // onc per 1000 iteration == 1 per sec
+           iAtm[iCurSat] = iItearationsPerSec;//479; // onc per 1000 iteration == 1 per sec
            h[iCurSat] = H =GetH(tempX, tempY, tempZ, 6378245.000, 6356863.019,dlLAT,dlLON);
            ro[iCurSat] = Ro=GetDens(); // 15C
        }
@@ -10132,97 +10132,140 @@ void RunCalc(TRAOBJ *SlS, TRAOBJ *Sat,TRAIMPLOBJ *Eng, long double ldFrom,long d
     }
     // set ininials velositi is equal EARTH velocity
     long double PError = measures[0].Err;
-    long double VelError = 10.0;//0.07;
+    long double VelError = 0.010704334375;//10.0;//0.07;
     //for (int m = 0; m < iMAxMesaures; m++)
-    int m = 0;
-    for (int n=0; n <20; n++)
+    printf("\n (init) PError =%.12f VelErr=%.12f",PError,VelError);
+    int m0 = 0;
+    int nextm = 1;
+    long double dlIX, dlIY, dlIZ, dlIVX, dlIVY, dlIVZ;
+    dlIX = Sat->X[0]; dlIY = Sat->Y[0]; dlIZ = Sat->Z[0];
+    dlIVX = Sat->VX[0]; dlIVY = Sat->VY[0]; dlIVZ = Sat->VZ[0];
+    Sat->X[0] += -958.445037841797;   Sat->Y[0] += 629.093017578125;   Sat->Z[0] += -273.815940856934;
+    Sat->VX[0] += 0.001135664937; Sat->VY[0] += 0.000285064067; Sat->VZ[0] += -0.000475006107;
+    for (m0= 1;m0 <iMAxMesaures; m0++)
     {
-        TRAOBJ SolS1=*SlS;
-        TRAOBJ Sat11= *Sat; // 1 error by position 1 error by velocity
-
-        long double ldRunFrom =ldFrom;
-        SYSTEMTIME ThatTime;
-        long double ldRunFromTLEEpoch = ConvertJulianDayToDateAndTime(ldRunFrom, &ThatTime);
-        long long iRunSec = (measures[m+1].T - measures[m].T)*(24*60*60);
-
-        int irestRun = (((measures[m+1].T - measures[m].T) - (long double)(iRunSec/(24.0*60.0*60.0))))*24.0*60.0*60.0* iItPerS*10;
-        irestRun +=1;
-        irestRun/=10;
-
-        long double XYZ_err = PError;
-        long double VXYZerr = VelError;
         long double Xn[9], Yn[9], Zn[9], Rn[9];
-        long double VXn[9], VYn[9], VZn[9];
-        long double Xe[9], Ye[9], Ze[9];
-        LONG_DOUBLE_INT_VAR _position_[9];
-        LONG_DOUBLE_INT_VAR _velosity_[9];
-        int iC = 0;
-        long double rmin;
-        long double RnSumm = 0;
         int iCmin = 0;
-        stateType  StateEarth;
-        Interpolate_State( ldRunFrom, EARTH , &StateEarth );
-        for (iC=0; iC < 9; iC++)
+DO_MATHC_AGAIN:
+        for (int m = nextm; m <=m0; m++)
         {
-            XYZ_err = PError * (long double)(0xffffff & ra())/((long double)(0xffffff));
-            VXYZerr = VelError * (long double)(0xffffff & ra())/((long double)(0xffffff));
+            for (int n=0; n <13; n++)
+            {
+                TRAOBJ SolS1=*SlS;
+                TRAOBJ Sat11= *Sat; // 1 error by position 1 error by velocity
 
-            if (iC)
-            {
-                GetRandomNVector(Xn[iC], Yn[iC], Zn[iC]);
-                Xn[iC]*= XYZ_err; Yn[iC]*= XYZ_err; Zn[iC]*= XYZ_err;
+                long double ldRunFrom =ldFrom;
+                SYSTEMTIME ThatTime;
+                long double ldRunFromTLEEpoch = ConvertJulianDayToDateAndTime(ldRunFrom, &ThatTime);
+                long long iRunSec = (measures[m].T - measures[0].T)*(24*60*60);
 
-                GetRandomNVector(VXn[iC], VYn[iC], VZn[iC]);
-                VXn[iC]*= VXYZerr; VYn[iC]*= VXYZerr; VZn[iC]*= VXYZerr;
-            }
-            else
-            {
-                Xn[iC] =0; Yn[iC] =0; Zn[iC] =0; VXn[iC] =0; VYn[iC] =0; VZn[iC] =0;
-            }
-            SolS1=*SlS; Sat11= *Sat;
-            SetCalcSat(&Sat11, &SolS1, 0, Xn[iC], Yn[iC], Zn[iC], VXn[iC], VYn[iC], VZn[iC]);
-            JustRun(&SolS1, &Sat11,Eng, ldRunFrom,ldRunFromTLEEpoch, iRunSec, iItPerS, irestRun, tSl);
-            Xe[iC] = Sat11.X[0]; Ye[iC] = Sat11.Y[0]; Ze[iC] = Sat11.Z[0];
-            _position_[iC] = Sat11._position_[0];_velosity_[iC] = Sat11._velosity_[0];
-            long double vrmin = sqrt((Xe[iC]-measures[1].X)*(Xe[iC]-measures[1].X)+(Ye[iC]-measures[1].Y)*(Ye[iC]-measures[1].Y)+(Ze[iC]-measures[1].Z)*(Ze[iC]-measures[1].Z));
-            Rn[iC] = vrmin;
-            RnSumm += vrmin;
-            if (iC==0)
-                rmin = vrmin;
-            else
-            {
-                if (vrmin < rmin)
+                int irestRun = (((measures[m].T - measures[0].T) - (long double)(iRunSec/(24.0*60.0*60.0))))*24.0*60.0*60.0* iItPerS*10;
+                irestRun +=1;
+                irestRun/=10;
+
+                long double XYZ_err = PError;
+                long double VXYZerr = VelError;
+                long double VXn[9], VYn[9], VZn[9];
+                long double Xe[9], Ye[9], Ze[9];
+                LONG_DOUBLE_INT_VAR _position_[9];
+                LONG_DOUBLE_INT_VAR _velosity_[9];
+                int iC = 0;
+                iCmin = 0;
+                long double rmin;
+                long double RnSumm = 0;
+                stateType  StateEarth;
+                Interpolate_State( ldRunFrom, EARTH , &StateEarth );
+                for (iC=0; iC < 9; iC++)
                 {
-                    iCmin = iC; rmin = vrmin;printf("\n min: %.5f",rmin);
+                    XYZ_err = PError * (long double)(0xffffff & ra())/((long double)(0xffffff));
+                    VXYZerr = VelError * (long double)(0xffffff & ra())/((long double)(0xffffff));
+
+                    if (iC)
+                    {
+                        GetRandomNVector(Xn[iC], Yn[iC], Zn[iC]);
+                        Xn[iC]*= XYZ_err; Yn[iC]*= XYZ_err; Zn[iC]*= XYZ_err;
+
+                        GetRandomNVector(VXn[iC], VYn[iC], VZn[iC]);
+                        VXn[iC]*= VXYZerr; VYn[iC]*= VXYZerr; VZn[iC]*= VXYZerr;
+                    }
+                    else
+                    {
+                        Xn[iC] =0; Yn[iC] =0; Zn[iC] =0; VXn[iC] =0; VYn[iC] =0; VZn[iC] =0;
+                    }
+                    SolS1=*SlS; Sat11= *Sat;
+                    SetCalcSat(&Sat11, &SolS1, 0, Xn[iC], Yn[iC], Zn[iC], VXn[iC], VYn[iC], VZn[iC]);
+                    JustRun(&SolS1, &Sat11,Eng, ldRunFrom,ldRunFromTLEEpoch, iRunSec, iItPerS, irestRun, tSl);
+                    Xe[iC] = Sat11.X[0]; Ye[iC] = Sat11.Y[0]; Ze[iC] = Sat11.Z[0];
+                    _position_[iC] = Sat11._position_[0];_velosity_[iC] = Sat11._velosity_[0];
+                    long double vrmin = sqrt((Xe[iC]-measures[m].X)*(Xe[iC]-measures[m].X)+(Ye[iC]-measures[m].Y)*(Ye[iC]-measures[m].Y)+(Ze[iC]-measures[m].Z)*(Ze[iC]-measures[m].Z));
+                    Rn[iC] = vrmin;
+                    RnSumm += vrmin;
+                
+                    if (iC==0)
+                    {
+                        rmin = vrmin;
+                        nextm = m0+1; // if error will match on iC =0 (X=0,0,0, V=0,0,0) than on next measurement all prev measurements can be skipped
+                    }
+                    else
+                    {
+                        if (vrmin < rmin)
+                        {
+                            iCmin = iC; rmin = vrmin;printf("\n min: %.5f",rmin);
+                            nextm=1; // value changed needs to start from measurement 1
+                        }
+                    }
+                
+                    printf("\n% dE=,%.5f,%.5f,%.5f,%.5f", n, Xe[iC]-measures[m].X, Ye[iC]-measures[m].Y,Ze[iC]-measures[m].Z,sqrt((Xe[iC]-measures[m].X)*(Xe[iC]-measures[m].X)+(Ye[iC]-measures[m].Y)*(Ye[iC]-measures[m].Y)+(Ze[iC]-measures[m].Z)*(Ze[iC]-measures[m].Z))
+                        );
+                    printf("\n  X=%.12f,%.12f,%.12f,V=%.12f,%.12f,%.12f", Xn[iC],Yn[iC],Zn[iC], VXn[iC],VYn[iC],VZn[iC]);
+                    if (vrmin < measures[m].Err)
+                    {
+                        Sat->X[0] += Xn[iCmin];   Sat->Y[0] += Yn[iCmin];   Sat->Z[0] += Zn[iCmin];
+                        Sat->VX[0] += VXn[iCmin]; Sat->VY[0] += VYn[iCmin]; Sat->VZ[0] += VZn[iCmin];
+                        printf("\n M0= %d m=%d measuements matched error => next measurement",m0, m);
+                        goto NEXT_MEASURE;
+                    }
+                }
+                Sat->X[0] += Xn[iCmin];   Sat->Y[0] += Yn[iCmin];   Sat->Z[0] += Zn[iCmin];
+                Sat->VX[0] += VXn[iCmin]; Sat->VY[0] += VYn[iCmin]; Sat->VZ[0] += VZn[iCmin];
+                if (iCmin)
+                {
+                    VelError /=2;
+                    printf("\n (2.0) VelErr=%.12f",VelError);
+                }
+                else
+                {
+                    if (n == 0)
+                    {
+                
+                        //VelError *= Rn[0]*9.0/ RnSumm;
+                        //printf("\n (main) VelErr=%.12f",VelError);
+                        VelError /=1.5;
+                        printf("\n (1.5) VelErr=%.12f",VelError);
+                    }
+                    else
+                    {
+                        VelError /=1.5;
+                        printf("\n (1.5) VelErr=%.12f",VelError);
+                    }
                 }
             }
-                
-            printf("\n% dE=,%.5f,%.5f,%.5f,%.5f", n, Xe[iC]-measures[1].X, Ye[iC]-measures[1].Y,Ze[iC]-measures[1].Z,sqrt((Xe[iC]-measures[1].X)*(Xe[iC]-measures[1].X)+(Ye[iC]-measures[1].Y)*(Ye[iC]-measures[1].Y)+(Ze[iC]-measures[1].Z)*(Ze[iC]-measures[1].Z))
-                    );
-            printf("\n  X=%.12f,%.12f,%.12f,V=%.12f,%.12f,%.12f", Xn[iC],Yn[iC],Zn[iC], VXn[iC],VYn[iC],VZn[iC]);
-        }
-        Sat->X[0] += Xn[iCmin];   Sat->Y[0] += Yn[iCmin];   Sat->Z[0] += Zn[iCmin];
-        Sat->VX[0] += VXn[iCmin]; Sat->VY[0] += VYn[iCmin]; Sat->VZ[0] += VZn[iCmin];
-        if (iCmin)
-        {
-            VelError /=2;
-            printf("\n (2.0) VelErr=%.12f",VelError);
-        }
-        else
-        {
-            if (n == 0)
+            printf("\nbest  X=%.12f,%.12f,%.12f,V=%.12f,%.12f,%.12f", Sat->X[0] - dlIX, Sat->Y[0] - dlIY, Sat->Z[0] - dlIZ, Sat->VX[0] - dlIVX, Sat->VY[0] - dlIVY, Sat->VZ[0] - dlIVZ);
+            //if (m < m0)
             {
-                
-                VelError *= Rn[0]*9.0/ RnSumm;
-                printf("\n (main) VelErr=%.12f",VelError);
+                if (Rn[iCmin] > measures[m].Err) // intermedian measurement did not match error needs to repeat steps
+                {
+                    printf("\n M0= %d m=%d erro is bigger %.12f=> repeat match ",m0, m,Rn[iCmin]);
+                    nextm=1;
+                    goto DO_MATHC_AGAIN;
+                }
             }
-            else
-            {
-                VelError /=1.5;
-                printf("\n (1.5) VelErr=%.12f",VelError);
-            }
+NEXT_MEASURE:;
+            printf("\ngood  X=%.12f,%.12f,%.12f,V=%.12f,%.12f,%.12f", Sat->X[0] - dlIX, Sat->Y[0] - dlIY, Sat->Z[0] - dlIZ, Sat->VX[0] - dlIVX, Sat->VY[0] - dlIVY, Sat->VZ[0] - dlIVZ);
         }
     }
+    printf("\nfinal  X=%.12f,%.12f,%.12f,V=%.12f,%.12f,%.12f", Sat->X[0] - dlIX, Sat->Y[0] - dlIY, Sat->Z[0] - dlIZ, Sat->VX[0] - dlIVX, Sat->VY[0] - dlIVY, Sat->VZ[0] - dlIVZ);
+    
 }
 void RunSim(TRAOBJ *SlS, TRAOBJ *Sat,TRAIMPLOBJ *Eng, long double ldFrom,long double ldFromTLEEpoch, long long iAllSec, int iItPerS, long double tSl)
 {
