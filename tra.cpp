@@ -271,6 +271,11 @@ long double C_S_nk[TOTAL_COEF*TOTAL_COEF/2][2];
 
 
 
+//#define MAX_FLUX_TABLE 365*2
+//int iStarting1007JD;
+//long double FLUX107[MAX_FLUX_TABLE];
+
+
 
 
 #define USE_MODEL_LOAD
@@ -6847,13 +6852,23 @@ void SGP8(long double TSINCE,/*double EPOCH,*/
 //1 XJ3,XKE,XKMPER,XMNPDA,AE
 //DOUBLE PRECISION EPOCH, DS50
 //DATA RHO/.15696615/
-    long double TOTHRD= .6666666666666;
+    long double TOTHRD= .6666666666666666666;
     long double RHO =.15696615;
+#if 0
 	long double XKE = BIG_XKE;//.743669161E-1;
 	long double XKMPER = 6378.1350;
 	long double XJ2 = 1.082616E-3; //the second gravitational zonal harmonic of the Earth
 	long double XJ3 = -.253881E-5; // the third gravitational zonal harmonic of the Earth
 	long double XJ4 = -1.65597E-6; // the fourth gravitational zonal harmonic of the Earth
+    double E6A = 1.E-6;
+#else
+	long double XKE = 7.43669161331734132e-2;
+	long double XKMPER = 6378.137;
+	long double XJ2 = 0.10826360229840e-02; //the second gravitational zonal harmonic of the Earth
+	long double XJ3 = -0.25325160653E-05; // the third gravitational zonal harmonic of the Earth
+	long double XJ4 = -0.16185636000E-05; // the fourth gravitational zonal harmonic of the Earth
+    double E6A = 1.E-12;
+#endif
 	long double AE = 1.0;          // the equatorial radius of the Earth - actualy it is not true it is one == everything measuared in that radiuses
 	long double QO =120.0;         // parameter for the SGP4/SGP8 density function
 	long double SO = 78.0;         // parameter for the SGP4/SGP8 density function
@@ -6863,7 +6878,7 @@ void SGP8(long double TSINCE,/*double EPOCH,*/
 	long double QOMS2T=pow(((QO-SO)*AE/XKMPER),(long double)4.0);
 	long double S=AE*(1.+SO/XKMPER);
     long double XMNPDA = 24.0*60.0;//1440.0; // XMNPDA time units(minutes) /day 1440.0
-    double E6A = 1.E-6;
+
 //IF (IFLAG .EQ. 0) GO TO 100
 //* RECOVER ORIGINAL MEAN MOTION (XNODP) AND SEMIMAJOR AXIS (AODP)
 //* FROM INPUT ELEMENTS --------- CALCULATE BALLISTIC COEFFICIENT
@@ -10140,8 +10155,8 @@ void RunCalc(TRAOBJ *SlS, TRAOBJ *Sat,TRAIMPLOBJ *Eng, long double ldFrom,long d
     long double dlIX, dlIY, dlIZ, dlIVX, dlIVY, dlIVZ;
     dlIX = Sat->X[0]; dlIY = Sat->Y[0]; dlIZ = Sat->Z[0];
     dlIVX = Sat->VX[0]; dlIVY = Sat->VY[0]; dlIVZ = Sat->VZ[0];
-    Sat->X[0] += -958.445037841797;   Sat->Y[0] += 629.093017578125;   Sat->Z[0] += -273.815940856934;
-    Sat->VX[0] += 0.001135664937; Sat->VY[0] += 0.000285064067; Sat->VZ[0] += -0.000475006107;
+    //Sat->X[0] += -958.445037841797;   Sat->Y[0] += 629.093017578125;   Sat->Z[0] += -273.815940856934;
+    //Sat->VX[0] += 0.001135664937; Sat->VY[0] += 0.000285064067; Sat->VZ[0] += -0.000475006107;
     for (m0= 1;m0 <iMAxMesaures; m0++)
     {
         long double Xn[9], Yn[9], Zn[9], Rn[9];
