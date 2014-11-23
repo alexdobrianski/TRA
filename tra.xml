@@ -7,28 +7,11 @@
                           //    CALC == calculation of the orbit based on any of the data : PING, GPS, PULSAR 
                           //    OPTIM = calculation of the engines firing to reach the moon
                -->
-    <TRA:setting name="Mode" value="CALC" />
+    <TRA:setting name="Mode" value="PROP" />
 
 </TRA:section>
 <TRA:section name="SimInfo" value="0.0">
-  <!-- char [] Mode:
-                    TLE_G_CRS  to generate position data with reference to geocentric CRS 
-                    TLE_G_TRS  to generate position data with reference to geocentric TRS 
-                    TLE_H_CRS  to generate position data with reference to solar system CRS
-                    PING       simulate ping messages from ground station to satellite (at spesific time from all ground stations)
-                    GPS        simulate GPS's raw data from GPS satellites at specific time from GPS satellites
-                    PULSAR     simulate PULSAR receving signal from all pulsars at specific time
--->
     <TRA:setting name="SimulationType" value="TLE_H_CRS" />
-
-    <TRA:setting name="GPS_SAT" value="89064A" />
-    <TRA:setting name="GPS_SAT" value="89085A" />
-    <TRA:setting name="GPS_SAT" value="89085A" />
-    <TRA:setting name="GPS_SAT" value="89097A" />
-    <TRA:setting name="PING" value="ON_GROUND_STATION" />
-    <TRA:setting name="@PING" value="ON_TIME" />
-    <TRA:setting name="@PING" value="ON_TIME" />
-
     <TRA:setting name="SimulationOutputTime" value="07/05/14 08:28:00:000" />
     <TRA:setting name="SimulationOutputTime" value="07/05/14 10:00:52:000" />
     <TRA:setting name="SimulationOutputTime" value="07/05/14 11:33:44:000" />
@@ -295,13 +278,13 @@
     <TRA:setting name="ProbM" value="67.5" />
     <TRA:setting name="ProbKeplerLine1" value="0 ISS (ZARYA)" />
     <TRA:setting name="ProbSquare" value="-1" />
-    <TRA:setting name="@ProbDX" value="-2391.774948120117" />
-    <TRA:setting name="@ProbDY" value="2836.573944091797" />
-    <TRA:setting name="@ProbDZ" value="-1994.011184692383" />
+    <TRA:setting name="@ProbDX" value="-479.048294067383" />
+    <TRA:setting name="@ProbDY" value="106.834991455078" />
+    <TRA:setting name="@ProbDZ" value="94.367050170898" />
 
-    <TRA:setting name="@ProbDVX" value="-0.012144505386" />
-    <TRA:setting name="@ProbDVY" value="0.001089859563" />
-    <TRA:setting name="@ProbDVZ" value="-0.001203408285" />
+    <TRA:setting name="@ProbDVX" value="0.000240058927" />
+    <TRA:setting name="@ProbDVY" value="-0.000153170095" />
+    <TRA:setting name="@ProbDVZ" value="-0.000134213009" />
 
     <TRA:setting name="@ProbDX" value="-196.971282030832" />
     <TRA:setting name="@ProbDY" value="74.97796182233" />
@@ -437,17 +420,13 @@
 -->
     <TRA:setting name="UseSatData" value="SGP8" />
 
-<!-- FLUX 10.7 data -->
-    <TRA:setting name="FLUX107File" value="fluxtable.txt" />
-    <TRA:setting name="FLUX107File" value="fluxtable.txt" />
-
 <!-- Cnk and Snk file data -->
     <TRA:setting name="EarthModelFile" value="egm96" />
     <TRA:setting name="GM_MODEL" value="398600.4418e9" />
     <TRA:setting name="R0_MODEL" value="6378137.00" />
 
 <!-- Cnk and Snk file data n max value do be used from the file  -->
-    <TRA:setting name="EarthModelCoefs" value="32" />
+    <TRA:setting name="EarthModelCoefs" value="36" />
 
     <TRA:setting name="IterPerSec9" value="127" />
     <TRA:setting name="IterPerSec" value="479" />
@@ -463,7 +442,7 @@
     <TRA:setting name="Gbig" value="6.6742799999999995e-011" />
     <TRA:setting name="Gbig0" value="6.6738177929210037e-011" />
     <TRA:setting name="TotalDays0" value="1" />
-    <TRA:setting name="TotalDays" value="16" />
+    <TRA:setting name="TotalDays" value="32" />
 
     <TRA:setting name="TotalDays0" value="0.062337962962962962962962962962963" />
     <TRA:setting name="TotalDays0" value="0.124675925925925925925925925924" />

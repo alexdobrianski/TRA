@@ -529,6 +529,15 @@ typedef struct Long_Double_Intergal_Var
     long double X_hh;
     long double Y_hh;
     long double Z_hh;
+
+    long double X_hhh;
+    long double Y_hhh;
+    long double Z_hhh;
+
+
+    long double X_temp;
+    long double Y_temp;
+    long double Z_temp;
     long CountNx;
     long CountNy;
     long CountNz;
@@ -537,17 +546,22 @@ typedef struct Long_Double_Intergal_Var
     long CountNy_h;
     long CountNz_h;
 
+    long CountNx_hh;
+    long CountNy_hh;
+    long CountNz_hh;
+
+
     long double x() 
     { 
-           return X+X_h+X_hh; 
+           return X+X_temp; 
     };
     long double y() 
     { 
-            return Y+Y_h+Y_hh; 
+            return Y+Y_temp; 
     };
     long double z() 
     { 
-            return Z+Z_h+Z_hh; 
+            return Z+Z_temp; 
     };
     void adjustX(long MaxVal, long MaxVal_h)
     {
@@ -556,10 +570,19 @@ typedef struct Long_Double_Intergal_Var
         {
             CountNx = 0;
             ADJUST(X_h, 0, X);
+            X_temp = X_h+X_hh+X_hhh;
             if (++CountNx_h >= MaxVal_h)
             {
                 CountNx_h = 0;
                 ADJUST(X_hh, 0, X_h);
+                X_temp = X_h+X_hh+X_hhh;
+                if (++CountNx_hh >= 1019)
+                {
+                    CountNx_hh = 0;
+                    ADJUST(X_hhh, 0, X_hh);
+                    X_temp = X_h+X_hh+X_hhh;
+                    printf("X");
+                }
             }
         }
     };
@@ -570,10 +593,19 @@ typedef struct Long_Double_Intergal_Var
         {
             CountNy = 0;
             ADJUST(Y_h, 0, Y);
+            Y_temp = Y_h + Y_hh + Y_hhh;
             if (++CountNy_h >= MaxVal_h)
             {
                 CountNy_h = 0;
                 ADJUST(Y_hh, 0, Y_h);
+                Y_temp = Y_h + Y_hh + Y_hhh;
+                if (++CountNy_hh >= 1307)
+                {
+                    CountNy_hh = 0;
+                    ADJUST(Y_hhh, 0, Y_hh);
+                    Y_temp = Y_h + Y_hh + Y_hhh;
+                    printf("Y");
+                }
             }
         }
     };
@@ -584,10 +616,19 @@ typedef struct Long_Double_Intergal_Var
         {
             CountNz = 0;
             ADJUST(Z_h, 0, Z);
+            Z_temp=Z_h+Z_hh +Z_hhh;
             if (++CountNz_h >= MaxVal_h)
             {
                 CountNz_h = 0;
                 ADJUST(Z_hh, 0, Z_h);
+                Z_temp=Z_h+Z_hh +Z_hhh;
+                if (++CountNz_hh >= 983)
+                {
+                    CountNz_hh = 0;
+                    ADJUST(Z_hhh, 0, Z_hh);
+                    Z_temp=Z_h+Z_hh +Z_hhh;
+                    printf("Z");
+                }
             }
         }
     };
@@ -598,8 +639,10 @@ typedef struct Long_Double_Intergal_Var
         X = 0.0;      Y = 0.0;      Z = 0.0;
         X_h =0.0;    Y_h =0.0;    Z_h =0.0;
         X_hh =0.0;   Y_hh =0.0;   Z_hh =0.0;
+        X_hhh =0.0;   Y_hhh =0.0;   Z_hhh =0.0;
         CountNx = 0; CountNy = 0; CountNz = 0;
         CountNx_h = 0; CountNy_h = 0; CountNz_h = 0;
+        CountNx_hh = 0; CountNy_hh = 0; CountNz_hh = 0;
 
         X0 = 0.0;      Y0 = 0.0;      Z0 = 0.0;
         X1 = 0.0;      Y1 = 0.0;      Z1 = 0.0;
@@ -607,6 +650,9 @@ typedef struct Long_Double_Intergal_Var
         X3 = 0.0;      Y3 = 0.0;      Z3 = 0.0;
         X4 = 0.0;      Y4 = 0.0;      Z4 = 0.0;
         X5 = 0.0;      Y5 = 0.0;      Z5 = 0.0;
+
+        X_temp = 0.0; Y_temp = 0.0;   Z_temp = 0.0;
+
     };
 } LONG_DOUBLE_INT_VAR, *PLONG_DOUBLE_INT_VAR;
 
@@ -1209,7 +1255,7 @@ typedef struct TraObj
         {
             Ro = _A0 * pow((long double)_E_CONST, _K1* (H-_H0) + _K2*(H-_H0)*(H-_H0));
         }
-        else // 120 km
+        else if (H < 1500000.0) // 120 km
         {
             long double Hkm = H/1000.0;
 #undef _A0
@@ -1258,6 +1304,9 @@ typedef struct TraObj
             long double K4 = 0;
             Ro = RoH * K0 * (1 + K1 + K2 + K3 + K4);
         }
+        else
+            Ro = 0;
+
 #endif
         return Ro;
     };
@@ -1313,6 +1362,278 @@ typedef struct TraObj
 
 #if 1
 
+#if 1
+        void FastSummXYZ( long double ValX, long double ValY, long double ValZ, long double ValR, long double &X, long double &Y, long double &Z, int iCurSat)
+    {
+        int n,k;
+        long double tempX;
+        long double tempY;
+        long double tempZ;
+        long double sinTetta, XdivR, YdivR;
+        X = 0; Y = 0; Z = 0;
+        long double _x[TOTAL_COEF][3];
+        long double _y[TOTAL_COEF][3];
+        long double _z[TOTAL_COEF][3];
+        long double _x20,_y20,_z20;
+
+        gcrs_2_trs(ValX, ValY, ValZ);
+        tempX = ValX; tempY = ValY; tempZ = ValZ;
+       // now earth in Terra Ref System
+       // it is possible to calculate H to get air drag
+       if (--iAtm[iCurSat] == 0)
+       {
+           long double dlLAT, dlLON;
+           iAtm[iCurSat] = iItearationsPerSec/4;//479; // onc per 1000 iteration == 1 per sec
+           h[iCurSat] = H =GetH(tempX, tempY, tempZ, 6378245.000, 6356863.019,dlLAT,dlLON);
+           ro[iCurSat] = Ro=GetDens(); // 15C
+       }
+
+       sinTetta =ValZ/ValR;
+
+        XdivR =   tempX/ValR;
+        YdivR =   tempY/ValR;
+        XdivRval = XdivR;
+        YdivRval = YdivR;
+
+        SinTetta = sinTetta;
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        n = 0;  //  initial
+
+        long double Ptilda_m_2[TOTAL_COEF];
+        long double Ptilda_m_1[TOTAL_COEF];
+        long double Ptilda_[TOTAL_COEF];
+        for (k = 0; k < TOTAL_COEF; k++) 
+        {
+            Ptilda_[k] = 0;  Ptilda_m_1[k] =0;  Ptilda_m_2[k]=0;
+        }
+        long double P_m_2 = 0;
+        long double P_m_1 = 0;
+        long double P_ = 1;
+        Ptilda_[0]= P_;
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        // next iteration by n
+        n = 1;
+        P_m_2 = P_m_1; P_m_1 = P_;
+        memcpy(Ptilda_m_2,Ptilda_m_1, sizeof(Ptilda_m_2)); memcpy(Ptilda_m_1,Ptilda_, sizeof(Ptilda_m_1));
+        //P_ = sinTetta;
+        P_ = sinTetta;
+        Ptilda_[0]= P_;
+
+        //Ptilda_[1] = n * P_m_1 + sinTetta * Ptilda_m_1[1]; // P'[1]  k == '
+
+        // P = sin => d(P)/d(sin) = 1
+        Ptilda_[1] =  1;
+
+        long double R0divR_ = R0divR[1]*R0divR[1];
+        int ip = 0;
+        // loop iteration starts from n=2 k = 0
+        // formula 8 on page 92
+        long double Xk[TOTAL_COEF];
+        long double Yk[TOTAL_COEF];
+        
+        Xk[0] = 1.0;
+        Yk[0] = 0.0;
+        Xk[1] = Xk[0]*XdivR - Yk[0]*YdivR;
+        Yk[1] = Yk[0]*XdivR + Xk[0]*YdivR;
+        //int iXkYk = 1;
+        long double P_nk_x_Qnk_ = 0.0;
+        long double Ptilda_nk_x_Qnk_ = 0.0;
+        long double P_nk_x_K_x_XSumD = 0.0;
+        long double P_nk_x_K_x_YSumD = 0.0;
+
+        for (n = 2; n <=iLeg; n++)
+        {
+            long double x[3],y[3],z[3];
+#if _DEBUG
+            // sanity check n:
+            if (n != nk_lm_Numbers[ip][0])
+                exit (1);
+#endif
+            //////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            // next iteration by n
+            P_m_2 = P_m_1; P_m_1 = P_;
+            memcpy(Ptilda_m_2,Ptilda_m_1, sizeof(Ptilda_m_2)); memcpy(Ptilda_m_1,Ptilda_, sizeof(Ptilda_m_1));
+            P_ = ((2.0* n-1.0) *sinTetta * P_m_1 - (n-1)*P_m_2)/n;  // P[2]
+            Ptilda_[0]= P_;
+            long double P_nk = P_;
+            //long double XkDxrPrev =0;
+            //long double XkDyrPrev =0;
+            //long double YkDxrPrev =0;
+            //long double YkDyrPrev =0;
+            //long double XkPrev =1;
+            //long double YkPrev =0;
+            //long double XkDxr, XkDyr, YkDxr, YkDyr;
+            long double XSumD, YSumD;
+            /////////////////////////////////////////////////////////////////////////////  k =================0
+            k = 0;
+            //if (iXkYk < k)
+            //{
+            //    Xk[k] = 1.0;
+            //    Yk[k] = 0.0;
+            //    iXkYk = k;
+            //}
+#if _DEBUG
+            // sanity check k:
+            if (k != nk_lm_Numbers[ip][1])
+                exit (1);
+#endif
+
+            long double Qnk_ = C_S_nk[ip][0] * Xk[k] + C_S_nk[ip][1] * Yk[k];
+            // on k=0 iteration!! i.e. n=2, k=0
+            // Qnk = Cnk=0*Xk=0 +Snk=0*Yk=0
+            // Xk=0 = 1; and Yk=0 = 0;
+            // Qn0 = Cn0  => D_Qnk_Dxr =0; D_Qnk_Dyr=0
+            //long double D_Qnk_Dxr_ = 0;
+            //long double D_Qnk_Dyr_ = 0;
+            // k is derivative
+            long double Ptilda_nk = n * P_m_1 + sinTetta * Ptilda_m_1[1];                        // P'[2]
+            Ptilda_[1] = Ptilda_nk; // store P'[2] for use 
+            // J case
+            if (ip == 0)
+            {           //Sumgam_N := Pn[0]*Cn[O]*(n + 1)
+                                                       // Sumh_N := Pn[1]* Cn[0];
+                _x20 = -(n+1) *XdivR    * P_nk * Qnk_  - Ptilda_nk *  Qnk_ * XdivR * SinTetta ;
+                _y20 = -(n+1) *YdivR    * P_nk * Qnk_  - Ptilda_nk *  Qnk_ * YdivR * SinTetta     ;
+                _z20 = -(n+1) *SinTetta * P_nk * Qnk_  +  Ptilda_nk *  Qnk_ * (1-SinTetta*SinTetta);
+            }
+            else
+            {
+                //x = (-(n+1) *XdivR    * P_ * Qnk_ - Ptilda_nk *  Qnk_ * XdivR * SinTetta   );
+                //y = (-(n+1) *YdivR    * P_ * Qnk_ - Ptilda_nk *  Qnk_ * YdivR * SinTetta   );
+                //z = (-(n+1) *SinTetta * P_ * Qnk_ + Ptilda_nk *  Qnk_ * (1-SinTetta*SinTetta) );
+
+                //x[0] = -(n+1) *XdivR    * P_nk * Qnk_;
+                //y[0] = -(n+1) *YdivR    * P_nk * Qnk_;
+                //z[0] = -(n+1) *SinTetta * P_nk * Qnk_;
+                P_nk_x_Qnk_ += -(n+1) * P_nk * Qnk_;
+                //x[1] = - Ptilda_nk *  Qnk_ * XdivR * SinTetta     ;
+                //y[1] = - Ptilda_nk *  Qnk_ * YdivR * SinTetta     ;
+                //z[1] =   Ptilda_nk *  Qnk_ * (1-SinTetta*SinTetta);
+                Ptilda_nk_x_Qnk_ += - Ptilda_nk *  Qnk_ ;
+                //x[2] =0; y[2]=0;z[2]=0;
+            }
+            
+            //////////////////////////////////////////////////////////////////////////   k ==================1
+            // next iteration by k
+            ip++;
+            k = 1;
+#if _DEBUG
+            // sanity check k:
+            if (k != nk_lm_Numbers[ip][1])
+                exit (1);
+#endif
+            //if (iXkYk < k)
+            //{
+            //    Xk[k] = Xk[k-1]*XdivR - Yk[k-1]*YdivR;
+            //    Yk[k] = Yk[k-1]*XdivR + Xk[k-1]*YdivR;
+            //    iXkYk = k;
+            //}
+            Qnk_ = C_S_nk[ip][0] * Xk[k] + C_S_nk[ip][1] * Yk[k];  //Bnmtil := Cnm*ctll[M] + Snm*stil[M];
+            XSumD = C_S_nk[ip][0] * Xk[k-1] + C_S_nk[ip][1] * Yk[k-1];
+            YSumD = C_S_nk[ip][0] * Yk[k-1] - C_S_nk[ip][1] * Xk[k-1];
+            //XkPrev = Xk; YkPrev = Yk;
+
+            P_nk = Ptilda_[1]; // P'[2] == (k= 1)
+            Ptilda_nk  = (2*n-1) * Ptilda_m_1[1] + Ptilda_m_2[2];
+            Ptilda_[2] = Ptilda_nk; // store P"[2] for next use
+            //x += (-(n+1+1) *XdivR    * P_nk * Qnk_ - Ptilda_nk *  Qnk_ * XdivR    * SinTetta     + P_nk * ( 1 *  XSumD   ));
+            //y += (-(n+1+1) *YdivR    * P_nk * Qnk_ - Ptilda_nk *  Qnk_ * YdivR    * SinTetta     + P_nk * ( 1 * -YSumD   ));
+            //z += (-(n+1+1) *SinTetta * P_nk * Qnk_ + Ptilda_nk *  Qnk_ * (1- SinTetta * SinTetta));
+
+
+            //x[0] += -(n+1+1) *XdivR    * P_nk * Qnk_;
+            //y[0] += -(n+1+1) *YdivR    * P_nk * Qnk_;
+            //z[0] += -(n+1+1) *SinTetta * P_nk * Qnk_;
+            P_nk_x_Qnk_ += -(n+1+1) * P_nk * Qnk_;
+
+            //x[1] +=  - Ptilda_nk *  Qnk_ * XdivR    * SinTetta ;
+            //y[1] +=  - Ptilda_nk *  Qnk_ * YdivR    * SinTetta;
+            //z[1] +=    Ptilda_nk *  Qnk_ * (1- SinTetta * SinTetta);
+            Ptilda_nk_x_Qnk_ += - Ptilda_nk *  Qnk_;
+
+            //x[2] += P_nk * ( 1 *  XSumD   );
+            //y[2] += P_nk * ( 1 * -YSumD   );
+            //z[2] += 0;
+            P_nk_x_K_x_XSumD += P_nk * ( 1 *  XSumD   );
+            P_nk_x_K_x_YSumD += P_nk * ( 1 * -YSumD   );
+
+            ////////////////////////////////////////////////////////////////////////////////////////
+            for (k = 2; k <=n; k++)
+            {
+                ////////////////////////////////////////////////////////////////////////////////////////
+                // next iteration == k ==2
+                ip++;
+#if _DEBUG
+                // sanity check k:
+                if (k != nk_lm_Numbers[ip][1])
+                    exit (1);
+#endif
+                if (k==n)
+                {
+                    Xk[k] = Xk[k-1]*XdivR - Yk[k-1]*YdivR;
+                    Yk[k] = Yk[k-1]*XdivR + Xk[k-1]*YdivR;
+                    //iXkYk = k;
+                }
+                Qnk_ = C_S_nk[ip][0] * Xk[k] + C_S_nk[ip][1] * Yk[k];
+                XSumD = C_S_nk[ip][0] * Xk[k-1] + C_S_nk[ip][1] * Yk[k-1];
+                YSumD = C_S_nk[ip][0] * Yk[k-1] - C_S_nk[ip][1] * Xk[k-1];
+
+                //XkPrev = Xk; YkPrev = Yk;
+
+                P_nk = Ptilda_[k];
+                Ptilda_nk = (2*n-1) * Ptilda_m_1[k] + Ptilda_m_2[k+1];
+                Ptilda_[k+1] = Ptilda_nk; // store P'"[2] (third derivative) for next use
+
+                //x += (-(n+k+1) *XdivR    * P_nk * Qnk_ - Ptilda_nk *  Qnk_ * XdivR    * SinTetta   + P_nk * ( k *  XSumD   ));
+                //y += (-(n+k+1) *YdivR    * P_nk * Qnk_ - Ptilda_nk *  Qnk_ * YdivR    * SinTetta   + P_nk * ( k * -YSumD   ));
+                //z += (-(n+k+1) *SinTetta * P_nk * Qnk_ + Ptilda_nk *  Qnk_ * (1- SinTetta * SinTetta));
+
+
+                //x[0] += -(n+k+1) *XdivR    * P_nk * Qnk_;
+                //y[0] += -(n+k+1) *YdivR    * P_nk * Qnk_;
+                //z[0] += -(n+k+1) *SinTetta * P_nk * Qnk_;
+                P_nk_x_Qnk_ += -(n+k+1) * P_nk * Qnk_;
+
+                //x[1] += - Ptilda_nk *  Qnk_ * XdivR    * SinTetta;
+                //y[1] += - Ptilda_nk *  Qnk_ * YdivR    * SinTetta;
+                //z[1] +=   Ptilda_nk *  Qnk_ * (1- SinTetta * SinTetta);
+                Ptilda_nk_x_Qnk_ += - Ptilda_nk *  Qnk_;
+
+                //x[2] +=  P_nk * ( k *  XSumD   );
+                //y[2] +=  P_nk * ( k * -YSumD   );
+                //z[2] += 0;
+                P_nk_x_K_x_XSumD += P_nk * ( k *  XSumD   );
+                P_nk_x_K_x_YSumD += P_nk * ( k * -YSumD   );
+            }
+            //_x[n][0] = x[0];_x[n][1] = x[1];_x[n][2] = x[2];
+            //_y[n][0] = y[0];_y[n][1] = y[1];_y[n][2] = y[2];
+            //_z[n][0] = z[0];_z[n][1] = z[1];_z[n][2] = z[2];
+            R0divR[n] = R0divR_;
+
+            //X += x* R0divR_; Y += y *R0divR_; Z += z * R0divR_;
+            R0divR_*= R0divR[1];
+            ////////////////////////////////////////////////////////////////////////////////////////
+            // next iteration == k ==2
+            ip++;
+        }
+        //for (n=2; n <= iLeg; n++)
+        //{
+        //    _x[n] *= R0divR[n]; _y[n] *= R0divR[n]; _z[n] *= R0divR[n];
+        //}
+        //for (n=iLeg; n >=2; n--)
+        {
+            //X += (_x[n][0]+_x[n][1]+_x[n][2])*R0divR[n]; 
+            //Y += (_y[n][0]+_y[n][1]+_y[n][2])*R0divR[n];
+            //Z += (_z[n][0]+_z[n][1]+_z[n][2])*R0divR[n];
+            X += (P_nk_x_Qnk_ * XdivR    + Ptilda_nk_x_Qnk_ * XdivR * SinTetta         + P_nk_x_K_x_XSumD )*R0divR[n]; 
+            Y += (P_nk_x_Qnk_ * YdivR    + Ptilda_nk_x_Qnk_ * YdivR * SinTetta         + P_nk_x_K_x_YSumD )*R0divR[n];
+            Z += (P_nk_x_Qnk_ * SinTetta - Ptilda_nk_x_Qnk_ * (1- SinTetta * SinTetta)                    )*R0divR[n];
+        }
+        X += _x20*R0divR[2];  Y += _y20*R0divR[2];  Z += _z20*R0divR[2];
+
+        trs_2_gcrs(X, Y, Z);
+    };
+#else
     void FastSummXYZ( long double ValX, long double ValY, long double ValZ, long double ValR, long double &X, long double &Y, long double &Z, int iCurSat)
     {
         int n,k;
@@ -1326,61 +1647,8 @@ typedef struct TraObj
         long double _z[TOTAL_COEF];
         long double _x20,_y20,_z20;
 
-#if 1
         gcrs_2_trs(ValX, ValY, ValZ);
         tempX = ValX; tempY = ValY; tempZ = ValZ;
-#else
-        // matrix Deps
-            cos_precEps= cos(precEps); sin_precEps= sin(precEps);
-            //| cos(eps)   sin(eps) 0 |
-            //| -sin(eps)  cos(eps) 0 |
-            //|   0           0     1 |
-            tempX =  cos_precEps * ValX + sin_precEps * ValY;
-            tempY = -sin_precEps * ValX + cos_precEps * ValY;
-            ValX = tempX; ValY = tempY;
-       // matrix Dtet
-            cos_precTet = cos(precTet); sin_precTet = sin(precTet);
-            //| cos(tet)   0 sin(tet) | 
-            //|   0        1        0 |
-            //|- sin(tet)  0 cos(tet) |
-            tempX =  cos_precTet * ValX + sin_precTet * ValZ;
-            tempZ = -sin_precTet * ValX + cos_precTet * ValZ;
-            ValX = tempX; ValZ = tempZ;
-       // matrix Dz
-            cos_precZ =  cos(precZ); sin_precZ = sin(precZ);
-            //| cos(z)  -sin(z) 0 | 
-            //| sin(z)   cos(z) 0 |
-            //|   0      0     1 |
-            tempX =  cos_precZ * ValX - sin_precZ * ValY;
-            tempY =  sin_precZ * ValX + cos_precZ * ValY;
-            ValX = tempX; ValY = tempY;
-
-       // matrix C nut Epsilon
-            cos_nutEpsilon = cos(nutEpsilon); sin_nutEpsilon = sin(nutEpsilon);
-            tempY =    cos_nutEpsilon * ValY + sin_nutEpsilon * ValZ;
-            tempZ =  - sin_nutEpsilon * ValY + cos_nutEpsilon * ValZ;
-            ValY = tempY; ValZ = tempZ;
-            
-       // matrix C nut dFeta
-            cos_nutDFeta = cos(nutDFeta); sin_nutDFeta=sin(nutDFeta);
-            tempX =  cos_nutDFeta * ValX - sin_nutDFeta * ValY;
-            tempY =  sin_nutDFeta * ValX + cos_nutDFeta * ValY;
-            ValX = tempX; ValY = tempY;
-
-       // matrix C nut Epsilon Trans
-            tempY =    cos_nutEpsilon * ValY - sin_nutEpsilon * ValZ;
-            tempZ =    sin_nutEpsilon * ValY + cos_nutEpsilon * ValZ;
-            ValY = tempY; ValZ = tempZ;
-
-            // matrix B:
-            cos_Lambda = cos(Lambda); sin_Lambda = sin(Lambda);
-            //| cos(h)   sin(h) 0 |  |
-            //| -sin(h)  cos(h) 0 |
-            //|   0       0     1 |
-            tempX = cos_Lambda * ValX + sin_Lambda * ValY;
-            tempY = -sin_Lambda * ValX + cos_Lambda * ValY;
-
-#endif
        // now earth in Terra Ref System
        // it is possible to calculate H to get air drag
        if (--iAtm[iCurSat] == 0)
@@ -1585,59 +1853,9 @@ typedef struct TraObj
         }
         X += _x20*R0divR[2];  Y += _y20*R0divR[2];  Z += _z20*R0divR[2];
 
-#if 1
         trs_2_gcrs(X, Y, Z);
-#else
-        // matrix (T) B:
-        //| cos(h)   -sin(h) 0 |  |
-        //| sin(h)   cos(h) 0 |
-        //|   0        0     1 |
-        tempX = cos_Lambda * X - sin_Lambda * Y;
-        tempY = sin_Lambda * X + cos_Lambda * Y;
-        X = tempX; Y = tempY;
-
-       // matrix (T) C nut Epsilon Trans
-            tempY =    cos_nutEpsilon * Y + sin_nutEpsilon * Z;
-            tempZ =  - sin_nutEpsilon * Y + cos_nutEpsilon * Z;
-            Y = tempY; Z = tempZ;
-
-       // matrix (T)C nut dFeta
-            tempX =  cos_nutDFeta * X + sin_nutDFeta * Y;
-            tempY = -sin_nutDFeta * X + cos_nutDFeta * Y;
-            X = tempX; Y = tempY;
-
-       // matrix C (T) nut Epsilon
-            tempY =    cos_nutEpsilon * Y - sin_nutEpsilon * Z;
-            tempZ =    sin_nutEpsilon * Y + cos_nutEpsilon * Z;
-            Y = tempY; Z = tempZ;
-            
-
-
-
-        // matrix (T) Dz
-            //| cos(z)   sin(z) 0 | 
-            //|-sin(z)   cos(z) 0 |
-            //|   0      0     1 |
-            tempX =  cos_precZ * X + sin_precZ * Y;
-            tempY = -sin_precZ * X + cos_precZ * Y;
-            X = tempX; Y = tempY;
-        // matrix(T) Dtet
-            //| cos(tet)   0 -sin(tet) | 
-            //|   0        1        0  |
-            //| sin(tet)   0  cos(tet) |
-            tempX =  cos_precTet * X - sin_precTet * Z;
-            tempZ =  sin_precTet * X + cos_precTet * Z;
-            X = tempX; Z = tempZ;
-
-        // matrix (T) Deps
-            //| cos(eps)   -sin(eps) 0 |
-            //| sin(eps)    cos(eps) 0 |
-            //|   0           0     1 |
-            tempX =  cos_precEps * X - sin_precEps * Y;
-            tempY =  sin_precEps * X + cos_precEps * Y;
-            X = tempX; Y = tempY;
-#endif
     };
+#endif
 #else
     void FastSummXYZ( long double ValX, long double ValY, long double ValZ, long double ValR, long double &X, long double &Y, long double &Z, int iCurSat)
     {
@@ -8352,7 +8570,7 @@ void ParamProb(char *szString)
             Sat.RunOne = TRUE;
             
 #ifdef USE_MODEL_LOAD
-            Sat.iLeg = 36;
+            Sat.iLeg = EarthModelCoefs;
             iCounter_nk_lm_Numbers =0;
             FILE *FileC_S = fopen(EarthModelFile,"r");
             //FILE *FileC_S = fopen("JGM3.txt","r");
@@ -10567,79 +10785,79 @@ void RunProp(TRAOBJ *SlS, TRAOBJ *Sat,TRAIMPLOBJ *Eng, long double ldFrom,long d
 #ifdef _DO_VISUALIZATION
         DrawAnimationSequence(SlS,Sat, iSec,"TRA",SlS, RGBReferenceBody, dRGBScale, StartSequence, 0); 
 #endif
-        // on first sattelite do compare of the calculated position and SGP4 
-        int iCheck = 0;
-        Time_SecondsFromStart = (long double) (iSec+1);
-        long double AE = 1.0;
-        long double XKMPER = 6378.1350; //XKMPER kilometers/Earth radii 6378.135
-		long double XKE = BIG_XKE;//.743669161E-1;
-
-        long double XJ2 = 1.082616E-3;
-        long double CK2=.5*XJ2*AE*AE;
-
-        long double XMNPDA = 1440.0; // XMNPDA time units(minutes) /day 1440.0
-        long double TEMP=2*M_PI/XMNPDA/XMNPDA; // 2*pi / (1440 **2)
-        long double ProbMeanMotion = Sat->ProbMeanMotion[iCheck];
-        long double XNO=ProbMeanMotion*TEMP*XMNPDA; // rotation per day * 2*pi /1440 == rotation per day on 1 unit (1 min)
-        long double XNDT2O=Sat->ProbFirstDervMeanMotion[iCheck]*TEMP;
-        long double XNDD6O=Sat->ProbSecondDervmeanMotion[iCheck]*TEMP/XMNPDA;
-        long double BSTAR=Sat->ProbDragterm[iCheck]/AE;
-        long double tProbX,tProbY,tProbZ,tProbVX,tProbVY,tProbVZ;
-        // next lines has to be removed ==> today they are included only to avoid drag effect
-#if 0
-        BSTAR = 0.0;
-        XNDD6O = 0.0;
-        XNDT2O =0.0;
-#endif
-
-        //long double TimeFromEpochOfSatInDays = fmod(Sat.ProbEpochOnStart[iCheck] + Time_SecondsFromStart/24.0/60.0/60.0, 1.0/Sat.ProbMeanMotion[iCheck]);
-        // first parameter in in minutes from epoch
-        if (memcmp(UseSatData, "SGP",3)==0) 
-        {
-            if (memcmp(UseSatData, "SGP4",4)==0)
-            {
-			    SGP4((ldFrom - Sat->ProbJD[iCheck]+Time_SecondsFromStart/24.0/60.0/60.0)*XMNPDA, 
-                        XNDT2O,XNDD6O,BSTAR,Sat->ProbIncl[iCheck], Sat->ProbAscNode[iCheck],Sat->ProbEcc[iCheck], Sat->ProbArgPer[iCheck], Sat->ProbMeanAnom[iCheck],XNO, 
-				        tProbX,tProbY,tProbZ,tProbVX,tProbVY,tProbVZ);
-            }
-            else if (memcmp(UseSatData, "SGP8",4)==0)
-            {
-			    SGP8((ldFrom - Sat->ProbJD[iCheck]+Time_SecondsFromStart/24.0/60.0/60.0)*XMNPDA, 
-                        XNDT2O,XNDD6O,BSTAR,Sat->ProbIncl[iCheck], Sat->ProbAscNode[iCheck],Sat->ProbEcc[iCheck], Sat->ProbArgPer[iCheck], Sat->ProbMeanAnom[iCheck],XNO, 
-				        tProbX,tProbY,tProbZ,tProbVX,tProbVY,tProbVZ);
-            }
-            else if  (memcmp(UseSatData, "SGP",3)==0)
-            {
-			    SGP((ldFrom - Sat->ProbJD[iCheck]+Time_SecondsFromStart/24.0/60.0/60.0)*XMNPDA, 
-                    XNDT2O,XNDD6O,BSTAR,Sat->ProbIncl[iCheck], Sat->ProbAscNode[iCheck],Sat->ProbEcc[iCheck], Sat->ProbArgPer[iCheck], Sat->ProbMeanAnom[iCheck],XNO, 
-				    tProbX,tProbY,tProbZ,tProbVX,tProbVY,tProbVZ);
-            }
-            tProbX=tProbX*XKMPER/AE*1000.0;                 tProbY=tProbY*XKMPER/AE*1000.0;                 tProbZ=tProbZ*XKMPER/AE*1000.0;
-			tProbVX=tProbVX*XKMPER/AE*XMNPDA/86400.*1000.0;	tProbVY=tProbVY*XKMPER/AE*XMNPDA/86400.*1000.0;	tProbVZ=tProbVZ*XKMPER/AE*XMNPDA/86400.*1000.0;
-        }
-        else
-        {
-            KeplerPosition(Sat->ProbJD[iCheck],ldFrom+Time_SecondsFromStart/24.0/60.0/60.0,      // prob epoch, and curent time
-	    			    Sat->ProbTSec[iCheck], Sat->ProbEcc[iCheck], Sat->ProbIncl[iCheck], Sat->ProbAscNode[iCheck],  Sat->ProbArgPer[iCheck], Sat->ProbMeanAnom[iCheck], BSTAR,
-                        Gbig *SolarSystem.M[EARTH],1, tProbX,tProbY,tProbZ,tProbVX,tProbVY,tProbVZ, Sat->ProbMeanMotion[iCheck]);
-
-        }
-        long double tX, tY, tZ, tVX, tVY, tVZ;
-        tX = Sat->X[iCheck] - SlS->X[EARTH];      tY = Sat->Y[iCheck] - SlS->Y[EARTH];      tZ = Sat->Z[iCheck] - SlS->Z[EARTH];
-		tVX = Sat->VX[iCheck] - SlS->VX[EARTH];   tVY = Sat->VY[iCheck] - SlS->VY[EARTH];   tVZ = Sat->VZ[iCheck] - SlS->VZ[EARTH];
-        long double ttProbX, ttProbY, ttProbZ, ttProbVX, ttProbVY, ttProbVZ;
-        ttProbX	= tX - tProbX;ttProbY= tY - tProbY; ttProbZ	= tZ - tProbZ;
-        ttProbVX = tVX - tProbVX; ttProbVY = tVY - tProbVY; ttProbVZ = tVZ - tProbVZ;
-        long double tttX, tttVX;
-        tttX = sqrt(ttProbX*ttProbX + ttProbY*ttProbY + ttProbZ*ttProbZ);
-        tttVX = sqrt(ttProbVX*ttProbVX + ttProbVY*ttProbVY + ttProbVZ*ttProbVZ);
-        double errorCos = (tVX*tProbVX + tVY*tProbVY + tVZ*tProbVZ)/ (sqrt(tVX*tVX +tVY*tVY + tVZ*tVZ)* sqrt(tProbVX*tProbVX + tProbVY*tProbVY + tProbVZ*tProbVZ));
-        double errAngle =  acos(errorCos);
-        double errorD = sqrt(tVX*tVX + tVY*tVY + tVZ*tVZ)/sqrt(tProbVX*tProbVX + tProbVY*tProbVY + tProbVZ*tProbVZ);
-        double SinAngle = tZ / sqrt(tX*tX + tY*tY + tZ*tZ);
-        double ErrorDD = sqrt(tVX*tVX + tVY*tVY + tVZ*tVZ) - sqrt(tProbVX*tProbVX + tProbVY*tProbVY + tProbVZ*tProbVZ);
+        
         if (iSec%(60*92) == 0)
         {
+            // on first sattelite do compare of the calculated position and SGP4 
+            int iCheck = 0;
+            Time_SecondsFromStart = (long double) (iSec+1);
+            long double AE = 1.0;
+            long double XKMPER = 6378.1350; //XKMPER kilometers/Earth radii 6378.135
+		    long double XKE = BIG_XKE;//.743669161E-1;
+
+            long double XJ2 = 1.082616E-3;
+            long double CK2=.5*XJ2*AE*AE;
+
+            long double XMNPDA = 1440.0; // XMNPDA time units(minutes) /day 1440.0
+            long double TEMP=2*M_PI/XMNPDA/XMNPDA; // 2*pi / (1440 **2)
+            long double ProbMeanMotion = Sat->ProbMeanMotion[iCheck];
+            long double XNO=ProbMeanMotion*TEMP*XMNPDA; // rotation per day * 2*pi /1440 == rotation per day on 1 unit (1 min)
+            long double XNDT2O=Sat->ProbFirstDervMeanMotion[iCheck]*TEMP;
+            long double XNDD6O=Sat->ProbSecondDervmeanMotion[iCheck]*TEMP/XMNPDA;
+            long double BSTAR=Sat->ProbDragterm[iCheck]/AE;
+            long double tProbX,tProbY,tProbZ,tProbVX,tProbVY,tProbVZ;
+            // next lines has to be removed ==> today they are included only to avoid drag effect
+#if 0
+            BSTAR = 0.0;
+            XNDD6O = 0.0;
+            XNDT2O =0.0;
+#endif
+
+            //long double TimeFromEpochOfSatInDays = fmod(Sat.ProbEpochOnStart[iCheck] + Time_SecondsFromStart/24.0/60.0/60.0, 1.0/Sat.ProbMeanMotion[iCheck]);
+            // first parameter in in minutes from epoch
+            if (memcmp(UseSatData, "SGP",3)==0) 
+            {
+                if (memcmp(UseSatData, "SGP4",4)==0)
+                {
+			        SGP4((ldFrom - Sat->ProbJD[iCheck]+Time_SecondsFromStart/24.0/60.0/60.0)*XMNPDA, 
+                        XNDT2O,XNDD6O,BSTAR,Sat->ProbIncl[iCheck], Sat->ProbAscNode[iCheck],Sat->ProbEcc[iCheck], Sat->ProbArgPer[iCheck], Sat->ProbMeanAnom[iCheck],XNO, 
+				        tProbX,tProbY,tProbZ,tProbVX,tProbVY,tProbVZ);
+                }
+                else if (memcmp(UseSatData, "SGP8",4)==0)
+                {
+    			    SGP8((ldFrom - Sat->ProbJD[iCheck]+Time_SecondsFromStart/24.0/60.0/60.0)*XMNPDA, 
+                        XNDT2O,XNDD6O,BSTAR,Sat->ProbIncl[iCheck], Sat->ProbAscNode[iCheck],Sat->ProbEcc[iCheck], Sat->ProbArgPer[iCheck], Sat->ProbMeanAnom[iCheck],XNO, 
+				        tProbX,tProbY,tProbZ,tProbVX,tProbVY,tProbVZ);
+                }
+                else if  (memcmp(UseSatData, "SGP",3)==0)
+                {
+			        SGP((ldFrom - Sat->ProbJD[iCheck]+Time_SecondsFromStart/24.0/60.0/60.0)*XMNPDA, 
+                        XNDT2O,XNDD6O,BSTAR,Sat->ProbIncl[iCheck], Sat->ProbAscNode[iCheck],Sat->ProbEcc[iCheck], Sat->ProbArgPer[iCheck], Sat->ProbMeanAnom[iCheck],XNO, 
+	    			    tProbX,tProbY,tProbZ,tProbVX,tProbVY,tProbVZ);
+                }
+                tProbX=tProbX*XKMPER/AE*1000.0;                 tProbY=tProbY*XKMPER/AE*1000.0;                 tProbZ=tProbZ*XKMPER/AE*1000.0;
+			    tProbVX=tProbVX*XKMPER/AE*XMNPDA/86400.*1000.0;	tProbVY=tProbVY*XKMPER/AE*XMNPDA/86400.*1000.0;	tProbVZ=tProbVZ*XKMPER/AE*XMNPDA/86400.*1000.0;
+            }
+            else
+            {
+                KeplerPosition(Sat->ProbJD[iCheck],ldFrom+Time_SecondsFromStart/24.0/60.0/60.0,      // prob epoch, and curent time
+	    			    Sat->ProbTSec[iCheck], Sat->ProbEcc[iCheck], Sat->ProbIncl[iCheck], Sat->ProbAscNode[iCheck],  Sat->ProbArgPer[iCheck], Sat->ProbMeanAnom[iCheck], BSTAR,
+                        Gbig *SolarSystem.M[EARTH],1, tProbX,tProbY,tProbZ,tProbVX,tProbVY,tProbVZ, Sat->ProbMeanMotion[iCheck]);
+            }
+            long double tX, tY, tZ, tVX, tVY, tVZ;
+            tX = Sat->X[iCheck] - SlS->X[EARTH];      tY = Sat->Y[iCheck] - SlS->Y[EARTH];      tZ = Sat->Z[iCheck] - SlS->Z[EARTH];
+		    tVX = Sat->VX[iCheck] - SlS->VX[EARTH];   tVY = Sat->VY[iCheck] - SlS->VY[EARTH];   tVZ = Sat->VZ[iCheck] - SlS->VZ[EARTH];
+            long double ttProbX, ttProbY, ttProbZ, ttProbVX, ttProbVY, ttProbVZ;
+            ttProbX	= tX - tProbX;ttProbY= tY - tProbY; ttProbZ	= tZ - tProbZ;
+            ttProbVX = tVX - tProbVX; ttProbVY = tVY - tProbVY; ttProbVZ = tVZ - tProbVZ;
+            long double tttX, tttVX;
+            tttX = sqrt(ttProbX*ttProbX + ttProbY*ttProbY + ttProbZ*ttProbZ);
+            tttVX = sqrt(ttProbVX*ttProbVX + ttProbVY*ttProbVY + ttProbVZ*ttProbVZ);
+            double errorCos = (tVX*tProbVX + tVY*tProbVY + tVZ*tProbVZ)/ (sqrt(tVX*tVX +tVY*tVY + tVZ*tVZ)* sqrt(tProbVX*tProbVX + tProbVY*tProbVY + tProbVZ*tProbVZ));
+            double errAngle =  acos(errorCos);
+            double errorD = sqrt(tVX*tVX + tVY*tVY + tVZ*tVZ)/sqrt(tProbVX*tProbVX + tProbVY*tProbVY + tProbVZ*tProbVZ);
+            double SinAngle = tZ / sqrt(tX*tX + tY*tY + tZ*tZ);
+            double ErrorDD = sqrt(tVX*tVX + tVY*tVY + tVZ*tVZ) - sqrt(tProbVX*tProbVX + tProbVY*tProbVY + tProbVZ*tProbVZ);
             //  printf("\n%f err(X=%f V=%f pr=%f lv=%f) min=%d ",(asin(SinAngle)*180/M_PI),tttX,tttVX, errorD, ErrorDD,iCurSec/60);
             printf("\n%8.4f X=%13.5f,%13.5f,%13.5f V=%13.5f,%13.5f,%13.5f e= %f %f  %d",(asin(SinAngle)*180/M_PI),
             tProbX - tX, tProbY - tY, tProbZ - tZ,
