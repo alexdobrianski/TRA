@@ -277,7 +277,7 @@ long double C_S_nk[TOTAL_COEF*TOTAL_COEF/2][2];
 
 
 
-
+long double ModelCoef;// = SlS->GM[j]/ GM_MODEL;
 #define USE_MODEL_LOAD
 #ifdef USE_MODEL_LOAD
 char EarthModelFile[1024]={"egm96"};
@@ -3207,7 +3207,7 @@ void CalcPlanetForces(TRAOBJ * SlS)
                 {
                     SlS->Distance[i][j] = tD_;
                     SlS->Distance[j][i] = tD_;
-#if 1
+#if 0
                     SlS->ForceDD[i][j] = SlS->GM[i] * SlS->M[j] / SlS->Distance2[i][j];
                     SlS->ForceDD[j][i] = SlS->GM[j] * SlS->M[i] / SlS->Distance2[j][i];
 #else
@@ -3270,7 +3270,6 @@ void CalcSatForces(TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfCalc)
             long double tD_ = sqrt(tD_Obj1Obj2);
             Sat->Distance[i][j] = tD_;
             Sat->ForceDD[i][j] = SlS->GM[j] /* Sat->M[i]*/ / Sat->Distance2[i][j]; // to get real force need to multiply on mass of the satellite
-            //Sat->ForceDD[i][j] = SlS->GM[j] /* Sat->M[i]*/ / (R0_MODEL*R0_MODEL); // to get real force need to multiply on mass of the satellite
 #define FAST_CALCULATIONS
 #ifdef FAST_CALCULATIONS
 
@@ -3281,8 +3280,9 @@ void CalcSatForces(TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfCalc)
 
             if (j == Sat->LegBody)
             {
-                Sat->ForceDD[i][j] = GM_MODEL / Sat->Distance2[i][j];
-                
+                //long double ModelCoef = SlS->GM[j]/ GM_MODEL;
+                //Sat->ForceDD[i][j] = GM_MODEL / Sat->Distance2[i][j];
+
                 Sat->R0divR[0] = 1;
                 Sat->R0divR[1] = R0_MODEL/tD_;
                 if (Sat->Distance[i][j] < 20*R0_MODEL)
@@ -3292,9 +3292,9 @@ void CalcSatForces(TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfCalc)
                     long double ValZ0 = (Sat->Z[i] - SlS->Z[j]);
 
                     Sat->FastSummXYZ(ValX0,ValY0,ValZ0,Sat->Distance[i][j],DX,DY,DZ, i);
-                    Sat->DeltaVX[i][j] =DX;
-                    Sat->DeltaVY[i][j] =DY;
-                    Sat->DeltaVZ[i][j] =DZ;
+                    Sat->DeltaVX[i][j] =DX/ModelCoef;
+                    Sat->DeltaVY[i][j] =DY/ModelCoef;
+                    Sat->DeltaVZ[i][j] =DZ/ModelCoef;
                 }
             }
 
@@ -3481,18 +3481,9 @@ void CalcSatForces(TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfCalc)
             //continue;
             if (j == Sat->LegBody)
             {
-#if 0
-                Sat->FX[i] += -( Sat->X[i] - SlS->X[j]) *Sat->DeltaVX[i][j] * Sat->ForceDD[i][j]/Sat->Distance[i][j];
-                Sat->FY[i] += -( Sat->Y[i] - SlS->Y[j]) *Sat->DeltaVY[i][j]* Sat->ForceDD[i][j]/Sat->Distance[i][j];
-#else
-                Sat->FX[i] += -( Sat->X[i] - SlS->X[j])  * Sat->ForceDD[i][j]/Sat->Distance[i][j] + Sat->DeltaVX[i][j]*GM_MODEL/ Sat->Distance2[i][j];
-                Sat->FY[i] += -( Sat->Y[i] - SlS->Y[j])  * Sat->ForceDD[i][j]/Sat->Distance[i][j] + Sat->DeltaVY[i][j]*GM_MODEL/ Sat->Distance2[i][j];
-#endif
-#ifndef _ACCOUNT_SIN
-                Sat->FZ[i] += -( Sat->Z[i] - SlS->Z[j]) *Sat->DeltaVZ[i][j] * Sat->ForceDD[i][j]/Sat->Distance[i][j];
-#else
-                Sat->FZ[i] += -( Sat->Z[i] - SlS->Z[j])  * Sat->ForceDD[i][j]/Sat->Distance[i][j] + Sat->DeltaVZ[i][j]*GM_MODEL/ Sat->Distance2[i][j];
-#endif
+                Sat->FX[i] += -( Sat->X[i] - SlS->X[j])  * Sat->ForceDD[i][j]/Sat->Distance[i][j] + Sat->DeltaVX[i][j]*Sat->ForceDD[i][j];
+                Sat->FY[i] += -( Sat->Y[i] - SlS->Y[j])  * Sat->ForceDD[i][j]/Sat->Distance[i][j] + Sat->DeltaVY[i][j]*Sat->ForceDD[i][j];
+                Sat->FZ[i] += -( Sat->Z[i] - SlS->Z[j])  * Sat->ForceDD[i][j]/Sat->Distance[i][j] + Sat->DeltaVZ[i][j]*Sat->ForceDD[i][j];
 #if 1
                 if (Sat->ProbSquare[i])
                 {
@@ -6661,10 +6652,21 @@ void SGP(long double TS, long double XNDT2O,long double XNDD6O,/*double IEXP,*/l
 	//double TOTHRD= .66666667;
 	//double TWOPI = 6.2831853;
 	//double X3PIO2 = 4.71238898;
-	long double XJ2 = 1.082616E-3;
-	long double XJ3 = -.253881E-5;
-	//double XJ4 = -1.65597E-6;
+#if _USE_ORIGINAL
 	long double XKE = BIG_XKE;//.743669161E-1;
+	//long double XKMPER = 6378.1350;
+	long double XJ2 = 1.082616E-3; //the second gravitational zonal harmonic of the Earth
+	long double XJ3 = -.253881E-5; // the third gravitational zonal harmonic of the Earth
+    double E6A = 1.E-6;
+#else
+	long double XKE = 7.43669161331734132e-2;
+//	long double XKMPER = 6378.137;
+	long double XJ2 = 0.10826360229840e-02; //the second gravitational zonal harmonic of the Earth
+	long double XJ3 = -0.25325160653E-05; // the third gravitational zonal harmonic of the Earth
+    double E6A = 1.E-12;
+#endif
+
+	//double XJ4 = -1.65597E-6;
 	//double XKMPER = 6378.135;
 	//double XMNPDA= 1440.;
 	long double AE =1.;
@@ -6823,15 +6825,25 @@ void SGP4(long double TSINCE,/*double EPOCH,*/
 //COMMON/C1/CK2,CK4,E6A,QOMS2T,S,TOTHRD,
 //1 XJ3,XKE,XKMPER,XMNPDA,AE
 	//long double /*EPOCH,*/ DS50;
+#if _USE_ORIGINAL
 	long double XKE = BIG_XKE;//.743669161E-1;
 	long double XKMPER = 6378.1350;
+	long double XJ2 = 1.082616E-3; //the second gravitational zonal harmonic of the Earth
+	long double XJ3 = -.253881E-5; // the third gravitational zonal harmonic of the Earth
+	long double XJ4 = -1.65597E-6; // the fourth gravitational zonal harmonic of the Earth
+    double E6A = 1.E-6;
+#else
+	long double XKE = 7.43669161331734132e-2;
+	long double XKMPER = 6378.137;
+	long double XJ2 = 0.10826360229840e-02; //the second gravitational zonal harmonic of the Earth
+	long double XJ3 = -0.25325160653E-05; // the third gravitational zonal harmonic of the Earth
+	long double XJ4 = -0.16185636000E-05; // the fourth gravitational zonal harmonic of the Earth
+    double E6A = 1.E-12;
+#endif
 	//IF (IFLAG .EQ. 0) GO TO 100
 	//* RECOVER ORIGINAL MEAN MOTION (XNODP) AND SEMIMAJOR AXIS (AODP)
 	//* FROM INPUT ELEMENTS
 	//A1=(XKE/XNO)**TOTHRD;
-	long double XJ2 = 1.082616E-3; //the second gravitational zonal harmonic of the Earth
-	long double XJ3 = -.253881E-5; // the third gravitational zonal harmonic of the Earth
-	long double XJ4 = -1.65597E-6; // the fourth gravitational zonal harmonic of the Earth
 	long double AE = 1.0;          // the equatorial radius of the Earth - actualy it is not true it is one == everything measuared in that radiuses
 	long double QO =120.0;         // parameter for the SGP4/SGP8 density function
 	long double SO = 78.0;         // parameter for the SGP4/SGP8 density function
@@ -7101,7 +7113,7 @@ void SGP8(long double TSINCE,/*double EPOCH,*/
 //DATA RHO/.15696615/
     long double TOTHRD= .6666666666666666666;
     long double RHO =.15696615;
-#if 0
+#if _USE_ORIGINAL
 	long double XKE = BIG_XKE;//.743669161E-1;
 	long double XKMPER = 6378.1350;
 	long double XJ2 = 1.082616E-3; //the second gravitational zonal harmonic of the Earth
@@ -8257,15 +8269,21 @@ void ParamProb(char *szString)
             {
                 long double AE = 1.0;
                 long double BSTAR=Sat.ProbDragterm[nSat]/AE;
+                
 			    if ( memcmp(UseSatData, "SGP",3)==0)
                 {
+
                     //Sat.ProbEpochOnStart[nSat] =fmod(dStartJD - Sat.ProbJD[nSat],1.0/Sat.ProbMeanMotion[nSat]);
-			        
-			        long double XKMPER = 6378.1350; //XKMPER kilometers/Earth radii 6378.135
-			        long double XKE = BIG_XKE;//.743669161E-1;
+
+#if _USE_ORIGINAL
+	                long double XKMPER = 6378.1350;//XKMPER kilometers/Earth radii 6378.135
+#else
+	                long double XKMPER = 6378.137;
+#endif
+			        //long double XKE = BIG_XKE;//.743669161E-1;
                     //XKE = sqrt(Gbig * SolarSystem.M[EARTH])*pow(AE/*(long double)6378.1350*//(long double)1440.0, (long double)3.0/(long double)2.0);;
-			        long double XJ2 = 1.082616E-3;
-			        long double CK2=.5*XJ2*AE*AE;
+			        //long double XJ2 = 1.082616E-3;
+			        //long double CK2=.5*XJ2*AE*AE;
 			        //double XMNPDA = 1440.0;
 			        //double TEMP=2.0*M_PI/XMNPDA/XMNPDA;
 			        //double XNO=ProbMeanMotion*TEMP*XMNPDA;
@@ -8301,11 +8319,6 @@ void ParamProb(char *szString)
 			        // second one does not use XNDT2O,XNDD6O
                     // in next call XN0 and ProbMeanMotion connected by a formula:
                     // Sat.ProbMeanMotion[nSat] = XNO / (2*pi) * 1440.0
-#if 0
-                    BSTAR = 0.0;
-                    XNDD6O = 0.0;
-                    XNDT2O =0.0;
-#endif
                     if (memcmp(UseSatData, "SGP4",4)==0)
 			            SGP4((dStartJD - Sat.ProbJD[nSat])*XMNPDA, XNDT2O,XNDD6O,BSTAR,Sat.ProbIncl[nSat], Sat.ProbAscNode[nSat],Sat.ProbEcc[nSat], 
                             Sat.ProbArgPer[nSat], Sat.ProbMeanAnom[nSat],XNO, 
@@ -8597,6 +8610,7 @@ void ParamProb(char *szString)
             }
             Sat.CountNx = 0; Sat.CountNy = 0; Sat.CountNz = 0;
             Sat.RunOne = TRUE;
+            ModelCoef = SolarSystem.GM[EARTH]/ GM_MODEL;
             
 #ifdef USE_MODEL_LOAD
             Sat.iLeg = EarthModelCoefs;
@@ -10538,10 +10552,14 @@ void RunSim(TRAOBJ *SlS, TRAOBJ *Sat,TRAIMPLOBJ *Eng, long double ldFrom,long do
         {
             int iCheck = 0;
             long double AE = 1.0;
-            long double XKMPER = 6378.1350; //XKMPER kilometers/Earth radii 6378.135
-		    long double XKE = BIG_XKE;//.743669161E-1;
-            long double XJ2 = 1.082616E-3;
-            long double CK2=.5*XJ2*AE*AE;
+#if _USE_ORIGINAL
+            long double XKMPER = 6378.1350;//XKMPER kilometers/Earth radii 6378.135
+#else
+            long double XKMPER = 6378.137;
+#endif
+		    //long double XKE = BIG_XKE;//.743669161E-1;
+            //long double XJ2 = 1.082616E-3;
+            //long double CK2=.5*XJ2*AE*AE;
             long double XMNPDA = 1440.0; // XMNPDA time units(minutes) /day 1440.0
             long double TEMP=2*M_PI/XMNPDA/XMNPDA; // 2*pi / (1440 **2)
             long double ProbMeanMotion = Sat->ProbMeanMotion[iCheck];
@@ -10653,6 +10671,84 @@ void RunSim(TRAOBJ *SlS, TRAOBJ *Sat,TRAIMPLOBJ *Eng, long double ldFrom,long do
         }
     }
 }
+void PrintPV(TRAOBJ *SlS, TRAOBJ *Sat, int iCheck, long double ldFrom, long double Time_SecondsFromStart)
+{
+            long iSec = Time_SecondsFromStart;
+            long double AE = 1.0;
+#if _USE_ORIGINAL
+            long double XKMPER = 6378.1350;//XKMPER kilometers/Earth radii 6378.135
+#else
+            long double XKMPER = 6378.137;
+#endif
+		    //long double XKE = BIG_XKE;//.743669161E-1;
+
+            //long double XJ2 = 1.082616E-3;
+            //long double CK2=.5*XJ2*AE*AE;
+
+            long double XMNPDA = 1440.0; // XMNPDA time units(minutes) /day 1440.0
+            long double TEMP=2*M_PI/XMNPDA/XMNPDA; // 2*pi / (1440 **2)
+            long double ProbMeanMotion = Sat->ProbMeanMotion[iCheck];
+            long double XNO=ProbMeanMotion*TEMP*XMNPDA; // rotation per day * 2*pi /1440 == rotation per day on 1 unit (1 min)
+            long double XNDT2O=Sat->ProbFirstDervMeanMotion[iCheck]*TEMP;
+            long double XNDD6O=Sat->ProbSecondDervmeanMotion[iCheck]*TEMP/XMNPDA;
+            long double BSTAR=Sat->ProbDragterm[iCheck]/AE;
+            long double tProbX,tProbY,tProbZ,tProbVX,tProbVY,tProbVZ;
+            // next lines has to be removed ==> today they are included only to avoid drag effect
+
+            //long double TimeFromEpochOfSatInDays = fmod(Sat.ProbEpochOnStart[iCheck] + Time_SecondsFromStart/24.0/60.0/60.0, 1.0/Sat.ProbMeanMotion[iCheck]);
+            // first parameter in in minutes from epoch
+            if (memcmp(UseSatData, "SGP",3)==0) 
+            {
+                if (memcmp(UseSatData, "SGP4",4)==0)
+                {
+			        SGP4((ldFrom - Sat->ProbJD[iCheck]+Time_SecondsFromStart/24.0/60.0/60.0)*XMNPDA, 
+                        XNDT2O,XNDD6O,BSTAR,Sat->ProbIncl[iCheck], Sat->ProbAscNode[iCheck],Sat->ProbEcc[iCheck], Sat->ProbArgPer[iCheck], Sat->ProbMeanAnom[iCheck],XNO, 
+				        tProbX,tProbY,tProbZ,tProbVX,tProbVY,tProbVZ);
+                }
+                else if (memcmp(UseSatData, "SGP8",4)==0)
+                {
+    			    SGP8((ldFrom - Sat->ProbJD[iCheck]+Time_SecondsFromStart/24.0/60.0/60.0)*XMNPDA, 
+                        XNDT2O,XNDD6O,BSTAR,Sat->ProbIncl[iCheck], Sat->ProbAscNode[iCheck],Sat->ProbEcc[iCheck], Sat->ProbArgPer[iCheck], Sat->ProbMeanAnom[iCheck],XNO, 
+				        tProbX,tProbY,tProbZ,tProbVX,tProbVY,tProbVZ);
+                }
+                else if  (memcmp(UseSatData, "SGP",3)==0)
+                {
+			        SGP((ldFrom - Sat->ProbJD[iCheck]+Time_SecondsFromStart/24.0/60.0/60.0)*XMNPDA, 
+                        XNDT2O,XNDD6O,BSTAR,Sat->ProbIncl[iCheck], Sat->ProbAscNode[iCheck],Sat->ProbEcc[iCheck], Sat->ProbArgPer[iCheck], Sat->ProbMeanAnom[iCheck],XNO, 
+	    			    tProbX,tProbY,tProbZ,tProbVX,tProbVY,tProbVZ);
+                }
+                tProbX=tProbX*XKMPER/AE*1000.0;                 tProbY=tProbY*XKMPER/AE*1000.0;                 tProbZ=tProbZ*XKMPER/AE*1000.0;
+			    tProbVX=tProbVX*XKMPER/AE*XMNPDA/86400.*1000.0;	tProbVY=tProbVY*XKMPER/AE*XMNPDA/86400.*1000.0;	tProbVZ=tProbVZ*XKMPER/AE*XMNPDA/86400.*1000.0;
+            }
+            else
+            {
+                KeplerPosition(Sat->ProbJD[iCheck],ldFrom+Time_SecondsFromStart/24.0/60.0/60.0,      // prob epoch, and curent time
+	    			    Sat->ProbTSec[iCheck], Sat->ProbEcc[iCheck], Sat->ProbIncl[iCheck], Sat->ProbAscNode[iCheck],  Sat->ProbArgPer[iCheck], Sat->ProbMeanAnom[iCheck], BSTAR,
+                        Gbig *SolarSystem.M[EARTH],1, tProbX,tProbY,tProbZ,tProbVX,tProbVY,tProbVZ, Sat->ProbMeanMotion[iCheck]);
+            }
+            long double tX, tY, tZ, tVX, tVY, tVZ;
+            tX = Sat->X[iCheck] - SlS->X[EARTH];      tY = Sat->Y[iCheck] - SlS->Y[EARTH];      tZ = Sat->Z[iCheck] - SlS->Z[EARTH];
+		    tVX = Sat->VX[iCheck] - SlS->VX[EARTH];   tVY = Sat->VY[iCheck] - SlS->VY[EARTH];   tVZ = Sat->VZ[iCheck] - SlS->VZ[EARTH];
+            long double ttProbX, ttProbY, ttProbZ, ttProbVX, ttProbVY, ttProbVZ;
+            ttProbX	= tX - tProbX;ttProbY= tY - tProbY; ttProbZ	= tZ - tProbZ;
+            ttProbVX = tVX - tProbVX; ttProbVY = tVY - tProbVY; ttProbVZ = tVZ - tProbVZ;
+            long double tttX, tttVX;
+            tttX = sqrt(ttProbX*ttProbX + ttProbY*ttProbY + ttProbZ*ttProbZ);
+            tttVX = sqrt(ttProbVX*ttProbVX + ttProbVY*ttProbVY + ttProbVZ*ttProbVZ);
+            double errorCos = (tVX*tProbVX + tVY*tProbVY + tVZ*tProbVZ)/ (sqrt(tVX*tVX +tVY*tVY + tVZ*tVZ)* sqrt(tProbVX*tProbVX + tProbVY*tProbVY + tProbVZ*tProbVZ));
+            //double errAngle =  acos(errorCos);
+            double errorD = sqrt(tVX*tVX + tVY*tVY + tVZ*tVZ)/sqrt(tProbVX*tProbVX + tProbVY*tProbVY + tProbVZ*tProbVZ);
+            double SinAngle = tZ / sqrt(tX*tX + tY*tY + tZ*tZ);
+            double SinAngle2 = tX / sqrt(tX*tX + tY*tY);
+
+            double ErrorDD = sqrt(tVX*tVX + tVY*tVY + tVZ*tVZ) - sqrt(tProbVX*tProbVX + tProbVY*tProbVY + tProbVZ*tProbVZ);
+            //  printf("\n%f err(X=%f V=%f pr=%f lv=%f) min=%d ",(asin(SinAngle)*180/M_PI),tttX,tttVX, errorD, ErrorDD,iCurSec/60);
+            printf("\n%8.4f %8.4f X=%13.5f,%13.5f,%13.5f V=%13.5f,%13.5f,%13.5f e= %f %f  %d",(asin(SinAngle)*180/M_PI),(asin(SinAngle2)*180/M_PI),
+            tProbX - tX, tProbY - tY, tProbZ - tZ,
+            tProbVX - tVX,tProbVY - tVY,tProbVZ - tVZ,
+            tttX,tttVX,iSec/60);
+
+}
 void RunProp(TRAOBJ *SlS, TRAOBJ *Sat,TRAIMPLOBJ *Eng, long double ldFrom,long double ldFromTLEEpoch, long long iAllSec, int iItPerS, long double tSl)
 {
     SlS->TimeSl = tSl;
@@ -10669,6 +10765,11 @@ void RunProp(TRAOBJ *SlS, TRAOBJ *Sat,TRAIMPLOBJ *Eng, long double ldFrom,long d
     stateType  StateMoon;
     double dErrorValue = 1000000.0; // 1km error == 1km*1km
     long double Time_SecondsFromStart=0;
+    int iDistance =0;
+    int Apogee = 0;
+    int Perigee = 10000000;
+    int ApPerStatus = 0; // search for apogee
+    int iCountDelay= 0;
 	
     for (iSec = 0; iSec < iAllSec; iSec++)
     {
@@ -10694,6 +10795,65 @@ void RunProp(TRAOBJ *SlS, TRAOBJ *Sat,TRAIMPLOBJ *Eng, long double ldFrom,long d
                 //printf("\n Landed on Earth at sec = %d", iCurSec);
                 Sat->flInUse[0] = 0;
             }
+            if (iDistance != (int)Sat->Distance[0][EARTH])
+            {
+                iDistance = (int)Sat->Distance[0][EARTH];
+                Sat->iAtm[0] = 1;
+
+            }
+            if (ApPerStatus == 0)
+            {
+                if (Apogee <= (int)Sat->Distance[0][EARTH])
+                    Apogee = Sat->Distance[0][EARTH];
+                else
+                {
+                    ApPerStatus = 1; // delay
+                    iCountDelay = 100;
+                    Time_SecondsFromStart = (iSec +   (long double)(iPortionSec+1)/(long double)iItPerS);
+                    PrintPV(SlS, Sat, 0, ldFrom, Time_SecondsFromStart);
+                }
+
+            } else if (ApPerStatus == 1)
+            {
+                if (--iCountDelay == 0)
+                {
+                    ApPerStatus = 2; // search for perigee
+                    Perigee = 1000000000;
+                }
+            } else if (ApPerStatus == 2)
+            {
+                if (Perigee >= (int)Sat->Distance[0][EARTH])
+                    Perigee = Sat->Distance[0][EARTH];
+                else
+                {
+                    ApPerStatus = 3; // delay
+                    iCountDelay = 100;
+                }
+            } else if (ApPerStatus == 3)
+            {
+                if (--iCountDelay == 0)
+                {
+                    ApPerStatus = 0; // search for apogee
+                    Apogee  = 0;
+                }
+            }
+
+            /*if (Apogee <= (int)Sat->Distance[0][EARTH])
+            {
+                Apogee = Sat->Distance[0][EARTH];
+                wasPlus = 1;
+            }
+            else
+            {
+                if (wasPlus == 1) // was apogee
+                {
+                    Time_SecondsFromStart = (iSec +   (long double)(iPortionSec+1)/(long double)iItPerS);
+                    PrintPV(SlS, Sat, 0, ldFrom, Time_SecondsFromStart);
+                }
+                wasPlus = 0;
+                Apogee = 0;
+            }*/
+
 
             double ProbX = Sat->X[0]; double ProbY = Sat->Y[0];      double ProbZ = Sat->Z[0];
             long double dRM, dRM0,dREMV;
@@ -10815,83 +10975,12 @@ void RunProp(TRAOBJ *SlS, TRAOBJ *Sat,TRAIMPLOBJ *Eng, long double ldFrom,long d
         DrawAnimationSequence(SlS,Sat, iSec,"TRA",SlS, RGBReferenceBody, dRGBScale, StartSequence, 0); 
 #endif
         
-        if (iSec%(60*92) == 0)
+        if (iSec%(60*60*24) == 0)
         {
             // on first sattelite do compare of the calculated position and SGP4 
             int iCheck = 0;
             Time_SecondsFromStart = (long double) (iSec+1);
-            long double AE = 1.0;
-            long double XKMPER = 6378.1350; //XKMPER kilometers/Earth radii 6378.135
-		    long double XKE = BIG_XKE;//.743669161E-1;
-
-            long double XJ2 = 1.082616E-3;
-            long double CK2=.5*XJ2*AE*AE;
-
-            long double XMNPDA = 1440.0; // XMNPDA time units(minutes) /day 1440.0
-            long double TEMP=2*M_PI/XMNPDA/XMNPDA; // 2*pi / (1440 **2)
-            long double ProbMeanMotion = Sat->ProbMeanMotion[iCheck];
-            long double XNO=ProbMeanMotion*TEMP*XMNPDA; // rotation per day * 2*pi /1440 == rotation per day on 1 unit (1 min)
-            long double XNDT2O=Sat->ProbFirstDervMeanMotion[iCheck]*TEMP;
-            long double XNDD6O=Sat->ProbSecondDervmeanMotion[iCheck]*TEMP/XMNPDA;
-            long double BSTAR=Sat->ProbDragterm[iCheck]/AE;
-            long double tProbX,tProbY,tProbZ,tProbVX,tProbVY,tProbVZ;
-            // next lines has to be removed ==> today they are included only to avoid drag effect
-#if 0
-            BSTAR = 0.0;
-            XNDD6O = 0.0;
-            XNDT2O =0.0;
-#endif
-
-            //long double TimeFromEpochOfSatInDays = fmod(Sat.ProbEpochOnStart[iCheck] + Time_SecondsFromStart/24.0/60.0/60.0, 1.0/Sat.ProbMeanMotion[iCheck]);
-            // first parameter in in minutes from epoch
-            if (memcmp(UseSatData, "SGP",3)==0) 
-            {
-                if (memcmp(UseSatData, "SGP4",4)==0)
-                {
-			        SGP4((ldFrom - Sat->ProbJD[iCheck]+Time_SecondsFromStart/24.0/60.0/60.0)*XMNPDA, 
-                        XNDT2O,XNDD6O,BSTAR,Sat->ProbIncl[iCheck], Sat->ProbAscNode[iCheck],Sat->ProbEcc[iCheck], Sat->ProbArgPer[iCheck], Sat->ProbMeanAnom[iCheck],XNO, 
-				        tProbX,tProbY,tProbZ,tProbVX,tProbVY,tProbVZ);
-                }
-                else if (memcmp(UseSatData, "SGP8",4)==0)
-                {
-    			    SGP8((ldFrom - Sat->ProbJD[iCheck]+Time_SecondsFromStart/24.0/60.0/60.0)*XMNPDA, 
-                        XNDT2O,XNDD6O,BSTAR,Sat->ProbIncl[iCheck], Sat->ProbAscNode[iCheck],Sat->ProbEcc[iCheck], Sat->ProbArgPer[iCheck], Sat->ProbMeanAnom[iCheck],XNO, 
-				        tProbX,tProbY,tProbZ,tProbVX,tProbVY,tProbVZ);
-                }
-                else if  (memcmp(UseSatData, "SGP",3)==0)
-                {
-			        SGP((ldFrom - Sat->ProbJD[iCheck]+Time_SecondsFromStart/24.0/60.0/60.0)*XMNPDA, 
-                        XNDT2O,XNDD6O,BSTAR,Sat->ProbIncl[iCheck], Sat->ProbAscNode[iCheck],Sat->ProbEcc[iCheck], Sat->ProbArgPer[iCheck], Sat->ProbMeanAnom[iCheck],XNO, 
-	    			    tProbX,tProbY,tProbZ,tProbVX,tProbVY,tProbVZ);
-                }
-                tProbX=tProbX*XKMPER/AE*1000.0;                 tProbY=tProbY*XKMPER/AE*1000.0;                 tProbZ=tProbZ*XKMPER/AE*1000.0;
-			    tProbVX=tProbVX*XKMPER/AE*XMNPDA/86400.*1000.0;	tProbVY=tProbVY*XKMPER/AE*XMNPDA/86400.*1000.0;	tProbVZ=tProbVZ*XKMPER/AE*XMNPDA/86400.*1000.0;
-            }
-            else
-            {
-                KeplerPosition(Sat->ProbJD[iCheck],ldFrom+Time_SecondsFromStart/24.0/60.0/60.0,      // prob epoch, and curent time
-	    			    Sat->ProbTSec[iCheck], Sat->ProbEcc[iCheck], Sat->ProbIncl[iCheck], Sat->ProbAscNode[iCheck],  Sat->ProbArgPer[iCheck], Sat->ProbMeanAnom[iCheck], BSTAR,
-                        Gbig *SolarSystem.M[EARTH],1, tProbX,tProbY,tProbZ,tProbVX,tProbVY,tProbVZ, Sat->ProbMeanMotion[iCheck]);
-            }
-            long double tX, tY, tZ, tVX, tVY, tVZ;
-            tX = Sat->X[iCheck] - SlS->X[EARTH];      tY = Sat->Y[iCheck] - SlS->Y[EARTH];      tZ = Sat->Z[iCheck] - SlS->Z[EARTH];
-		    tVX = Sat->VX[iCheck] - SlS->VX[EARTH];   tVY = Sat->VY[iCheck] - SlS->VY[EARTH];   tVZ = Sat->VZ[iCheck] - SlS->VZ[EARTH];
-            long double ttProbX, ttProbY, ttProbZ, ttProbVX, ttProbVY, ttProbVZ;
-            ttProbX	= tX - tProbX;ttProbY= tY - tProbY; ttProbZ	= tZ - tProbZ;
-            ttProbVX = tVX - tProbVX; ttProbVY = tVY - tProbVY; ttProbVZ = tVZ - tProbVZ;
-            long double tttX, tttVX;
-            tttX = sqrt(ttProbX*ttProbX + ttProbY*ttProbY + ttProbZ*ttProbZ);
-            tttVX = sqrt(ttProbVX*ttProbVX + ttProbVY*ttProbVY + ttProbVZ*ttProbVZ);
-            double errorCos = (tVX*tProbVX + tVY*tProbVY + tVZ*tProbVZ)/ (sqrt(tVX*tVX +tVY*tVY + tVZ*tVZ)* sqrt(tProbVX*tProbVX + tProbVY*tProbVY + tProbVZ*tProbVZ));
-            double errAngle =  acos(errorCos);
-            double errorD = sqrt(tVX*tVX + tVY*tVY + tVZ*tVZ)/sqrt(tProbVX*tProbVX + tProbVY*tProbVY + tProbVZ*tProbVZ);
-            double SinAngle = tZ / sqrt(tX*tX + tY*tY + tZ*tZ);
-            double ErrorDD = sqrt(tVX*tVX + tVY*tVY + tVZ*tVZ) - sqrt(tProbVX*tProbVX + tProbVY*tProbVY + tProbVZ*tProbVZ);
-            //  printf("\n%f err(X=%f V=%f pr=%f lv=%f) min=%d ",(asin(SinAngle)*180/M_PI),tttX,tttVX, errorD, ErrorDD,iCurSec/60);
-            printf("\n%8.4f X=%13.5f,%13.5f,%13.5f V=%13.5f,%13.5f,%13.5f e= %f %f  %d",(asin(SinAngle)*180/M_PI),
-            tProbX - tX, tProbY - tY, tProbZ - tZ,
-            tProbVX - tVX,tProbVY - tVY,tProbVZ - tVZ,
-            tttX,tttVX,iSec/60);
+            PrintPV(SlS, Sat, 0, ldFrom, Time_SecondsFromStart);
         }
         //Sat.X[0] = tProbX + SolarSystem.X[EARTH]; Sat.Y[0] = tProbY + SolarSystem.Y[EARTH]; Sat.Z[0] = tProbZ + SolarSystem.Z[EARTH];
         //Sat.VX[0] = tProbVX + SolarSystem.VX[EARTH]; Sat.VY[0] = tProbVY + SolarSystem.VY[EARTH]; Sat.VZ[0] = tProbVZ + SolarSystem.VZ[EARTH];
