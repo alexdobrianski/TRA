@@ -563,6 +563,28 @@ typedef struct Long_Double_Intergal_Var
     { 
             return Z+Z_temp; 
     };
+    void Add(long double valX,long double valY, long double valZ)
+    {
+        X+=valX;
+        Y+=valY;
+        Z+=valZ;
+        nX0++;
+    }
+    void getIntegral(long double &valVX, long double &valVY, long double &valVZ)
+    {
+            valVX = (x()+X0);    
+            valVY = (y()+Y0);    
+            valVZ = (z()+Z0);
+
+    }
+    void adjustAll(void)
+    {
+        adjustX(10103,10163);      adjustY(10463,10559);      adjustZ(10607,10667);
+    }
+    void adjustall(void)
+    {
+            adjustX(10799,10883);      adjustY(11279,11423);      adjustZ(11483,11699);
+    }
     void adjustX(long MaxVal, long MaxVal_h)
     {
         long double ldTemp, ldTemp2;
@@ -652,7 +674,6 @@ typedef struct Long_Double_Intergal_Var
         X5 = 0.0;      Y5 = 0.0;      Z5 = 0.0;
 
         X_temp = 0.0; Y_temp = 0.0;   Z_temp = 0.0;
-
     };
 } LONG_DOUBLE_INT_VAR, *PLONG_DOUBLE_INT_VAR;
 
@@ -3568,23 +3589,22 @@ void IteraSat(int TimeDirection, TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfC
     {
         for (i = 0; i < Sat->Elem; i++)
         {
-            Sat->_position_[i].X  += (Sat->_velosity_[i].x()) + Sat->FX[i];
-            Sat->_position_[i].Y  += (Sat->_velosity_[i].y()) + Sat->FY[i];
-            Sat->_position_[i].Z  += (Sat->_velosity_[i].z()) + Sat->FZ[i];
+            Sat->_position_[i].Add((Sat->_velosity_[i].x()) + Sat->FX[i],
+                                    (Sat->_velosity_[i].y()) + Sat->FY[i],
+                                    (Sat->_velosity_[i].z()) + Sat->FZ[i]);
 
-            Sat->_velosity_[i].X += Sat->FX[i];
-            Sat->_velosity_[i].Y += Sat->FY[i];
-            Sat->_velosity_[i].Z += Sat->FZ[i];
-            Sat->_position_[i].adjustX(10103,10163);      Sat->_position_[i].adjustY(10463,10559);      Sat->_position_[i].adjustZ(10607,10667);
-            Sat->_velosity_[i].adjustX(10799,10883);      Sat->_velosity_[i].adjustY(11279,11423);      Sat->_velosity_[i].adjustZ(11483,11699);
+            Sat->_velosity_[i].Add(Sat->FX[i],
+                                   Sat->FY[i],
+                                   Sat->FZ[i]);
+            Sat->_position_[i].adjustAll();
+            Sat->_velosity_[i].adjustall();
             Sat->X[i] = (Sat->_position_[i].x()+Sat->_position_[i].X0+ Sat->_velosity_[i].X0 *Sat->_velosity_[i].nX0)* SlS->TimeSl_2;   
             Sat->Y[i] = (Sat->_position_[i].y()+Sat->_position_[i].Y0+ Sat->_velosity_[i].Y0 *Sat->_velosity_[i].nX0)* SlS->TimeSl_2;   
             Sat->Z[i] = (Sat->_position_[i].z()+Sat->_position_[i].Z0+ Sat->_velosity_[i].Z0 *Sat->_velosity_[i].nX0)* SlS->TimeSl_2;
-            Sat->VX[i] = (Sat->_velosity_[i].x()+Sat->_velosity_[i].X0)* SlS->TimeSl;    
-            Sat->VY[i] = (Sat->_velosity_[i].y()+Sat->_velosity_[i].Y0)* SlS->TimeSl;    
-            Sat->VZ[i] = (Sat->_velosity_[i].z()+Sat->_velosity_[i].Z0)* SlS->TimeSl;
-            Sat->_position_[i].nX0++;
-            Sat->_velosity_[i].nX0++;
+            Sat->_velosity_[i].getIntegral(Sat->VX[i], Sat->VY[i], Sat->VZ[i]);
+            Sat->VX[i] *= SlS->TimeSl; Sat->VY[i] *= SlS->TimeSl; Sat->VZ[i] *= SlS->TimeSl;
+            //Sat->_position_[i].nX0++;
+            //Sat->_velosity_[i].nX0++;
 
         }
     }
@@ -3598,24 +3618,24 @@ void IteraSat(int TimeDirection, TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfC
             Sat->_position_[i].ZeroIntegral();
             Sat->_velosity_[i].ZeroIntegral();
 
-            Sat->_position_[i].nX0 = 1;
-            Sat->_velosity_[i].nX0 = 1;
+            //Sat->_position_[i].nX0 = 1;
+            //Sat->_velosity_[i].nX0 = 1;
 
             Sat->_position_[i].X0 = Sat->X[i]/ SlS->TimeSl_2 + Sat->VX[i]/SlS->TimeSl;
             Sat->_position_[i].Y0 = Sat->Y[i]/ SlS->TimeSl_2 + Sat->VY[i]/SlS->TimeSl;
             Sat->_position_[i].Z0 = Sat->Z[i]/ SlS->TimeSl_2 + Sat->VZ[i]/SlS->TimeSl;
 
-            Sat->_position_[i].X = Sat->FX[i];
-            Sat->_position_[i].Y = Sat->FY[i];
-            Sat->_position_[i].Z = Sat->FZ[i];
+            Sat->_position_[i].Add(Sat->FX[i],
+                                   Sat->FY[i],
+                                   Sat->FZ[i]);
 
             Sat->_velosity_[i].X0 = Sat->VX[i]/SlS->TimeSl;
             Sat->_velosity_[i].Y0 = Sat->VY[i]/SlS->TimeSl;
             Sat->_velosity_[i].Z0 = Sat->VZ[i]/SlS->TimeSl;
 
-            Sat->_velosity_[i].X =  Sat->FX[i] ;
-            Sat->_velosity_[i].Y =  Sat->FY[i] ;
-            Sat->_velosity_[i].Z =  Sat->FZ[i] ;
+            Sat->_velosity_[i].Add(Sat->FX[i],
+                                   Sat->FY[i],
+                                   Sat->FZ[i]);
 
             Sat->X[i] = (Sat->_position_[i].x()+Sat->_position_[i].X0)* SlS->TimeSl_2;   
             Sat->Y[i] = (Sat->_position_[i].y()+Sat->_position_[i].Y0)* SlS->TimeSl_2;   
