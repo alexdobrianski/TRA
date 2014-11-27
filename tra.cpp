@@ -63,8 +63,10 @@ void write_JPEG_file (char * filename, int quality, int SizeW, int SizeH, int Si
 	// New table containing conventional gravity coefficients generated from
 	// Table D.1 (normalized gravity coefficients)
 	//Table D.3 JGM-3 Earth Gravity Field (Conventional Coefficients)
+//#define _NORMALIZED_COEF 1
 
 #define MAX_COEF_J 18
+
 #define TOTAL_COEF 360
 int iCounter_nk_lm_Numbers;
 int nk_lm_Numbers[TOTAL_COEF*TOTAL_COEF/2][2];
@@ -498,25 +500,26 @@ typedef struct Long_Double_Intergal_Var
     long double Y0;
     long double Z0;
 
-    long double X1;
-    long double Y1;
-    long double Z1;
+    long double X6[6];
+    long double Y6[6];
+    long double Z6[6];
 
-    long double X2;
-    long double Y2;
-    long double Z2;
+    long double x6[6];
+    long double y6[6];
+    long double z6[6];
+    int i6;
 
-    long double X3;
-    long double Y3;
-    long double Z3;
+    long double X6_h[6];
+    long double Y6_h[6];
+    long double Z6_h[6];
 
-    long double X4;
-    long double Y4;
-    long double Z4;
+    long double X6_hh[6];
+    long double Y6_hh[6];
+    long double Z6_hh[6];
 
-    long double X5;
-    long double Y5;
-    long double Z5;
+    long double X6_hhh[6];
+    long double Y6_hhh[6];
+    long double Z6_hhh[6];
 
     long double X;
     long double Y;
@@ -569,6 +572,14 @@ typedef struct Long_Double_Intergal_Var
         Y+=valY;
         Z+=valZ;
         nX0++;
+        x6[i6] =valX; y6[i6] =valY; z6[i6] =valZ;
+        if (++i6 == 6)
+        {
+            i6 = 0;
+        }
+        else
+        {
+        }
     }
     void getIntegral(long double &valVX, long double &valVY, long double &valVZ)
     {
@@ -667,11 +678,15 @@ typedef struct Long_Double_Intergal_Var
         CountNx_hh = 0; CountNy_hh = 0; CountNz_hh = 0;
 
         X0 = 0.0;      Y0 = 0.0;      Z0 = 0.0;
-        X1 = 0.0;      Y1 = 0.0;      Z1 = 0.0;
-        X2 = 0.0;      Y2 = 0.0;      Z2 = 0.0;
-        X3 = 0.0;      Y3 = 0.0;      Z3 = 0.0;
-        X4 = 0.0;      Y4 = 0.0;      Z4 = 0.0;
-        X5 = 0.0;      Y5 = 0.0;      Z5 = 0.0;
+        for (int i = 0; i < 6; i++)
+        {
+            x6[i] = 0.0;      x6[i] = 0.0;      x6[i] = 0.0;
+            X6[i] = 0.0;      Y6[i] = 0.0;      Z6[i] = 0.0;
+            X6_h[i] = 0.0;    Y6_h[i] = 0.0;    Z6_h[i] = 0.0;
+            X6_hh[i] = 0.0;   Y6_hh[i] = 0.0;   Z6_hh[i] = 0.0;
+            X6_hhh[i] = 0.0;  Y6_hhh[i] = 0.0;  Z6_hhh[i] = 0.0;
+        }
+        i6 = 0;
 
         X_temp = 0.0; Y_temp = 0.0;   Z_temp = 0.0;
     };
@@ -981,12 +996,12 @@ typedef struct TraObj
     long double SNK[MAX_COEF_J][MAX_COEF_J];
     long double SinTetta;
     long double P[MAX_COEF_J];
-    long double Rn1divR[MAX_COEF_J];
+    //long double Rn1divR[MAX_COEF_J];
     long double Ptilda[MAX_COEF_J];
     long double Pnk_tilda[MAX_COEF_J][MAX_COEF_J];
     //double Pnk[MAX_COEF_J][MAX_COEF_J];
     long double Qnk[MAX_COEF_J][MAX_COEF_J];
-    long double R0divR[TOTAL_COEF];
+
 
     long double ForceDD_;
     long double Lambda; // that is direction to a Greenwich
@@ -1025,12 +1040,12 @@ typedef struct TraObj
     long double OneMinusYdivRInSquare2;
     long double XdivRval;
     long double YdivRval;
-    long double OneMinusXdivRInSquare_XdivRval[PLANET_COUNT][MAX_COEF_J][MAX_COEF_J];
-    long double OneMinusYdivRInSquare_YdivRval[PLANET_COUNT][MAX_COEF_J][MAX_COEF_J];
-    long double OneMinusZdivRInSquare_ZdivRval[PLANET_COUNT][MAX_COEF_J][MAX_COEF_J];
-    long double OldXSign[PLANET_COUNT][MAX_COEF_J][MAX_COEF_J];
-    long double OldYSign[PLANET_COUNT][MAX_COEF_J][MAX_COEF_J];
-    long double OldZSign[PLANET_COUNT][MAX_COEF_J][MAX_COEF_J];
+    //long double OneMinusXdivRInSquare_XdivRval[PLANET_COUNT][MAX_COEF_J][MAX_COEF_J];
+    //long double OneMinusYdivRInSquare_YdivRval[PLANET_COUNT][MAX_COEF_J][MAX_COEF_J];
+    //long double OneMinusZdivRInSquare_ZdivRval[PLANET_COUNT][MAX_COEF_J][MAX_COEF_J];
+    //long double OldXSign[PLANET_COUNT][MAX_COEF_J][MAX_COEF_J];
+    //long double OldYSign[PLANET_COUNT][MAX_COEF_J][MAX_COEF_J];
+    //long double OldZSign[PLANET_COUNT][MAX_COEF_J][MAX_COEF_J];
     long double D_Qnk_Dxr[MAX_COEF_J][MAX_COEF_J];
     long double D_Qnk_Dyr[MAX_COEF_J][MAX_COEF_J];
 
@@ -1040,7 +1055,14 @@ typedef struct TraObj
     long double cos_Lambda, sin_Lambda;
     long double cos_nutEpsilon, sin_nutEpsilon;
     long double cos_nutDFeta, sin_nutDFeta;
-
+    long double _SQRT3;
+    long double R0divR[TOTAL_COEF];
+    long double _p_n_m_1[TOTAL_COEF];
+    long double _p_n_m_2[TOTAL_COEF];
+    long double _pt_nk[TOTAL_COEF][TOTAL_COEF];
+    long double _tp_nm1_k[TOTAL_COEF][TOTAL_COEF];
+    long double _tp_nm2_k[TOTAL_COEF][TOTAL_COEF];
+    long double _tpk_nm1_k[TOTAL_COEF][TOTAL_COEF];
 
     void gcrs_2_trs(long double &X, long double &Y, long double &Z)
     {
@@ -1392,10 +1414,12 @@ typedef struct TraObj
         long double tempZ;
         long double sinTetta, XdivR, YdivR;
         X = 0; Y = 0; Z = 0;
-        long double _x[TOTAL_COEF][3];
-        long double _y[TOTAL_COEF][3];
-        long double _z[TOTAL_COEF][3];
-        long double _x20,_y20,_z20;
+        //long double _x[TOTAL_COEF][3];
+        //long double _y[TOTAL_COEF][3];
+        //long double _z[TOTAL_COEF][3];
+        //long double _x20,_y20,_z20;
+        long double P_20_x_Q20_;
+        long double Ptilda_20_x_Qnk_;
 
         long double P_nk_x_Qnk_;//[TOTAL_COEF];
         long double Ptilda_nk_x_Qnk_;//[TOTAL_COEF];
@@ -1442,19 +1466,29 @@ typedef struct TraObj
         long double P_m_1 = 0;
         long double P_ = 1;
         Ptilda_[0]= P_;
+
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         // next iteration by n
         n = 1;
         P_m_2 = P_m_1; P_m_1 = P_;
         memcpy(Ptilda_m_2,Ptilda_m_1, sizeof(Ptilda_m_2)); memcpy(Ptilda_m_1,Ptilda_, sizeof(Ptilda_m_1));
         //P_ = sinTetta;
+
+#ifdef _NORMALIZED_COEF
+        P_ = sinTetta*_SQRT3;
+#else
         P_ = sinTetta;
+#endif
         Ptilda_[0]= P_;
 
         //Ptilda_[1] = n * P_m_1 + sinTetta * Ptilda_m_1[1]; // P'[1]  k == '
 
         // P = sin => d(P)/d(sin) = 1
+#ifdef _NORMALIZED_COEF
+        Ptilda_[1] =  _SQRT3;
+#else
         Ptilda_[1] =  1;
+#endif
 
         long double R0divR_ = R0divR[1]*R0divR[1];
         int ip = 0;
@@ -1481,7 +1515,11 @@ typedef struct TraObj
             // next iteration by n
             P_m_2 = P_m_1; P_m_1 = P_;
             memcpy(Ptilda_m_2,Ptilda_m_1, sizeof(Ptilda_m_2)); memcpy(Ptilda_m_1,Ptilda_, sizeof(Ptilda_m_1));
+#ifdef _NORMALIZED_COEF
+            P_ = _p_n_m_1[n] *sinTetta * P_m_1 - _p_n_m_2[n]*P_m_2;  // P[2]
+#else
             P_ = ((2.0* n-1.0) *sinTetta * P_m_1 - (n-1)*P_m_2)/n;  // P[2]
+#endif
             Ptilda_[0]= P_;
             long double P_nk = P_;
             //long double XkDxrPrev =0;
@@ -1514,20 +1552,36 @@ typedef struct TraObj
             //long double D_Qnk_Dxr_ = 0;
             //long double D_Qnk_Dyr_ = 0;
             // k is derivative
-            long double Ptilda_nk = n * P_m_1 + sinTetta * Ptilda_m_1[1];                        // P'[2]
+#ifdef _NORMALIZED_COEF
+            long double Ptilda_nk  = _tp_nm1_k [n][k+1] * Ptilda_m_1[k+1]*sinTetta + _tp_nm2_k[n][k+1] * Ptilda_m_2[k+1];
+            
+#else
+            //long double Ptilda_nk = n * P_m_1 + sinTetta * Ptilda_m_1[1];                        // P'[2]
+            // this is equivalent, but better for iterations
+            //long double Ptilda_nk  = (2*n-1) * Ptilda_m_1[k] + Ptilda_m_2[k+1];                      // P'[2]
+            // this is equivalent
+            long double Ptilda_nk  = ((2*n-1) * Ptilda_m_1[k+1]*sinTetta - (n + (k+1) -1)*Ptilda_m_2[k+1])/(n-(k+1));   // P'[2]
+#endif
             Ptilda_[1] = Ptilda_nk; // store P'[2] for use 
             // J case
-            P_nk_x_Qnk_ = 0;
-            Ptilda_nk_x_Qnk_ = 0;
-            P_nk_x_K_x_XSumD = 0;
-            P_nk_x_K_x_YSumD = 0;
+            P_nk_x_Qnk_ = 0;       // sumv_n => sumgam_n
+            Ptilda_nk_x_Qnk_ = 0;  // sumh_n
+            P_nk_x_K_x_XSumD = 0;  // sumj_n
+            P_nk_x_K_x_YSumD = 0;  // sumk_n
 
             if (ip == 0)
             {           //Sumgam_N := Pn[0]*Cn[O]*(n + 1)
                                                        // Sumh_N := Pn[1]* Cn[0];
-                _x20 = -(n+1) *XdivR    * P_nk * Qnk_  - Ptilda_nk *  Qnk_ * XdivR * SinTetta ;
-                _y20 = -(n+1) *YdivR    * P_nk * Qnk_  - Ptilda_nk *  Qnk_ * YdivR * SinTetta     ;
-                _z20 = -(n+1) *SinTetta * P_nk * Qnk_  +  Ptilda_nk *  Qnk_ * (1-SinTetta*SinTetta);
+                //_x20 = -(n+1) *XdivR    * P_nk * Qnk_  - Ptilda_nk *  Qnk_ * XdivR * SinTetta ;
+                //_y20 = -(n+1) *YdivR    * P_nk * Qnk_  - Ptilda_nk *  Qnk_ * YdivR * SinTetta     ;
+                //_z20 = -(n+1) *SinTetta * P_nk * Qnk_  +  Ptilda_nk *  Qnk_ * (1-SinTetta*SinTetta);
+                P_20_x_Q20_ = P_nk * Qnk_;              // sumv_n => sumgam_n
+#ifdef _NORMALIZED_COEF
+                Ptilda_20_x_Qnk_ = _pt_nk[n][k] *Ptilda_nk *  Qnk_;   // sumh_n    (normalized == z[n][k] * Ptilda_nk *  Qnk_
+#else
+                Ptilda_20_x_Qnk_ = Ptilda_nk *  Qnk_;   // sumh_n 
+#endif
+
             }
             else
             {
@@ -1542,7 +1596,11 @@ typedef struct TraObj
                 //x[1] = - Ptilda_nk *  Qnk_ * XdivR * SinTetta     ;
                 //y[1] = - Ptilda_nk *  Qnk_ * YdivR * SinTetta     ;
                 //z[1] =   Ptilda_nk *  Qnk_ * (1-SinTetta*SinTetta);
+#ifdef _NORMALIZED_COEF
+                Ptilda_nk_x_Qnk_ += - _pt_nk[n][k] *Ptilda_nk *  Qnk_;   // sumh_n    (normalized == z[n][k] * Ptilda_nk *  Qnk_
+#else
                 Ptilda_nk_x_Qnk_ += - Ptilda_nk *  Qnk_ ;
+#endif
                 //x[2] =0; y[2]=0;z[2]=0;
             }
             
@@ -1567,8 +1625,18 @@ typedef struct TraObj
             //XkPrev = Xk; YkPrev = Yk;
 
             P_nk = Ptilda_[1]; // P'[2] == (k= 1)
-            Ptilda_nk  = (2*n-1) * Ptilda_m_1[1] + Ptilda_m_2[2];
-            Ptilda_[2] = Ptilda_nk; // store P"[2] for next use
+#ifdef _NORMALIZED_COEF
+            if (n == (k+1))
+                Ptilda_nk  = _tpk_nm1_k[n][k+1] * Ptilda_m_1[k];// + Ptilda_m_2[k+1];
+            else
+                Ptilda_nk  = _tp_nm1_k [n][k+1] * Ptilda_m_1[k+1]*sinTetta + _tp_nm2_k[n][k+1] * Ptilda_m_2[k+1];
+#else
+            if (n == (k+1))
+                Ptilda_nk  = (2*n-1) * Ptilda_m_1[k];// + Ptilda_m_2[k+1];
+            else
+                Ptilda_nk  = ((2*n-1) * Ptilda_m_1[k+1]*sinTetta - (n + (k+1) -1)*Ptilda_m_2[k+1])/(n-(k+1));
+#endif
+            Ptilda_[k+1] = Ptilda_nk; // store P"[2] for next use
             //x += (-(n+1+1) *XdivR    * P_nk * Qnk_ - Ptilda_nk *  Qnk_ * XdivR    * SinTetta     + P_nk * ( 1 *  XSumD   ));
             //y += (-(n+1+1) *YdivR    * P_nk * Qnk_ - Ptilda_nk *  Qnk_ * YdivR    * SinTetta     + P_nk * ( 1 * -YSumD   ));
             //z += (-(n+1+1) *SinTetta * P_nk * Qnk_ + Ptilda_nk *  Qnk_ * (1- SinTetta * SinTetta));
@@ -1577,18 +1645,22 @@ typedef struct TraObj
             //x[0] += -(n+1+1) *XdivR    * P_nk * Qnk_;
             //y[0] += -(n+1+1) *YdivR    * P_nk * Qnk_;
             //z[0] += -(n+1+1) *SinTetta * P_nk * Qnk_;
-            P_nk_x_Qnk_ += -(n+1+1) * P_nk * Qnk_;
+            P_nk_x_Qnk_ += -(n+1+1) * P_nk * Qnk_;      // sumgam_n (normalized == n+k+10 P_nk * Qnk_)
 
             //x[1] +=  - Ptilda_nk *  Qnk_ * XdivR    * SinTetta ;
             //y[1] +=  - Ptilda_nk *  Qnk_ * YdivR    * SinTetta;
             //z[1] +=    Ptilda_nk *  Qnk_ * (1- SinTetta * SinTetta);
-            Ptilda_nk_x_Qnk_ += - Ptilda_nk *  Qnk_;
+#ifdef _NORMALIZED_COEF
+            Ptilda_nk_x_Qnk_ += - _pt_nk[n][k] *Ptilda_nk *  Qnk_;   // sumh_n    (normalized == z[n][k] * Ptilda_nk *  Qnk_
+#else
+            Ptilda_nk_x_Qnk_ += - Ptilda_nk *  Qnk_;   // sumh_n    (normalized == z[n][k] * Ptilda_nk *  Qnk_
+#endif
 
             //x[2] += P_nk * ( 1 *  XSumD   );
             //y[2] += P_nk * ( 1 * -YSumD   );
             //z[2] += 0;
-            P_nk_x_K_x_XSumD += P_nk * ( 1 *  XSumD   );
-            P_nk_x_K_x_YSumD += P_nk * ( 1 * -YSumD   );
+            P_nk_x_K_x_XSumD += P_nk * ( 1 *  XSumD   );   // sumj_n (normalized == k * P_nk * XSumD)
+            P_nk_x_K_x_YSumD += P_nk * ( 1 * -YSumD   );   // sumk_n (normakized ==-k * P_nk * YSumD
 
             ////////////////////////////////////////////////////////////////////////////////////////
             for (k = 2; k <=n; k++)
@@ -1601,21 +1673,37 @@ typedef struct TraObj
                 if (k != nk_lm_Numbers[ip][1])
                     exit (1);
 #endif
+                P_nk = Ptilda_[k];
                 if (k==n)
                 {
                     Xk[k] = Xk[k-1]*XdivR - Yk[k-1]*YdivR;
                     Yk[k] = Yk[k-1]*XdivR + Xk[k-1]*YdivR;
                     //iXkYk = k;
+                    Ptilda_nk = 0;//(2*n-1) * Ptilda_m_1[k] + Ptilda_m_2[k+1];
                 }
+                else
+                {
+#ifdef _NORMALIZED_COEF
+                    if (n == (k+1))
+                        Ptilda_nk  = _tpk_nm1_k[n][k+1] * Ptilda_m_1[k];// + Ptilda_m_2[k+1];
+                    else
+                        Ptilda_nk  = _tp_nm1_k [n][k+1] * Ptilda_m_1[k+1]*sinTetta + _tp_nm2_k[n][k+1] * Ptilda_m_2[k+1];
+#else
+                    if (n == k+1)
+                        Ptilda_nk = (2*n-1) * Ptilda_m_1[k];// + Ptilda_m_2[k+1];
+                    else
+                        Ptilda_nk  = ((2*n-1) * Ptilda_m_1[k+1]*sinTetta - (n + (k+1) -1)*Ptilda_m_2[k+1])/(n-(k+1));
+#endif
+                }
+                Ptilda_[k+1] = Ptilda_nk; // store P'"[2] (third derivative) for next use
+
                 Qnk_ = C_S_nk[ip][0] * Xk[k] + C_S_nk[ip][1] * Yk[k];
                 XSumD = C_S_nk[ip][0] * Xk[k-1] + C_S_nk[ip][1] * Yk[k-1];
                 YSumD = C_S_nk[ip][0] * Yk[k-1] - C_S_nk[ip][1] * Xk[k-1];
 
                 //XkPrev = Xk; YkPrev = Yk;
 
-                P_nk = Ptilda_[k];
-                Ptilda_nk = (2*n-1) * Ptilda_m_1[k] + Ptilda_m_2[k+1];
-                Ptilda_[k+1] = Ptilda_nk; // store P'"[2] (third derivative) for next use
+                
 
                 //x += (-(n+k+1) *XdivR    * P_nk * Qnk_ - Ptilda_nk *  Qnk_ * XdivR    * SinTetta   + P_nk * ( k *  XSumD   ));
                 //y += (-(n+k+1) *YdivR    * P_nk * Qnk_ - Ptilda_nk *  Qnk_ * YdivR    * SinTetta   + P_nk * ( k * -YSumD   ));
@@ -1630,7 +1718,11 @@ typedef struct TraObj
                 //x[1] += - Ptilda_nk *  Qnk_ * XdivR    * SinTetta;
                 //y[1] += - Ptilda_nk *  Qnk_ * YdivR    * SinTetta;
                 //z[1] +=   Ptilda_nk *  Qnk_ * (1- SinTetta * SinTetta);
+#ifdef _NORMALIZED_COEF
+                Ptilda_nk_x_Qnk_ += - _pt_nk[n][k] *Ptilda_nk *  Qnk_;   // sumh_n    (normalized == z[n][k] * Ptilda_nk *  Qnk_
+#else
                 Ptilda_nk_x_Qnk_ += - Ptilda_nk *  Qnk_;
+#endif
 
                 //x[2] +=  P_nk * ( k *  XSumD   );
                 //y[2] +=  P_nk * ( k * -YSumD   );
@@ -1638,10 +1730,10 @@ typedef struct TraObj
                 P_nk_x_K_x_XSumD += P_nk * ( k *  XSumD   );
                 P_nk_x_K_x_YSumD += P_nk * ( k * -YSumD   );
             }
-            p_nk_x_Qnk_      += P_nk_x_Qnk_*R0divR_;
-            ptilda_nk_x_Qnk_ +=Ptilda_nk_x_Qnk_*R0divR_;
-            p_nk_x_K_x_XSumD +=P_nk_x_K_x_XSumD*R0divR_;
-            p_nk_x_K_x_YSumD +=P_nk_x_K_x_YSumD*R0divR_;
+            p_nk_x_Qnk_      += P_nk_x_Qnk_*R0divR_;      // sumgam
+            ptilda_nk_x_Qnk_ +=Ptilda_nk_x_Qnk_*R0divR_;  // sumh
+            p_nk_x_K_x_XSumD +=P_nk_x_K_x_XSumD*R0divR_;  // sumj
+            p_nk_x_K_x_YSumD +=P_nk_x_K_x_YSumD*R0divR_;  // sumk
             //_x[n][0] = x[0];_x[n][1] = x[1];_x[n][2] = x[2];
             //_y[n][0] = y[0];_y[n][1] = y[1];_y[n][2] = y[2];
             //_z[n][0] = z[0];_z[n][1] = z[1];_z[n][2] = z[2];
@@ -1675,11 +1767,25 @@ typedef struct TraObj
         //    p_nk_x_K_x_XSumD +=P_nk_x_K_x_XSumD[n]*R0divR[n];
         //    p_nk_x_K_x_YSumD +=P_nk_x_K_x_YSumD[n]*R0divR[n];
         //}
+
+        //    lambda = sumgam + ep*sumh    
+        //        sumgam==-p_nk_x_Qnk_   sumh==-ptilda_nk_x_Qnk_
+        //        sumj == p_nk_x_K_x_XSumD   sumk == p_nk_x_K_x_YSumD
+        //    -(lambda * XdivR - sumj)  
+        // =>   -sumgam   * XdivR          -sumh        * XdivR *  ep              + sumj 
         X += (p_nk_x_Qnk_ * XdivR    + ptilda_nk_x_Qnk_ * XdivR * SinTetta         + p_nk_x_K_x_XSumD ); 
+        //    -(lamda * YdivR - sumk)
+        //      -sumgam   * YdivR          -sumh        * YdivR *  ep              + sunk
         Y += (p_nk_x_Qnk_ * YdivR    + ptilda_nk_x_Qnk_ * YdivR * SinTetta         + p_nk_x_K_x_YSumD );
+        //    lamda * SinTetta - sumh
+        //     - simgam   * sintetta        -sumh       * SinTetta * SinTetta      + sumh
         Z += (p_nk_x_Qnk_ * SinTetta - ptilda_nk_x_Qnk_ * (1- SinTetta * SinTetta)                    );
 
-        X += _x20*R0divR[2];  Y += _y20*R0divR[2];  Z += _z20*R0divR[2];
+        //X += _x20*R0divR[2];  Y += _y20*R0divR[2];  Z += _z20*R0divR[2];
+
+        X+= (-(2+1) *XdivR    * P_20_x_Q20_  - Ptilda_20_x_Qnk_ * XdivR * SinTetta)*R0divR[2] ;
+        Y+= (-(2+1) *YdivR    * P_20_x_Q20_  - Ptilda_20_x_Qnk_ * YdivR * SinTetta)*R0divR[2]     ;
+        Z+= (-(2+1) *SinTetta * P_20_x_Q20_  + Ptilda_20_x_Qnk_ * (1-SinTetta*SinTetta))*R0divR[2];
 
         trs_2_gcrs(X, Y, Z);
     };
@@ -8643,6 +8749,9 @@ void ParamProb(char *szString)
                 exit(555);
             }
             char szTemp[512];
+            Sat._SQRT3= sqrt((long double)3.0);
+            long double _p_n_k= Sat._SQRT3;
+
             for (int n = 2 ; n <= Sat.iLeg; n++)
             {
                 //l	m	            C                                S
@@ -8716,6 +8825,7 @@ DONE_WITH_LINE:
                         {
                             Factor3 /= (long double)m1;
                         }
+
                     }
 
                     // CNK = sqrt(2*(2*n+1)) * sqrt(((n-k)!/(n+k)!) * Clm
@@ -8727,26 +8837,42 @@ DONE_WITH_LINE:
                     
                      if (n==2 && k ==2)
                      {
-                         C_S_nk[iCounter_nk_lm_Numbers][0]+=1.3*1.39e-8;
+                         //C_S_nk[iCounter_nk_lm_Numbers][0]+=1.3*1.39e-8;
                          //Sat.CNK[n][k]+=1.3*1.39e-8;
                      }
-
+#ifndef _NORMALIZED_COEF
                     CNK = sqrt(Betta*(2*(long double)n+1) * Factor1/Factor2) * C_S_nk[iCounter_nk_lm_Numbers][0];
 
                      CNK = sqrt(Betta*(2*(long double)n+1) * Factor3) * C_S_nk[iCounter_nk_lm_Numbers][0];
                      
-                     SNK = sqrt(2*(Betta*(long double)n+1) * Factor1/Factor2) * C_S_nk[iCounter_nk_lm_Numbers][1];
+                    SNK = sqrt(2*(Betta*(long double)n+1) * Factor1/Factor2) * C_S_nk[iCounter_nk_lm_Numbers][1];
 
                      SNK = sqrt(2*(Betta*(long double)n+1) * Factor3) * C_S_nk[iCounter_nk_lm_Numbers][1];
+#endif
+                     if (k==0)
+                        Sat._pt_nk[n][k] = sqrt((long double)n*(n + 1)/2.0); // z
+                     else
+                     {
+                         if ((n-k)*(n+k+1) == 0)
+                            Sat._pt_nk[n][k] = 0.0;
+                         else
+                            Sat._pt_nk[n][k] = sqrt((long double)(n-k)*(n+k+1));
+                     }
 
-
+                     Sat._tp_nm1_k[n][k] = sqrt((long double)(2*n-1)*(2*n+1)/((long double)(n+k)*(n-k)));  // xin
+                     if (k==0)
+                         Sat._tp_nm2_k[n][k]= 0;  //eta
+                     else
+                         Sat._tp_nm2_k[n][k]= sqrt((long double)((2*n+1)*(n+k-1)*(n-k-1))/(long double)((n+k)*(n-k)*(2*n-3)));
+                     
                      if (iCounter_nk_lm_Numbers == 0 && n < 2)
                          continue;
                      nk_lm_Numbers[iCounter_nk_lm_Numbers][0] = n;
                      nk_lm_Numbers[iCounter_nk_lm_Numbers][1] = k;
+#ifndef _NORMALIZED_COEF
                      C_S_nk[iCounter_nk_lm_Numbers][0] =CNK;
                      C_S_nk[iCounter_nk_lm_Numbers][1] =SNK;
-
+#endif
                      /* some starange corrections
                      if (n==2 && k == 0)
                         C_S_nk[iCounter_nk_lm_Numbers][0] =0.108262982131e-2;
@@ -8765,6 +8891,11 @@ DONE_WITH_LINE:
                          exit(555);
                      }
                 }
+                Sat._p_n_m_1[n] = sqrt((long double)(2*n +1)*(2*n -1))/long double(n);  // alfa
+                Sat._p_n_m_2[n] = sqrt((long double)(2*n +1)/(long double)(2*n -3)) * (long double)(n -1)/long double(n); // betta
+
+                _p_n_k = sqrt((long double)(2*n+1)/(long double)(2*n)) * _p_n_k;
+                Sat._tpk_nm1_k[n][n] = sqrt((long double)(2*n+1))*_p_n_k;
             }
 
 #else
@@ -8859,6 +8990,7 @@ DONE_WITH_LINE:
             Sat.iLeg_longit = 0; // no longitude in calculation
             Sat.Lambda = -2;
             Sat.LegBody = EARTH;
+            
             
         }
         IF_XML_READ(UseSatData)
