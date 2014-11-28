@@ -1650,6 +1650,7 @@ typedef struct TraObj
             //x[1] +=  - Ptilda_nk *  Qnk_ * XdivR    * SinTetta ;
             //y[1] +=  - Ptilda_nk *  Qnk_ * YdivR    * SinTetta;
             //z[1] +=    Ptilda_nk *  Qnk_ * (1- SinTetta * SinTetta);
+
 #ifdef _NORMALIZED_COEF
             Ptilda_nk_x_Qnk_ += - _pt_nk[n][k] *Ptilda_nk *  Qnk_;   // sumh_n    (normalized == z[n][k] * Ptilda_nk *  Qnk_
 #else
@@ -8845,9 +8846,9 @@ DONE_WITH_LINE:
 
                      CNK = sqrt(Betta*(2*(long double)n+1) * Factor3) * C_S_nk[iCounter_nk_lm_Numbers][0];
                      
-                    SNK = sqrt(2*(Betta*(long double)n+1) * Factor1/Factor2) * C_S_nk[iCounter_nk_lm_Numbers][1];
+                    SNK = sqrt(Betta*(2*(long double)n+1) * Factor1/Factor2) * C_S_nk[iCounter_nk_lm_Numbers][1];
 
-                     SNK = sqrt(2*(Betta*(long double)n+1) * Factor3) * C_S_nk[iCounter_nk_lm_Numbers][1];
+                     SNK = sqrt(Betta*(2*(long double)n+1) * Factor3) * C_S_nk[iCounter_nk_lm_Numbers][1];
 #endif
                      if (k==0)
                         Sat._pt_nk[n][k] = sqrt((long double)n*(n + 1)/2.0); // z
@@ -8894,8 +8895,8 @@ DONE_WITH_LINE:
                 Sat._p_n_m_1[n] = sqrt((long double)(2*n +1)*(2*n -1))/long double(n);  // alfa
                 Sat._p_n_m_2[n] = sqrt((long double)(2*n +1)/(long double)(2*n -3)) * (long double)(n -1)/long double(n); // betta
 
-                _p_n_k = sqrt((long double)(2*n+1)/(long double)(2*n)) * _p_n_k;
                 Sat._tpk_nm1_k[n][n] = sqrt((long double)(2*n+1))*_p_n_k;
+                _p_n_k = sqrt((long double)(2*n+1)/(long double)(2*n)) * _p_n_k;
             }
 
 #else
