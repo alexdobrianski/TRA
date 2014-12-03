@@ -809,7 +809,9 @@ typedef struct Long_Double_Intergal_Var4
 typedef struct TraObj
 {
     long double TimeSl;
+    long double TimeSl_div_m[PLANET_COUNT];
     long double TimeSl_2;
+    long double TimeSl_2_div_m[PLANET_COUNT];
     long double TimeSlOld;
     int Elem;
     int flInUse[PLANET_COUNT];
@@ -3361,9 +3363,17 @@ void CalcPlanetForces(TRAOBJ * SlS)
                 {
                     SlS->Distance[i][j] = tD_;
                     SlS->Distance[j][i] = tD_;
-#if 0
-                    SlS->ForceDD[i][j] = SlS->GM[i] * SlS->M[j] / SlS->Distance2[i][j];
-                    SlS->ForceDD[j][i] = SlS->GM[j] * SlS->M[i] / SlS->Distance2[j][i];
+#if 1
+                    if ((SlS->GM[i] * SlS->M[j]) > (SlS->GM[j] * SlS->M[i]))
+                    {
+                        SlS->ForceDD[i][j] = SlS->GM[i] * SlS->M[j] / SlS->Distance2[i][j];
+                        SlS->ForceDD[j][i] = SlS->ForceDD[i][j];
+                    }
+                    else
+                    {
+                        SlS->ForceDD[j][i] = SlS->GM[j] * SlS->M[i] / SlS->Distance2[j][i];
+                        SlS->ForceDD[i][j] = SlS->ForceDD[j][i];
+                    }
 #else
                     SlS->ForceDD[i][j] = SlS->GMxM[i][j] / SlS->Distance2[i][j];
                     SlS->ForceDD[j][i] = SlS->GMxM[j][i] / SlS->Distance2[j][i];
@@ -3666,6 +3676,7 @@ void CalcSatForces(TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfCalc)
 }
 #define VERY_BASIC
 #ifdef VERY_BASIC
+#if 0
 void IteraSolarSystem(BOOL ForceWasCalculated, TRAOBJ * SlS)
 {
     int i;
@@ -3686,6 +3697,79 @@ void IteraSolarSystem(BOOL ForceWasCalculated, TRAOBJ * SlS)
 
     }
 }
+#else
+void IteraSolarSystem(BOOL ForceWasCalculated, TRAOBJ * SlS)
+{
+    int i;
+    //int j;
+    // calculation of a[i] based on x[i]
+    CalcPlanetForces(SlS);
+    // calculation of velocities and positions 
+
+    if (SlS->RunOne == FALSE)
+    {
+        for (i = 0; i < SlS->Elem; i++)
+        {
+            SlS->_position_[i].Add((SlS->_velosity_[i].x()) + SlS->FX[i],
+                                    (SlS->_velosity_[i].y()) + SlS->FY[i],
+                                    (SlS->_velosity_[i].z()) + SlS->FZ[i]);
+
+            SlS->_velosity_[i].Add(SlS->FX[i],
+                                   SlS->FY[i],
+                                   SlS->FZ[i]);
+            SlS->_position_[i].adjustAll();
+            SlS->_velosity_[i].adjustall();
+            SlS->X[i] = (SlS->_position_[i].x()+SlS->_position_[i].X0+ SlS->_velosity_[i].X0 *SlS->_velosity_[i].nX0)* SlS->TimeSl_2_div_m[i];   
+            SlS->Y[i] = (SlS->_position_[i].y()+SlS->_position_[i].Y0+ SlS->_velosity_[i].Y0 *SlS->_velosity_[i].nX0)* SlS->TimeSl_2_div_m[i];   
+            SlS->Z[i] = (SlS->_position_[i].z()+SlS->_position_[i].Z0+ SlS->_velosity_[i].Z0 *SlS->_velosity_[i].nX0)* SlS->TimeSl_2_div_m[i];
+            SlS->_velosity_[i].getIntegral(SlS->VX[i], SlS->VY[i], SlS->VZ[i]);
+            SlS->VX[i] *= SlS->TimeSl_div_m[i]; SlS->VY[i] *= SlS->TimeSl_div_m[i]; SlS->VZ[i] *= SlS->TimeSl_div_m[i];
+            //Sat->_position_[i].nX0++;
+            //Sat->_velosity_[i].nX0++;
+
+        }
+    }
+    else
+    {
+        SlS->RunOne = FALSE;
+        
+        for (i = 0; i < SlS->Elem; i++)
+        {
+            SlS->TimeSl_div_m[i] = SlS->TimeSl/ SlS->M[i];
+            SlS->TimeSl_2_div_m[i] = SlS->TimeSl_2/ SlS->M[i];
+            SlS->_position_[i].ZeroIntegral();
+            SlS->_velosity_[i].ZeroIntegral();
+
+            //Sat->_position_[i].nX0 = 1;
+            //Sat->_velosity_[i].nX0 = 1;
+
+            SlS->_position_[i].X0 = SlS->X[i]* SlS->M[i]/ SlS->TimeSl_2 + SlS->VX[i]* SlS->M[i]/SlS->TimeSl;
+            SlS->_position_[i].Y0 = SlS->Y[i]* SlS->M[i]/ SlS->TimeSl_2 + SlS->VY[i]* SlS->M[i]/SlS->TimeSl;
+            SlS->_position_[i].Z0 = SlS->Z[i]* SlS->M[i]/ SlS->TimeSl_2 + SlS->VZ[i]* SlS->M[i]/SlS->TimeSl;
+
+            SlS->_position_[i].Add(SlS->FX[i],
+                                   SlS->FY[i],
+                                   SlS->FZ[i]);
+
+            SlS->_velosity_[i].X0 = SlS->VX[i]* SlS->M[i]/SlS->TimeSl;
+            SlS->_velosity_[i].Y0 = SlS->VY[i]* SlS->M[i]/SlS->TimeSl;
+            SlS->_velosity_[i].Z0 = SlS->VZ[i]* SlS->M[i]/SlS->TimeSl;
+
+            SlS->_velosity_[i].Add(SlS->FX[i],
+                                   SlS->FY[i],
+                                   SlS->FZ[i]);
+
+            SlS->X[i] = (SlS->_position_[i].x()+SlS->_position_[i].X0)* SlS->TimeSl_2_div_m[i];   
+            SlS->Y[i] = (SlS->_position_[i].y()+SlS->_position_[i].Y0)* SlS->TimeSl_2_div_m[i];   
+            SlS->Z[i] = (SlS->_position_[i].z()+SlS->_position_[i].Z0)* SlS->TimeSl_2_div_m[i];
+            SlS->VX[i] = (SlS->_velosity_[i].x()+SlS->_velosity_[i].X0)* SlS->TimeSl_div_m[i];    
+            SlS->VY[i] = (SlS->_velosity_[i].y()+SlS->_velosity_[i].Y0)* SlS->TimeSl_div_m[i];    
+            SlS->VZ[i] = (SlS->_velosity_[i].z()+SlS->_velosity_[i].Z0)* SlS->TimeSl_div_m[i];
+        }
+    }
+}
+
+#endif
 #if 0
 void IteraSat(int TimeDirection, TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfCalc)
 {
@@ -5371,6 +5455,7 @@ void AssignFromNASAData(TRAOBJ * SlS, double JDSec)
     SlS->CountNx = 0; SlS->CountNy = 0; SlS->CountNz = 0;
     SlS->RunOne = TRUE;
 }
+
 
 // main engine to dump keplers elements as it is (no drag)
 void DumpKeplers(long double &T,long double &Ecc, long double &Incl, long double &AssNode, long double &ArgPer, long double &MeanAnm, long double Mass, long double mass, 
@@ -10946,7 +11031,7 @@ void RunProp(TRAOBJ *SlS, TRAOBJ *Sat,TRAIMPLOBJ *Eng, long double ldFrom,long d
     int flFindFirst1KmError = 1;
     stateType  StateEarth;
     stateType  StateMoon;
-    double dErrorValue = 1000000.0; // 1km error == 1km*1km
+    double dErrorValue = 10.0; // 1km error == 1km*1km
     long double Time_SecondsFromStart=0;
     int iDistance =0;
     int Apogee = 0;
