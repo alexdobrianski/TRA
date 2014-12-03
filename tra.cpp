@@ -1064,6 +1064,7 @@ typedef struct TraObj
     long double _tp_nm2_k[TOTAL_COEF][TOTAL_COEF];
     long double _tpk_n_k[TOTAL_COEF];
     long double diagonal[TOTAL_COEF];
+    long double _p_n_k[TOTAL_COEF];
 
     void gcrs_2_trs(long double &X, long double &Y, long double &Z)
     {
@@ -1543,7 +1544,10 @@ typedef struct TraObj
 
             long double Ptilda_nk;
 #ifdef _NORMALIZED_COEF
-            Ptilda_nk  = _tp_nm1_k [n][k+1] * Ptilda_m_1[k+1]*sinTetta + _tp_nm2_k[n][k+1] * Ptilda_m_2[k+1];
+            if (2 == n) // k==0 & n == 2
+                Ptilda_nk  = _tpk_n_k[n]*sinTetta;
+            else
+                Ptilda_nk  = _tp_nm1_k [n][k+1] * Ptilda_m_1[k+1]*sinTetta - _tp_nm2_k[n][k+1] * Ptilda_m_2[k+1];
             
 #else
             //long double Ptilda_nk = n * P_m_1 + sinTetta * Ptilda_m_1[1];                        // P'[2]
@@ -1632,9 +1636,9 @@ typedef struct TraObj
             P_nk = Ptilda_[k]; // P'[2] == (k= 1)
 #ifdef _NORMALIZED_COEF
             if (2 == n) // k==1 && n==2
-                Ptilda_nk  = _tpk_n_k[n];// + Ptilda_m_2[k+1];
+                Ptilda_nk  = _p_n_k[n];// + Ptilda_m_2[k+1];
             else
-                Ptilda_nk  = _tp_nm1_k [n][k+1] * Ptilda_m_1[k+1]*sinTetta + _tp_nm2_k[n][k+1] * Ptilda_m_2[k+1];
+                Ptilda_nk  = _tp_nm1_k [n][k+1] * Ptilda_m_1[k+1]*sinTetta - _tp_nm2_k[n][k+1] * Ptilda_m_2[k+1];
 #else
             if (2 == n) // k==1 && n==2
             {
@@ -1701,10 +1705,12 @@ typedef struct TraObj
                 else
                 {
 #ifdef _NORMALIZED_COEF
-                    if (n == (k+1))
-                        Ptilda_nk  = _tpk_n_k[n];// + Ptilda_m_2[k+1];
+                    if (k == (n-1))
+                        Ptilda_nk  = _p_n_k[n];
+                    else if (k == (n-2))
+                        Ptilda_nk  = _tpk_n_k[n]*sinTetta;// + Ptilda_m_2[k+1];
                     else
-                        Ptilda_nk  = _tp_nm1_k [n][k+1] * Ptilda_m_1[k+1]*sinTetta + _tp_nm2_k[n][k+1] * Ptilda_m_2[k+1];
+                        Ptilda_nk  = _tp_nm1_k [n][k+1] * Ptilda_m_1[k+1]*sinTetta - _tp_nm2_k[n][k+1] * Ptilda_m_2[k+1];
 #else
                     if (k == (n-1))
                         Ptilda_nk = diagonal[n];// + Ptilda_m_2[k+1];
@@ -8771,7 +8777,7 @@ void ParamProb(char *szString)
             }
             char szTemp[512];
             Sat._SQRT3= sqrt((long double)3.0);
-            long double _p_n_k= Sat._SQRT3;
+            Sat._p_n_k[1]= Sat._SQRT3;
             long double _P_N_K = 3.0;
 
             for (int n = 2 ; n <= Sat.iLeg; n++)
@@ -8919,8 +8925,8 @@ DONE_WITH_LINE:
                 Sat._p_n_m_2[n] = sqrt((long double)(2*n +1)/(long double)(2*n -3)) * (long double)(n -1)/long double(n); // betta
                 Sat.diagonal[n] = _P_N_K;
                 _P_N_K *= (long double)(2*n+1);
-                Sat._tpk_n_k[n] = sqrt((long double)(2*n+1))*_p_n_k;
-                _p_n_k = sqrt((long double)(2*n+1)/(long double)(2*n)) * _p_n_k;
+                Sat._tpk_n_k[n] = sqrt((long double)(2*n+1))*Sat._p_n_k[n-1];
+                Sat._p_n_k[n] = sqrt((long double)(2*n+1)/(long double)(2*n)) * Sat._p_n_k[n-1];
             }
 
 #else
