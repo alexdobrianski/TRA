@@ -44,7 +44,7 @@ int _tmain(int argc, _TCHAR* argv[])
   recTwoType   R2;
   
   char    lineBuffer[82];
-  double  D1, D2, D3, DblDenum, T_last,  T_now,  val[ARRAY_SIZE];
+  long double  D1, D2, D3, DblDenum, T_last,  T_now,  val[ARRAY_SIZE];
   FILE   *inFile1, *inFile2,  *outFile;
   int     count, i,  j,  k, KS,  M,  
           group, maxLine, NC,    recNum, recSize, status;
@@ -325,7 +325,7 @@ int _tmain(int argc, _TCHAR* argv[])
 
                for ( i=0 ; i<recSize ; i++ )      /* Write binary data record */
                    {
-                     fwrite(&val[i],sizeof(double),1,outFile);
+                     fwrite(&val[i],sizeof(long double),1,outFile);
                    }
 
                T_last = val[1];                   /* Save stop time of record */

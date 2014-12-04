@@ -129,11 +129,11 @@ void Warning(int errorCode)
 /**    A double precision number                                             **/
 /**==========================================================================**/
 
-double Find_Value( char    name[], 
-                   char    name_array[400][6] , 
-                   double  value_array[400]  ) 
+long double Find_Value( char    name[], 
+                   char    name_array[600][6] , 
+                   long double  value_array[600]  ) 
 {
-  double value = 0.0;
+  long double value = 0.0;
   int    found = FALSE;
   char   target[7];
   int    i, j;
@@ -187,11 +187,11 @@ double Find_Value( char    name[],
 /**     Julian date (double)                                                 **/
 /**==========================================================================**/
 
-double Gregorian_to_Julian( int     year ,  int     month   , 
+long double Gregorian_to_Julian( int     year ,  int     month   , 
                             int     day  ,  int     hour    , 
-                            int     min  ,  double  seconds )
+                            int     min  ,  long double  seconds )
 {
-  double  A, B, D, H, JD, M, N, Y;
+  long double  A, B, D, H, JD, M, N, Y;
 
   /*--------------------------------------------------------------------------*/
   /*  Adjust year & month values (if necessary).                              */
@@ -206,11 +206,11 @@ double Gregorian_to_Julian( int     year ,  int     month   ,
   /*  Perform type casts and adjust the day count.                            */
   /*--------------------------------------------------------------------------*/
 
-  Y = (double) year;
-  M = (double) month;
-  D = (double) day;
-  H = (double) hour;
-  N = (double) min;
+  Y = (long double) year;
+  M = (long double) month;
+  D = (long double) day;
+  H = (long double) hour;
+  N = (long double) min;
 
   /*--------------------------------------------------------------------------*/
   /*  Compute the day fraction:                                               */
@@ -236,7 +236,7 @@ double Gregorian_to_Julian( int     year ,  int     month   ,
 
 int mod(int x, int y)
 {
-  double rf, rx, ry;
+  long double rf, rx, ry;
      int f;
   
   /*--------------------------------------------------------------------------*/
@@ -247,8 +247,8 @@ int mod(int x, int y)
 
   if ( y != 0 ) 
      {
-       rx = (double) x;
-       ry = (double) y;
+       rx = (long double) x;
+       ry = (long double) y;
        rf = floor(rx/ry);
        f  = (int) rf;
        return x - y*f;

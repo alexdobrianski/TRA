@@ -81,8 +81,8 @@
    /*-------------------------------------------------------------------------*/
 
    struct stateData{
-     double Position[3];
-     double Velocity[3];
+     long double Position[3];
+     long double Velocity[3];
      };
 
    typedef struct stateData stateType;
@@ -93,18 +93,18 @@
 
    struct recOneData {
          char label[3][84];
-         char constName[400][6];
-       double timeData[3];
+         char constName[600][6];
+       long double timeData[3];
      long int numConst;
-       double AU;
-       double EMRAT;
+       long double AU;
+       long double EMRAT;
      long int coeffPtr[12][3];
      long int DENUM;
      long int libratPtr[3];
      };
 
    struct recTwoData {
-     double constValue[400];
+     long double constValue[600];
      }; 
 
    typedef struct recOneData recOneType;
@@ -116,12 +116,12 @@
 
    struct headerOne {
        recOneType data;
-       char pad[ARRAY_SIZE*sizeof(double) - sizeof(recOneType)];
+       char pad[ARRAY_SIZE*sizeof(long double) - sizeof(recOneType)];
      };
   
    struct headerTwo {
        recTwoType data;
-       char pad[ARRAY_SIZE*sizeof(double) - sizeof(recTwoType)];
+       char pad[ARRAY_SIZE*sizeof(long double) - sizeof(recTwoType)];
      };
 
    typedef struct headerOne headOneType;

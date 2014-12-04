@@ -683,7 +683,8 @@ if ( Target >= 11 )             /* Also protects against weird input errors */
   /* Determine if a new record needs to be input.                             */
   /*--------------------------------------------------------------------------*/
   
-  if (Time < T_beg || Time > T_end)  Read_Coefficients(Time);
+  if (Time < T_beg || Time > T_end)  
+      Read_Coefficients(Time);
 
   /*--------------------------------------------------------------------------*/
   /* Read the coefficients from the binary record.                            */
