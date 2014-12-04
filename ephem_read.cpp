@@ -48,7 +48,7 @@
    static headTwoType  H2;
    static recOneType   R1;
    static FILE        *Ephemeris_File;
-   static double       Coeff_Array[ARRAY_SIZE] , T_beg , T_end , T_span;
+   static long double       Coeff_Array[ARRAY_SIZE] , T_beg , T_end , T_span;
 
    static int Debug = FALSE;             /* Generates detailed output if true */
 
@@ -64,9 +64,9 @@
 /**                                                                          **/
 /**==========================================================================**/
 
-void Read_Coefficients( double Time )
+void Read_Coefficients( long double Time )
 {
-  double  T_delta = 0.0;
+  long double  T_delta = 0.0;
   int     Offset  =  0 ;
 
   /*--------------------------------------------------------------------------*/
@@ -91,8 +91,8 @@ void Read_Coefficients( double Time )
   /*  Retrieve ephemeris data from new record.                                */
   /*--------------------------------------------------------------------------*/
 
-  fseek(Ephemeris_File,(Offset-1)*ARRAY_SIZE*sizeof(double),SEEK_CUR);
-  fread(&Coeff_Array,sizeof(double),ARRAY_SIZE,Ephemeris_File);
+  fseek(Ephemeris_File,(Offset-1)*ARRAY_SIZE*sizeof(long double),SEEK_CUR);
+  fread(&Coeff_Array,sizeof(long double),ARRAY_SIZE,Ephemeris_File);
   
   T_beg  = Coeff_Array[0];
   T_end  = Coeff_Array[1];
@@ -152,9 +152,9 @@ int Initialize_Ephemeris( char *fileName )
   else 
      { /*.................Read first three header records from ephemeris file */
          
-       fread(&H1,sizeof(double),ARRAY_SIZE,Ephemeris_File);
-       fread(&H2,sizeof(double),ARRAY_SIZE,Ephemeris_File);
-       fread(&Coeff_Array,sizeof(double),ARRAY_SIZE,Ephemeris_File);
+       fread(&H1,sizeof(long double),ARRAY_SIZE,Ephemeris_File);
+       fread(&H2,sizeof(long double),ARRAY_SIZE,Ephemeris_File);
+       fread(&Coeff_Array,sizeof(long double),ARRAY_SIZE,Ephemeris_File);
        
        /*...............................Store header data in global variables */
        
@@ -213,9 +213,9 @@ int Initialize_Ephemeris( char *fileName )
 /**  Returns: Nothing explicitly.                                            **/
 /**==========================================================================**/
 
-void Interpolate_Libration( double Time , int Target , double Libration[3] )
+void Interpolate_Libration( long double Time , int Target , long double Libration[3] )
 {
-  double    A[50] , Cp[50]  , sum[3] , T_break , T_seg , T_sub , Tc;
+  long double    A[50] , Cp[50]  , sum[3] , T_break , T_seg , T_sub , Tc;
   int       i , j;
   long int  C , G , N , offset = 0;
 
@@ -278,11 +278,11 @@ void Interpolate_Libration( double Time , int Target , double Libration[3] )
      }
   else if ( G > 1 )
      {
-       T_sub = T_span / ((double) G);          /* Compute subgranule interval */
+       T_sub = T_span / ((long double) G);          /* Compute subgranule interval */
        
        for ( j=G ; j>0 ; j-- ) 
            {
-             T_break = T_beg + ((double) j-1) * T_sub;
+             T_break = T_beg + ((long double) j-1) * T_sub;
              if ( Time > T_break ) 
                 {
                   T_seg  = T_break;
@@ -360,9 +360,9 @@ void Interpolate_Libration( double Time , int Target , double Libration[3] )
 /**                                                                          **/
 /**==========================================================================**/
 
-void Interpolate_Nutation( double Time , int Target , double Nutation[2] )
+void Interpolate_Nutation( long double Time , int Target , long double Nutation[2] )
 {
-  double    A[50] , Cp[50]  , sum[3] , T_break , T_seg , T_sub , Tc;
+  long double    A[50] , Cp[50]  , sum[3] , T_break , T_seg , T_sub , Tc;
   int       i , j;
   long int  C , G , N , offset = 0;
 
@@ -425,11 +425,11 @@ void Interpolate_Nutation( double Time , int Target , double Nutation[2] )
      }
   else if ( G > 1 )
      {
-       T_sub = T_span / ((double) G);          /* Compute subgranule interval */
+       T_sub = T_span / ((long double) G);          /* Compute subgranule interval */
        
        for ( j=G ; j>0 ; j-- ) 
            {
-             T_break = T_beg + ((double) j-1) * T_sub;
+             T_break = T_beg + ((long double) j-1) * T_sub;
              if ( Time > T_break ) 
                 {
                   T_seg  = T_break;
@@ -506,7 +506,7 @@ void Interpolate_Nutation( double Time , int Target , double Nutation[2] )
 /**                                                                          **/
 /**==========================================================================**/
 
-void Interpolate_Position( double Time , int Target , double Position[3] )
+void Interpolate_Position( long double Time , int Target , long double Position[3] )
 {
   double    A[50] , Cp[50]  , sum[3] , T_break , T_seg , T_sub , Tc;
   int       i , j;
@@ -571,11 +571,11 @@ void Interpolate_Position( double Time , int Target , double Position[3] )
      }
   else if ( G > 1 )
      {
-       T_sub = T_span / ((double) G);          /* Compute subgranule interval */
+       T_sub = T_span / ((long double) G);          /* Compute subgranule interval */
        
        for ( j=G ; j>0 ; j-- ) 
            {
-             T_break = T_beg + ((double) j-1) * T_sub;
+             T_break = T_beg + ((long double) j-1) * T_sub;
              if ( Time > T_break ) 
                 {
                   T_seg  = T_break;
@@ -651,9 +651,9 @@ void Interpolate_Position( double Time , int Target , double Position[3] )
 /**  Returns: Nothing (explicitly)                                           **/
 /**==========================================================================**/
 
-void Interpolate_State(double Time , int Target, stateType *Planet)
+void Interpolate_State(long double Time , int Target, stateType *Planet)
 {
-  double    A[50]   , B[50] , Cp[50] , P_Sum[3] , V_Sum[3] , Up[50] ,
+  long double    A[50]   , B[50] , Cp[50] , P_Sum[3] , V_Sum[3] , Up[50] ,
             T_break , T_seg , T_sub  , Tc;
   int       i , j;
   long int  C , G , N , offset = 0;
@@ -720,11 +720,11 @@ if ( Target >= 11 )             /* Also protects against weird input errors */
      }
   else if ( G > 1 )
      {
-       T_sub = T_span / ((double) G);          /* Compute subgranule interval */
+       T_sub = T_span / ((long double) G);          /* Compute subgranule interval */
        
        for ( j=G ; j>0 ; j-- ) 
            {
-             T_break = T_beg + ((double) j-1) * T_sub;
+             T_break = T_beg + ((long double) j-1) * T_sub;
              if ( Time > T_break ) 
                 {
                   T_seg  = T_break;
@@ -790,7 +790,7 @@ if ( Target >= 11 )             /* Also protects against weird input errors */
         for ( j=N-1 ; j>0  ; j-- )  V_Sum[i] = V_Sum[i] + A[j+i*N] * Up[j];
 
         X.Position[i] = P_Sum[i];
-        X.Velocity[i] = V_Sum[i] * 2.0 * ((double) G) / (T_span * 86400.0);
+        X.Velocity[i] = V_Sum[i] * 2.0 * ((long double) G) / (T_span * 86400.0);
       }
 
   /*--------------------------------------------------------------------------*/
@@ -801,7 +801,7 @@ if ( Target >= 11 )             /* Also protects against weird input errors */
 
   return;
 }
-double Find_DataInHeader( char    *szTarget)
+long double Find_DataInHeader( char    *szTarget)
 {
     int i;
     for (i = 0; i <400; i++)

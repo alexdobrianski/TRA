@@ -138,7 +138,7 @@ long double Find_Value( char    name[],
   char   target[7];
   int    i, j;
 
-  for ( i=0 ; i<400 ; i++ ) 
+  for ( i=0 ; i<600 ; i++ ) 
       {
         /*.....................Convert current name array element to a string */
       

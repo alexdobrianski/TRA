@@ -116,7 +116,8 @@ int _tmain(int argc, _TCHAR* argv[])
 
     for (i=0 ; i<3 ; i++)
         for (j=0 ; j<81 ; j++)
-            if ( R1.label[i][j] == '\r') R1.label[i][j] = '\0';
+            if ( R1.label[i][j] == '\r') 
+                R1.label[i][j] = '\0';
 
     /*------------------------------------------------------------------------*/
     /* Read data from Group 1030                                              */
@@ -127,9 +128,9 @@ int _tmain(int argc, _TCHAR* argv[])
     if ( group == 2 ) 
        {
          status = Read_File_Line(inFile1,FALSE,lineBuffer);
-         sscanf(lineBuffer," %10le",&R1.timeData[0]);
-         sscanf(lineBuffer+14," %10le",&R1.timeData[1]);
-         sscanf(lineBuffer+27," %10le",&R1.timeData[2]);
+         sscanf(lineBuffer," %10Le",&R1.timeData[0]);
+         sscanf(lineBuffer+14," %10Le",&R1.timeData[1]);
+         sscanf(lineBuffer+27," %10Le",&R1.timeData[2]);
        }
     else 
        {
@@ -181,7 +182,7 @@ int _tmain(int argc, _TCHAR* argv[])
               while ( count < (NC-1) ) 
                     {
                       status = Read_File_Line(inFile1,TRUE,lineBuffer);
-                      sscanf(lineBuffer," %le %le %le",&D1,&D2,&D3);
+                      sscanf(lineBuffer," %Le %Le %Le",&D1,&D2,&D3);
                       R2.constValue[count] = D1;
                       if (++count == NC) break;
                       R2.constValue[count] = D2;
@@ -294,11 +295,11 @@ int _tmain(int argc, _TCHAR* argv[])
                      break;
                    }
 
-                sscanf(lineBuffer,"%le",&val[3*i]); 
+                sscanf(lineBuffer,"%Le",&val[3*i]); 
                 if (3*i+1 >= recSize) break; 
-                sscanf(lineBuffer+26,"%le",&val[3*i+1]); 
+                sscanf(lineBuffer+26,"%Le",&val[3*i+1]); 
                 if (3*i+2 >= recSize) break;
-                sscanf(lineBuffer+52,"%le",&val[3*i+2]);
+                sscanf(lineBuffer+52,"%Le",&val[3*i+2]);
               }
 
           /*........................................Read start time of record */

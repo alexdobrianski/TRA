@@ -19,17 +19,17 @@
 /*  Find_Value                                                                */
 /*----------------------------------------------------------------------------*/
 
-    extern double Find_Value( char    name[]             , 
-                              char    name_array[400][6] , 
-                              double  value_array[400]   );
+    extern long double Find_Value( char    name[]             , 
+                              char    name_array[600][6] , 
+                              long double  value_array[600]   );
 
 /*----------------------------------------------------------------------------*/
 /**  Gregorian_to_Julian                                                     **/
 /*----------------------------------------------------------------------------*/
 
-     extern double Gregorian_to_Julian( int     year ,   int     month   , 
+     extern long double Gregorian_to_Julian( int     year ,   int     month   , 
                                         int     day  ,   int     hour    , 
-                                        int     min  ,   double  seconds );
+                                        int     min  ,   long double  seconds );
 
 /*----------------------------------------------------------------------------*/
 /*  Integer modulo function.                                                  */

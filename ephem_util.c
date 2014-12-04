@@ -126,11 +126,11 @@ void Warning(int errorCode)
 /**    A double precision number                                             **/
 /**==========================================================================**/
 
-double Find_Value( char    name[], 
-                   char    name_array[400][6] , 
-                   double  value_array[400]  ) 
+long double Find_Value( char    name[], 
+                   char    name_array[600][6] , 
+                   long double  value_array[600]  ) 
 {
-  double value = 0.0;
+  long double value = 0.0;
   int    found = FALSE;
   char   target[7];
   int    i, j;
@@ -186,7 +186,7 @@ double Find_Value( char    name[],
 
 double Gregorian_to_Julian( int     year ,  int     month   , 
                             int     day  ,  int     hour    , 
-                            int     min  ,  double  seconds )
+                            int     min  ,  long double  seconds )
 {
   double  A, B, D, H, JD, M, N, Y;
 
