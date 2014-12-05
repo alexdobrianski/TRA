@@ -38,14 +38,33 @@
 /**==========================================================================**/
 
 //#define EPHEMERIS 405                /* Note the obvious: input XXX for DEXXX */
-#define EPHEMERIS 410                /* Note the obvious: input XXX for DEXXX */
+#define EPHEMERIS 432               /* Note the obvious: input XXX for DEXXX */
+
 
 #if EPHEMERIS==200  
 #define ARRAY_SIZE 826
+#define BINARY_EP_NAME "bin200.bin"
+
 #elif EPHEMERIS==405
 #define ARRAY_SIZE 1018
+#define BINARY_EP_NAME "bin405.bin"
 #elif EPHEMERIS==410
 #define ARRAY_SIZE 1018
+#define BINARY_EP_NAME "bin410.bin"
+#elif EPHEMERIS==431
+#define ARRAY_SIZE 1018
+#define BINARY_EP_NAME "bin431.bin"
+#elif EPHEMERIS==430
+#define ARRAY_SIZE 1018
+#define BINARY_EP_NAME "bin430.bin"
+
+#elif EPHEMERIS==432
+#define ARRAY_SIZE 938
+#define BINARY_EP_NAME "bin432.bin"
+
+#elif EPHEMERIS==4322
+#define ARRAY_SIZE 982
+#define BINARY_EP_NAME "bin432T.bin"
 #endif
 
 

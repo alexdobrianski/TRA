@@ -69,8 +69,8 @@ void write_JPEG_file (char * filename, int quality, int SizeW, int SizeH, int Si
 
 #define TOTAL_COEF 360
 int iCounter_nk_lm_Numbers;
-int nk_lm_Numbers[TOTAL_COEF*TOTAL_COEF/2][2];
-long double C_S_nk[TOTAL_COEF*TOTAL_COEF/2][2];
+int nk_lm_Numbers[TOTAL_COEF*TOTAL_COEF][2];
+long double C_S_nk[TOTAL_COEF*TOTAL_COEF][2];
     	
     // see http://vadimchazov.narod.ru/lepa_zov/lesat.pdf
     // P0 == P[0](x) = 1
@@ -491,7 +491,7 @@ int iItearationsPerSec; // that is "int" == IterPerSec
 long double StepsValInDay; // step's value in day measurement
 //long iCurSec; // current second from begining of the simulation
 //int iCurPortionOfTheSecond;
-#define SIMPSON_INTEGRAL 1 
+//#define SIMPSON_INTEGRAL 1 
 #define ADJUST(__INIT,__FORMULA,__ADDON) ldTemp=(__INIT+(__FORMULA))+__ADDON;ldTemp2=ldTemp-(__INIT +(__FORMULA));__INIT=ldTemp;__ADDON-=ldTemp2;
 typedef struct Long_Double_Intergal_Var
 {
@@ -499,6 +499,9 @@ typedef struct Long_Double_Intergal_Var
     long double X0;
     long double Y0;
     long double Z0;
+    long double VX0;
+    long double VY0;
+    long double VZ0;
 
     long double X6[6];
     long double Y6[6];
@@ -541,6 +544,27 @@ typedef struct Long_Double_Intergal_Var
     long double X_temp;
     long double Y_temp;
     long double Z_temp;
+
+    long double VX;
+    long double VY;
+    long double VZ;
+
+    long double VX_h;
+    long double VY_h;
+    long double VZ_h;
+
+    long double VX_hh;
+    long double VY_hh;
+    long double VZ_hh;
+
+    long double VX_hhh;
+    long double VY_hhh;
+    long double VZ_hhh;
+
+
+    long double VX_temp;
+    long double VY_temp;
+    long double VZ_temp;
     long CountNx;
     long CountNy;
     long CountNz;
@@ -566,21 +590,38 @@ typedef struct Long_Double_Intergal_Var
     { 
             return Z+Z_temp; 
     };
+    long double vx() 
+    { 
+           return VX+VX_temp; 
+    };
+    long double vy() 
+    { 
+            return VY+VY_temp; 
+    };
+    long double vz() 
+    { 
+            return VZ+VZ_temp; 
+    };
 #ifndef SIMPSON_INTEGRAL
+    void Addpos(long double valVX,long double valX,long double valVY,long double valY, long double valVZ,long double valZ)
+    {
+        X+=valX;  Y+=valY;   Z+=valZ;
+        VX+=valVX;  VY+=valVY;   VZ+=valVZ;
+    }
     void Add(long double valX,long double valY, long double valZ)
     {
         X+=valX;
         Y+=valY;
         Z+=valZ;
         //nX0++;
-        x6[i6] =valX; y6[i6] =valY; z6[i6] =valZ;
-        if (++i6 == 6)
-        {
-            i6 = 0;
-        }
-        else
-        {
-        }
+        //x6[i6] =valX; y6[i6] =valY; z6[i6] =valZ;
+        //if (++i6 == 6)
+        //{
+        //    i6 = 0;
+        //}
+        //else
+        //{
+        //}
     }
 #else
     void Add(long double valX,long double valY, long double valZ)
@@ -605,6 +646,19 @@ typedef struct Long_Double_Intergal_Var
         }
     }
 #endif
+    void getIntegralpos(long double &valVX, long double &valVY, long double &valVZ)
+    {
+#ifndef SIMPSON_INTEGRAL
+            valVX = (x()+X0+vx()+VX0);    
+            valVY = (y()+Y0+vy()+VY0);    
+            valVZ = (z()+Z0+vz()+VZ0);
+#else
+            valVX = (X_temp+X+X0);    
+            valVY = (Y_temp+Y+Y0);    
+            valVZ = (Z_temp+Z+Z0);
+#endif
+    }
+
     void getIntegral(long double &valVX, long double &valVY, long double &valVZ)
     {
 #ifndef SIMPSON_INTEGRAL
@@ -617,6 +671,15 @@ typedef struct Long_Double_Intergal_Var
             valVZ = (Z_temp+Z+Z0);
 #endif
     }
+    void adjustAllpos(void)
+    {
+#ifndef SIMPSON_INTEGRAL
+        adjustXpos(10103,10163);      adjustYpos(10463,10559);      adjustZpos(10607,10667);
+#else
+        adjustXX(10103,10163);      adjustYY(10463,10559);      adjustZZ(10607,10667);
+#endif
+    }
+
     void adjustAll(void)
     {
 #ifndef SIMPSON_INTEGRAL
@@ -702,6 +765,95 @@ typedef struct Long_Double_Intergal_Var
             }
         }
     };
+
+    void adjustXpos(long MaxVal, long MaxVal_h)
+    {
+        long double ldTemp, ldTemp2;
+        if (++CountNx >= MaxVal)
+        {
+            CountNx = 0;
+            ADJUST(X_h, 0, X);
+            ADJUST(VX_h, 0, VX);
+            X_temp = X_h+X_hh+X_hhh;
+            VX_temp = VX_h+VX_hh+VX_hhh;
+            if (++CountNx_h >= MaxVal_h)
+            {
+                CountNx_h = 0;
+                ADJUST(X_hh, 0, X_h);
+                ADJUST(VX_hh, 0, VX_h);
+                X_temp = X_h+X_hh+X_hhh;
+                VX_temp = VX_h+VX_hh+VX_hhh;
+                if (++CountNx_hh >= 1019)
+                {
+                    CountNx_hh = 0;
+                    ADJUST(X_hhh, 0, X_hh);
+                    ADJUST(VX_hhh, 0, VX_hh);
+                    X_temp = X_h+X_hh+X_hhh;
+                    VX_temp = VX_h+VX_hh+VX_hhh;
+                    printf("X");
+                }
+            }
+        }
+    };
+    void adjustYpos(long MaxVal, long MaxVal_h)
+    {
+        long double ldTemp, ldTemp2;
+        if (++CountNy >= MaxVal)
+        {
+            CountNy = 0;
+            ADJUST(Y_h, 0, Y);
+            ADJUST(VY_h, 0, VY);
+            Y_temp = Y_h + Y_hh + Y_hhh;
+            VY_temp = VY_h + VY_hh + VY_hhh;
+            if (++CountNy_h >= MaxVal_h)
+            {
+                CountNy_h = 0;
+                ADJUST(Y_hh, 0, Y_h);
+                ADJUST(VY_hh, 0, VY_h);
+                Y_temp = Y_h + Y_hh + Y_hhh;
+                VY_temp = VY_h + VY_hh + VY_hhh;
+                if (++CountNy_hh >= 1307)
+                {
+                    CountNy_hh = 0;
+                    ADJUST(Y_hhh, 0, Y_hh);
+                    ADJUST(VY_hhh, 0, VY_hh);
+                    Y_temp = Y_h + Y_hh + Y_hhh;
+                    VY_temp = VY_h + VY_hh + VY_hhh;
+                    printf("Y");
+                }
+            }
+        }
+    };
+    void adjustZpos(long MaxVal, long MaxVal_h)
+    {
+        long double ldTemp, ldTemp2;
+        if (++CountNz >= MaxVal)
+        {
+            CountNz = 0;
+            ADJUST(Z_h, 0, Z);
+            ADJUST(VZ_h, 0, VZ);
+            Z_temp=Z_h+Z_hh +Z_hhh;
+            VZ_temp=VZ_h+VZ_hh +VZ_hhh;
+            if (++CountNz_h >= MaxVal_h)
+            {
+                CountNz_h = 0;
+                ADJUST(Z_hh, 0, Z_h);
+                ADJUST(VZ_hh, 0, VZ_h);
+                Z_temp=Z_h+Z_hh +Z_hhh;
+                VZ_temp=VZ_h+VZ_hh +VZ_hhh;
+                if (++CountNz_hh >= 983)
+                {
+                    CountNz_hh = 0;
+                    ADJUST(Z_hhh, 0, Z_hh);
+                    ADJUST(VZ_hhh, 0, VZ_hh);
+                    Z_temp=Z_h+Z_hh +Z_hhh;
+                    VZ_temp=VZ_h+VZ_hh +VZ_hhh;
+                    printf("Z");
+                }
+            }
+        }
+    };
+
 #ifdef SIMPSON_INTEGRAL
     void adjustXX(long MaxVal, long MaxVal_h)
     {
@@ -789,11 +941,17 @@ typedef struct Long_Double_Intergal_Var
         X_h =0.0;    Y_h =0.0;    Z_h =0.0;
         X_hh =0.0;   Y_hh =0.0;   Z_hh =0.0;
         X_hhh =0.0;   Y_hhh =0.0;   Z_hhh =0.0;
+        VX = 0.0;      VY = 0.0;      VZ = 0.0;
+        VX_h =0.0;    VY_h =0.0;    VZ_h =0.0;
+        VX_hh =0.0;   VY_hh =0.0;   VZ_hh =0.0;
+        VX_hhh =0.0;   VY_hhh =0.0;   VZ_hhh =0.0;
+
         CountNx = 0; CountNy = 0; CountNz = 0;
         CountNx_h = 0; CountNy_h = 0; CountNz_h = 0;
         CountNx_hh = 0; CountNy_hh = 0; CountNz_hh = 0;
 
         X0 = 0.0;      Y0 = 0.0;      Z0 = 0.0;
+        VX0 = 0.0;      VY0 = 0.0;      VZ0 = 0.0;
         for (int i = 0; i < 6; i++)
         {
             x6[i] = 0.0;      x6[i] = 0.0;      x6[i] = 0.0;
@@ -805,6 +963,7 @@ typedef struct Long_Double_Intergal_Var
         i6 = 0;
 
         X_temp = 0.0; Y_temp = 0.0;   Z_temp = 0.0;
+        VX_temp = 0.0; VY_temp = 0.0;   VZ_temp = 0.0;
     };
 } LONG_DOUBLE_INT_VAR, *PLONG_DOUBLE_INT_VAR;
 
@@ -1106,15 +1265,15 @@ typedef struct TraObj
     long double cos_nutEpsilon, sin_nutEpsilon;
     long double cos_nutDFeta, sin_nutDFeta;
     long double _SQRT3;
-    long double R0divR[TOTAL_COEF];
-    long double _p_n_m_1[TOTAL_COEF];
-    long double _p_n_m_2[TOTAL_COEF];
-    long double _pt_nk[TOTAL_COEF][TOTAL_COEF];
-    long double _tp_nm1_k[TOTAL_COEF][TOTAL_COEF];
-    long double _tp_nm2_k[TOTAL_COEF][TOTAL_COEF];
-    long double _tpk_n_k[TOTAL_COEF];
-    long double diagonal[TOTAL_COEF];
-    long double _p_n_k[TOTAL_COEF];
+    long double R0divR[TOTAL_COEF+3];
+    long double _p_n_m_1[TOTAL_COEF+3];
+    long double _p_n_m_2[TOTAL_COEF+3];
+    long double _pt_nk[TOTAL_COEF+3][TOTAL_COEF+3];
+    long double _tp_nm1_k[TOTAL_COEF+3][TOTAL_COEF+3];
+    long double _tp_nm2_k[TOTAL_COEF+3][TOTAL_COEF+3];
+    long double _tpk_n_k[TOTAL_COEF+3];
+    long double diagonal[TOTAL_COEF+3];
+    long double _p_n_k[TOTAL_COEF+3];
 
     void gcrs_2_trs(long double &X, long double &Y, long double &Z)
     {
@@ -1507,9 +1666,9 @@ typedef struct TraObj
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         n = 0;  //  initial
 
-        long double Ptilda_m_2[TOTAL_COEF];
-        long double Ptilda_m_1[TOTAL_COEF];
-        long double Ptilda_[TOTAL_COEF];
+        long double Ptilda_m_2[TOTAL_COEF+3];
+        long double Ptilda_m_1[TOTAL_COEF+3];
+        long double Ptilda_[TOTAL_COEF+3];
         for (k = 0; k < TOTAL_COEF; k++) 
         {
             Ptilda_[k] = 0;  Ptilda_m_1[k] =0;  Ptilda_m_2[k]=0;
@@ -1546,8 +1705,8 @@ typedef struct TraObj
         int ip = 0;
         // loop iteration starts from n=2 k = 0
         // formula 8 on page 92
-        long double Xk[TOTAL_COEF];
-        long double Yk[TOTAL_COEF];
+        long double Xk[TOTAL_COEF+3];
+        long double Yk[TOTAL_COEF+3];
         
         Xk[0] = 1.0;
         Yk[0] = 0.0;
@@ -3426,7 +3585,7 @@ void CalcSatForces(TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfCalc)
             if (j == Sat->LegBody)
             {
                 //long double ModelCoef = SlS->GM[j]/ GM_MODEL;
-                //Sat->ForceDD[i][j] = GM_MODEL / Sat->Distance2[i][j];
+                Sat->ForceDD[i][j] = GM_MODEL / Sat->Distance2[i][j];
 
                 Sat->R0divR[0] = 1;
                 Sat->R0divR[1] = R0_MODEL/tD_;
@@ -3437,9 +3596,16 @@ void CalcSatForces(TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfCalc)
                     long double ValZ0 = (Sat->Z[i] - SlS->Z[j]);
 
                     Sat->FastSummXYZ(ValX0,ValY0,ValZ0,Sat->Distance[i][j],DX,DY,DZ, i);
+#define _NO_GM_CORRECTION 1
+#ifndef _NO_GM_CORRECTION
                     Sat->DeltaVX[i][j] =DX/ModelCoef;
                     Sat->DeltaVY[i][j] =DY/ModelCoef;
                     Sat->DeltaVZ[i][j] =DZ/ModelCoef;
+#else
+                    Sat->DeltaVX[i][j] =DX;
+                    Sat->DeltaVY[i][j] =DY;
+                    Sat->DeltaVZ[i][j] =DZ;
+#endif
                 }
             }
 
@@ -3679,6 +3845,7 @@ void IteraSolarSystem(BOOL ForceWasCalculated, TRAOBJ * SlS)
     }
 }
 #else
+#define NO_SEPARATION_VEL_POS 1
 void IteraSolarSystem(BOOL ForceWasCalculated, TRAOBJ * SlS)
 {
     int i;
@@ -3695,10 +3862,16 @@ void IteraSolarSystem(BOOL ForceWasCalculated, TRAOBJ * SlS)
             SlS->_position_[i].ZeroIntegral();
             SlS->_velosity_[i].ZeroIntegral();
 
-            SlS->_position_[i].X0 = SlS->X[i]/ SlS->TimeSl_2 + SlS->VX[i]/SlS->TimeSl;
-            SlS->_position_[i].Y0 = SlS->Y[i]/ SlS->TimeSl_2 + SlS->VY[i]/SlS->TimeSl;
-            SlS->_position_[i].Z0 = SlS->Z[i]/ SlS->TimeSl_2 + SlS->VZ[i]/SlS->TimeSl;
+#ifdef NO_SEPARATION_VEL_POS
+            SlS->_position_[i].X0 = SlS->X[i]/ SlS->TimeSl_2+ SlS->VX[i]/SlS->TimeSl;
+            SlS->_position_[i].Y0 = SlS->Y[i]/ SlS->TimeSl_2+ SlS->VY[i]/SlS->TimeSl;
+            SlS->_position_[i].Z0 = SlS->Z[i]/ SlS->TimeSl_2+ SlS->VZ[i]/SlS->TimeSl;
 
+#else
+            SlS->_position_[i].X0 = SlS->X[i]/ SlS->TimeSl_2; SlS->_position_[i].VX0 = SlS->VX[i]/SlS->TimeSl;
+            SlS->_position_[i].Y0 = SlS->Y[i]/ SlS->TimeSl_2; SlS->_position_[i].VY0 = SlS->VY[i]/SlS->TimeSl;
+            SlS->_position_[i].Z0 = SlS->Z[i]/ SlS->TimeSl_2; SlS->_position_[i].VZ0 = SlS->VZ[i]/SlS->TimeSl;
+#endif
 
             SlS->_velosity_[i].X0 = SlS->VX[i]/SlS->TimeSl;
             SlS->_velosity_[i].Y0 = SlS->VY[i]/SlS->TimeSl;
@@ -3707,9 +3880,10 @@ void IteraSolarSystem(BOOL ForceWasCalculated, TRAOBJ * SlS)
     }
     for (i = 0; i < SlS->Elem; i++)
     {
-        SlS->_position_[i].Add((SlS->_velosity_[i].x()) + SlS->FX[i],
-                                    (SlS->_velosity_[i].y()) + SlS->FY[i],
-                                    (SlS->_velosity_[i].z()) + SlS->FZ[i]);
+#ifdef NO_SEPARATION_VEL_POS
+        SlS->_position_[i].Add((SlS->_velosity_[i].x())+ SlS->FX[i],
+                                    (SlS->_velosity_[i].y())+ SlS->FY[i],
+                                    (SlS->_velosity_[i].z())+ SlS->FZ[i]);
 
         SlS->_velosity_[i].Add(SlS->FX[i],
                                    SlS->FY[i],
@@ -3717,6 +3891,19 @@ void IteraSolarSystem(BOOL ForceWasCalculated, TRAOBJ * SlS)
         SlS->_position_[i].adjustAll();
         SlS->_velosity_[i].adjustall();
         SlS->_position_[i].getIntegral(SlS->X[i], SlS->Y[i], SlS->Z[i]);
+
+#else
+        SlS->_position_[i].Addpos((SlS->_velosity_[i].x()), SlS->FX[i],
+                                    (SlS->_velosity_[i].y()), SlS->FY[i],
+                                    (SlS->_velosity_[i].z()), SlS->FZ[i]);
+
+        SlS->_velosity_[i].Add(SlS->FX[i],
+                                   SlS->FY[i],
+                                   SlS->FZ[i]);
+        SlS->_position_[i].adjustAllpos();
+        SlS->_velosity_[i].adjustall();
+        SlS->_position_[i].getIntegralpos(SlS->X[i], SlS->Y[i], SlS->Z[i]);
+#endif
         SlS->X[i] = (SlS->X[i]+ SlS->_velosity_[i].X0 *SlS->_velosity_[i].nX0)* SlS->TimeSl_2;   
         SlS->Y[i] = (SlS->Y[i]+ SlS->_velosity_[i].Y0 *SlS->_velosity_[i].nX0)* SlS->TimeSl_2;   
         SlS->Z[i] = (SlS->Z[i]+ SlS->_velosity_[i].Z0 *SlS->_velosity_[i].nX0)* SlS->TimeSl_2;
@@ -3769,11 +3956,16 @@ void IteraSat(int TimeDirection, TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfC
            
             Sat->_position_[i].ZeroIntegral();
             Sat->_velosity_[i].ZeroIntegral();
-
+#ifdef NO_SEPARATION_VEL_POS
             Sat->_position_[i].X0 = Sat->X[i]/ SlS->TimeSl_2 + Sat->VX[i]/SlS->TimeSl;
             Sat->_position_[i].Y0 = Sat->Y[i]/ SlS->TimeSl_2 + Sat->VY[i]/SlS->TimeSl;
             Sat->_position_[i].Z0 = Sat->Z[i]/ SlS->TimeSl_2 + Sat->VZ[i]/SlS->TimeSl;
 
+#else
+            Sat->_position_[i].X0 = Sat->X[i]/ SlS->TimeSl_2; Sat->_position_[i].VX0 = Sat->VX[i]/SlS->TimeSl;
+            Sat->_position_[i].Y0 = Sat->Y[i]/ SlS->TimeSl_2; Sat->_position_[i].VY0 = Sat->VY[i]/SlS->TimeSl;
+            Sat->_position_[i].Z0 = Sat->Z[i]/ SlS->TimeSl_2; Sat->_position_[i].VZ0 = Sat->VZ[i]/SlS->TimeSl;
+#endif
 
             Sat->_velosity_[i].X0 = Sat->VX[i]/SlS->TimeSl;
             Sat->_velosity_[i].Y0 = Sat->VY[i]/SlS->TimeSl;
@@ -3783,15 +3975,27 @@ void IteraSat(int TimeDirection, TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfC
     }
     for (i = 0; i < Sat->Elem; i++)
     {
-        Sat->_position_[i].Add((Sat->_velosity_[i].x()) + Sat->FX[i],
-                                (Sat->_velosity_[i].y()) + Sat->FY[i],
-                                (Sat->_velosity_[i].z()) + Sat->FZ[i]);
+#ifdef NO_SEPARATION_VEL_POS
+        Sat->_position_[i].Add((Sat->_velosity_[i].x())+ Sat->FX[i],
+                                (Sat->_velosity_[i].y())+ Sat->FY[i],
+                                (Sat->_velosity_[i].z())+ Sat->FZ[i]);
         Sat->_velosity_[i].Add(Sat->FX[i],
                                    Sat->FY[i],
                                    Sat->FZ[i]);
         Sat->_position_[i].adjustAll();
         Sat->_velosity_[i].adjustall();
         Sat->_position_[i].getIntegral(Sat->X[i], Sat->Y[i], Sat->Z[i]);
+#else
+        Sat->_position_[i].Addpos((Sat->_velosity_[i].x()), Sat->FX[i],
+                                (Sat->_velosity_[i].y()), Sat->FY[i],
+                                (Sat->_velosity_[i].z()), Sat->FZ[i]);
+        Sat->_velosity_[i].Add(Sat->FX[i],
+                                   Sat->FY[i],
+                                   Sat->FZ[i]);
+        Sat->_position_[i].adjustAllpos();
+        Sat->_velosity_[i].adjustall();
+        Sat->_position_[i].getIntegralpos(Sat->X[i], Sat->Y[i], Sat->Z[i]);
+#endif
         Sat->X[i] = (Sat->X[i]+ Sat->_velosity_[i].X0 *Sat->_velosity_[i].nX0)* SlS->TimeSl_2;   
         Sat->Y[i] = (Sat->Y[i]+ Sat->_velosity_[i].Y0 *Sat->_velosity_[i].nX0)* SlS->TimeSl_2;   
         Sat->Z[i] = (Sat->Z[i]+ Sat->_velosity_[i].Z0 *Sat->_velosity_[i].nX0)* SlS->TimeSl_2;
@@ -6019,6 +6223,7 @@ M_8:
 	//RETURN
 	//END
 }
+#define _USE_ORIGINAL 1
 // original and less acurate
 void SGP(long double TS, long double XNDT2O,long double XNDD6O,/*double IEXP,*/long double nuBSTAR,/*double IBEXP,*/long double XINCL, long double XNODEO,long double EO, long double OMEGAO, long double XMO, long double XNO, 
 	long double &X,long double &Y,long double &Z,long double &XDOT,long double &YDOT,long double &ZDOT)
@@ -8002,7 +8207,12 @@ void ParamProb(char *szString)
             }
             Sat.CountNx = 0; Sat.CountNy = 0; Sat.CountNz = 0;
             Sat.RunOne = TRUE;
+
+#ifndef _NO_GM_CORRECTION
             ModelCoef = SolarSystem.GM[EARTH]/ GM_MODEL;
+#else
+            ModelCoef = 1;
+#endif
             
 #ifdef USE_MODEL_LOAD
             Sat.iLeg = EarthModelCoefs;
@@ -8154,7 +8364,7 @@ DONE_WITH_LINE:
                      if (n==10 && k == 0)
                         C_S_nk[iCounter_nk_lm_Numbers][0] =0.121439275882e-13;
                     */
-                     if (iCounter_nk_lm_Numbers++ >= TOTAL_COEF*TOTAL_COEF/2)
+                     if (iCounter_nk_lm_Numbers++ >= TOTAL_COEF*TOTAL_COEF)
                      {
                          printf("\n something wrong with coef");
                          exit(555);
@@ -10492,7 +10702,8 @@ int main(int argc, char * argv[])
 
     //InitTraMap(&CurTraMap);
     Sat.Elem = 0;  // zero asatelites at the begining
-    Initialize_Ephemeris("bin430.bin");
+    Initialize_Ephemeris(BINARY_EP_NAME);
+    printf("\nInitialize_Ephemeris=%s",BINARY_EP_NAME);
     if (argc == 2)
     {
         if (argv[1][1] == '?')

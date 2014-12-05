@@ -47,4 +47,4 @@
 
     void Interpolate_State( long double Time , int Target , stateType *Planet );
 
-double Find_DataInHeader( char    *szTarget);
+long double Find_DataInHeader( char    *szTarget);

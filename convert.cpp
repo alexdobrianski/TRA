@@ -149,7 +149,7 @@ int _tmain(int argc, _TCHAR* argv[])
          status = Read_File_Line(inFile1,FALSE,lineBuffer);
          sscanf(lineBuffer," %d",&M);
          count = 0;
-         while ( count < (M-1) ) 
+         while ( count < M ) 
                {
                  status = Read_File_Line(inFile1,FALSE,lineBuffer);
 
@@ -179,7 +179,7 @@ int _tmain(int argc, _TCHAR* argv[])
          if ( M == NC )                               /* of Constants"; it is */
             {                                         /* no longer a "dummy". */
               count = 0;
-              while ( count < (NC-1) ) 
+              while ( count < NC ) 
                     {
                       status = Read_File_Line(inFile1,TRUE,lineBuffer);
                       sscanf(lineBuffer," %Le %Le %Le",&D1,&D2,&D3);
