@@ -491,7 +491,7 @@ int iItearationsPerSec; // that is "int" == IterPerSec
 long double StepsValInDay; // step's value in day measurement
 //long iCurSec; // current second from begining of the simulation
 //int iCurPortionOfTheSecond;
-//#define SIMPSON_INTEGRAL 1 
+#define SIMPSON_INTEGRAL 1 
 #define ADJUST(__INIT,__FORMULA,__ADDON) ldTemp=(__INIT+(__FORMULA))+__ADDON;ldTemp2=ldTemp-(__INIT +(__FORMULA));__INIT=ldTemp;__ADDON-=ldTemp2;
 typedef struct Long_Double_Intergal_Var
 {
@@ -1231,6 +1231,7 @@ typedef struct TraObj
     long double DeltaVX[PLANET_COUNT][PLANET_COUNT];
     long double DeltaVY[PLANET_COUNT][PLANET_COUNT];
     long double DeltaVZ[PLANET_COUNT][PLANET_COUNT];
+
 #if 1
     long double Xk[MAX_COEF_J];
     long double Yk[MAX_COEF_J];
@@ -1617,7 +1618,9 @@ typedef struct TraObj
 #if 1
 
 #if 1
-        void FastSummXYZ( long double ValX, long double ValY, long double ValZ, long double ValR, long double &X, long double &Y, long double &Z, int iCurSat)
+        void FastSummXYZ( long double ValX, long double ValY, long double ValZ, long double ValR, long double &X, long double &Y, long double &Z, 
+            long double &Xadd, long double &Yadd, long double &Zadd,
+            int iCurSat)
     {
         int n,k;
         long double tempX;
@@ -1642,20 +1645,19 @@ typedef struct TraObj
         long double p_nk_x_K_x_XSumD = 0.0;
         long double p_nk_x_K_x_YSumD = 0.0;
 
-
-        gcrs_2_trs(ValX, ValY, ValZ);
         tempX = ValX; tempY = ValY; tempZ = ValZ;
-       // now earth in Terra Ref System
-       // it is possible to calculate H to get air drag
-       if (--iAtm[iCurSat] == 0)
-       {
-           long double dlLAT, dlLON;
-           iAtm[iCurSat] = iItearationsPerSec;//479; // onc per 1000 iteration == 1 per sec
-           h[iCurSat] = H =GetH(tempX, tempY, tempZ, 6378245.000, 6356863.019,dlLAT,dlLON);
-           ro[iCurSat] = Ro=GetDens(); // 15C
-       }
+        gcrs_2_trs(tempX, tempY, tempZ);
+        // now earth in Terra Ref System
+        // it is possible to calculate H to get air drag
+        if (--iAtm[iCurSat] == 0)
+        {
+            long double dlLAT, dlLON;
+            iAtm[iCurSat] = iItearationsPerSec;//479; // onc per 1000 iteration == 1 per sec
+            h[iCurSat] = H =GetH(tempX, tempY, tempZ, 6378245.000, 6356863.019,dlLAT,dlLON);
+            ro[iCurSat] = Ro=GetDens(); // 15C
+        }
 
-       sinTetta =ValZ/ValR;
+        sinTetta =tempZ/ValR;
 
         XdivR =   tempX/ValR;
         YdivR =   tempY/ValR;
@@ -2009,21 +2011,50 @@ typedef struct TraObj
         //        sumj == p_nk_x_K_x_XSumD   sumk == p_nk_x_K_x_YSumD
         //    -(lambda * XdivR - sumj)  
         // =>   -sumgam   * XdivR          -sumh        * XdivR *  ep              + sumj 
-        X += (p_nk_x_Qnk_ * XdivR    + ptilda_nk_x_Qnk_ * XdivR * SinTetta         + p_nk_x_K_x_XSumD ); 
+#if 0
+        Xadd = (p_nk_x_Qnk_ * XdivR    + ptilda_nk_x_Qnk_ * XdivR * SinTetta         + p_nk_x_K_x_XSumD ); 
+
         //    -(lamda * YdivR - sumk)
         //      -sumgam   * YdivR          -sumh        * YdivR *  ep              + sunk
-        Y += (p_nk_x_Qnk_ * YdivR    + ptilda_nk_x_Qnk_ * YdivR * SinTetta         + p_nk_x_K_x_YSumD );
+        Yadd = (p_nk_x_Qnk_ * YdivR    + ptilda_nk_x_Qnk_ * YdivR * SinTetta         + p_nk_x_K_x_YSumD );
         //    lamda * SinTetta - sumh
         //     - simgam   * sintetta        -sumh       * SinTetta * SinTetta      + sumh
-        Z += (p_nk_x_Qnk_ * SinTetta - ptilda_nk_x_Qnk_ * (1- SinTetta * SinTetta)                    );
+        Zadd = (p_nk_x_Qnk_ * SinTetta - ptilda_nk_x_Qnk_ * (1- SinTetta * SinTetta)                    );
 
         //X += _x20*R0divR[2];  Y += _y20*R0divR[2];  Z += _z20*R0divR[2];
 
-        X+= (-(2+1) *XdivR    * P_20_x_Q20_  - Ptilda_20_x_Qnk_ * XdivR * SinTetta)*R0divR[2] ;
-        Y+= (-(2+1) *YdivR    * P_20_x_Q20_  - Ptilda_20_x_Qnk_ * YdivR * SinTetta)*R0divR[2]     ;
-        Z+= (-(2+1) *SinTetta * P_20_x_Q20_  + Ptilda_20_x_Qnk_ * (1-SinTetta*SinTetta))*R0divR[2];
+        Xadd+= (-(2+1) *XdivR    * P_20_x_Q20_  - Ptilda_20_x_Qnk_ * XdivR * SinTetta)*R0divR[2] ;
+        Yadd+= (-(2+1) *YdivR    * P_20_x_Q20_  - Ptilda_20_x_Qnk_ * YdivR * SinTetta)*R0divR[2]     ;
+        Zadd+= (-(2+1) *SinTetta * P_20_x_Q20_  + Ptilda_20_x_Qnk_ * (1-SinTetta*SinTetta))*R0divR[2];
+        X =1; Y= 1; Z =1;
 
-        trs_2_gcrs(X, Y, Z);
+        //trs_2_gcrs(X, Y, Z);
+#else
+        Xadd = (    + p_nk_x_K_x_XSumD ); 
+        Yadd = (    + p_nk_x_K_x_YSumD );
+        Zadd = (    - ptilda_nk_x_Qnk_ );
+        //Xadd+= (  - Ptilda_20_x_Qnk_ * XdivR * SinTetta)*R0divR[2] ;
+        //Yadd+= (  - Ptilda_20_x_Qnk_ * YdivR * SinTetta)*R0divR[2]     ;
+        Zadd+= (  + Ptilda_20_x_Qnk_ * (1.0))*R0divR[2];
+
+        //X =XdivR; 
+        //Y= YdivR; 
+        //Z =SinTetta;
+
+        //trs_2_gcrs(X, Y, Z); // that will be original X0divR Y0divR Z0divR
+
+        //X =1.1*XdivR;        // prove :
+        //Y= 1.1*YdivR; 
+        //Z =1.1*SinTetta;
+
+        //trs_2_gcrs(X, Y, Z);
+        // such way reduce error
+
+        X = (p_nk_x_Qnk_ + ptilda_nk_x_Qnk_ * SinTetta ) + (-(2+1) * P_20_x_Q20_ - Ptilda_20_x_Qnk_ * SinTetta)*R0divR[2] ; 
+        X=1-X; 
+#endif
+        
+        trs_2_gcrs(Xadd, Yadd, Zadd);
     };
 #else
     void FastSummXYZ( long double ValX, long double ValY, long double ValZ, long double ValR, long double &X, long double &Y, long double &Z, int iCurSat)
@@ -3552,6 +3583,7 @@ void CalcSatForces(TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfCalc)
     int j;
 //    double Summ;
 //    double Temp;
+    long double DX1,DY1,DZ1;
     long double DX,DY,DZ;
 
 
@@ -3594,17 +3626,21 @@ void CalcSatForces(TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfCalc)
                     long double ValX0 = (Sat->X[i] - SlS->X[j]);
                     long double ValY0 = (Sat->Y[i] - SlS->Y[j]);
                     long double ValZ0 = (Sat->Z[i] - SlS->Z[j]);
+                    long double oXdivR = ValX0 /tD_;
+                    long double oYdivR = ValY0 /tD_;
+                    long double oZdivR = ValZ0 /tD_;
 
-                    Sat->FastSummXYZ(ValX0,ValY0,ValZ0,Sat->Distance[i][j],DX,DY,DZ, i);
+                    Sat->FastSummXYZ(ValX0,ValY0,ValZ0,Sat->Distance[i][j],DX1,DY1,DZ1, DX,DY,DZ,i);
 #define _NO_GM_CORRECTION 1
 #ifndef _NO_GM_CORRECTION
                     Sat->DeltaVX[i][j] =DX/ModelCoef;
                     Sat->DeltaVY[i][j] =DY/ModelCoef;
                     Sat->DeltaVZ[i][j] =DZ/ModelCoef;
 #else
-                    Sat->DeltaVX[i][j] =DX;
-                    Sat->DeltaVY[i][j] =DY;
-                    Sat->DeltaVZ[i][j] =DZ;
+                    Sat->DeltaVX[i][j] =DX1*oXdivR - DX;
+                    Sat->DeltaVY[i][j] =DX1*oYdivR - DY;
+                    Sat->DeltaVZ[i][j] =DX1*oZdivR - DZ;
+
 #endif
                 }
             }
@@ -3792,9 +3828,14 @@ void CalcSatForces(TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfCalc)
             //continue;
             if (j == Sat->LegBody)
             {
-                Sat->FX[i] += -( Sat->X[i] - SlS->X[j])  * Sat->ForceDD[i][j]/Sat->Distance[i][j] + Sat->DeltaVX[i][j]*Sat->ForceDD[i][j];
-                Sat->FY[i] += -( Sat->Y[i] - SlS->Y[j])  * Sat->ForceDD[i][j]/Sat->Distance[i][j] + Sat->DeltaVY[i][j]*Sat->ForceDD[i][j];
-                Sat->FZ[i] += -( Sat->Z[i] - SlS->Z[j])  * Sat->ForceDD[i][j]/Sat->Distance[i][j] + Sat->DeltaVZ[i][j]*Sat->ForceDD[i][j];
+                //Sat->FX[i] += -( Sat->X[i] - SlS->X[j])  * Sat->ForceDD[i][j]/Sat->Distance[i][j] + Sat->DeltaVX[i][j]*Sat->ForceDD[i][j];
+                //Sat->FY[i] += -( Sat->Y[i] - SlS->Y[j])  * Sat->ForceDD[i][j]/Sat->Distance[i][j] + Sat->DeltaVY[i][j]*Sat->ForceDD[i][j];
+                //Sat->FZ[i] += -( Sat->Z[i] - SlS->Z[j])  * Sat->ForceDD[i][j]/Sat->Distance[i][j] + Sat->DeltaVZ[i][j]*Sat->ForceDD[i][j];
+
+                Sat->FX[i] += -Sat->DeltaVX[i][j]*Sat->ForceDD[i][j];
+                Sat->FY[i] += -Sat->DeltaVY[i][j]*Sat->ForceDD[i][j];
+                Sat->FZ[i] += -Sat->DeltaVZ[i][j]*Sat->ForceDD[i][j];
+
 #if 1
                 if (Sat->ProbSquare[i])
                 {
@@ -7067,6 +7108,7 @@ void ParamCommon(char *szString)
              TimeSl = 1.0 / IterPerSec;
              TimeSl_2 = 1.0 / ((long double)IterPerSec*(long double)IterPerSec);
              StepsValInDay = (1.0/((long double)IterPerSec))/24.0/60.0/60.0;
+             printf("\n IterPerSec =%d ", (int)IterPerSec);
         }
         XML_READ(StartLandingIteraPerSec);
         IF_XML_READ(TotalDays) 
