@@ -2174,7 +2174,7 @@ typedef struct TraObj
             X=1-X;  Y=1-Y;   Z=1-Z;
             Xadd = -Xadd; 
             Yadd = -Yadd;
-            Zadd = +Zadd;
+            Zadd = -Zadd;
             trs_2_gcrs(Xadd, Yadd, Zadd);
         }
 #endif
@@ -3762,9 +3762,9 @@ void CalcSatForces(TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfCalc)
                     Sat->DeltaVY[i][j] =DY/ModelCoef;
                     Sat->DeltaVZ[i][j] =DZ/ModelCoef;
 #else
-                    Sat->DeltaVX[i][j] =DX1*oXdivR - DX;
-                    Sat->DeltaVY[i][j] =DY1*oYdivR - DY;
-                    Sat->DeltaVZ[i][j] =DZ1*oZdivR - DZ;
+                    Sat->DeltaVX[i][j] =DX1*oXdivR + DX;
+                    Sat->DeltaVY[i][j] =DY1*oYdivR + DY;
+                    Sat->DeltaVZ[i][j] =DZ1*oZdivR + DZ;
                     //printf("\n %04d %20.18f %20.18f %20.18f %20.18f %20.18f %20.18f %20.18f", printcount++, DX1, DX1*oXdivR, DX1*oYdivR, DX1*oZdivR, DX, DY, DZ); 
 #endif
                 }
