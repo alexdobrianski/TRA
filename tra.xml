@@ -278,13 +278,13 @@
     <TRA:setting name="ProbM" value="67.5" />
     <TRA:setting name="ProbKeplerLine1" value="0 ISS (ZARYA)" />
     <TRA:setting name="ProbSquare" value="1885" />
-    <TRA:setting name="ProbDX" value="-479.048294067383" />
-    <TRA:setting name="ProbDY" value="106.834991455078" />
-    <TRA:setting name="ProbDZ" value="94.367050170898" />
+    <TRA:setting name="@ProbDX" value="-479.048294067383" />
+    <TRA:setting name="@ProbDY" value="106.834991455078" />
+    <TRA:setting name="@ProbDZ" value="94.367050170898" />
 
-    <TRA:setting name="ProbDVX" value="0.000240058927" />
-    <TRA:setting name="ProbDVY" value="-0.000153170095" />
-    <TRA:setting name="ProbDVZ" value="-0.000134213009" />
+    <TRA:setting name="@ProbDVX" value="0.000240058927" />
+    <TRA:setting name="@ProbDVY" value="-0.000153170095" />
+    <TRA:setting name="@ProbDVZ" value="-0.000134213009" />
 
     <TRA:setting name="@ProbDX" value="-196.971282030832" />
     <TRA:setting name="@ProbDY" value="74.97796182233" />
@@ -447,14 +447,15 @@
     <TRA:setting name="R0_MODEL" value="6378137.00" />
 
 <!-- Cnk and Snk file data n max value do be used from the file  -->
-    <TRA:setting name="EarthModelCoefs" value="16" />
+    <TRA:setting name="EarthModelCoefs" value="36" />
 
     <TRA:setting name="IterPerSec9" value="127" />
-    <TRA:setting name="IterPerSec" value="479" />
-    <TRA:setting name="IterPerSec1" value="1013" />
-    <TRA:setting name="IterPerSec3" value="1523" />
-    <TRA:setting name="IterPerSec3" value="3167" />
+    <TRA:setting name="IterPerSec0" value="479" />
+    <TRA:setting name="IterPerSec2" value="1013" />
+    <TRA:setting name="IterPerSec" value="1523" />
+    <TRA:setting name="IterPerSec5" value="3167" />
     <TRA:setting name="IterPerSec5" value="5507" />
+    <TRA:setting name="IterPerSec11" value="11014" />
 
     <TRA:setting name="StartLandingIteraPerSec" value="772050" />
 <!-- next vaue actualy just a reference it will be used in-->
