@@ -276,7 +276,79 @@ long double C_S_nk[TOTAL_COEF*TOTAL_COEF][2];
 //#define MAX_FLUX_TABLE 365*2
 //int iStarting1007JD;
 //long double FLUX107[MAX_FLUX_TABLE];
-
+long double AlternativePoints[360 ][3] ={
+-0.0100,0.0100,92,
+4.7500,5.2500,49,
+9.5000,10.5000,43,
+14.0000,16.0000,42,
+19.5000,20.5000,39,
+24.5000,25.5000,39,
+29.0000,31.0000,39,
+34.5000,35.5000,38,
+39.0000,41.0000,38,
+44.0000,46.0000,38,
+49.0000,51.0000,38,
+54.0000,56.0000,41,
+59.5000,60.5000,37,
+64.5000,65.5000,37,
+69.5000,70.5000,37,
+74.0000,76.0000,37,
+79.0000,81.0000,37,
+84.0000,86.0000,37,
+89.0000,91.0000,37,
+94.0000,96.0000,37,
+99.0000,101.0000,37,
+104.0000,106.0000,37,
+109.5000,110.5000,37,
+114.5000,115.5000,37,
+119.5000,120.5000,37,
+124.0000,126.0000,41,
+129.5000,130.5000,38,
+134.0000,136.0000,42,
+139.5000,140.5000,38,
+144.5000,145.5000,38,
+149.0000,151.0000,39,
+154.5000,155.5000,39,
+159.5000,160.5000,39,
+164.0000,166.0000,42,
+169.5000,170.5000,43,
+174.7500,175.2500,49,
+179.9750,180.0250,92,
+184.7500,185.2500,49,
+189.5000,190.5000,43,
+194.0000,196.0000,42,
+199.5000,200.5000,39,
+204.5000,205.5000,39,
+209.0000,211.0000,39,
+214.5000,215.5000,38,
+219.0000,221.0000,38,
+224.0000,226.0000,38,
+229.0000,231.0000,38,
+234.0000,236.0000,41,
+239.5000,240.5000,37,
+244.5000,245.5000,37,
+249.5000,250.5000,37,
+254.0000,256.0000,37,
+259.0000,261.0000,37,
+264.0000,266.0000,37,
+269.0000,271.0000,37,
+274.0000,276.0000,37,
+279.0000,281.0000,37,
+284.0000,286.0000,37,
+289.5000,290.5000,37,
+294.5000,295.5000,37,
+299.5000,300.5000,37,
+304.0000,306.0000,41,
+309.0000,311.0000,38,
+314.0000,316.0000,38,
+319.0000,321.0000,38,
+324.5000,325.5000,38,
+329.0000,331.0000,39,
+334.5000,335.5000,39,
+339.5000,340.5000,39,
+344.0000,346.0000,42,
+349.7500,350.2500,42,
+354.9750,355.0250,92};
 
 
 long double ModelCoef;// = SlS->GM[j]/ GM_MODEL;
@@ -491,7 +563,7 @@ int iItearationsPerSec; // that is "int" == IterPerSec
 long double StepsValInDay; // step's value in day measurement
 //long iCurSec; // current second from begining of the simulation
 //int iCurPortionOfTheSecond;
-#define SIMPSON_INTEGRAL 1 
+//#define SIMPSON_INTEGRAL 1 
 #define ADJUST(__INIT,__FORMULA,__ADDON) ldTemp=(__INIT+(__FORMULA))+__ADDON;ldTemp2=ldTemp-(__INIT +(__FORMULA));__INIT=ldTemp;__ADDON-=ldTemp2;
 typedef struct Long_Double_Intergal_Var
 {
@@ -1281,6 +1353,15 @@ typedef struct TraObj
         long double tempX;
         long double tempY;
         long double tempZ;
+#define TEST_STATIC_EARTH 1
+#ifdef TEST_STATIC_EARTH
+        precEps =0;
+        precTet =0;
+        precZ =0;
+        nutEpsilon =0;
+        nutDFeta = 0;
+        Lambda = 0;
+#endif
         // matrix Deps
             cos_precEps= cos(precEps); sin_precEps= sin(precEps);
             //| cos(eps)   sin(eps) 0 |
@@ -2027,34 +2108,78 @@ typedef struct TraObj
         Yadd+= (-(2+1) *YdivR    * P_20_x_Q20_  - Ptilda_20_x_Qnk_ * YdivR * SinTetta)*R0divR[2]     ;
         Zadd+= (-(2+1) *SinTetta * P_20_x_Q20_  + Ptilda_20_x_Qnk_ * (1-SinTetta*SinTetta))*R0divR[2];
         X =1; Y= 1; Z =1;
-
+        trs_2_gcrs(Xadd, Yadd, Zadd);
         //trs_2_gcrs(X, Y, Z);
 #else
-        Xadd = (    + p_nk_x_K_x_XSumD ); 
-        Yadd = (    + p_nk_x_K_x_YSumD );
-        Zadd = (    - ptilda_nk_x_Qnk_ );
-        //Xadd+= (  - Ptilda_20_x_Qnk_ * XdivR * SinTetta)*R0divR[2] ;
-        //Yadd+= (  - Ptilda_20_x_Qnk_ * YdivR * SinTetta)*R0divR[2]     ;
-        Zadd+= (  + Ptilda_20_x_Qnk_ * (1.0))*R0divR[2];
+        /*
+        if ((XdivR > .01) &&  (YdivR > .01) && (SinTetta > .01))
+        {
+            // Xadd = (p_nk_x_Qnk_ * XdivR    + ptilda_nk_x_Qnk_ * XdivR * SinTetta         + p_nk_x_K_x_XSumD );
+            // Yadd = (p_nk_x_Qnk_ * YdivR    + ptilda_nk_x_Qnk_ * YdivR * SinTetta         + p_nk_x_K_x_YSumD );
+            // Zadd = (p_nk_x_Qnk_ * SinTetta - ptilda_nk_x_Qnk_ * (1- SinTetta * SinTetta)                    );
+            // Zadd = (p_nk_x_Qnk_ * SinTetta + ptilda_nk_x_Qnk_ * SinTetta * SinTetta                         - ptilda_nk_x_Qnk_ );
+            // xadd = XdivR *(p_nk_x_Qnk_ + ptilda_nk_x_Qnk_ * SinTetta      + p_nk_x_K_x_XSumD/XdivR); 
+            // Yadd = YdivR *(p_nk_x_Qnk_ + ptilda_nk_x_Qnk_ * SinTetta      + p_nk_x_K_x_YSumD/YdivR );
+            // Zadd = SinTetta *(p_nk_x_Qnk_  + ptilda_nk_x_Qnk_ * SinTetta  - ptilda_nk_x_Qnk_/SinTetta );
 
-        //X =XdivR; 
-        //Y= YdivR; 
-        //Z =SinTetta;
+            // Xadd+= (-(2+1) *XdivR    * P_20_x_Q20_  - Ptilda_20_x_Qnk_ * XdivR * SinTetta)*R0divR[2] ;
+            // Yadd+= (-(2+1) *YdivR    * P_20_x_Q20_  - Ptilda_20_x_Qnk_ * YdivR * SinTetta)*R0divR[2]     ;
+            // Zadd+= (-(2+1) *SinTetta * P_20_x_Q20_  + Ptilda_20_x_Qnk_ * (1-SinTetta*SinTetta))*R0divR[2];
+            // Xadd+= XdivR  * (-(2+1) * P_20_x_Q20_  - Ptilda_20_x_Qnk_ * SinTetta)*R0divR[2] ;
+            // Yadd+= YdivR  * (-(2+1) * P_20_x_Q20_  - Ptilda_20_x_Qnk_ * SinTetta)*R0divR[2] ;
+            // Zadd+= SinTetta*(-(2+1) * P_20_x_Q20_  - Ptilda_20_x_Qnk_ * SinTetta)  + Ptilda_20_x_Qnk_/SinTetta)*R0divR[2];
 
-        //trs_2_gcrs(X, Y, Z); // that will be original X0divR Y0divR Z0divR
 
-        //X =1.1*XdivR;        // prove :
-        //Y= 1.1*YdivR; 
-        //Z =1.1*SinTetta;
+            Xadd = 0; Yadd = 0; Zadd = 0;
+            Xadd += (    + p_nk_x_K_x_XSumD ); 
+            Yadd += (    + p_nk_x_K_x_YSumD );
+            Zadd += (    - ptilda_nk_x_Qnk_ );
+ 
+            Zadd+= (  + Ptilda_20_x_Qnk_ * (1.0))*R0divR[2];
+            X = (p_nk_x_Qnk_ + ptilda_nk_x_Qnk_ * SinTetta ) + (-(2+1) * P_20_x_Q20_ - Ptilda_20_x_Qnk_ * SinTetta)*R0divR[2] ;
+            Y=X; Z=X;
+            X+=(    + p_nk_x_K_x_XSumD )/XdivR;
+            Y+=(    + p_nk_x_K_x_YSumD )/YdivR;
+            Z+=(    - ptilda_nk_x_Qnk_ )/SinTetta;
+            Z+=(  + Ptilda_20_x_Qnk_ * (1.0))*R0divR[2]/SinTetta;
+            X=1-X;    Y=1-Y;    Z=1-Z;
+            trs_2_gcrs(Xadd, Yadd, Zadd);
+            Xadd = 0; Yadd = 0; Zadd = 0;
 
-        //trs_2_gcrs(X, Y, Z);
-        // such way reduce error
+        }
+        else*/
+        {
+            Xadd = (    + p_nk_x_K_x_XSumD ); 
+            Yadd = (    + p_nk_x_K_x_YSumD );
+            Zadd = (    - ptilda_nk_x_Qnk_ );
+            //Xadd+= (  - Ptilda_20_x_Qnk_ * XdivR * SinTetta)*R0divR[2] ;
+            //Yadd+= (  - Ptilda_20_x_Qnk_ * YdivR * SinTetta)*R0divR[2]     ;
+            Zadd+= (  + Ptilda_20_x_Qnk_ * (1.0))*R0divR[2];
 
-        X = (p_nk_x_Qnk_ + ptilda_nk_x_Qnk_ * SinTetta ) + (-(2+1) * P_20_x_Q20_ - Ptilda_20_x_Qnk_ * SinTetta)*R0divR[2] ; 
-        X=1-X; 
+            //X =XdivR; 
+            //Y= YdivR; 
+            //Z =SinTetta;
+
+            //trs_2_gcrs(X, Y, Z); // that will be original X0divR Y0divR Z0divR
+
+            //X =1.1*XdivR;        // prove :
+            //Y= 1.1*YdivR; 
+            //Z =1.1*SinTetta;
+
+            //trs_2_gcrs(X, Y, Z);
+            // such way reduce error
+
+            X = (p_nk_x_Qnk_ + ptilda_nk_x_Qnk_ * SinTetta ) + (-(2+1) * P_20_x_Q20_ - Ptilda_20_x_Qnk_ * SinTetta)*R0divR[2] ; 
+            Y=X; Z=X;
+            X=1-X;  Y=1-Y;   Z=1-Z;
+            Xadd = -Xadd; 
+            Yadd = -Yadd;
+            Zadd = +Zadd;
+            trs_2_gcrs(Xadd, Yadd, Zadd);
+        }
 #endif
         
-        trs_2_gcrs(Xadd, Yadd, Zadd);
+        
     };
 #else
     void FastSummXYZ( long double ValX, long double ValY, long double ValZ, long double ValR, long double &X, long double &Y, long double &Z, int iCurSat)
@@ -3576,7 +3701,7 @@ void CalcPlanetForces(TRAOBJ * SlS)
 
 }
 long double GreenwichAscensionFromTLEEpoch(long double EP, long double &preEps, long double &preTetta, long double &preZ, long double &nutEpsilon, long double &nutDFeta);
-
+int printcount =0;
 void CalcSatForces(TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfCalc)
 {
     int i;
@@ -3638,9 +3763,9 @@ void CalcSatForces(TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfCalc)
                     Sat->DeltaVZ[i][j] =DZ/ModelCoef;
 #else
                     Sat->DeltaVX[i][j] =DX1*oXdivR - DX;
-                    Sat->DeltaVY[i][j] =DX1*oYdivR - DY;
-                    Sat->DeltaVZ[i][j] =DX1*oZdivR - DZ;
-
+                    Sat->DeltaVY[i][j] =DY1*oYdivR - DY;
+                    Sat->DeltaVZ[i][j] =DZ1*oZdivR - DZ;
+                    //printf("\n %04d %20.18f %20.18f %20.18f %20.18f %20.18f %20.18f %20.18f", printcount++, DX1, DX1*oXdivR, DX1*oYdivR, DX1*oZdivR, DX, DY, DZ); 
 #endif
                 }
             }
