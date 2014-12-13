@@ -1700,7 +1700,15 @@ typedef struct TraObj
 
 #if 1
 
-#if 1
+    void PowerR(void)
+    {
+        long double R0divR_ = R0divR[1]*R0divR[1];
+        for (int n = 2; n <= iLeg; n++)
+        {
+            R0divR[n] = R0divR_;
+            R0divR_*= R0divR[1];
+        }
+    }
     void PartSummXYZ ( long double *Xk, long double *Yk, int iTotalCoeff, long double sinTetta, long double &MainVal, 
         long double &Xadd, long double &Yadd, long double &Zadd, int Nstart, int Nstop, int Kstart, int Kstop)
     {
@@ -1711,6 +1719,10 @@ typedef struct TraObj
         long double Ptilda_m_2[TOTAL_COEF+3];
         long double Ptilda_m_1[TOTAL_COEF+3];
         long double Ptilda_[TOTAL_COEF+3];
+        long double *ptilda_m_2 = &Ptilda_m_2[Kstart];
+        long double *ptilda_m_1 = &Ptilda_m_1[Kstart];
+        long double *ptilda_=&Ptilda_[Kstart];
+        int cpSize = sizeof(long double) *2;
         long double P_20_x_Q20_ = 0;
         long double Ptilda_20_x_Qnk_ = 0;
 
@@ -1724,7 +1736,13 @@ typedef struct TraObj
         long double p_nk_x_K_x_XSumD = 0.0;
         long double p_nk_x_K_x_YSumD = 0.0;
 
-        for (k = Kstart; k < Kstop; k++) 
+        //long double Xk[TOTAL_COEF+3];
+        //long double Yk[TOTAL_COEF+3];
+        //memcpy(Xk, xk, sizeof(Xk));
+        //memcpy(Yk, yk, sizeof(Yk));
+
+
+        for (k = Kstart; k <= Kstop+1; k++) 
         {
             Ptilda_[k] = 0;  Ptilda_m_1[k] =0;  Ptilda_m_2[k]=0;
         }
@@ -1733,11 +1751,13 @@ typedef struct TraObj
         long double P_ = 1;
         Ptilda_[0]= P_;
 
+
+
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         // next iteration by n
         n = 1;
         P_m_2 = P_m_1; P_m_1 = P_;
-        memcpy(Ptilda_m_2,Ptilda_m_1, sizeof(Ptilda_m_2)); memcpy(Ptilda_m_1,Ptilda_, sizeof(Ptilda_m_1));
+        memcpy(ptilda_m_2,ptilda_m_1, cpSize); memcpy(ptilda_m_1,ptilda_, cpSize);
         //P_ = sinTetta;
 
 #ifdef _NORMALIZED_COEF
@@ -1756,18 +1776,32 @@ typedef struct TraObj
         Ptilda_[1] =  1;
 #endif
 
-        long double R0divR_ = R0divR[1]*R0divR[1];
+        long double R0divR_;// = R0divR[1]*R0divR[1];
         int ip = 0;
 
         //int iXkYk = 1;
         int Klast;
+        if (Nstart != 2)
+        {
+            for (n= 2; n< Nstart; n++)
+            {
+                ip +=n+1;
+                //R0divR[n] = R0divR_;
+                //R0divR_*= R0divR[1];
+            }
+        }
         
         for (n = Nstart; n <=Nstop; n++)
         {
+            R0divR_ = R0divR[n];
             if (Kstop >= n)
+            {
                 Klast = n;
+                cpSize += sizeof(long double);
+            }
             else
                 Klast = Kstop;
+            ip+=Kstart;
             P_nk_x_Qnk_ = 0;
             Ptilda_nk_x_Qnk_ = 0;
             P_nk_x_K_x_XSumD = 0;
@@ -1788,7 +1822,7 @@ typedef struct TraObj
                 if (k == Kstart)
                 {
                     P_m_2 = P_m_1; P_m_1 = P_;
-                    memcpy(Ptilda_m_2,Ptilda_m_1, sizeof(Ptilda_m_2)); memcpy(Ptilda_m_1,Ptilda_, sizeof(Ptilda_m_1));
+                    memcpy(ptilda_m_2,ptilda_m_1, cpSize); memcpy(ptilda_m_1,ptilda_, cpSize);
                 }
                 if (k == 0)
                 {
@@ -1901,8 +1935,8 @@ typedef struct TraObj
             ptilda_nk_x_Qnk_ +=Ptilda_nk_x_Qnk_*R0divR_;
             p_nk_x_K_x_XSumD +=P_nk_x_K_x_XSumD*R0divR_;
             p_nk_x_K_x_YSumD +=P_nk_x_K_x_YSumD*R0divR_;
-            R0divR[n] = R0divR_;
-            R0divR_*= R0divR[1];
+            //R0divR[n] = R0divR_;
+            //R0divR_*= R0divR[1];
         }
         Xadd = (    + p_nk_x_K_x_XSumD ); 
         Yadd = (    + p_nk_x_K_x_YSumD );
@@ -1910,247 +1944,6 @@ typedef struct TraObj
         Zadd+= (  + Ptilda_20_x_Qnk_ * (1.0))*R0divR[2];
         MainVal = (p_nk_x_Qnk_ + ptilda_nk_x_Qnk_ * SinTetta ) + (-(2+1) * P_20_x_Q20_ - Ptilda_20_x_Qnk_ * SinTetta)*R0divR[2] ; 
     }
-#else
-    void PartSummXYZ ( long double *Xk, long double *Yk, int iTotalCoeff, long double sinTetta, long double &MainVal, 
-        long double &Xadd, long double &Yadd, long double &Zadd, int Nstart, int Nstop, int Kstart, int Kstop)
-    {
-        int k;
-        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        int n = 0;  //  initial
-
-        long double Ptilda_m_2[TOTAL_COEF+3];
-        long double Ptilda_m_1[TOTAL_COEF+3];
-        long double Ptilda_[TOTAL_COEF+3];
-        long double P_20_x_Q20_;
-        long double Ptilda_20_x_Qnk_;
-
-        long double P_nk_x_Qnk_;//[TOTAL_COEF];
-        long double Ptilda_nk_x_Qnk_;//[TOTAL_COEF];
-        long double P_nk_x_K_x_XSumD;//[TOTAL_COEF];
-        long double P_nk_x_K_x_YSumD;//[TOTAL_COEF];
-
-        long double p_nk_x_Qnk_ = 0.0;
-        long double ptilda_nk_x_Qnk_ = 0.0;
-        long double p_nk_x_K_x_XSumD = 0.0;
-        long double p_nk_x_K_x_YSumD = 0.0;
-
-        for (k = Kstart; k < Kstop; k++) 
-        {
-            Ptilda_[k] = 0;  Ptilda_m_1[k] =0;  Ptilda_m_2[k]=0;
-        }
-        long double P_m_2 = 0;
-        long double P_m_1 = 0;
-        long double P_ = 1;
-        Ptilda_[0]= P_;
-
-        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        // next iteration by n
-        n = 1;
-        P_m_2 = P_m_1; P_m_1 = P_;
-        memcpy(Ptilda_m_2,Ptilda_m_1, sizeof(Ptilda_m_2)); memcpy(Ptilda_m_1,Ptilda_, sizeof(Ptilda_m_1));
-        //P_ = sinTetta;
-
-#ifdef _NORMALIZED_COEF
-        P_ = sinTetta*_SQRT3;
-#else
-        P_ = sinTetta;
-#endif
-        Ptilda_[0]= P_;
-
-        //Ptilda_[1] = n * P_m_1 + sinTetta * Ptilda_m_1[1]; // P'[1]  k == '
-
-        // P = sin => d(P)/d(sin) = 1
-#ifdef _NORMALIZED_COEF
-        Ptilda_[1] =  _SQRT3;
-#else
-        Ptilda_[1] =  1;
-#endif
-
-        long double R0divR_ = R0divR[1]*R0divR[1];
-        int ip = 0;
-
-        //int iXkYk = 1;
-        for (n = Nstart; n <=Nstop; n++)
-        {
-            long double x[3],y[3],z[3];
-#if _DEBUG
-            // sanity check n:
-            if (n != nk_lm_Numbers[ip][0])
-                exit (1);
-#endif
-            //////////////////////////////////////////////////////////////////////////////////////////////////////////////
-            // next iteration by n
-            P_m_2 = P_m_1; P_m_1 = P_;
-            memcpy(Ptilda_m_2,Ptilda_m_1, sizeof(Ptilda_m_2)); memcpy(Ptilda_m_1,Ptilda_, sizeof(Ptilda_m_1));
-#ifdef _NORMALIZED_COEF
-            P_ = _p_n_m_1[n] *sinTetta * P_m_1 - _p_n_m_2[n]*P_m_2;  // P[2]
-#else
-            P_ = ((2.0* n-1.0) *sinTetta * P_m_1 - (n-1)*P_m_2)/n;  // P[2]
-#endif
-            long double P_nk = P_;
-            long double XSumD, YSumD;
-            /////////////////////////////////////////////////////////////////////////////  k =================0
-            k = 0;
-            Ptilda_[k]= P_;
-
-#if _DEBUG
-            // sanity check k:
-            if (k != nk_lm_Numbers[ip][1])
-                exit (1);
-#endif
-
-            long double Ptilda_nk;
-#ifdef _NORMALIZED_COEF
-            if (2 == n) // k==0 & n == 2
-                Ptilda_nk  = _tpk_n_k[n]*sinTetta;
-            else
-                Ptilda_nk  = _tp_nm1_k [n][k+1] * Ptilda_m_1[k+1]*sinTetta - _tp_nm2_k[n][k+1] * Ptilda_m_2[k+1];
-            
-#else
-#ifdef _DO_NOT_SKIP_OBVIOUS
-            if (2 == n) // k==0 & n == 2
-                Ptilda_nk  = diagonal[n]*sinTetta;
-            else
-#endif
-                Ptilda_nk  = ((2*n-1) * Ptilda_m_1[k+1]*sinTetta - (n + (k+1) -1)*Ptilda_m_2[k+1])/(n-(k+1));   // P'[2]
-#endif
-            Ptilda_[k+1] = Ptilda_nk; // store P'[2] for use 
-
-            long double Qnk_ = C_S_nk[ip][0] * Xk[k] + C_S_nk[ip][1] * Yk[k];
-            // J case
-            P_nk_x_Qnk_ = 0;
-            Ptilda_nk_x_Qnk_ = 0;
-            P_nk_x_K_x_XSumD = 0;
-            P_nk_x_K_x_YSumD = 0;
-
-            if (ip == 0)
-            {
-                P_20_x_Q20_ = P_nk * Qnk_;
-#ifdef _NORMALIZED_COEF
-                Ptilda_20_x_Qnk_ = _pt_nk[n][k] *Ptilda_nk *  Qnk_;
-#else
-                Ptilda_20_x_Qnk_ = Ptilda_nk *  Qnk_;
-#endif
-            }
-            else
-            {
-                P_nk_x_Qnk_ += -(n+1) * P_nk * Qnk_;
-#ifdef _NORMALIZED_COEF
-                Ptilda_nk_x_Qnk_ += - _pt_nk[n][k] *Ptilda_nk *  Qnk_;
-#else
-                Ptilda_nk_x_Qnk_ += - Ptilda_nk *  Qnk_ ;
-#endif
-            }
-            
-            //////////////////////////////////////////////////////////////////////////   k ==================1
-            // next iteration by k
-            ip++;
-            k = 1;
-#if _DEBUG
-            // sanity check k:
-            if (k != nk_lm_Numbers[ip][1])
-                exit (1);
-#endif
-            Qnk_ = C_S_nk[ip][0] * Xk[k] + C_S_nk[ip][1] * Yk[k];  //Bnmtil := Cnm*ctll[M] + Snm*stil[M];
-            XSumD = C_S_nk[ip][0] * Xk[k-1] + C_S_nk[ip][1] * Yk[k-1];
-            YSumD = C_S_nk[ip][0] * Yk[k-1] - C_S_nk[ip][1] * Xk[k-1];
-
-            P_nk = Ptilda_[k]; // P'[2] == (k= 1)
-#ifdef _NORMALIZED_COEF
-            if (2 == n) // k==1 && n==2
-                Ptilda_nk  = _p_n_k[n];
-            else
-                Ptilda_nk  = _tp_nm1_k [n][k+1] * Ptilda_m_1[k+1]*sinTetta - _tp_nm2_k[n][k+1] * Ptilda_m_2[k+1];
-#else
-            if (2 == n) // k==1 && n==2
-            {
-                //Ptilda_nk  = (2*n-1) * Ptilda_m_1[k];// + Ptilda_m_2[k+1];
-                Ptilda_nk  = diagonal[n];
-            }
-#ifdef _DO_NOT_SKIP_OBVIOUS
-            else if (3 == n) // k==1 && n == 3
-                Ptilda_nk  = diagonal[n]*sinTetta;
-#endif
-            else
-                Ptilda_nk  = ((2*n-1) * Ptilda_m_1[k+1]*sinTetta - (n + (k+1) -1)*Ptilda_m_2[k+1])/(n-(k+1));
-#endif
-            Ptilda_[k+1] = Ptilda_nk; // store P"[2] for next use
-            P_nk_x_Qnk_ += -(n+1+1) * P_nk * Qnk_;
-#ifdef _NORMALIZED_COEF
-            Ptilda_nk_x_Qnk_ += - _pt_nk[n][k] *Ptilda_nk *  Qnk_;
-#else
-            Ptilda_nk_x_Qnk_ += - Ptilda_nk *  Qnk_;
-#endif
-            P_nk_x_K_x_XSumD += P_nk * ( 1 *  XSumD   );
-            P_nk_x_K_x_YSumD += P_nk * ( 1 * -YSumD   );
-
-            ////////////////////////////////////////////////////////////////////////////////////////
-            for (k = 2; k <=n; k++)
-            {
-                ////////////////////////////////////////////////////////////////////////////////////////
-                // next iteration == k ==2
-                ip++;
-#if _DEBUG
-                // sanity check k:
-                if (k != nk_lm_Numbers[ip][1])
-                    exit (1);
-#endif
-                P_nk = Ptilda_[k];
-                if (k==n)
-                    Ptilda_nk = 0;
-                else
-                {
-#ifdef _NORMALIZED_COEF
-                    if (k == (n-1))
-                        Ptilda_nk  = _p_n_k[n];
-                    else if (k == (n-2))
-                        Ptilda_nk  = _tpk_n_k[n]*sinTetta;
-                    else
-                        Ptilda_nk  = _tp_nm1_k [n][k+1] * Ptilda_m_1[k+1]*sinTetta - _tp_nm2_k[n][k+1] * Ptilda_m_2[k+1];
-#else
-                    if (k == (n-1))
-                        Ptilda_nk = diagonal[n];
-#ifdef _DO_NOT_SKIP_OBVIOUS
-                    else if (k == (n-2))
-                        Ptilda_nk = diagonal[n]*sinTetta;
-#endif
-                    else
-                        Ptilda_nk  = ((2*n-1) * Ptilda_m_1[k+1]*sinTetta - (n + (k+1) -1)*Ptilda_m_2[k+1])/(n-(k+1));
-#endif
-                }
-                Ptilda_[k+1] = Ptilda_nk;
-
-                Qnk_ = C_S_nk[ip][0] * Xk[k] + C_S_nk[ip][1] * Yk[k];
-                XSumD = C_S_nk[ip][0] * Xk[k-1] + C_S_nk[ip][1] * Yk[k-1];
-                YSumD = C_S_nk[ip][0] * Yk[k-1] - C_S_nk[ip][1] * Xk[k-1];
-                P_nk_x_Qnk_ += -(n+k+1) * P_nk * Qnk_;
-
-#ifdef _NORMALIZED_COEF
-                Ptilda_nk_x_Qnk_ += - _pt_nk[n][k] *Ptilda_nk *  Qnk_;   // sumh_n    (normalized == z[n][k] * Ptilda_nk *  Qnk_
-#else
-                Ptilda_nk_x_Qnk_ += - Ptilda_nk *  Qnk_;
-#endif
-                P_nk_x_K_x_XSumD += P_nk * ( k *  XSumD   );
-                P_nk_x_K_x_YSumD += P_nk * ( k * -YSumD   );
-            }
-            p_nk_x_Qnk_      += P_nk_x_Qnk_*R0divR_;
-            ptilda_nk_x_Qnk_ +=Ptilda_nk_x_Qnk_*R0divR_;
-            p_nk_x_K_x_XSumD +=P_nk_x_K_x_XSumD*R0divR_;
-            p_nk_x_K_x_YSumD +=P_nk_x_K_x_YSumD*R0divR_;
-            R0divR[n] = R0divR_;
-            R0divR_*= R0divR[1];
-            ////////////////////////////////////////////////////////////////////////////////////////
-            // next iteration == k ==2
-            ip++;
-        }
-        Xadd = (    + p_nk_x_K_x_XSumD ); 
-        Yadd = (    + p_nk_x_K_x_YSumD );
-        Zadd = (    - ptilda_nk_x_Qnk_ );
-        Zadd+= (  + Ptilda_20_x_Qnk_ * (1.0))*R0divR[2];
-        MainVal = (p_nk_x_Qnk_ + ptilda_nk_x_Qnk_ * SinTetta ) + (-(2+1) * P_20_x_Q20_ - Ptilda_20_x_Qnk_ * SinTetta)*R0divR[2] ; 
-    }
-
-#endif
     void FillXkYk(long double XdivR, long double YdivR, long double *Xk, long double *Yk)
     {
         Xk[0] = 1.0;
@@ -2174,6 +1967,7 @@ typedef struct TraObj
         long double tempZ;
         long double sinTetta, XdivR, YdivR;
         X = 0; Y = 0; Z = 0;
+
         //long double _x[TOTAL_COEF][3];
         //long double _y[TOTAL_COEF][3];
         //long double _z[TOTAL_COEF][3];
@@ -2216,13 +2010,30 @@ typedef struct TraObj
         // formula 8 on page 92
         long double Xk[TOTAL_COEF+3];
         long double Yk[TOTAL_COEF+3];
-
         FillXkYk(XdivR, YdivR, Xk, Yk);
+        PowerR();
+#if 0
         PartSummXYZ ( Xk, Yk, TOTAL_COEF+3, sinTetta,  X, Xadd, Yadd, Zadd, 2, iLeg, 0, iLeg);
 
                        Y=X;            Z=X;
         X=1-X;         Y=1-Y;          Z=1-Z;
         Xadd = -Xadd;  Yadd = -Yadd;   Zadd = -Zadd;
+#else
+        long double xx[4], xadd[4], yadd[4],zadd[4];
+        
+        PartSummXYZ ( Xk, Yk, TOTAL_COEF+3, sinTetta,  xx[0], xadd[0], yadd[0], zadd[0], 2, iLeg, 0, 2);
+        PartSummXYZ ( Xk, Yk, TOTAL_COEF+3, sinTetta,  xx[1], xadd[1], yadd[1], zadd[1], 3, iLeg, 3, 5);
+        PartSummXYZ ( Xk, Yk, TOTAL_COEF+3, sinTetta,  xx[2], xadd[2], yadd[2], zadd[2], 6, iLeg, 6, 9);
+        PartSummXYZ ( Xk, Yk, TOTAL_COEF+3, sinTetta,  xx[3], xadd[3], yadd[3], zadd[3], 10, iLeg, 10, iLeg);
+        X = xx[0]+xx[1]+xx[2]+xx[3];
+                       Y=X;            Z=X;
+        X=1-X;         Y=1-Y;          Z=1-Z;
+        Xadd = xadd[0]+xadd[1]+xadd[2]+xadd[3];
+        Yadd = yadd[0]+yadd[1]+yadd[2]+yadd[3];
+        Zadd = zadd[0]+zadd[1]+zadd[2]+zadd[3];
+        Xadd = -Xadd;  Yadd = -Yadd;   Zadd = -Zadd;
+
+#endif
         trs_2_gcrs(Xadd, Yadd, Zadd);
     };
 #else
