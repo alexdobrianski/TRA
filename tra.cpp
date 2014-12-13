@@ -1722,7 +1722,7 @@ typedef struct TraObj
         long double *ptilda_m_2 = &Ptilda_m_2[Kstart];
         long double *ptilda_m_1 = &Ptilda_m_1[Kstart];
         long double *ptilda_=&Ptilda_[Kstart];
-        int cpSize = sizeof(long double) *2;
+        int cpSize = sizeof(long double) *3;
         long double P_20_x_Q20_ = 0;
         long double Ptilda_20_x_Qnk_ = 0;
 
