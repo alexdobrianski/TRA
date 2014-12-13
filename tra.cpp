@@ -1823,6 +1823,34 @@ typedef struct TraObj
                 {
                     P_m_2 = P_m_1; P_m_1 = P_;
                     memcpy(ptilda_m_2,ptilda_m_1, cpSize); memcpy(ptilda_m_1,ptilda_, cpSize);
+                    if (k)
+                    {
+                        k=k-1;  // one Pnk left
+                        if (k==n)
+                            P_nk =0;
+                        else
+                        {
+#ifdef _NORMALIZED_COEF
+                            if (k == (n-1))
+                                P_nk = _p_n_k[n];
+                            else if (k == (n-2))
+                                P_nk = _tpk_n_k[n]*sinTetta;
+                            else
+                                P_nk = _tp_nm1_k [n][k+1] * Ptilda_m_1[k+1]*sinTetta - _tp_nm2_k[n][k+1] * Ptilda_m_2[k+1];
+#else
+                            if (k == (n-1))
+                                P_nk = diagonal[n];
+#ifdef _DO_NOT_SKIP_OBVIOUS
+                            else if (k == (n-2))
+                                P_nk = diagonal[n]*sinTetta;
+#endif
+                            else
+                                P_nk = ((2*n-1) * Ptilda_m_1[k+1]*sinTetta - (n + (k+1) -1)*Ptilda_m_2[k+1])/(n-(k+1));
+#endif
+                        }
+                        Ptilda_[k+1] = P_nk; // store Pnk and rerstore original K;
+                        k++;
+                    }
                 }
                 if (k == 0)
                 {
@@ -1892,7 +1920,6 @@ typedef struct TraObj
                     Qnk_ = C_S_nk[ip][0] * Xk[k] + C_S_nk[ip][1] * Yk[k];
                     XSumD = C_S_nk[ip][0] * Xk[k-1] + C_S_nk[ip][1] * Yk[k-1];
                     YSumD = C_S_nk[ip][0] * Yk[k-1] - C_S_nk[ip][1] * Xk[k-1];
-
                     P_nk = Ptilda_[k];
                     if (k==n)
                         Ptilda_nk = 0;
