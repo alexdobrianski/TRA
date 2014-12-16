@@ -356,6 +356,7 @@ long double ModelCoef;// = SlS->GM[j]/ GM_MODEL;
 #ifdef USE_MODEL_LOAD
 char EarthModelFile[1024]={"egm96"};
 int EarthModelCoefs = 16;
+int CpuCore = 0;
 //long  double GM_MODEL = 398600.4415E9;
 //#define R0_MODEL 6378136.30
 long double GM_MODEL = 398600.4418e9;
@@ -1152,7 +1153,6 @@ typedef struct Long_Double_Intergal_Var4
     };
 } LONG_DOUBLE_INT_VAR4, *PLONG_DOUBLE_INT_VAR4;
 
-
 typedef struct TraObj
 {
     long double TimeSl;
@@ -1347,7 +1347,87 @@ typedef struct TraObj
     long double _tpk_n_k[TOTAL_COEF+3];
     long double diagonal[TOTAL_COEF+3];
     long double _p_n_k[TOTAL_COEF+3];
+    int i_proc;
+typedef struct CpuData {
+    int cpuid;
+    TraObj *my;
+} CPUDATA, *PCPUDATA;
 
+    CPUDATA CPUID[32];
+    int i_split[32][3];
+    DWORD dwServiceStateThreadID[32];
+
+    HANDLE		hWaitForExit[32];
+    HANDLE		hWaitCmdDoCalc[32];
+    HANDLE		hWaitCmdStop[32];
+    HANDLE		Callback_Thread[32];
+
+
+    static DWORD WINAPI CallbackThread_Proc(LPVOID lParm)
+    {   
+        UINT uResult = 0;
+	    DWORD ResWait;
+	    HANDLE hList[2];
+	    BOOL bFound;
+	    BOOL bRes;
+	    int iRea;
+        CPUDATA *Param = (CPUDATA*)lParm;
+        TraObj *my = Param->my;
+        int cpuid = Param->cpuid;
+	
+        hList[0] = my->hWaitCmdStop[cpuid];
+	    hList[1] = my->hWaitCmdDoCalc[cpuid];
+	    
+	    while((ResWait = WaitForMultipleObjects(2,hList,FALSE,INFINITE)) != WAIT_OBJECT_0 )
+	    {
+		    ResetEvent(hList[ResWait - WAIT_OBJECT_0]);
+		
+		    bRes = FALSE;
+		    if ((ResWait - WAIT_OBJECT_0) == 1) // hWaitCmdDoCalc
+            {
+            }
+        }
+	    SetEvent(my->hWaitForExit[cpuid]);
+	    return(uResult);   
+    };
+    
+
+    void StartThreads(void)
+    {
+        if (i_proc)
+        {
+            for (int i =0; i <i_proc; i++)
+            {
+                hWaitForExit[i] = CreateEvent(NULL, TRUE, TRUE, NULL);
+                ResetEvent(hWaitForExit[i]);
+                hWaitCmdDoCalc[i] = CreateEvent(NULL, TRUE, TRUE, NULL);
+                ResetEvent(hWaitCmdDoCalc[i]);
+                hWaitCmdStop[i] = CreateEvent(NULL, TRUE, TRUE, NULL);
+                ResetEvent(hWaitCmdStop[i]);
+                Callback_Thread[i] = CreateThread(NULL,20980000,(LPTHREAD_START_ROUTINE)CallbackThread_Proc,(LPVOID)&CPUID[i], STACK_SIZE_PARAM_IS_A_RESERVATION,&dwServiceStateThreadID[i]);
+                DWORD err = GetLastError();
+            }
+        }
+
+    }
+    void StopThreads(void)
+    {
+        int i;
+        if (i_proc)
+        {
+            for (i =0; i <i_proc; i++)
+            {
+                SetEvent(hWaitCmdStop[i]);
+            }
+            WaitForMultipleObjects(i_proc,hWaitForExit,TRUE,2000);
+            for (i =0; i <i_proc; i++)
+            {
+                CloseHandle(hWaitForExit[i]);
+                CloseHandle(hWaitCmdDoCalc[i]);
+                CloseHandle(hWaitCmdStop[i]);
+            }
+        }
+    }
     void gcrs_2_trs(long double &X, long double &Y, long double &Z)
     {
         long double tempX;
@@ -1699,6 +1779,39 @@ typedef struct TraObj
 #if 1
 
 #if 1
+    void CalcSplit(long iCoefs, long iCpu)
+    {
+        i_proc = 0;
+        long iAll = 0;
+        int i;
+        long irow = iCoefs -2;
+        for (int i = 0; i< iCoefs; i++)
+        {
+            iAll += irow;
+            if (i>=2)
+                irow--;
+        }
+        long iCount = iAll/iCpu;
+        long iEachCount = 0;
+        irow = iCoefs -2;
+        i_split[i_proc][0] = 0;
+        for (int i = 0; i< iCoefs; i++)
+        {
+            iEachCount += irow;
+            if (i>=2)
+                irow--;
+            if (iEachCount >= (iAll*(i_proc+1))/iCpu)
+            {
+                CPUID[i_proc].cpuid = i_proc;
+                CPUID[i_proc].my = this;
+                i_split[i_proc][2] = iEachCount;
+                i_split[i_proc++][1] = i;
+                i_split[i_proc][0] = i+1;
+                
+            }
+        }
+        i_split[i_proc-1][1] = i_split[i_proc][0];
+    }
 
     void PowerR(void)
     {
@@ -1725,6 +1838,8 @@ typedef struct TraObj
         int cpSize = sizeof(long double) *3;
         long double P_20_x_Q20_ = 0;
         long double Ptilda_20_x_Qnk_ = 0;
+        long double C_nk_ip;
+        long double S_nk_ip;
 
         long double P_nk_x_Qnk_;
         long double Ptilda_nk_x_Qnk_;
@@ -1825,88 +1940,89 @@ typedef struct TraObj
                     memcpy(ptilda_m_2,ptilda_m_1, cpSize); memcpy(ptilda_m_1,ptilda_, cpSize);
                     if (k)
                     {
-                        k=k-1;  // one Pnk left
-                        if (k==n)
+                        //k=k-1;  // one Pnk left
+                        if ((k-1)==n)
                             P_nk =0;
                         else
                         {
 #ifdef _NORMALIZED_COEF
-                            if (k == (n-1))
+                            if ((k-1) == (n-1))
                                 P_nk = _p_n_k[n];
-                            else if (k == (n-2))
+                            else if ((k-1) == (n-2))
                                 P_nk = _tpk_n_k[n]*sinTetta;
                             else
-                                P_nk = _tp_nm1_k [n][k+1] * Ptilda_m_1[k+1]*sinTetta - _tp_nm2_k[n][k+1] * Ptilda_m_2[k+1];
+                                P_nk = _tp_nm1_k [n][(k-1)+1] * Ptilda_m_1[(k-1)+1]*sinTetta - _tp_nm2_k[n][(k-1)+1] * Ptilda_m_2[(k-1)+1];
 #else
-                            if (k == (n-1))
+                            if ((k-1) == (n-1))
                                 P_nk = diagonal[n];
 #ifdef _DO_NOT_SKIP_OBVIOUS
-                            else if (k == (n-2))
+                            else if ((k-1) == (n-2))
                                 P_nk = diagonal[n]*sinTetta;
 #endif
                             else
-                                P_nk = ((2*n-1) * Ptilda_m_1[k+1]*sinTetta - (n + (k+1) -1)*Ptilda_m_2[k+1])/(n-(k+1));
+                                P_nk = ((2*n-1) * Ptilda_m_1[(k-1)+1]*sinTetta - (n + ((k-1)+1) -1)*Ptilda_m_2[(k-1)+1])/(n-((k-1)+1));
 #endif
                         }
-                        Ptilda_[k+1] = P_nk; // store Pnk and rerstore original K;
-                        k++;
+                        Ptilda_[(k-1)+1] = P_nk; // store Pnk and rerstore original K;
+                        //k++;
                     }
-                }
-                if (k == 0)
-                {
-                    //////////////////////////////////////////////////////////////////////////////////////////////////////////////
-                    // next iteration by n
-#ifdef _NORMALIZED_COEF
-                    P_ = _p_n_m_1[n] *sinTetta * P_m_1 - _p_n_m_2[n]*P_m_2;  // P[2]
-#else
-                    P_ = ((2.0* n-1.0) *sinTetta * P_m_1 - (n-1)*P_m_2)/n;  // P[2]
-#endif
-                    P_nk = P_;
-                    /////////////////////////////////////////////////////////////////////////////  k =================0
-                    //k = 0;
-                    Ptilda_[k]= P_;
-#if _DEBUG
-                    // sanity check k:
-                    if (k != nk_lm_Numbers[ip][1])
-                        exit (1);
-#endif
-#ifdef _NORMALIZED_COEF
-                    if (2 == n) // k==0 & n == 2
-                        Ptilda_nk  = _tpk_n_k[n]*sinTetta;
                     else
-                        Ptilda_nk  = _tp_nm1_k [n][k+1] * Ptilda_m_1[k+1]*sinTetta - _tp_nm2_k[n][k+1] * Ptilda_m_2[k+1];
+                    {
+                        //////////////////////////////////////////////////////////////////////////////////////////////////////////////
+                        // next iteration by n
+#ifdef _NORMALIZED_COEF
+                        P_ = _p_n_m_1[n] *sinTetta * P_m_1 - _p_n_m_2[n]*P_m_2;  // P[2]
+#else
+                        P_ = ((2.0* n-1.0) *sinTetta * P_m_1 - (n-1)*P_m_2)/n;  // P[2]
+#endif
+                        P_nk = P_;
+                        /////////////////////////////////////////////////////////////////////////////  k =================0
+                        //k = 0;
+                        Ptilda_[k]= P_;
+#if _DEBUG
+                        // sanity check k:
+                        if (k != nk_lm_Numbers[ip][1])
+                            exit (1);
+#endif
+#ifdef _NORMALIZED_COEF
+                        if (2 == n) // k==0 & n == 2
+                            Ptilda_nk  = _tpk_n_k[n]*sinTetta;
+                        else
+                            Ptilda_nk  = _tp_nm1_k [n][k+1] * Ptilda_m_1[k+1]*sinTetta - _tp_nm2_k[n][k+1] * Ptilda_m_2[k+1];
             
 #else
 #ifdef _DO_NOT_SKIP_OBVIOUS
-                    if (2 == n) // k==0 & n == 2
-                        Ptilda_nk  = diagonal[n]*sinTetta;
-                    else
+                        if (2 == n) // k==0 & n == 2
+                            Ptilda_nk  = diagonal[n]*sinTetta;
+                        else
 #endif
-                    Ptilda_nk  = ((2*n-1) * Ptilda_m_1[k+1]*sinTetta - (n + (k+1) -1)*Ptilda_m_2[k+1])/(n-(k+1));   // P'[2]
+                            Ptilda_nk  = ((2*n-1) * Ptilda_m_1[k+1]*sinTetta - (n + (k+1) -1)*Ptilda_m_2[k+1])/(n-(k+1));   // P'[2]
 #endif
-                    Ptilda_[k+1] = Ptilda_nk; // store P'[2] for use 
-                    Qnk_ = C_S_nk[ip][0] * Xk[k] + C_S_nk[ip][1] * Yk[k];
-                    // J case
-                    if (ip == 0)
-                    {
-                        P_20_x_Q20_ = P_nk * Qnk_;
+                        Ptilda_[k+1] = Ptilda_nk; // store P'[2] for use 
+                        Qnk_ = C_S_nk[ip][0] * Xk[k] + C_S_nk[ip][1] * Yk[k];
+                        // J case
+                        if (ip == 0)
+                        {
+                            P_20_x_Q20_ = P_nk * Qnk_;
 #ifdef _NORMALIZED_COEF
-                        Ptilda_20_x_Qnk_ = _pt_nk[n][k] *Ptilda_nk *  Qnk_;
+                            Ptilda_20_x_Qnk_ = _pt_nk[n][k] *Ptilda_nk *  Qnk_;
 #else
-                        Ptilda_20_x_Qnk_ = Ptilda_nk *  Qnk_;
+                            Ptilda_20_x_Qnk_ = Ptilda_nk *  Qnk_;
 #endif
-                    }
-                    else
-                    {
-                        P_nk_x_Qnk_ += -(n+1) * P_nk * Qnk_;
+                        }
+                        else
+                        {
+                            P_nk_x_Qnk_ += -(n+1) * P_nk * Qnk_;
 #ifdef _NORMALIZED_COEF
-                        Ptilda_nk_x_Qnk_ += - _pt_nk[n][k] *Ptilda_nk *  Qnk_;
+                            Ptilda_nk_x_Qnk_ += - _pt_nk[n][k] *Ptilda_nk *  Qnk_;
 #else
-                        Ptilda_nk_x_Qnk_ += - Ptilda_nk *  Qnk_ ;
+                            Ptilda_nk_x_Qnk_ += - Ptilda_nk *  Qnk_ ;
 #endif
+                        }
+                        ++ip;
+                        continue;
                     }
                 }
-                else 
                 ////////////////////////////////////////////////////////////////////////////////////////
                 //for (k = 1; k <=n; k++)
                 {
@@ -1917,9 +2033,11 @@ typedef struct TraObj
                     if (k != nk_lm_Numbers[ip][1])
                         exit (1);
 #endif
-                    Qnk_ = C_S_nk[ip][0] * Xk[k] + C_S_nk[ip][1] * Yk[k];
-                    XSumD = C_S_nk[ip][0] * Xk[k-1] + C_S_nk[ip][1] * Yk[k-1];
-                    YSumD = C_S_nk[ip][0] * Yk[k-1] - C_S_nk[ip][1] * Xk[k-1];
+                    C_nk_ip = C_S_nk[ip][0];
+                    S_nk_ip = C_S_nk[ip][1];
+                    Qnk_ = C_nk_ip * Xk[k] + S_nk_ip * Yk[k];
+                    XSumD = C_nk_ip * Xk[k-1] + S_nk_ip * Yk[k-1];
+                    YSumD = C_nk_ip * Yk[k-1] - S_nk_ip * Xk[k-1];
                     P_nk = Ptilda_[k];
                     if (k==n)
                         Ptilda_nk = 0;
@@ -2039,28 +2157,31 @@ typedef struct TraObj
         long double Yk[TOTAL_COEF+3];
         FillXkYk(XdivR, YdivR, Xk, Yk);
         PowerR();
-#if 0
-        PartSummXYZ ( Xk, Yk, TOTAL_COEF+3, sinTetta,  X, Xadd, Yadd, Zadd, 2, iLeg, 0, iLeg);
+        if (i_proc == 0)
+        {
+            PartSummXYZ ( Xk, Yk, TOTAL_COEF+3, sinTetta,  X, Xadd, Yadd, Zadd, 2, iLeg, 0, iLeg);
 
-                       Y=X;            Z=X;
-        X=1-X;         Y=1-Y;          Z=1-Z;
-        Xadd = -Xadd;  Yadd = -Yadd;   Zadd = -Zadd;
-#else
-        long double xx[4], xadd[4], yadd[4],zadd[4];
+                           Y=X;            Z=X;
+            X=1-X;         Y=1-Y;          Z=1-Z;
+            Xadd = -Xadd;  Yadd = -Yadd;   Zadd = -Zadd;
+        }
+        else
+        {
+            long double xx[4], xadd[4], yadd[4],zadd[4];
         
-        PartSummXYZ ( Xk, Yk, TOTAL_COEF+3, sinTetta,  xx[0], xadd[0], yadd[0], zadd[0], 2, iLeg, 0, 2);
-        PartSummXYZ ( Xk, Yk, TOTAL_COEF+3, sinTetta,  xx[1], xadd[1], yadd[1], zadd[1], 3, iLeg, 3, 5);
-        PartSummXYZ ( Xk, Yk, TOTAL_COEF+3, sinTetta,  xx[2], xadd[2], yadd[2], zadd[2], 6, iLeg, 6, 9);
-        PartSummXYZ ( Xk, Yk, TOTAL_COEF+3, sinTetta,  xx[3], xadd[3], yadd[3], zadd[3], 10, iLeg, 10, iLeg);
-        X = xx[0]+xx[1]+xx[2]+xx[3];
-                       Y=X;            Z=X;
-        X=1-X;         Y=1-Y;          Z=1-Z;
-        Xadd = xadd[0]+xadd[1]+xadd[2]+xadd[3];
-        Yadd = yadd[0]+yadd[1]+yadd[2]+yadd[3];
-        Zadd = zadd[0]+zadd[1]+zadd[2]+zadd[3];
-        Xadd = -Xadd;  Yadd = -Yadd;   Zadd = -Zadd;
-
-#endif
+            // i_split[0][0] - i_split[0][1]
+            PartSummXYZ ( Xk, Yk, TOTAL_COEF+3, sinTetta,  xx[0], xadd[0], yadd[0], zadd[0], 2            , iLeg, i_split[0][0], i_split[0][1]);
+            PartSummXYZ ( Xk, Yk, TOTAL_COEF+3, sinTetta,  xx[1], xadd[1], yadd[1], zadd[1], i_split[1][0], iLeg, i_split[1][0], i_split[1][1]);
+            PartSummXYZ ( Xk, Yk, TOTAL_COEF+3, sinTetta,  xx[2], xadd[2], yadd[2], zadd[2], i_split[2][0], iLeg, i_split[2][0], i_split[2][1]);
+            PartSummXYZ ( Xk, Yk, TOTAL_COEF+3, sinTetta,  xx[3], xadd[3], yadd[3], zadd[3], i_split[3][0], iLeg, i_split[3][0], iLeg         );
+            X = xx[0]+xx[1]+xx[2]+xx[3];
+                           Y=X;            Z=X;
+            X=1-X;         Y=1-Y;          Z=1-Z;
+            Xadd = xadd[0]+xadd[1]+xadd[2]+xadd[3];
+            Yadd = yadd[0]+yadd[1]+yadd[2]+yadd[3];
+            Zadd = zadd[0]+zadd[1]+zadd[2]+zadd[3];
+            Xadd = -Xadd;  Yadd = -Yadd;   Zadd = -Zadd;
+        }
         trs_2_gcrs(Xadd, Yadd, Zadd);
     };
 #else
@@ -3973,11 +4094,25 @@ void CalcPlanetForces(TRAOBJ * SlS)
     {
         //if (SlS->flInUse[i] ==0)
         //    continue;
+
+        long double *SlS_ForceDD_i_j = &SlS->ForceDD[i][0];
+        long double *SlS_GM_j = &SlS->GM[0];
+        long double *SlS_Distance2_i_j = &SlS->Distance2[i][0];
+        for (j = 0; j < i; j++)
+        {
+            *SlS_ForceDD_i_j = * SlS_GM_j / *SlS_Distance2_i_j;
+            SlS_ForceDD_i_j++;SlS_GM_j++;SlS_Distance2_i_j++;
+        }
+        SlS_ForceDD_i_j++;SlS_GM_j++;SlS_Distance2_i_j++;
+
+/*
         for (j = 0; j < i; j++)
         {
             SlS->ForceDD[i][j] = SlS->GM[j] / SlS->Distance2[i][j];
         }
-        for (j = i+1; j < SlS->Elem; j++)
+*/
+        long double *SlS_Distance_i_j = &SlS->Distance[i][i+1];
+        for (j = i+1; j < SlS->Elem; j++,SlS_ForceDD_i_j++,SlS_GM_j++,SlS_Distance2_i_j++,SlS_Distance_i_j++)
         {
             //if (i == j) 
             //    continue;
@@ -3995,16 +4130,17 @@ void CalcPlanetForces(TRAOBJ * SlS)
 
             //if (tD_Obj1Obj2 != SlS->Distance2[i][j])
             {
-                SlS->Distance2[i][j] = tD_Obj1Obj2;
+                *SlS_Distance2_i_j = tD_Obj1Obj2;
                 SlS->Distance2[j][i] = tD_Obj1Obj2;
                 double tD_ = sqrt(tD_Obj1Obj2);
-                SlS->Distance[i][j] = tD_;
+                *SlS_Distance_i_j = tD_;
                 SlS->Distance[j][i] = tD_;
 
                 //if (tD_ != SlS->Distance[i][j])
                 {
 #if 1
-                    SlS->ForceDD[i][j] = /* SlS->M[i] * */SlS->GM[j] / SlS->Distance2[i][j];
+                    //SlS->ForceDD[i][j] = /* SlS->M[i] * */SlS->GM[j] / SlS->Distance2[i][j];
+                    *SlS_ForceDD_i_j = * SlS_GM_j / tD_Obj1Obj2;
 #else
                     SlS->ForceDD[i][j] = SlS->GMxM[i][j] / SlS->Distance2[i][j];
                     SlS->ForceDD[j][i] = SlS->GMxM[j][i] / SlS->Distance2[j][i];
@@ -4023,14 +4159,17 @@ void CalcPlanetForces(TRAOBJ * SlS)
 
         //if (SlS->flInUse[i] ==0)
         //    continue;
-        for (j = 0; j < SlS->Elem; j++)
+        long double *SlS_ForceDD_i = &(SlS->ForceDD[i][0]);
+        long double *SlS_Distance_i = &(SlS->Distance[i][0]);
+        for (j = 0; j < SlS->Elem; j++,SlS_ForceDD_i++, SlS_Distance_i++)
         {
             if (i == j) continue;
             //if (SlS->flInUse[j] ==0)
             //continue;
-            SlS->FX[i] += -( SlS->X[i] - SlS->X[j]) * SlS->ForceDD[i][j]/SlS->Distance[i][j];
-            SlS->FY[i] += -( SlS->Y[i] - SlS->Y[j]) * SlS->ForceDD[i][j]/SlS->Distance[i][j];
-            SlS->FZ[i] += -( SlS->Z[i] - SlS->Z[j]) * SlS->ForceDD[i][j]/SlS->Distance[i][j];
+            long double SlS_ForceDD_i_j_div_SlS_Distance_i_j = *SlS_ForceDD_i/ *SlS_Distance_i;
+            SlS->FX[i] += -( SlS->X[i] - SlS->X[j]) * SlS_ForceDD_i_j_div_SlS_Distance_i_j;
+            SlS->FY[i] += -( SlS->Y[i] - SlS->Y[j]) * SlS_ForceDD_i_j_div_SlS_Distance_i_j;
+            SlS->FZ[i] += -( SlS->Z[i] - SlS->Z[j]) * SlS_ForceDD_i_j_div_SlS_Distance_i_j;
         }
     }
 
@@ -4052,40 +4191,46 @@ void CalcSatForces(TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfCalc)
     for (i = 0; i < Sat->Elem; i++)
     {
        // loop for all selestial bodies
-        for (j = 0; j < SlS->Elem; j++)
+        long double *Sat_Distance2_i_j = &Sat->Distance2[i][0];
+        long double *Sat_Distance_i_j  = &Sat->Distance[i][0];
+        long double *Sat_ForceDD_i_j   = &Sat->ForceDD[i][0];
+        long double *SlS_GM_j = &SlS->GM[0];
+        long double *Sat_DeltaVX_i_j = &Sat->DeltaVX[i][0];
+        long double *Sat_DeltaVY_i_j = &Sat->DeltaVY[i][0];
+        long double *Sat_DeltaVZ_i_j = &Sat->DeltaVZ[i][0];
+        for (j = 0; j < SlS->Elem; j++, Sat_Distance2_i_j++, Sat_Distance_i_j++, Sat_ForceDD_i_j++, SlS_GM_j++, Sat_DeltaVX_i_j++, Sat_DeltaVY_i_j++, Sat_DeltaVZ_i_j++)
         {
             // do we account that? Sun == yes Moon == yes but Saturn == probably no
             //if (SlS->flInUse[j] ==0)
             //    continue;
             // that is the distance*distance from the satellite to selestial body
-            long double tD_Obj1Obj2 = (Sat->X[i] - SlS->X[j])*(Sat->X[i] - SlS->X[j]) + 
-					    (Sat->Y[i] - SlS->Y[j])*(Sat->Y[i] - SlS->Y[j]) + 
-					    (Sat->Z[i] - SlS->Z[j])*(Sat->Z[i] - SlS->Z[j]);
+            long double ValX0 = (Sat->X[i] - SlS->X[j]);
+            long double ValY0 = (Sat->Y[i] - SlS->Y[j]);
+            long double ValZ0 = (Sat->Z[i] - SlS->Z[j]);
+
+            long double tD_Obj1Obj2 = ValX0*ValX0 + ValY0*ValY0 + ValZ0*ValZ0;
             
-            Sat->Distance2[i][j] = tD_Obj1Obj2;
+            *Sat_Distance2_i_j = tD_Obj1Obj2;
             long double tD_ = sqrt(tD_Obj1Obj2);
-            Sat->Distance[i][j] = tD_;
-            Sat->ForceDD[i][j] = SlS->GM[j] /* Sat->M[i]*/ / Sat->Distance2[i][j]; // to get real force need to multiply on mass of the satellite
+            *Sat_Distance_i_j = tD_;
+            
 #define FAST_CALCULATIONS
 #ifdef FAST_CALCULATIONS
 
-            Sat->ForceDD_ = Sat->ForceDD[i][j];
-            Sat->DeltaVX[i][j] =0;
-            Sat->DeltaVY[i][j] =0;
-            Sat->DeltaVZ[i][j] =0;
+            //Sat->ForceDD_ = Sat->ForceDD[i][j];
+            *Sat_DeltaVX_i_j =0;
+            *Sat_DeltaVY_i_j =0;
+            *Sat_DeltaVZ_i_j =0;
 
             if (j == Sat->LegBody)
             {
                 //long double ModelCoef = SlS->GM[j]/ GM_MODEL;
-                Sat->ForceDD[i][j] = GM_MODEL / Sat->Distance2[i][j];
+                *Sat_ForceDD_i_j = GM_MODEL / *Sat_Distance2_i_j;
 
                 Sat->R0divR[0] = 1;
                 Sat->R0divR[1] = R0_MODEL/tD_;
-                if (Sat->Distance[i][j] < 20*R0_MODEL)
+                if (*Sat_Distance_i_j < 20*R0_MODEL)
                 {
-                    long double ValX0 = (Sat->X[i] - SlS->X[j]);
-                    long double ValY0 = (Sat->Y[i] - SlS->Y[j]);
-                    long double ValZ0 = (Sat->Z[i] - SlS->Z[j]);
                     long double oXdivR = ValX0 /tD_;
                     long double oYdivR = ValY0 /tD_;
                     long double oZdivR = ValZ0 /tD_;
@@ -4093,196 +4238,43 @@ void CalcSatForces(TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfCalc)
                     Sat->FastSummXYZ(ValX0,ValY0,ValZ0,Sat->Distance[i][j],DX1,DY1,DZ1, DX,DY,DZ,i);
 #define _NO_GM_CORRECTION 1
 #ifndef _NO_GM_CORRECTION
-                    Sat->DeltaVX[i][j] =DX/ModelCoef;
-                    Sat->DeltaVY[i][j] =DY/ModelCoef;
-                    Sat->DeltaVZ[i][j] =DZ/ModelCoef;
+                    *Sat_DeltaVX_i_j =DX/ModelCoef;
+                    *Sat_DeltaVY_i_j =DY/ModelCoef;
+                    *Sat_DeltaVZ_i_j =DZ/ModelCoef;
 #else
-                    Sat->DeltaVX[i][j] =DX1*oXdivR + DX;
-                    Sat->DeltaVY[i][j] =DY1*oYdivR + DY;
-                    Sat->DeltaVZ[i][j] =DZ1*oZdivR + DZ;
+                    *Sat_DeltaVX_i_j =DX1*oXdivR + DX;
+                    *Sat_DeltaVY_i_j =DY1*oYdivR + DY;
+                    *Sat_DeltaVZ_i_j =DZ1*oZdivR + DZ;
                     //printf("\n %04d %20.18f %20.18f %20.18f %20.18f %20.18f %20.18f %20.18f", printcount++, DX1, DX1*oXdivR, DX1*oYdivR, DX1*oZdivR, DX, DY, DZ); 
 #endif
                 }
             }
-
-#else
-            Sat->DeltaVX[i][j] =1;
-            Sat->DeltaVY[i][j] =1;
-            Sat->DeltaVZ[i][j] =1;
-
-
-            Sat->ForceDD_ = Sat->ForceDD[i][j];
-            if (j == Sat->LegBody)
+            else
             {
-                 Sat->ForceDD[i][j] = GM_MODEL / Sat->Distance2[i][j];
-                 Sat->R0divR[0] = 1;
-                 Sat->R0divR[1] = R0_MODEL/tD_;
-                 for (int n = 2; n <= (Sat->iLeg+1); n++)
-                 {
-                      Sat->R0divR[n] = Sat->R0divR[1]*Sat->R0divR[n-1];
-                 }
-
-                if (Sat->Distance[i][j] < 20*R0_MODEL)
-                {
-                    // is this a metter how to measure Tetta?
-                    // sin Tetta(colatitude) = Z/R
-                    // and tetta(Latitude) btw equator and vector
-                    // this means that sinTetta(colatitude) equal cosTetta(latitude)
-                    // that is what used in calculations:
-                    //Sat->SinTetta[1] = ((Sat->Z[i] - SlS->Z[j]) /Sat->Distance[i][j]);
-
-                    long double ValX0 = (Sat->X[i] - SlS->X[j]);
-                    long double ValY0 = (Sat->Y[i] - SlS->Y[j]);
-                    long double ValZ0 = (Sat->Z[i] - SlS->Z[j]);
-                    int iRet;
-                    if ((iRet= Sat->CalcP(ValX0,ValY0,ValZ0,Sat->Distance[i][j])) != 0)
-                    {
-                        switch(iRet)
-                        {
-                        case 1: printf("x");break;
-                        case 2: printf("y");break;
-                        case 3: printf("z");break;
-                        }
-                        // infiniti points in model with lagrange coef
-                        // needs to aproximate value
-                        // first point -4 next point +4 and median value is used
-                        long double DXx1,DYy1,DZz1,DXx2,DYy2,DZz2;
-                        int stepsAproximations = 4;
-                        BOOL DoIterations = TRUE;
-                        if ((iRet == 1) || (iRet == 2)) // this is X or Y infinity point => rotate earth east-west to get aproximation
-                        {
-                            while(DoIterations)
-                            {
-                                Sat->Lambda = GreenwichAscensionFromTLEEpoch(TimeOfCalc - stepsAproximations*(StepsValInDay),Sat->precEps,Sat->precTet,Sat->precZ,Sat->nutEpsilon,Sat->nutDFeta);
-                                if ((iRet= Sat->CalcP(ValX0,ValY0,ValZ0,Sat->Distance[i][j])) == 0)
-                                {
-                                    Sat->SummXYZ(i, DXx1,DYy1,DZz1);
-                                    Sat->Lambda = GreenwichAscensionFromTLEEpoch(TimeOfCalc + stepsAproximations*(StepsValInDay),Sat->precEps,Sat->precTet,Sat->precZ,Sat->nutEpsilon,Sat->nutDFeta);
-                                    if ((iRet= Sat->CalcP(ValX0,ValY0,ValZ0,Sat->Distance[i][j])) == 0)
-                                    {
-                                        Sat->SummXYZ(i, DXx2,DYy2,DZz2);
-                                        DX = (DXx1+DXx2)/2;   DY = (DYy1+DYy2)/2;   DZ = (DZz1+DZz2)/2;
-                                        DoIterations = FALSE;
-                                    }
-                                    else
-                                    {
-                                        if (iRet == 3) // exit loop point (x or y) & z both in critical point
-                                            break;
-                                        stepsAproximations++;
-                                    }
-                                }
-                                else
-                                {
-                                     if (iRet == 3) // exit loop point (x or y) & z both in critical point
-                                        break;
-                                     stepsAproximations++;
-                                }
-                            }
-                        }
-                        else   // Z is in inifinity point (equator) == get aproxymation == rotate sat position north-south
-                        {
-                            // now sat on equator
-                            long double tempX, tempY, tempZ;
-                            long double OneSecond = M_PI/12.0/60.0/60.0;
-                            OneSecond = OneSecond/ (long double)iItearationsPerSec;
-                            stepsAproximations =1;
-                            BOOL DoByX = TRUE;
-                            while(DoIterations)
-                            {
-                                Sat->Lambda = GreenwichAscensionFromTLEEpoch(TimeOfCalc,Sat->precEps,Sat->precTet,Sat->precZ,Sat->nutEpsilon,Sat->nutDFeta); // same place on longitude
-                                if (DoByX)
-                                {
-                                    tempX = cos(-stepsAproximations*OneSecond) * ValX0 - sin(-stepsAproximations*OneSecond) * ValZ0;
-                                    tempZ = sin(-stepsAproximations*OneSecond) * ValX0 + cos(-stepsAproximations*OneSecond) * ValZ0;
-                                    tempY = ValY0;
-                                }
-                                else
-                                {
-                                    tempY = cos(-stepsAproximations*OneSecond) * ValY0 - sin(-stepsAproximations*OneSecond) * ValZ0;
-                                    tempZ = sin(-stepsAproximations*OneSecond) * ValY0 + cos(-stepsAproximations*OneSecond) * ValZ0;
-                                    tempX = ValX0;
-                                }
-                                if ((iRet= Sat->CalcP(tempX,tempY,tempZ,Sat->Distance[i][j])) == 0)
-                                {
-                                    Sat->SummXYZ(i, DXx1,DYy1,DZz1);
-                                    Sat->Lambda = GreenwichAscensionFromTLEEpoch(TimeOfCalc,Sat->precEps,Sat->precTet,Sat->precZ,Sat->nutEpsilon,Sat->nutDFeta);
-                                    if (DoByX)
-                                    {
-                                        tempX = cos(+stepsAproximations*OneSecond) * ValX0 - sin(+stepsAproximations*OneSecond) * ValZ0;
-                                        tempZ = sin(+stepsAproximations*OneSecond) * ValX0 + cos(+stepsAproximations*OneSecond) * ValZ0;
-                                    }
-                                    else
-                                    {
-                                        tempY = cos(+stepsAproximations*OneSecond) * ValY0 - sin(+stepsAproximations*OneSecond) * ValZ0;
-                                        tempZ = sin(+stepsAproximations*OneSecond) * ValY0 + cos(+stepsAproximations*OneSecond) * ValZ0;
-                                    }
-                                    if ((iRet= Sat->CalcP(tempX,tempY,tempZ,Sat->Distance[i][j])) == 0)
-                                    {
-                                        Sat->SummXYZ(i, DXx2,DYy2,DZz2);
-                                        DX = (DXx1+DXx2)/2;   DY = (DYy1+DYy2)/2;   DZ = (DZz1+DZz2)/2;
-                                        DoIterations = FALSE;
-                                    }
-                                    else
-                                    {
-                                        if (iRet == 1) // exit loop == impossible situation
-                                        {
-                                            printf("polni pizdets");
-                                            break;
-                                        }
-                                        stepsAproximations++;
-                                    }
-                                }
-                                else
-                                {
-                                     if (iRet == 1) // needs to rotate in Y-Z plane same north-south direction
-                                        DoByX = FALSE;
-                                     else
-                                         stepsAproximations++;
-                                }
-                            }
-
-                        }
-                    }
-                    if (iRet != 0) // this is critical point (x or y) & z both in critical point
-                    {
-                        printf("pizdets");
-
-                    }
-                    //Sat->CalcPNK(Sat->LastCosTetta);
-                    //Summ = Sat->SummJ();
-                    Sat->SummXYZ(i, DX,DY,DZ);
-#if 0
-                    Sat->DeltaVX[i][j] =(1.0-DX);
-                    Sat->DeltaVY[i][j] =(1.0-DY);
-#else
-                    Sat->DeltaVX[i][j] =(DX);
-                    Sat->DeltaVY[i][j] =(DY);
-
-#endif
-#ifndef _ACCOUNT_SIN
-                    Sat->DeltaVZ[i][j] =(1.0-DZ);
-#else
-                    Sat->DeltaVZ[i][j] =DZ;
-#endif
-                    // is this a WGS84??:
-                    //Temp = SlS->GM[j] / (R0_MODEL*R0_MODEL);
-                    //Summ = (1- 0.00193185138639*Sat->LastSinTetta*Sat->LastSinTetta)/sqrt(1.0 - 0.00669437999013*Sat->LastSinTetta*Sat->LastSinTetta);
-                    //Summ = (1- 0.00193185138639*Sat->LastCosTetta*Sat->LastCosTetta)/sqrt(1.0 - 0.00669437999013*Sat->LastCosTetta*Sat->LastCosTetta);
-                    //Sat->ForceDD[i][j] = Sat->ForceDD_*Summ;
-                    //GM_MODEL 3.986004415E5;
-                }
+                *Sat_ForceDD_i_j = *SlS_GM_j / *Sat_Distance2_i_j; // to get real force need to multiply on mass of the satellite
             }
+
+
+#else
 #endif
         }
     }
+    long double *Sat_FX_i = &Sat->FX[0];
+    long double *Sat_FY_i = &Sat->FY[0];
+    long double *Sat_FZ_i = &Sat->FZ[0];
     // calculation of a XYZ forces
-    for (i = 0; i < Sat->Elem; i++)
+    for (i = 0; i < Sat->Elem; i++,Sat_FX_i++,Sat_FY_i++,Sat_FZ_i++)
     {
-        Sat->FX[i] = 0.0;
-        Sat->FY[i] = 0.0;
-        Sat->FZ[i] = 0.0;
+        *Sat_FX_i = 0.0;
+        *Sat_FY_i = 0.0;
+        *Sat_FZ_i = 0.0;
 
-        for (j = 0; j < SlS->Elem; j++)
+        long double *Sat_DeltaVX_i_j = &Sat->DeltaVX[i][0];
+        long double *Sat_DeltaVY_i_j = &Sat->DeltaVY[i][0];
+        long double *Sat_DeltaVZ_i_j = &Sat->DeltaVZ[i][0];
+        long double *Sat_ForceDD_i_j = &Sat->ForceDD[i][0];
+        long double *Sat_Distance_i_j =  &Sat->Distance[i][0];
+        for (j = 0; j < SlS->Elem; j++, Sat_DeltaVX_i_j++, Sat_DeltaVY_i_j++, Sat_DeltaVZ_i_j++, Sat_ForceDD_i_j++, Sat_Distance_i_j++)
         {
             //if (SlS->flInUse[j] ==0)
             //continue;
@@ -4292,9 +4284,9 @@ void CalcSatForces(TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfCalc)
                 //Sat->FY[i] += -( Sat->Y[i] - SlS->Y[j])  * Sat->ForceDD[i][j]/Sat->Distance[i][j] + Sat->DeltaVY[i][j]*Sat->ForceDD[i][j];
                 //Sat->FZ[i] += -( Sat->Z[i] - SlS->Z[j])  * Sat->ForceDD[i][j]/Sat->Distance[i][j] + Sat->DeltaVZ[i][j]*Sat->ForceDD[i][j];
 
-                Sat->FX[i] += -Sat->DeltaVX[i][j]*Sat->ForceDD[i][j];
-                Sat->FY[i] += -Sat->DeltaVY[i][j]*Sat->ForceDD[i][j];
-                Sat->FZ[i] += -Sat->DeltaVZ[i][j]*Sat->ForceDD[i][j];
+                *Sat_FX_i += - *Sat_DeltaVX_i_j* *Sat_ForceDD_i_j;
+                *Sat_FY_i += - *Sat_DeltaVY_i_j* *Sat_ForceDD_i_j;
+                *Sat_FZ_i += - *Sat_DeltaVZ_i_j* *Sat_ForceDD_i_j;
 
 #if 1
                 if (Sat->ProbSquare[i])
@@ -4307,17 +4299,18 @@ void CalcSatForces(TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfCalc)
                     long double AbsAir = AirNorm* Sat->ro[i] * Sat->ProbSquare[i]/2*SlS->TimeSl_2;
                     //long double AbsAir = AirNorm* Sat->ro[i] * 2004.0*SlS->TimeSl_2; // is it? Is ISS looks like square with side= 56.014 m? => S area= 3137.679m^2
                     //long double AbsAir = AirNorm* Sat->Ro * 1568.8395*SlS->TimeSl_2; // is it? Is ISS looks like square with side= 56.014 m? => S area= 3137.679m^2
-                    Sat->FX[i] -=AirFX *AbsAir;
-                    Sat->FY[i] -=AirFY *AbsAir;
-                    Sat->FZ[i] -=AirFZ *AbsAir;
+                    *Sat_FX_i -=AirFX *AbsAir;
+                    *Sat_FY_i -=AirFY *AbsAir;
+                    *Sat_FZ_i -=AirFZ *AbsAir;
                 }
 #endif
             }
             else
             {
-                Sat->FX[i] += -( Sat->X[i] - SlS->X[j]) * Sat->ForceDD[i][j]/Sat->Distance[i][j];
-                Sat->FY[i] += -( Sat->Y[i] - SlS->Y[j]) * Sat->ForceDD[i][j]/Sat->Distance[i][j];
-                Sat->FZ[i] += -( Sat->Z[i] - SlS->Z[j]) * Sat->ForceDD[i][j]/Sat->Distance[i][j];
+                long double Sat_ForceDD_i_j_div_Sat_Distance_i_j = *Sat_ForceDD_i_j/ *Sat_Distance_i_j;
+                *Sat_FX_i += -( Sat->X[i] - SlS->X[j]) * Sat_ForceDD_i_j_div_Sat_Distance_i_j;
+                *Sat_FY_i += -( Sat->Y[i] - SlS->Y[j]) * Sat_ForceDD_i_j_div_Sat_Distance_i_j;
+                *Sat_FZ_i += -( Sat->Z[i] - SlS->Z[j]) * Sat_ForceDD_i_j_div_Sat_Distance_i_j;
             }
         }
     }
@@ -8256,6 +8249,10 @@ void ParamProb(char *szString)
         {
             EarthModelCoefs = atoi(pszQuo);
         }
+        IF_XML_READ(CpuCore)
+        {
+            CpuCore = atoi(pszQuo);
+        }
         IF_XML_READ(GM_MODEL)
         {
             GM_MODEL = atof(pszQuo);
@@ -8709,6 +8706,15 @@ void ParamProb(char *szString)
             }
             Sat.CountNx = 0; Sat.CountNy = 0; Sat.CountNz = 0;
             Sat.RunOne = TRUE;
+            // the amoun of yhe core can be grabed from kernel - but it will be nice to have a control
+            if (CpuCore)
+            {
+                Sat.CalcSplit(EarthModelCoefs,CpuCore);
+                Sat.StartThreads();
+            }
+            else
+                Sat.i_proc = 0;
+
 
 #ifndef _NO_GM_CORRECTION
             ModelCoef = SolarSystem.GM[EARTH]/ GM_MODEL;
@@ -11393,6 +11399,10 @@ int main(int argc, char * argv[])
         {
         }
 	}
+    if (CpuCore)
+    {
+        Sat.StopThreads();
+    }
 	return 0;
 }
 
