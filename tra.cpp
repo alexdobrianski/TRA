@@ -69,8 +69,8 @@ void write_JPEG_file (char * filename, int quality, int SizeW, int SizeH, int Si
 
 #define TOTAL_COEF 360
 int iCounter_nk_lm_Numbers;
-int nk_lm_Numbers[TOTAL_COEF*TOTAL_COEF][2];
-long double C_S_nk[TOTAL_COEF*TOTAL_COEF][2];
+int nk_lm_Numbers[(TOTAL_COEF+3)*(TOTAL_COEF+3)][2];
+long double C_S_nk[(TOTAL_COEF+3)*(TOTAL_COEF+3)][2];
     	
     // see http://vadimchazov.narod.ru/lepa_zov/lesat.pdf
     // P0 == P[0](x) = 1
@@ -1272,6 +1272,7 @@ typedef struct TraObj
     int iLeg;
     int iLeg_longit;
     int LegBody;
+#ifdef ALL_OLD_CODE
     long double J[MAX_COEF_J];
     long double CNK[MAX_COEF_J][MAX_COEF_J];
     long double SNK[MAX_COEF_J][MAX_COEF_J];
@@ -1282,7 +1283,7 @@ typedef struct TraObj
     long double Pnk_tilda[MAX_COEF_J][MAX_COEF_J];
     //double Pnk[MAX_COEF_J][MAX_COEF_J];
     long double Qnk[MAX_COEF_J][MAX_COEF_J];
-
+#endif
 
     long double ForceDD_;
     long double Lambda; // that is direction to a Greenwich
@@ -1351,7 +1352,29 @@ typedef struct TraObj
 typedef struct CpuData {
     int cpuid;
     TraObj *my;
+    long double *ParamSinTetta;
+    long double xx, xadd, yadd,zadd;
+    long double *Xk;
+    long double *Yk;
 } CPUDATA, *PCPUDATA;
+
+typedef struct CpuMemory {
+    long double R0divR[TOTAL_COEF+3];
+    long double _p_n_m_1[TOTAL_COEF+3];
+    long double _p_n_m_2[TOTAL_COEF+3];
+    long double _pt_nk[TOTAL_COEF+3][TOTAL_COEF+3];
+    long double _tp_nm1_k[TOTAL_COEF+3][TOTAL_COEF+3];
+    long double _tp_nm2_k[TOTAL_COEF+3][TOTAL_COEF+3];
+    long double _tpk_n_k[TOTAL_COEF+3];
+    long double diagonal[TOTAL_COEF+3];
+    long double _p_n_k[TOTAL_COEF+3];
+    long double Xk[TOTAL_COEF+3];
+    long double Yk[TOTAL_COEF+3];
+    long double C_S_nk[(TOTAL_COEF+3)*(TOTAL_COEF+3)][2];
+    long double _SQRT3;
+} CPUMEMORY, *PCPUMEMORY;
+
+CPUMEMORY MainCpu;
 
     CPUDATA CPUID[32];
     int i_split[32][3];
@@ -1359,8 +1382,10 @@ typedef struct CpuData {
 
     HANDLE		hWaitForExit[32];
     HANDLE		hWaitCmdDoCalc[32];
+    HANDLE		hWaitCmdDoneCalc[32];
     HANDLE		hWaitCmdStop[32];
     HANDLE		Callback_Thread[32];
+    
 
 
     static DWORD WINAPI CallbackThread_Proc(LPVOID lParm)
@@ -1371,12 +1396,36 @@ typedef struct CpuData {
 	    BOOL bFound;
 	    BOOL bRes;
 	    int iRea;
+        int Nb, Ne, Kb, Ke, Nall;
         CPUDATA *Param = (CPUDATA*)lParm;
         TraObj *my = Param->my;
         int cpuid = Param->cpuid;
+        long double *pSinTetta = Param->ParamSinTetta;
+        long double sin_Tetta;
+        long double xx, xadd, yadd,zadd;
+        CPUMEMORY ThreadCpuMem;
 	
         hList[0] = my->hWaitCmdStop[cpuid];
 	    hList[1] = my->hWaitCmdDoCalc[cpuid];
+
+        memcpy(ThreadCpuMem.diagonal, my->diagonal, sizeof(ThreadCpuMem.diagonal));
+        memcpy(ThreadCpuMem._pt_nk, my->_pt_nk, sizeof(ThreadCpuMem._pt_nk));
+        memcpy(ThreadCpuMem._p_n_m_1, my->_p_n_m_1, sizeof(ThreadCpuMem._p_n_m_1));
+        memcpy(ThreadCpuMem._p_n_m_2, my->_p_n_m_2, sizeof(ThreadCpuMem._p_n_m_2));
+        memcpy(ThreadCpuMem._tpk_n_k, my->_tpk_n_k, sizeof(ThreadCpuMem._tpk_n_k));
+        memcpy(ThreadCpuMem._tp_nm1_k, my->_tp_nm1_k, sizeof(ThreadCpuMem._tp_nm1_k));
+        memcpy(ThreadCpuMem._tp_nm2_k, my->_tp_nm2_k, sizeof(ThreadCpuMem._tp_nm2_k));
+        memcpy(ThreadCpuMem.C_S_nk, C_S_nk, sizeof(ThreadCpuMem.C_S_nk));
+        memcpy(ThreadCpuMem._p_n_k, my->_p_n_k, sizeof(ThreadCpuMem._p_n_k));
+        ThreadCpuMem._SQRT3 = my->_SQRT3;
+        if (cpuid == 0)
+            Nb = 2;
+        else
+            Nb = my->i_split[cpuid][0];
+
+        Ne = my->iLeg;
+        Kb = my->i_split[cpuid][0];
+        Ke = my->i_split[cpuid][1];
 	    
 	    while((ResWait = WaitForMultipleObjects(2,hList,FALSE,INFINITE)) != WAIT_OBJECT_0 )
 	    {
@@ -1385,6 +1434,14 @@ typedef struct CpuData {
 		    bRes = FALSE;
 		    if ((ResWait - WAIT_OBJECT_0) == 1) // hWaitCmdDoCalc
             {
+                sin_Tetta = *Param->ParamSinTetta;
+                memcpy(ThreadCpuMem.Xk, Param->Xk,sizeof(ThreadCpuMem.Xk));
+                memcpy(ThreadCpuMem.Yk, Param->Yk,sizeof(ThreadCpuMem.Yk));
+                memcpy(ThreadCpuMem.R0divR, my->R0divR,sizeof(ThreadCpuMem.R0divR));
+                my->CpuPartSummXYZ ( &ThreadCpuMem, sin_Tetta,  xx, xadd, yadd, zadd, Nb , Ne, Kb, Ke);
+                //my->CpuPartSummXYZ ( &ThreadCpuMem, sin_Tetta,  xx, xadd, yadd, zadd, 2 , Ne, 0, Ne);
+                Param->xx = xx; Param->xadd = xadd; Param->yadd = yadd; Param->zadd = zadd;
+                SetEvent(my->hWaitCmdDoneCalc[cpuid]);
             }
         }
 	    SetEvent(my->hWaitForExit[cpuid]);
@@ -1402,6 +1459,8 @@ typedef struct CpuData {
                 ResetEvent(hWaitForExit[i]);
                 hWaitCmdDoCalc[i] = CreateEvent(NULL, TRUE, TRUE, NULL);
                 ResetEvent(hWaitCmdDoCalc[i]);
+                hWaitCmdDoneCalc[i] = CreateEvent(NULL, TRUE, TRUE, NULL);
+                ResetEvent(hWaitCmdDoneCalc[i]);
                 hWaitCmdStop[i] = CreateEvent(NULL, TRUE, TRUE, NULL);
                 ResetEvent(hWaitCmdStop[i]);
                 Callback_Thread[i] = CreateThread(NULL,20980000,(LPTHREAD_START_ROUTINE)CallbackThread_Proc,(LPVOID)&CPUID[i], STACK_SIZE_PARAM_IS_A_RESERVATION,&dwServiceStateThreadID[i]);
@@ -1424,6 +1483,7 @@ typedef struct CpuData {
             {
                 CloseHandle(hWaitForExit[i]);
                 CloseHandle(hWaitCmdDoCalc[i]);
+                CloseHandle(hWaitCmdDoneCalc[i]);
                 CloseHandle(hWaitCmdStop[i]);
             }
         }
@@ -1813,16 +1873,290 @@ typedef struct CpuData {
         i_split[i_proc-1][1] = i_split[i_proc][0];
     }
 
-    void PowerR(void)
+    void PowerR(long double *__R0divR)
     {
-        long double R0divR_ = R0divR[1]*R0divR[1];
+        long double R0divR_ = __R0divR[1]*__R0divR[1];
         for (int n = 2; n <= iLeg; n++)
         {
-            R0divR[n] = R0divR_;
-            R0divR_*= R0divR[1];
+            __R0divR[n] = R0divR_;
+            R0divR_*= __R0divR[1];
         }
     }
-    void PartSummXYZ ( long double *Xk, long double *Yk, int iTotalCoeff, long double sinTetta, long double &MainVal, 
+    void CpuPartSummXYZ (CPUMEMORY * CpuMemory, long double sinTetta, long double &MainVal, 
+        long double &Xadd, long double &Yadd, long double &Zadd, int Nstart, int Nstop, int Kstart, int Kstop)
+    {
+        int k;
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        int n = 0;  //  initial
+
+        long double Ptilda_m_2[TOTAL_COEF+3];
+        long double Ptilda_m_1[TOTAL_COEF+3];
+        long double Ptilda_[TOTAL_COEF+3];
+        long double *ptilda_m_2 = &Ptilda_m_2[Kstart];
+        long double *ptilda_m_1 = &Ptilda_m_1[Kstart];
+        long double *ptilda_=&Ptilda_[Kstart];
+        int cpSize = sizeof(long double) *3;
+        long double P_20_x_Q20_ = 0;
+        long double Ptilda_20_x_Qnk_ = 0;
+        long double C_nk_ip;
+        long double S_nk_ip;
+
+        long double P_nk_x_Qnk_;
+        long double Ptilda_nk_x_Qnk_;
+        long double P_nk_x_K_x_XSumD;
+        long double P_nk_x_K_x_YSumD;
+
+        long double p_nk_x_Qnk_ = 0.0;
+        long double ptilda_nk_x_Qnk_ = 0.0;
+        long double p_nk_x_K_x_XSumD = 0.0;
+        long double p_nk_x_K_x_YSumD = 0.0;
+
+        for (k = Kstart; k <= Kstop+1; k++) 
+        {
+            Ptilda_[k] = 0;  Ptilda_m_1[k] =0;  Ptilda_m_2[k]=0;
+        }
+        long double P_m_2 = 0;
+        long double P_m_1 = 0;
+        long double P_ = 1;
+        Ptilda_[0]= P_;
+
+
+
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        // next iteration by n
+        n = 1;
+        P_m_2 = P_m_1; P_m_1 = P_;
+        memcpy(ptilda_m_2,ptilda_m_1, cpSize); memcpy(ptilda_m_1,ptilda_, cpSize);
+        //P_ = sinTetta;
+
+#ifdef _NORMALIZED_COEF
+        P_ = sinTetta*CpuMemory->_SQRT3;
+#else
+        P_ = sinTetta;
+#endif
+        Ptilda_[0]= P_;
+
+        //Ptilda_[1] = n * P_m_1 + sinTetta * Ptilda_m_1[1]; // P'[1]  k == '
+
+        // P = sin => d(P)/d(sin) = 1
+#ifdef _NORMALIZED_COEF
+        Ptilda_[1] =  CpuMemory->_SQRT3;
+#else
+        Ptilda_[1] =  1;
+#endif
+
+        long double R0divR_;// = R0divR[1]*R0divR[1];
+        int ip = 0;
+
+        //int iXkYk = 1;
+        int Klast;
+        if (Nstart != 2)
+        {
+            for (n= 2; n< Nstart; n++)
+            {
+                ip +=n+1;
+                //R0divR[n] = R0divR_;
+                //R0divR_*= R0divR[1];
+            }
+        }
+        
+        for (n = Nstart; n <=Nstop; n++)
+        {
+            R0divR_ = CpuMemory->R0divR[n];
+            if (Kstop >= n)
+            {
+                Klast = n;
+                cpSize += sizeof(long double);
+            }
+            else
+                Klast = Kstop;
+            ip+=Kstart;
+            P_nk_x_Qnk_ = 0;
+            Ptilda_nk_x_Qnk_ = 0;
+            P_nk_x_K_x_XSumD = 0;
+            P_nk_x_K_x_YSumD = 0;
+
+            for (k = Kstart; k <=Klast; k++)
+            {
+                long double P_nk;
+                long double Ptilda_nk;
+                long double Qnk_;
+                long double XSumD, YSumD;
+
+#if _DEBUG
+                // sanity check n:
+                if (n != nk_lm_Numbers[ip][0])
+                    exit (1);
+#endif
+                if (k == Kstart)
+                {
+                    P_m_2 = P_m_1; P_m_1 = P_;
+                    memcpy(ptilda_m_2,ptilda_m_1, cpSize); memcpy(ptilda_m_1,ptilda_, cpSize);
+                    if (k)
+                    {
+                        //k=k-1;  // one Pnk left
+                        if ((k-1)==n)
+                            P_nk =0;
+                        else
+                        {
+#ifdef _NORMALIZED_COEF
+                            if ((k-1) == (n-1))
+                                P_nk = CpuMemory->_p_n_k[n];
+                            else if ((k-1) == (n-2))
+                                P_nk = CpuMemory->_tpk_n_k[n]*sinTetta;
+                            else
+                                P_nk = CpuMemory->_tp_nm1_k [n][(k-1)+1] * Ptilda_m_1[(k-1)+1]*sinTetta - CpuMemory->_tp_nm2_k[n][(k-1)+1] * Ptilda_m_2[(k-1)+1];
+#else
+                            if ((k-1) == (n-1))
+                                P_nk = CpuMemory->diagonal[n];
+#ifdef _DO_NOT_SKIP_OBVIOUS
+                            else if ((k-1) == (n-2))
+                                P_nk = CpuMemory->diagonal[n]*sinTetta;
+#endif
+                            else
+                                P_nk = ((2*n-1) * Ptilda_m_1[(k-1)+1]*sinTetta - (n + ((k-1)+1) -1)*Ptilda_m_2[(k-1)+1])/(n-((k-1)+1));
+#endif
+                        }
+                        Ptilda_[(k-1)+1] = P_nk; // store Pnk and rerstore original K;
+                        //k++;
+                    }
+                    else
+                    {
+                        //////////////////////////////////////////////////////////////////////////////////////////////////////////////
+                        // next iteration by n
+#ifdef _NORMALIZED_COEF
+                        P_ = CpuMemory->_p_n_m_1[n] *sinTetta * P_m_1 - CpuMemory->_p_n_m_2[n]*P_m_2;  // P[2]
+#else
+                        P_ = ((2.0* n-1.0) *sinTetta * P_m_1 - (n-1)*P_m_2)/n;  // P[2]
+#endif
+                        P_nk = P_;
+                        /////////////////////////////////////////////////////////////////////////////  k =================0
+                        //k = 0;
+                        Ptilda_[k]= P_;
+#if _DEBUG
+                        // sanity check k:
+                        if (k != nk_lm_Numbers[ip][1])
+                            exit (1);
+#endif
+#ifdef _NORMALIZED_COEF
+                        if (2 == n) // k==0 & n == 2
+                            Ptilda_nk  = CpuMemory->_tpk_n_k[n]*sinTetta;
+                        else
+                            Ptilda_nk  = CpuMemory->_tp_nm1_k [n][k+1] * Ptilda_m_1[k+1]*sinTetta - CpuMemory->_tp_nm2_k[n][k+1] * Ptilda_m_2[k+1];
+            
+#else
+#ifdef _DO_NOT_SKIP_OBVIOUS
+                        if (2 == n) // k==0 & n == 2
+                            Ptilda_nk  = CpuMemory->diagonal[n]*sinTetta;
+                        else
+#endif
+                            Ptilda_nk  = ((2*n-1) * Ptilda_m_1[k+1]*sinTetta - (n + (k+1) -1)*Ptilda_m_2[k+1])/(n-(k+1));   // P'[2]
+#endif
+                        Ptilda_[k+1] = Ptilda_nk; // store P'[2] for use 
+                        Qnk_ = CpuMemory->C_S_nk[ip][0] * CpuMemory->Xk[k] + CpuMemory->C_S_nk[ip][1] * CpuMemory->Yk[k];
+                        // J case
+                        if (ip == 0)
+                        {
+                            P_20_x_Q20_ = P_nk * Qnk_;
+#ifdef _NORMALIZED_COEF
+                            Ptilda_20_x_Qnk_ = CpuMemory->_pt_nk[n][k] *Ptilda_nk *  Qnk_;
+#else
+                            Ptilda_20_x_Qnk_ = Ptilda_nk *  Qnk_;
+#endif
+                        }
+                        else
+                        {
+                            P_nk_x_Qnk_ += -(n+1) * P_nk * Qnk_;
+#ifdef _NORMALIZED_COEF
+                            Ptilda_nk_x_Qnk_ += - CpuMemory->_pt_nk[n][k] *Ptilda_nk *  Qnk_;
+#else
+                            Ptilda_nk_x_Qnk_ += - Ptilda_nk *  Qnk_ ;
+#endif
+                        }
+                        ++ip;
+                        continue;
+                    }
+                }
+                ////////////////////////////////////////////////////////////////////////////////////////
+                //for (k = 1; k <=n; k++)
+                {
+                    ////////////////////////////////////////////////////////////////////////////////////////
+                    // next iteration == k ==2
+#if _DEBUG
+                    // sanity check k:
+                    if (k != nk_lm_Numbers[ip][1])
+                        exit (1);
+#endif
+                    C_nk_ip = CpuMemory->C_S_nk[ip][0];
+                    S_nk_ip = CpuMemory->C_S_nk[ip][1];
+                    Qnk_ = C_nk_ip * CpuMemory->Xk[k] + S_nk_ip * CpuMemory->Yk[k];
+                    XSumD = C_nk_ip * CpuMemory->Xk[k-1] + S_nk_ip * CpuMemory->Yk[k-1];
+                    YSumD = C_nk_ip * CpuMemory->Yk[k-1] - S_nk_ip * CpuMemory->Xk[k-1];
+                    P_nk = Ptilda_[k];
+                    if (k==n)
+                        Ptilda_nk = 0;
+                    else
+                    {
+#ifdef _NORMALIZED_COEF
+                        if (k == (n-1))
+                            Ptilda_nk  = CpuMemory->_p_n_k[n];
+                        else if (k == (n-2))
+                            Ptilda_nk  = CpuMemory->_tpk_n_k[n]*sinTetta;
+                        else
+                            Ptilda_nk  = CpuMemory->_tp_nm1_k [n][k+1] * Ptilda_m_1[k+1]*sinTetta - CpuMemory->_tp_nm2_k[n][k+1] * Ptilda_m_2[k+1];
+#else
+                        if (k == (n-1))
+                            Ptilda_nk = CpuMemory->diagonal[n];
+#ifdef _DO_NOT_SKIP_OBVIOUS
+                        else if (k == (n-2))
+                            Ptilda_nk = CpuMemory->diagonal[n]*sinTetta;
+#endif
+                        else
+                            Ptilda_nk  = ((2*n-1) * Ptilda_m_1[k+1]*sinTetta - (n + (k+1) -1)*Ptilda_m_2[k+1])/(n-(k+1));
+#endif
+                    }
+                    Ptilda_[k+1] = Ptilda_nk;
+                    P_nk_x_Qnk_ += -(n+k+1) * P_nk * Qnk_;
+#ifdef _NORMALIZED_COEF
+                    Ptilda_nk_x_Qnk_ += - CpuMemory->_pt_nk[n][k] *Ptilda_nk *  Qnk_;   // sumh_n    (normalized == z[n][k] * Ptilda_nk *  Qnk_
+#else
+                    Ptilda_nk_x_Qnk_ += - Ptilda_nk *  Qnk_;
+#endif
+                    P_nk_x_K_x_XSumD += P_nk * ( k *  XSumD   );
+                    P_nk_x_K_x_YSumD += P_nk * ( k * -YSumD   );
+                }
+                ++ip;
+            }
+            ////////////////////////////////////////////////////////////////////////////////////////
+            // next iteration == k ==2
+            ip += n - Klast;
+            p_nk_x_Qnk_      += P_nk_x_Qnk_*R0divR_;
+            ptilda_nk_x_Qnk_ +=Ptilda_nk_x_Qnk_*R0divR_;
+            p_nk_x_K_x_XSumD +=P_nk_x_K_x_XSumD*R0divR_;
+            p_nk_x_K_x_YSumD +=P_nk_x_K_x_YSumD*R0divR_;
+            //R0divR[n] = R0divR_;
+            //R0divR_*= R0divR[1];
+        }
+        Xadd = (    + p_nk_x_K_x_XSumD ); 
+        Yadd = (    + p_nk_x_K_x_YSumD );
+        Zadd = (    - ptilda_nk_x_Qnk_ );
+        Zadd+= (  + Ptilda_20_x_Qnk_ * (1.0))* CpuMemory->R0divR[2];
+        MainVal = (p_nk_x_Qnk_ + ptilda_nk_x_Qnk_ * sinTetta ) + (-(2+1) * P_20_x_Q20_ - Ptilda_20_x_Qnk_ * sinTetta)* CpuMemory->R0divR[2] ; 
+    }
+    void FillXkYk(long double XdivR, long double YdivR, long double *Xk, long double *Yk)
+    {
+        Xk[0] = 1.0;
+        Yk[0] = 0.0;
+        Xk[1] = Xk[0]*XdivR - Yk[0]*YdivR;
+        Yk[1] = Yk[0]*XdivR + Xk[0]*YdivR;
+        for (int k = 2; k <= iLeg; k++)
+        {
+            Xk[k] = Xk[k-1]*XdivR - Yk[k-1]*YdivR;
+            Yk[k] = Yk[k-1]*XdivR + Xk[k-1]*YdivR;
+        }
+    }
+
+    void PartSummXYZ ( long double *Xk, long double *Yk, long double sinTetta, long double &MainVal, 
         long double &Xadd, long double &Yadd, long double &Zadd, int Nstart, int Nstop, int Kstart, int Kstop)
     {
         int k;
@@ -2087,19 +2421,7 @@ typedef struct CpuData {
         Yadd = (    + p_nk_x_K_x_YSumD );
         Zadd = (    - ptilda_nk_x_Qnk_ );
         Zadd+= (  + Ptilda_20_x_Qnk_ * (1.0))*R0divR[2];
-        MainVal = (p_nk_x_Qnk_ + ptilda_nk_x_Qnk_ * SinTetta ) + (-(2+1) * P_20_x_Q20_ - Ptilda_20_x_Qnk_ * SinTetta)*R0divR[2] ; 
-    }
-    void FillXkYk(long double XdivR, long double YdivR, long double *Xk, long double *Yk)
-    {
-        Xk[0] = 1.0;
-        Yk[0] = 0.0;
-        Xk[1] = Xk[0]*XdivR - Yk[0]*YdivR;
-        Yk[1] = Yk[0]*XdivR + Xk[0]*YdivR;
-        for (int k = 2; k <= iLeg; k++)
-        {
-            Xk[k] = Xk[k-1]*XdivR - Yk[k-1]*YdivR;
-            Yk[k] = Yk[k-1]*XdivR + Xk[k-1]*YdivR;
-        }
+        MainVal = (p_nk_x_Qnk_ + ptilda_nk_x_Qnk_ * sinTetta ) + (-(2+1) * P_20_x_Q20_ - Ptilda_20_x_Qnk_ * sinTetta)*R0divR[2] ; 
     }
 #if 1
     void FastSummXYZ( long double ValX, long double ValY, long double ValZ, long double ValR, long double &X, long double &Y, long double &Z, 
@@ -2148,38 +2470,82 @@ typedef struct CpuData {
         YdivR =   tempY/ValR;
         XdivRval = XdivR;
         YdivRval = YdivR;
-
+#ifdef ALL_OLD_CODE
         SinTetta = sinTetta;
+#endif
 
         // loop iteration starts from n=2 k = 0
         // formula 8 on page 92
         long double Xk[TOTAL_COEF+3];
         long double Yk[TOTAL_COEF+3];
+#if 0
         FillXkYk(XdivR, YdivR, Xk, Yk);
-        PowerR();
+        PowerR(R0divR);
         if (i_proc == 0)
         {
-            PartSummXYZ ( Xk, Yk, TOTAL_COEF+3, sinTetta,  X, Xadd, Yadd, Zadd, 2, iLeg, 0, iLeg);
+            PartSummXYZ (Xk,Yk, sinTetta,  X, Xadd, Yadd, Zadd, 2, iLeg, 0, iLeg);
 
                            Y=X;            Z=X;
             X=1-X;         Y=1-Y;          Z=1-Z;
             Xadd = -Xadd;  Yadd = -Yadd;   Zadd = -Zadd;
         }
+
+#else
+
+        if (i_proc == 0)
+        {
+            FillXkYk(XdivR, YdivR, MainCpu.Xk, MainCpu.Yk);
+            MainCpu.R0divR[0] = R0divR[0];
+            MainCpu.R0divR[1] = R0divR[1];
+            PowerR(MainCpu.R0divR);
+
+            CpuPartSummXYZ (&MainCpu, sinTetta,  X, Xadd, Yadd, Zadd, 2, iLeg, 0, iLeg);
+                           Y=X;            Z=X;
+            X=1-X;         Y=1-Y;          Z=1-Z;
+            Xadd = -Xadd;  Yadd = -Yadd;   Zadd = -Zadd;
+        }
+#endif 
         else
         {
+#define CALC_VIA_THREADS
+#ifdef CALC_VIA_THREADS
+            FillXkYk(XdivR, YdivR, Xk, Yk);
+            PowerR(R0divR);
+            CPUID[0].ParamSinTetta = &sinTetta; CPUID[0].Xk =  Xk; CPUID[0].Yk = Yk;
+            SetEvent(hWaitCmdDoCalc[0]);
+            CPUID[1].ParamSinTetta = &sinTetta; CPUID[1].Xk =  Xk; CPUID[1].Yk = Yk;
+            SetEvent(hWaitCmdDoCalc[1]);
+            CPUID[2].ParamSinTetta = &sinTetta; CPUID[2].Xk =  Xk; CPUID[2].Yk = Yk;
+            SetEvent(hWaitCmdDoCalc[2]);
+            CPUID[3].ParamSinTetta = &sinTetta; CPUID[3].Xk = Xk; CPUID[3].Yk = Yk;
+            SetEvent(hWaitCmdDoCalc[3]);
+	    
+	        WaitForMultipleObjects(4,hWaitCmdDoneCalc,TRUE,INFINITE);
+            ResetEvent(hWaitCmdDoneCalc[0]);
+            ResetEvent(hWaitCmdDoneCalc[1]);
+            ResetEvent(hWaitCmdDoneCalc[2]);
+            ResetEvent(hWaitCmdDoneCalc[3]);
+            X = CPUID[0].xx + CPUID[1].xx + CPUID[2].xx + CPUID[3].xx;
+                           Y=X;            Z=X;
+            X=1-X;         Y=1-Y;          Z=1-Z;
+            Xadd = CPUID[0].xadd + CPUID[1].xadd + CPUID[2].xadd + CPUID[3].xadd;
+            Yadd = CPUID[0].yadd + CPUID[1].yadd + CPUID[2].yadd + CPUID[3].yadd;
+            Zadd = CPUID[0].zadd + CPUID[1].zadd + CPUID[2].zadd + CPUID[3].zadd;
+#else
             long double xx[4], xadd[4], yadd[4],zadd[4];
-        
+            PowerR(R0divR);
             // i_split[0][0] - i_split[0][1]
-            PartSummXYZ ( Xk, Yk, TOTAL_COEF+3, sinTetta,  xx[0], xadd[0], yadd[0], zadd[0], 2            , iLeg, i_split[0][0], i_split[0][1]);
-            PartSummXYZ ( Xk, Yk, TOTAL_COEF+3, sinTetta,  xx[1], xadd[1], yadd[1], zadd[1], i_split[1][0], iLeg, i_split[1][0], i_split[1][1]);
-            PartSummXYZ ( Xk, Yk, TOTAL_COEF+3, sinTetta,  xx[2], xadd[2], yadd[2], zadd[2], i_split[2][0], iLeg, i_split[2][0], i_split[2][1]);
-            PartSummXYZ ( Xk, Yk, TOTAL_COEF+3, sinTetta,  xx[3], xadd[3], yadd[3], zadd[3], i_split[3][0], iLeg, i_split[3][0], iLeg         );
+            PartSummXYZ ( MainCpu.Xk, MainCpu.Yk, sinTetta,  xx[0], xadd[0], yadd[0], zadd[0], 2            , iLeg, i_split[0][0], i_split[0][1]);
+            PartSummXYZ ( MainCpu.Xk, MainCpu.Yk, sinTetta,  xx[1], xadd[1], yadd[1], zadd[1], i_split[1][0], iLeg, i_split[1][0], i_split[1][1]);
+            PartSummXYZ ( MainCpu.Xk, MainCpu.Yk, sinTetta,  xx[2], xadd[2], yadd[2], zadd[2], i_split[2][0], iLeg, i_split[2][0], i_split[2][1]);
+            PartSummXYZ ( MainCpu.Xk, MainCpu.Yk, sinTetta,  xx[3], xadd[3], yadd[3], zadd[3], i_split[3][0], iLeg, i_split[3][0], iLeg         );
             X = xx[0]+xx[1]+xx[2]+xx[3];
                            Y=X;            Z=X;
             X=1-X;         Y=1-Y;          Z=1-Z;
             Xadd = xadd[0]+xadd[1]+xadd[2]+xadd[3];
             Yadd = yadd[0]+yadd[1]+yadd[2]+yadd[3];
             Zadd = zadd[0]+zadd[1]+zadd[2]+zadd[3];
+#endif
             Xadd = -Xadd;  Yadd = -Yadd;   Zadd = -Zadd;
         }
         trs_2_gcrs(Xadd, Yadd, Zadd);
@@ -3081,6 +3447,7 @@ typedef struct CpuData {
 
     };
 #endif    
+#ifdef ALL_OLD_CODE
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     int CalcP( long double ValX, long double ValY, long double ValZ, long double ValR)
     {
@@ -3187,8 +3554,9 @@ typedef struct CpuData {
 
         XdivRval = XdivR;
         YdivRval = YdivR;
-
+#ifdef ALL_OLD_CODE
         SinTetta = sinTetta;
+#endif
 #define CPV 0.0000005
 #if 0
         if ((XdivRval > -CPV) && (XdivRval < CPV))
@@ -3789,6 +4157,7 @@ typedef struct CpuData {
 
         return Summ;
     };
+#endif
 } TRAOBJ, *PTRAOBJ;
 
 #define MAX_IMPULSE_LINES 100
@@ -8707,13 +9076,6 @@ void ParamProb(char *szString)
             Sat.CountNx = 0; Sat.CountNy = 0; Sat.CountNz = 0;
             Sat.RunOne = TRUE;
             // the amoun of yhe core can be grabed from kernel - but it will be nice to have a control
-            if (CpuCore)
-            {
-                Sat.CalcSplit(EarthModelCoefs,CpuCore);
-                Sat.StartThreads();
-            }
-            else
-                Sat.i_proc = 0;
 
 
 #ifndef _NO_GM_CORRECTION
@@ -8978,8 +9340,25 @@ DONE_WITH_LINE:
             Sat.iLeg_longit = 0; // no longitude in calculation
             Sat.Lambda = -2;
             Sat.LegBody = EARTH;
-            
-            
+
+            memcpy(Sat.MainCpu.diagonal, Sat.diagonal, sizeof(Sat.MainCpu.diagonal));
+            memcpy(Sat.MainCpu._pt_nk, Sat._pt_nk, sizeof(Sat.MainCpu._pt_nk));
+            memcpy(Sat.MainCpu._p_n_m_1, Sat._p_n_m_1, sizeof(Sat.MainCpu._p_n_m_1));
+            memcpy(Sat.MainCpu._p_n_m_2, Sat._p_n_m_2, sizeof(Sat.MainCpu._p_n_m_2));
+            memcpy(Sat.MainCpu._tpk_n_k, Sat._tpk_n_k, sizeof(Sat.MainCpu._tpk_n_k));
+            memcpy(Sat.MainCpu._tp_nm1_k, Sat._tp_nm1_k, sizeof(Sat.MainCpu._tp_nm1_k));
+            memcpy(Sat.MainCpu._tp_nm2_k, Sat._tp_nm2_k, sizeof(Sat.MainCpu._tp_nm2_k));
+            memcpy(Sat.MainCpu.C_S_nk, C_S_nk, sizeof(Sat.MainCpu.C_S_nk));
+            memcpy(Sat.MainCpu._p_n_k, Sat._p_n_k, sizeof(Sat.MainCpu._p_n_k));
+            Sat.MainCpu._SQRT3 = Sat._SQRT3;
+            if (CpuCore)
+            {
+                Sat.CalcSplit(EarthModelCoefs,CpuCore);
+                Sat.StartThreads();
+            }
+            else
+                Sat.i_proc = 0;
+
         }
         IF_XML_READ(UseSatData)
         {
