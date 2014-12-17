@@ -1356,6 +1356,8 @@ typedef struct CpuData {
     long double xx, xadd, yadd,zadd;
     long double *Xk;
     long double *Yk;
+    int WaitVar;
+    int WaitDoVar;
 } CPUDATA, *PCPUDATA;
 
 typedef struct CpuMemory {
@@ -1426,13 +1428,18 @@ CPUMEMORY MainCpu;
         Ne = my->iLeg;
         Kb = my->i_split[cpuid][0];
         Ke = my->i_split[cpuid][1];
-	    
-	    while((ResWait = WaitForMultipleObjects(2,hList,FALSE,INFINITE)) != WAIT_OBJECT_0 )
+WAIT_AGAIN:	    
+        Param->WaitDoVar = 0;
+	    //while((ResWait = WaitForMultipleObjects(2,hList,FALSE,INFINITE)) != WAIT_OBJECT_0 )
+        while(Param->WaitDoVar == 0)
+        {
+            SwitchToThread();
+        }
 	    {
-		    ResetEvent(hList[ResWait - WAIT_OBJECT_0]);
+		    //ResetEvent(my->hWaitCmdDoCalc[cpuid]);
 		
 		    bRes = FALSE;
-		    if ((ResWait - WAIT_OBJECT_0) == 1) // hWaitCmdDoCalc
+		    if (Param->WaitDoVar == 1) // hWaitCmdDoCalc
             {
                 sin_Tetta = *Param->ParamSinTetta;
                 memcpy(ThreadCpuMem.Xk, Param->Xk,sizeof(ThreadCpuMem.Xk));
@@ -1441,8 +1448,11 @@ CPUMEMORY MainCpu;
                 my->CpuPartSummXYZ ( &ThreadCpuMem, sin_Tetta,  xx, xadd, yadd, zadd, Nb , Ne, Kb, Ke);
                 //my->CpuPartSummXYZ ( &ThreadCpuMem, sin_Tetta,  xx, xadd, yadd, zadd, 2 , Ne, 0, Ne);
                 Param->xx = xx; Param->xadd = xadd; Param->yadd = yadd; Param->zadd = zadd;
-                SetEvent(my->hWaitCmdDoneCalc[cpuid]);
+
+                Param->WaitVar = 1;
+                //SetEvent(my->hWaitCmdDoneCalc[cpuid]);
             }
+            goto WAIT_AGAIN;
         }
 	    SetEvent(my->hWaitForExit[cpuid]);
 	    return(uResult);   
@@ -1455,15 +1465,17 @@ CPUMEMORY MainCpu;
         {
             for (int i =0; i <i_proc; i++)
             {
-                hWaitForExit[i] = CreateEvent(NULL, TRUE, TRUE, NULL);
+                hWaitForExit[i] = CreateEvent(NULL, FALSE, TRUE, NULL);
                 ResetEvent(hWaitForExit[i]);
-                hWaitCmdDoCalc[i] = CreateEvent(NULL, TRUE, TRUE, NULL);
+                hWaitCmdDoCalc[i] = CreateEvent(NULL, FALSE, TRUE, NULL);
                 ResetEvent(hWaitCmdDoCalc[i]);
-                hWaitCmdDoneCalc[i] = CreateEvent(NULL, TRUE, TRUE, NULL);
+                hWaitCmdDoneCalc[i] = CreateEvent(NULL, FALSE, TRUE, NULL);
                 ResetEvent(hWaitCmdDoneCalc[i]);
-                hWaitCmdStop[i] = CreateEvent(NULL, TRUE, TRUE, NULL);
+                hWaitCmdStop[i] = CreateEvent(NULL, FALSE, TRUE, NULL);
                 ResetEvent(hWaitCmdStop[i]);
-                Callback_Thread[i] = CreateThread(NULL,20980000,(LPTHREAD_START_ROUTINE)CallbackThread_Proc,(LPVOID)&CPUID[i], STACK_SIZE_PARAM_IS_A_RESERVATION,&dwServiceStateThreadID[i]);
+                Callback_Thread[i] = CreateThread(NULL,20980000,(LPTHREAD_START_ROUTINE)CallbackThread_Proc,(LPVOID)&CPUID[i], 0/*STACK_SIZE_PARAM_IS_A_RESERVATION*/,&dwServiceStateThreadID[i]);
+                //SetThreadPriority(Callback_Thread[i],THREAD_PRIORITY_TIME_CRITICAL);
+                SetThreadPriority(Callback_Thread[i],THREAD_PRIORITY_IDLE);
                 DWORD err = GetLastError();
             }
         }
@@ -1477,6 +1489,7 @@ CPUMEMORY MainCpu;
             for (i =0; i <i_proc; i++)
             {
                 SetEvent(hWaitCmdStop[i]);
+                CPUID[i].WaitDoVar = 2;
             }
             WaitForMultipleObjects(i_proc,hWaitForExit,TRUE,2000);
             for (i =0; i <i_proc; i++)
@@ -1864,6 +1877,7 @@ CPUMEMORY MainCpu;
             {
                 CPUID[i_proc].cpuid = i_proc;
                 CPUID[i_proc].my = this;
+                CPUID[i_proc].WaitVar = 0;
                 i_split[i_proc][2] = iEachCount;
                 i_split[i_proc++][1] = i;
                 i_split[i_proc][0] = i+1;
@@ -2509,28 +2523,39 @@ CPUMEMORY MainCpu;
         {
 #define CALC_VIA_THREADS
 #ifdef CALC_VIA_THREADS
+            
             FillXkYk(XdivR, YdivR, Xk, Yk);
             PowerR(R0divR);
-            CPUID[0].ParamSinTetta = &sinTetta; CPUID[0].Xk =  Xk; CPUID[0].Yk = Yk;
-            SetEvent(hWaitCmdDoCalc[0]);
-            CPUID[1].ParamSinTetta = &sinTetta; CPUID[1].Xk =  Xk; CPUID[1].Yk = Yk;
-            SetEvent(hWaitCmdDoCalc[1]);
-            CPUID[2].ParamSinTetta = &sinTetta; CPUID[2].Xk =  Xk; CPUID[2].Yk = Yk;
-            SetEvent(hWaitCmdDoCalc[2]);
-            CPUID[3].ParamSinTetta = &sinTetta; CPUID[3].Xk = Xk; CPUID[3].Yk = Yk;
-            SetEvent(hWaitCmdDoCalc[3]);
+            int ipr;
+            int bRes = 0;
+            for (ipr = 0; ipr< i_proc; ipr++)
+            {
+                CPUID[ipr].ParamSinTetta = &sinTetta; CPUID[ipr].Xk =  Xk; CPUID[ipr].Yk = Yk;
+                CPUID[ipr].WaitVar = 0;
+                //SetEvent(hWaitCmdDoCalc[ipr]);
+                //ResumeThread(Callback_Thread[ipr]);   
+                SetThreadPriority(Callback_Thread[ipr],THREAD_PRIORITY_TIME_CRITICAL);
+                CPUID[ipr].WaitDoVar = 1;
+                
+            }
 	    
-	        WaitForMultipleObjects(4,hWaitCmdDoneCalc,TRUE,INFINITE);
-            ResetEvent(hWaitCmdDoneCalc[0]);
-            ResetEvent(hWaitCmdDoneCalc[1]);
-            ResetEvent(hWaitCmdDoneCalc[2]);
-            ResetEvent(hWaitCmdDoneCalc[3]);
-            X = CPUID[0].xx + CPUID[1].xx + CPUID[2].xx + CPUID[3].xx;
+            while(CPUID[0].WaitVar == 0)
+            {
+                SwitchToThread();
+            }
+            SetThreadPriority(Callback_Thread[0],THREAD_PRIORITY_IDLE);
+	        //WaitForMultipleObjects(i_proc,hWaitCmdDoneCalc,TRUE,INFINITE);
+            //SuspendThread(Callback_Thread[0]);
+            
+            X=0;  Xadd=0;  Yadd=0;  Zadd=0;
+            for (ipr = 0; ipr< i_proc; ipr++)
+            {
+                //ResetEvent(hWaitCmdDoneCalc[ipr]);
+                X+= CPUID[ipr].xx;
+                Xadd += CPUID[ipr].xadd;  Yadd += CPUID[ipr].yadd;  Zadd += CPUID[ipr].zadd;
+            }
                            Y=X;            Z=X;
             X=1-X;         Y=1-Y;          Z=1-Z;
-            Xadd = CPUID[0].xadd + CPUID[1].xadd + CPUID[2].xadd + CPUID[3].xadd;
-            Yadd = CPUID[0].yadd + CPUID[1].yadd + CPUID[2].yadd + CPUID[3].yadd;
-            Zadd = CPUID[0].zadd + CPUID[1].zadd + CPUID[2].zadd + CPUID[3].zadd;
 #else
             long double xx[4], xadd[4], yadd[4],zadd[4];
             PowerR(R0divR);
