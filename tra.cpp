@@ -1356,6 +1356,7 @@ typedef struct CpuData {
     long double xx, xadd, yadd,zadd;
     long double *Xk;
     long double *Yk;
+    long double *R0divR;
     int WaitVar;
     int WaitDoVar;
 } CPUDATA, *PCPUDATA;
@@ -1376,7 +1377,8 @@ typedef struct CpuMemory {
     long double _SQRT3;
 } CPUMEMORY, *PCPUMEMORY;
 
-CPUMEMORY MainCpu;
+    HANDLE mainThread;
+    CPUMEMORY MainCpu;
 
     CPUDATA CPUID[32];
     int i_split[32][3];
@@ -1387,7 +1389,35 @@ CPUMEMORY MainCpu;
     HANDLE		hWaitCmdDoneCalc[32];
     HANDLE		hWaitCmdStop[32];
     HANDLE		Callback_Thread[32];
-    
+
+//#define THREAD_SIGNAL SET_EVENT
+#ifdef THREAD_SIGNAL
+#define WAIT_THREAD_POINT while((ResWait = WaitForMultipleObjects(2,hList,FALSE,INFINITE)) != WAIT_OBJECT_0 )
+#define DONE_THREAD_SIGNAL SetEvent(my->hWaitCmdDoneCalc[cpuid]);
+#define CONTINUE_TO_WAIT ;
+#else
+#define WAIT_THREAD_POINT WAIT_AGAIN: \
+        my->CPUID[0].WaitDoVar = 0;\
+        SetThreadPriority(my->Callback_Thread[cpuid],THREAD_PRIORITY_IDLE);\
+        while(my->CPUID[0].WaitDoVar == 0)\
+        {\
+            SwitchToThread();\
+        }\
+        SetThreadPriority(my->Callback_Thread[cpuid],THREAD_PRIORITY_NORMAL);\
+        if (my->CPUID[0].WaitDoVar == 1)
+
+#define DONE_THREAD_SIGNAL Param->WaitVar = 1;\
+                iRea=0;\
+                for (int icnt = 1; icnt < my->i_proc; icnt++)\
+                {  \
+                    iRea += my->CPUID[icnt].WaitVar;\
+                }\
+                if (iRea == (my->i_proc -1))\
+                {\
+                    my->CPUID[0].WaitVar = 1; \
+                }
+#define CONTINUE_TO_WAIT goto WAIT_AGAIN;
+#endif
 
 
     static DWORD WINAPI CallbackThread_Proc(LPVOID lParm)
@@ -1410,6 +1440,8 @@ CPUMEMORY MainCpu;
         hList[0] = my->hWaitCmdStop[cpuid];
 	    hList[1] = my->hWaitCmdDoCalc[cpuid];
 
+        //bRes = SetThreadAffinityMask(my->Callback_Thread[cpuid],4);
+
         memcpy(ThreadCpuMem.diagonal, my->diagonal, sizeof(ThreadCpuMem.diagonal));
         memcpy(ThreadCpuMem._pt_nk, my->_pt_nk, sizeof(ThreadCpuMem._pt_nk));
         memcpy(ThreadCpuMem._p_n_m_1, my->_p_n_m_1, sizeof(ThreadCpuMem._p_n_m_1));
@@ -1428,31 +1460,23 @@ CPUMEMORY MainCpu;
         Ne = my->iLeg;
         Kb = my->i_split[cpuid][0];
         Ke = my->i_split[cpuid][1];
-WAIT_AGAIN:	    
-        Param->WaitDoVar = 0;
-	    //while((ResWait = WaitForMultipleObjects(2,hList,FALSE,INFINITE)) != WAIT_OBJECT_0 )
-        while(Param->WaitDoVar == 0)
-        {
-            SwitchToThread();
-        }
+        WAIT_THREAD_POINT
 	    {
 		    //ResetEvent(my->hWaitCmdDoCalc[cpuid]);
 		
-		    bRes = FALSE;
-		    if (Param->WaitDoVar == 1) // hWaitCmdDoCalc
+		    //bRes = FALSE;
+		    //if (Param->WaitDoVar == 1) // hWaitCmdDoCalc
             {
                 sin_Tetta = *Param->ParamSinTetta;
                 memcpy(ThreadCpuMem.Xk, Param->Xk,sizeof(ThreadCpuMem.Xk));
                 memcpy(ThreadCpuMem.Yk, Param->Yk,sizeof(ThreadCpuMem.Yk));
-                memcpy(ThreadCpuMem.R0divR, my->R0divR,sizeof(ThreadCpuMem.R0divR));
+                memcpy(ThreadCpuMem.R0divR, Param->R0divR,sizeof(ThreadCpuMem.R0divR));
                 my->CpuPartSummXYZ ( &ThreadCpuMem, sin_Tetta,  xx, xadd, yadd, zadd, Nb , Ne, Kb, Ke);
                 //my->CpuPartSummXYZ ( &ThreadCpuMem, sin_Tetta,  xx, xadd, yadd, zadd, 2 , Ne, 0, Ne);
                 Param->xx = xx; Param->xadd = xadd; Param->yadd = yadd; Param->zadd = zadd;
-
-                Param->WaitVar = 1;
-                //SetEvent(my->hWaitCmdDoneCalc[cpuid]);
+                DONE_THREAD_SIGNAL
             }
-            goto WAIT_AGAIN;
+            CONTINUE_TO_WAIT
         }
 	    SetEvent(my->hWaitForExit[cpuid]);
 	    return(uResult);   
@@ -1461,9 +1485,18 @@ WAIT_AGAIN:
 
     void StartThreads(void)
     {
-        if (i_proc)
+        if (i_proc > 1)
         {
-            for (int i =0; i <i_proc; i++)
+            mainThread = GetCurrentThread();
+            DWORD dwProcessAffinityMask;
+            DWORD dwSystemAffinityMask;
+            DWORD dwThreadAffinityMask = 1;
+            BOOL Ret;
+            GetProcessAffinityMask(GetCurrentProcess(), &dwProcessAffinityMask, &dwSystemAffinityMask);
+            Ret = SetThreadAffinityMask(GetCurrentThread(), dwThreadAffinityMask);
+            dwThreadAffinityMask <<= 2;
+
+            for (int i =1; i <i_proc; i++)
             {
                 hWaitForExit[i] = CreateEvent(NULL, FALSE, TRUE, NULL);
                 ResetEvent(hWaitForExit[i]);
@@ -1473,26 +1506,38 @@ WAIT_AGAIN:
                 ResetEvent(hWaitCmdDoneCalc[i]);
                 hWaitCmdStop[i] = CreateEvent(NULL, FALSE, TRUE, NULL);
                 ResetEvent(hWaitCmdStop[i]);
+                //SECURITY_ATTRIBUTES sa;
+                //sa.nLength = sizeof(SECURITY_ATTRIBUTES);
+                //sa.bInheritHandle = FALSE:
                 Callback_Thread[i] = CreateThread(NULL,20980000,(LPTHREAD_START_ROUTINE)CallbackThread_Proc,(LPVOID)&CPUID[i], 0/*STACK_SIZE_PARAM_IS_A_RESERVATION*/,&dwServiceStateThreadID[i]);
+                if (dwThreadAffinityMask & dwProcessAffinityMask)
+                {
+                    Ret = SetThreadAffinityMask(Callback_Thread[i],dwThreadAffinityMask);
+                    dwThreadAffinityMask <<= 2;
+                }
                 //SetThreadPriority(Callback_Thread[i],THREAD_PRIORITY_TIME_CRITICAL);
-                SetThreadPriority(Callback_Thread[i],THREAD_PRIORITY_IDLE);
+                //SetThreadPriority(Callback_Thread[i],THREAD_PRIORITY_IDLE);
                 DWORD err = GetLastError();
             }
+            
         }
 
     }
     void StopThreads(void)
     {
         int i;
-        if (i_proc)
+        if (i_proc > 1)
         {
-            for (i =0; i <i_proc; i++)
+            for (i =1; i <i_proc; i++)
             {
                 SetEvent(hWaitCmdStop[i]);
                 CPUID[i].WaitDoVar = 2;
+                SetThreadPriority(Callback_Thread[i],THREAD_PRIORITY_TIME_CRITICAL);
             }
-            WaitForMultipleObjects(i_proc,hWaitForExit,TRUE,2000);
-            for (i =0; i <i_proc; i++)
+            CPUID[0].WaitDoVar = 2;
+            
+            WaitForMultipleObjects(i_proc-1,&hWaitForExit[1],TRUE,2000);
+            for (i =1; i <i_proc; i++)
             {
                 CloseHandle(hWaitForExit[i]);
                 CloseHandle(hWaitCmdDoCalc[i]);
@@ -1854,6 +1899,23 @@ WAIT_AGAIN:
 #if 1
     void CalcSplit(long iCoefs, long iCpu)
     {
+        if (iCpu < 0)
+        {
+            DWORD dwProcessAffinityMask;
+            DWORD dwSystemAffinityMask;
+            DWORD dwThreadAffinityMask = 1;
+            BOOL Ret;
+            GetProcessAffinityMask(GetCurrentProcess(), &dwProcessAffinityMask, &dwSystemAffinityMask);
+            iCpu = 0;
+            while(dwThreadAffinityMask & dwProcessAffinityMask)
+            {
+                dwThreadAffinityMask <<=2;
+                iCpu++;
+            }
+            CpuCore = iCpu;
+            printf("\n detected %d cpu",CpuCore);
+            
+        }
         i_proc = 0;
         long iAll = 0;
         int i;
@@ -2505,14 +2567,12 @@ WAIT_AGAIN:
         }
 
 #else
-
-        if (i_proc == 0)
+        FillXkYk(XdivR, YdivR, MainCpu.Xk, MainCpu.Yk);
+        MainCpu.R0divR[0] = R0divR[0];
+        MainCpu.R0divR[1] = R0divR[1];
+        PowerR(MainCpu.R0divR);
+        if (i_proc <= 1)
         {
-            FillXkYk(XdivR, YdivR, MainCpu.Xk, MainCpu.Yk);
-            MainCpu.R0divR[0] = R0divR[0];
-            MainCpu.R0divR[1] = R0divR[1];
-            PowerR(MainCpu.R0divR);
-
             CpuPartSummXYZ (&MainCpu, sinTetta,  X, Xadd, Yadd, Zadd, 2, iLeg, 0, iLeg);
                            Y=X;            Z=X;
             X=1-X;         Y=1-Y;          Z=1-Z;
@@ -2523,34 +2583,39 @@ WAIT_AGAIN:
         {
 #define CALC_VIA_THREADS
 #ifdef CALC_VIA_THREADS
-            
-            FillXkYk(XdivR, YdivR, Xk, Yk);
-            PowerR(R0divR);
+
+#ifdef THREAD_SIGNAL
+#define KICK_THREAD_SIGNAL SetEvent(hWaitCmdDoCalc[ipr]);
+#define KICK_ALL_THREAD_SIGNAL ;
+#define WAIT_ALL_THREAD_DONE WaitForMultipleObjects(i_proc-1,&hWaitCmdDoneCalc[1],TRUE,INFINITE);
+#else
+#define KICK_THREAD_SIGNAL SetThreadPriority(Callback_Thread[ipr],THREAD_PRIORITY_TIME_CRITICAL);
+#define KICK_ALL_THREAD_SIGNAL CPUID[0].WaitDoVar = 1;
+//#define WAIT_ALL_THREAD_DONE \SetThreadPriority(mainThread,THREAD_PRIORITY_IDLE);\
+
+#define WAIT_ALL_THREAD_DONE while(CPUID[0].WaitVar == 0) \
+            { \
+                SwitchToThread(); \
+            }\
+            for (ipr = 0; ipr< i_proc; ipr++)\
+                CPUID[ipr].WaitVar = 0; 
+#endif
             int ipr;
-            int bRes = 0;
-            for (ipr = 0; ipr< i_proc; ipr++)
+            for (ipr = 1; ipr< i_proc; ipr++)
             {
-                CPUID[ipr].ParamSinTetta = &sinTetta; CPUID[ipr].Xk =  Xk; CPUID[ipr].Yk = Yk;
-                CPUID[ipr].WaitVar = 0;
-                //SetEvent(hWaitCmdDoCalc[ipr]);
-                //ResumeThread(Callback_Thread[ipr]);   
-                SetThreadPriority(Callback_Thread[ipr],THREAD_PRIORITY_TIME_CRITICAL);
-                CPUID[ipr].WaitDoVar = 1;
-                
+                CPUID[ipr].ParamSinTetta = &sinTetta; CPUID[ipr].Xk =  MainCpu.Xk; CPUID[ipr].Yk = MainCpu.Yk;
+                CPUID[ipr].R0divR = MainCpu.R0divR;
+                KICK_THREAD_SIGNAL
             }
-	    
-            while(CPUID[0].WaitVar == 0)
-            {
-                SwitchToThread();
-            }
-            SetThreadPriority(Callback_Thread[0],THREAD_PRIORITY_IDLE);
-	        //WaitForMultipleObjects(i_proc,hWaitCmdDoneCalc,TRUE,INFINITE);
-            //SuspendThread(Callback_Thread[0]);
+            KICK_ALL_THREAD_SIGNAL
             
-            X=0;  Xadd=0;  Yadd=0;  Zadd=0;
-            for (ipr = 0; ipr< i_proc; ipr++)
+            CPUID[0].WaitDoVar = 1;
+            CpuPartSummXYZ (&MainCpu, sinTetta,  X, Xadd, Yadd, Zadd, 2, iLeg, 0, i_split[0][1]);
+            
+            WAIT_ALL_THREAD_DONE
+            
+            for (ipr = 1; ipr< i_proc; ipr++)
             {
-                //ResetEvent(hWaitCmdDoneCalc[ipr]);
                 X+= CPUID[ipr].xx;
                 Xadd += CPUID[ipr].xadd;  Yadd += CPUID[ipr].yadd;  Zadd += CPUID[ipr].zadd;
             }
