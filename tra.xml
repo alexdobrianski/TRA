@@ -11,7 +11,26 @@
 
 </TRA:section>
 <TRA:section name="SimInfo" value="0.0">
-    <TRA:setting name="SimulationType" value="TLE_H_CRS" />
+<!-- char [] SimulationType
+                          //    TLE_H_CRS == Helical Cel Ref Sys
+                          //    TLE_G_CRS == Terr  Cal Ref Sys
+                          //    TLE_G_TRS == Ter Ref Sys 
+                          //    PULSAR_GEOID = calculation of the period for pulsars
+                          //    PULSAR_LUNAROID = calculation of the period for pulsars
+                          //    PULSAR_SAT = calculation of the period for pulsars
+
+
+               -->
+
+    <TRA:setting name="&SimulationType" value="TLE_H_CRS" />
+    <TRA:setting name="&SimulationType" value="TLE_G_CRS" />
+    <TRA:setting name="SimulationType" value="PULSAR_GEOID" />
+
+    <TRA:setting name="Lat" value="49.257735" />
+    <TRA:setting name="Long" value="-123.123904" />
+    <TRA:setting name="Sat" value="0" />
+
+
     <TRA:setting name="SimulationOutputTime" value="07/05/14 08:28:00:000" />
     <TRA:setting name="SimulationOutputTime" value="07/05/14 10:00:52:000" />
     <TRA:setting name="SimulationOutputTime" value="07/05/14 11:33:44:000" />
@@ -453,7 +472,7 @@
      that paramether must be after EarthModelCoefs 
      it split equaly coefs calculations 
      param must be less or equal of a core cpu  on a computer-->
-    <TRA:setting name="CpuCore" value="-1" />
+    <TRA:setting name="CpuCore" value="0" />
 
 
     <TRA:setting name="IterPerSec9" value="127" />

@@ -1153,6 +1153,7 @@ typedef struct Long_Double_Intergal_Var4
     };
 } LONG_DOUBLE_INT_VAR4, *PLONG_DOUBLE_INT_VAR4;
 
+long double GreenwichAscensionFromTLEEpoch(long double EP, long double &preEps, long double &preTetta, long double &preZ, long double &nutEpsilon, long double &nutDFeta);
 typedef struct TraObj
 {
     long double TimeSl;
@@ -1390,7 +1391,7 @@ typedef struct CpuMemory {
     HANDLE		hWaitCmdStop[32];
     HANDLE		Callback_Thread[32];
 
-#define THREAD_SIGNAL SET_EVENT
+//#define THREAD_SIGNAL SET_EVENT
 #ifdef THREAD_SIGNAL
 #define WAIT_THREAD_POINT while((ResWait = WaitForMultipleObjects(2,hList,FALSE,INFINITE)) != WAIT_OBJECT_0 )
 #define DONE_THREAD_SIGNAL SetEvent(my->hWaitCmdDoneCalc[cpuid]);
@@ -1493,9 +1494,7 @@ typedef struct CpuMemory {
                 ResetEvent(hWaitCmdDoneCalc[i]);
                 hWaitCmdStop[i] = CreateEvent(NULL, FALSE, TRUE, NULL);
                 ResetEvent(hWaitCmdStop[i]);
-                //SECURITY_ATTRIBUTES sa;
-                //sa.nLength = sizeof(SECURITY_ATTRIBUTES);
-                //sa.bInheritHandle = FALSE:
+
                 Callback_Thread[i] = CreateThread(NULL,20980000,(LPTHREAD_START_ROUTINE)CallbackThread_Proc,(LPVOID)&CPUID[i], 0/*STACK_SIZE_PARAM_IS_A_RESERVATION*/,&dwServiceStateThreadID[i]);
 #ifndef THREAD_SIGNAL
                 SetThreadPriority(Callback_Thread[i],THREAD_PRIORITY_TIME_CRITICAL);
@@ -1535,6 +1534,15 @@ typedef struct CpuMemory {
                 CloseHandle(hWaitCmdStop[i]);
             }
         }
+    }
+    void calc_tr_matrix(void)
+    {
+        cos_precEps= cos(precEps); sin_precEps= sin(precEps);
+        cos_precTet = cos(precTet); sin_precTet = sin(precTet);
+        cos_precZ =  cos(precZ); sin_precZ = sin(precZ);
+        cos_nutEpsilon = cos(nutEpsilon); sin_nutEpsilon = sin(nutEpsilon);
+        cos_nutDFeta = cos(nutDFeta); sin_nutDFeta=sin(nutDFeta);
+        cos_Lambda = cos(Lambda); sin_Lambda = sin(Lambda);
     }
     void gcrs_2_trs(long double &X, long double &Y, long double &Z)
     {
@@ -1883,7 +1891,45 @@ typedef struct CpuMemory {
         else
             return Z/sin(lat) - n*(1.0-e_tilda_2);
 	};
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    // geodesial to trs
+    // source: http://www.astronet.ru/db/msg/1190817/node25.html
+    // and http://gis-lab.info/qa/geodesic-coords.html (some error has to be fixed)
+    void LatLongToTRS(long double Long,long double Lat,long double h, long double a, long double b, long double &PosX,long double &PosY,long double &PosZ)
+    {
+        //initial calculations
+        long cos_lat = cos(Lat* M_PI/180.0);
+        long sin_lat = sin(Lat* M_PI/180.0);
+        long double f = (a-b)/a;
+        long double c= a/(1-f);
+        long double e2 = f*(2-f);
+        long double e_tilda_2 = e2/(1-e2);
+        long double n = c / sqrt(1.0 + e_tilda_2 * cos_lat *cos_lat);
 
+        //   LAT = latitude * pi/180    // shirota
+        //   LON = longitude * pi/180   // dolgota
+        //   Y =  R * cos(LAT) * cos(LON)
+        //   Z =  R * sin(LAT) 
+        //   X = -R * cos(LAT) * sin(LON)
+
+        //PosZ =   dRadius * sin(Lat* M_PI/180.0);
+        //PosX = - dRadius * cos(Lat* M_PI/180.0) * sin(Long* M_PI/180.0); ///??????
+        //PosY =   dRadius * cos(Lat* M_PI/180.0) * cos(Long* M_PI/180.0); ///??????
+
+        PosX = (n+h) * cos_lat * cos(Long* M_PI/180.0);
+        PosY = (n+h) * cos_lat * sin(Long* M_PI/180.0);
+        PosZ = (n + h - e2 * n) * sin_lat;
+    }
+    /////////////////////////////////////////////////////////////////////////////////////////////
+    // geodesial to crs
+    void LatLongToCRS(long double Long,long double Lat,long double h, long double a, long double b, long double curTLETime, long double &PosX,long double &PosY,long double &PosZ)
+    {
+        Lambda = GreenwichAscensionFromTLEEpoch(curTLETime,precEps,precTet,precZ,nutEpsilon,nutDFeta);
+        LatLongToTRS(Long, Lat, h, a, b, PosX, PosY, PosZ);
+        calc_tr_matrix();
+        trs_2_gcrs(PosX, PosY, PosZ);
+
+    }
 #if 1
 
 #if 1
@@ -2612,7 +2658,7 @@ typedef struct CpuMemory {
                 CPUID[ipr].R0divR = MainCpu.R0divR;
                 KICK_THREAD_SIGNAL
             }
-            SetThreadPriority(mainThread,THREAD_PRIORITY_TIME_CRITICAL);
+            //SetThreadPriority(mainThread,THREAD_PRIORITY_TIME_CRITICAL);
             CpuPartSummXYZ (&MainCpu, sinTetta,  X, Xadd, Yadd, Zadd, 2, iLeg, 0, i_split[0][1]);
             
             WAIT_ALL_THREAD_DONE
@@ -4547,6 +4593,7 @@ typedef struct tagPulsars
 int nPulsars= 0;
 PULSARS Pulsars[150];
 
+
 void CalcPlanetForces(TRAOBJ * SlS)
 {
     int i;
@@ -4636,7 +4683,7 @@ void CalcPlanetForces(TRAOBJ * SlS)
     }
 
 }
-long double GreenwichAscensionFromTLEEpoch(long double EP, long double &preEps, long double &preTetta, long double &preZ, long double &nutEpsilon, long double &nutDFeta);
+
 int printcount =0;
 void CalcSatForces(TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfCalc)
 {
@@ -11221,9 +11268,13 @@ void RunSim(TRAOBJ *SlS, TRAOBJ *Sat,TRAIMPLOBJ *Eng, long double ldFrom,long do
                     fprintf(FileOut,"\n\t\t<T>%.11f</T>\n\t\t<X>%.5f</X>\n\t\t<Y>%.5f</Y>\n\t\t<Z>%.5f</Z>", SimulationOutputTime[i],tProbX, tProbY, tProbZ);
                     fprintf(FileOut,"\n\t\t<E>1000</E>\n\t\t<D1>0.0</D1>\n\t\t<E1>0.0</E1>\n\t\t<T2>0.0</T2>\n\t\t<E2>0.0</E2>\n\t\t<D3>0.0</D3>\n\t\t<E3>0.0</E3>");
                     fprintf(FileOut,"\n\t</gCRSmeasure>");
+
                 }
                 else if (strcmp(SimulationType,"TLE_G_TRS")==0) // it was request to generate position data with reference to geocentric TRS 
                 {
+#if 1
+                    printf("\n TBD");
+#else
                     SYSTEMTIME ThatTime;
                     long double dSimTLEEpoch = ConvertJulianDayToDateAndTime(SimulationOutputTime[i], &ThatTime);
                     Sat->Lambda = GreenwichAscensionFromTLEEpoch(dSimTLEEpoch,Sat->precEps,Sat->precTet,Sat->precZ,Sat->nutEpsilon,Sat->nutDFeta);
@@ -11238,6 +11289,7 @@ void RunSim(TRAOBJ *SlS, TRAOBJ *Sat,TRAIMPLOBJ *Eng, long double ldFrom,long do
                     fprintf(FileOut,"\n\t\t<H>%.5f</H>\n\t\t<LAT>%.11f</LAT>\n\t\t<LON>%.11f</LON>", H,dlLAT, dlLON);
                     fprintf(FileOut,"\n\t\t<E>1000</E>\n\t\t<D1>0.0</D1>\n\t\t<E1>0.0</E1>\n\t\t<T2>0.0</T2>\n\t\t<E2>0.0</E2>\n\t\t<D3>0.0</D3>\n\t\t<E3>0.0</E3>");
                     fprintf(FileOut,"\n\t</gTRSmeasure>");
+#endif
                 }
                 else if (strcmp(SimulationType,"TLE_H_CRS")==0) // it was request to generate position data with reference to solar system CRS
                 {
@@ -11262,7 +11314,7 @@ void RunSim(TRAOBJ *SlS, TRAOBJ *Sat,TRAIMPLOBJ *Eng, long double ldFrom,long do
                     fprintf(FileOut,"\n\t</hCRSmeasure>");
                 }
             }
-       }
+        }
         else if (memcmp(SimulationType,"PING", 4) ==0) // simulate ping messages from ground station to satellite (at spesific time from all ground stations)
         {
 
