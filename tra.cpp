@@ -1357,8 +1357,8 @@ typedef struct CpuData {
     long double *Xk;
     long double *Yk;
     long double *R0divR;
-    int WaitVar;
-    int WaitDoVar;
+    volatile int WaitVar;
+    volatile int WaitDoVar;
 } CPUDATA, *PCPUDATA;
 
 typedef struct CpuMemory {
@@ -1390,32 +1390,24 @@ typedef struct CpuMemory {
     HANDLE		hWaitCmdStop[32];
     HANDLE		Callback_Thread[32];
 
-//#define THREAD_SIGNAL SET_EVENT
+#define THREAD_SIGNAL SET_EVENT
 #ifdef THREAD_SIGNAL
 #define WAIT_THREAD_POINT while((ResWait = WaitForMultipleObjects(2,hList,FALSE,INFINITE)) != WAIT_OBJECT_0 )
 #define DONE_THREAD_SIGNAL SetEvent(my->hWaitCmdDoneCalc[cpuid]);
 #define CONTINUE_TO_WAIT ;
 #else
-#define WAIT_THREAD_POINT WAIT_AGAIN: \
-        my->CPUID[0].WaitDoVar = 0;\
+#define WAIT_THREAD_POINT WAIT_AGAIN:\
+        my->CPUID[cpuid].WaitDoVar = 0;\
         SetThreadPriority(my->Callback_Thread[cpuid],THREAD_PRIORITY_IDLE);\
-        while(my->CPUID[0].WaitDoVar == 0)\
+        while(my->CPUID[cpuid].WaitDoVar == 0)\
         {\
             SwitchToThread();\
         }\
         SetThreadPriority(my->Callback_Thread[cpuid],THREAD_PRIORITY_NORMAL);\
-        if (my->CPUID[0].WaitDoVar == 1)
+        if (my->CPUID[cpuid].WaitDoVar == 1)
 
-#define DONE_THREAD_SIGNAL Param->WaitVar = 1;\
-                iRea=0;\
-                for (int icnt = 1; icnt < my->i_proc; icnt++)\
-                {  \
-                    iRea += my->CPUID[icnt].WaitVar;\
-                }\
-                if (iRea == (my->i_proc -1))\
-                {\
-                    my->CPUID[0].WaitVar = 1; \
-                }
+
+#define DONE_THREAD_SIGNAL Param->WaitVar = 1;
 #define CONTINUE_TO_WAIT goto WAIT_AGAIN;
 #endif
 
@@ -1462,20 +1454,14 @@ typedef struct CpuMemory {
         Ke = my->i_split[cpuid][1];
         WAIT_THREAD_POINT
 	    {
-		    //ResetEvent(my->hWaitCmdDoCalc[cpuid]);
-		
-		    //bRes = FALSE;
-		    //if (Param->WaitDoVar == 1) // hWaitCmdDoCalc
-            {
-                sin_Tetta = *Param->ParamSinTetta;
-                memcpy(ThreadCpuMem.Xk, Param->Xk,sizeof(ThreadCpuMem.Xk));
-                memcpy(ThreadCpuMem.Yk, Param->Yk,sizeof(ThreadCpuMem.Yk));
-                memcpy(ThreadCpuMem.R0divR, Param->R0divR,sizeof(ThreadCpuMem.R0divR));
-                my->CpuPartSummXYZ ( &ThreadCpuMem, sin_Tetta,  xx, xadd, yadd, zadd, Nb , Ne, Kb, Ke);
-                //my->CpuPartSummXYZ ( &ThreadCpuMem, sin_Tetta,  xx, xadd, yadd, zadd, 2 , Ne, 0, Ne);
-                Param->xx = xx; Param->xadd = xadd; Param->yadd = yadd; Param->zadd = zadd;
-                DONE_THREAD_SIGNAL
-            }
+            sin_Tetta = *Param->ParamSinTetta;
+            memcpy(ThreadCpuMem.Xk, Param->Xk,sizeof(ThreadCpuMem.Xk));
+            memcpy(ThreadCpuMem.Yk, Param->Yk,sizeof(ThreadCpuMem.Yk));
+            memcpy(ThreadCpuMem.R0divR, Param->R0divR,sizeof(ThreadCpuMem.R0divR));
+            my->CpuPartSummXYZ ( &ThreadCpuMem, sin_Tetta,  xx, xadd, yadd, zadd, Nb , Ne, Kb, Ke);
+            //my->CpuPartSummXYZ ( &ThreadCpuMem, sin_Tetta,  xx, xadd, yadd, zadd, 2 , Ne, 0, Ne);
+            Param->xx = xx; Param->xadd = xadd; Param->yadd = yadd; Param->zadd = zadd;
+            DONE_THREAD_SIGNAL
             CONTINUE_TO_WAIT
         }
 	    SetEvent(my->hWaitForExit[cpuid]);
@@ -1488,6 +1474,7 @@ typedef struct CpuMemory {
         if (i_proc > 1)
         {
             mainThread = GetCurrentThread();
+#ifndef THREAD_SIGNAL
             DWORD dwProcessAffinityMask;
             DWORD dwSystemAffinityMask;
             DWORD dwThreadAffinityMask = 1;
@@ -1495,7 +1482,7 @@ typedef struct CpuMemory {
             GetProcessAffinityMask(GetCurrentProcess(), &dwProcessAffinityMask, &dwSystemAffinityMask);
             Ret = SetThreadAffinityMask(GetCurrentThread(), dwThreadAffinityMask);
             dwThreadAffinityMask <<= 2;
-
+#endif
             for (int i =1; i <i_proc; i++)
             {
                 hWaitForExit[i] = CreateEvent(NULL, FALSE, TRUE, NULL);
@@ -1510,12 +1497,15 @@ typedef struct CpuMemory {
                 //sa.nLength = sizeof(SECURITY_ATTRIBUTES);
                 //sa.bInheritHandle = FALSE:
                 Callback_Thread[i] = CreateThread(NULL,20980000,(LPTHREAD_START_ROUTINE)CallbackThread_Proc,(LPVOID)&CPUID[i], 0/*STACK_SIZE_PARAM_IS_A_RESERVATION*/,&dwServiceStateThreadID[i]);
+#ifndef THREAD_SIGNAL
+                SetThreadPriority(Callback_Thread[i],THREAD_PRIORITY_TIME_CRITICAL);
+                SwitchToThread();
                 if (dwThreadAffinityMask & dwProcessAffinityMask)
                 {
                     Ret = SetThreadAffinityMask(Callback_Thread[i],dwThreadAffinityMask);
                     dwThreadAffinityMask <<= 2;
                 }
-                //SetThreadPriority(Callback_Thread[i],THREAD_PRIORITY_TIME_CRITICAL);
+#endif
                 //SetThreadPriority(Callback_Thread[i],THREAD_PRIORITY_IDLE);
                 DWORD err = GetLastError();
             }
@@ -1901,9 +1891,10 @@ typedef struct CpuMemory {
     {
         if (iCpu < 0)
         {
-            DWORD dwProcessAffinityMask;
-            DWORD dwSystemAffinityMask;
-            DWORD dwThreadAffinityMask = 1;
+
+            DWORD_PTR dwProcessAffinityMask;
+            DWORD_PTR dwSystemAffinityMask;
+            DWORD_PTR dwThreadAffinityMask = {1};
             BOOL Ret;
             GetProcessAffinityMask(GetCurrentProcess(), &dwProcessAffinityMask, &dwSystemAffinityMask);
             iCpu = 0;
@@ -1940,6 +1931,7 @@ typedef struct CpuMemory {
                 CPUID[i_proc].cpuid = i_proc;
                 CPUID[i_proc].my = this;
                 CPUID[i_proc].WaitVar = 0;
+                CPUID[i_proc].WaitDoVar = 0;
                 i_split[i_proc][2] = iEachCount;
                 i_split[i_proc++][1] = i;
                 i_split[i_proc][0] = i+1;
@@ -2589,27 +2581,38 @@ typedef struct CpuMemory {
 #define KICK_ALL_THREAD_SIGNAL ;
 #define WAIT_ALL_THREAD_DONE WaitForMultipleObjects(i_proc-1,&hWaitCmdDoneCalc[1],TRUE,INFINITE);
 #else
-#define KICK_THREAD_SIGNAL SetThreadPriority(Callback_Thread[ipr],THREAD_PRIORITY_TIME_CRITICAL);
+#define KICK_THREAD_SIGNAL CPUID[ipr].WaitDoVar = 1;\
+                SetThreadPriority(Callback_Thread[ipr],THREAD_PRIORITY_TIME_CRITICAL);
 #define KICK_ALL_THREAD_SIGNAL CPUID[0].WaitDoVar = 1;
-//#define WAIT_ALL_THREAD_DONE \SetThreadPriority(mainThread,THREAD_PRIORITY_IDLE);\
-
-#define WAIT_ALL_THREAD_DONE while(CPUID[0].WaitVar == 0) \
-            { \
-                SwitchToThread(); \
+#define WAIT_ALL_THREAD_DONE    int iDoneCound = 0;\
+            for (ipr = 1; ipr< i_proc; ipr++)\
+            {\
+                iDoneCound += CPUID[ipr].WaitVar;\
             }\
+            SetThreadPriority(mainThread,THREAD_PRIORITY_IDLE);\
+            while(iDoneCound != (i_proc-1))\
+            {\
+                SwitchToThread(); \
+                iDoneCound = 0;\
+                for (ipr = 1; ipr< i_proc; ipr++)\
+                {\
+                    iDoneCound += CPUID[ipr].WaitVar;\
+                }\
+            }\
+            SetThreadPriority(mainThread,THREAD_PRIORITY_NORMAL);\
             for (ipr = 0; ipr< i_proc; ipr++)\
                 CPUID[ipr].WaitVar = 0; 
 #endif
             int ipr;
+            
+            
             for (ipr = 1; ipr< i_proc; ipr++)
             {
                 CPUID[ipr].ParamSinTetta = &sinTetta; CPUID[ipr].Xk =  MainCpu.Xk; CPUID[ipr].Yk = MainCpu.Yk;
                 CPUID[ipr].R0divR = MainCpu.R0divR;
                 KICK_THREAD_SIGNAL
             }
-            KICK_ALL_THREAD_SIGNAL
-            
-            CPUID[0].WaitDoVar = 1;
+            SetThreadPriority(mainThread,THREAD_PRIORITY_TIME_CRITICAL);
             CpuPartSummXYZ (&MainCpu, sinTetta,  X, Xadd, Yadd, Zadd, 2, iLeg, 0, i_split[0][1]);
             
             WAIT_ALL_THREAD_DONE
