@@ -84,6 +84,7 @@
       <BrowseInformation>true</BrowseInformation>
       <StructMemberAlignment>Default</StructMemberAlignment>
       <FloatingPointModel>Precise</FloatingPointModel>
+      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
     </ClCompile>
     <Link>
       <OutputFile>$(OutDir)tra.exe</OutputFile>
