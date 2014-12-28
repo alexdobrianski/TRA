@@ -6,10 +6,18 @@
                           //    SIM ==  simulation of the data from satellite
                           //    CALC == calculation of the orbit based on any of the data : PING, GPS, PULSAR 
                           //    OPTIM = calculation of the engines firing to reach the moon
+                          //    MASSPOINTS = calculation Mass Pint model of the graviatation
                -->
     <TRA:setting name="Mode" value="PROP" />
 
 </TRA:section>
+<TRA:section name="MassInfo" value="0.0">
+    <TRA:setting name="ModelOutput" value="masspoints.txt" />
+    <TRA:setting name="MinH" value="200000" />
+    <TRA:setting name="MaxH" value="500000" />
+    <TRA:setting name="MidRandPointsFile" value="RandomPoints.txt" />
+</TRA:section>
+
 <TRA:section name="SimInfo" value="0.0">
     <TRA:setting name="SimulationType" value="TLE_H_CRS" />
     <TRA:setting name="SimulationOutputTime" value="07/05/14 08:28:00:000" />
@@ -30,6 +38,7 @@
     <TRA:setting name="SimulationOutputTime" value="08/05/14 09:13:53:000" />
     <TRA:setting name="SimulationOutputTime" value="15/05/14 09:13:53:000" />
 </TRA:section>
+
 
 <TRA:section name="CalcInfo" value="0.0">
 	<hCRSmeasure>
@@ -453,7 +462,7 @@
      that paramether must be after EarthModelCoefs 
      it split equaly coefs calculations 
      param must be less or equal of a core cpu  on a computer-->
-    <TRA:setting name="CpuCore" value="4" />
+    <TRA:setting name="CpuCore" value="0" />
 
 
     <TRA:setting name="IterPerSec9" value="127" />

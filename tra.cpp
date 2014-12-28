@@ -71,6 +71,22 @@ void write_JPEG_file (char * filename, int quality, int SizeW, int SizeH, int Si
 int iCounter_nk_lm_Numbers;
 int nk_lm_Numbers[(TOTAL_COEF+3)*(TOTAL_COEF+3)][2];
 long double C_S_nk[(TOTAL_COEF+3)*(TOTAL_COEF+3)][2];
+
+char szMassPointsModelFile[1024];
+long double MinH;
+long double MaxH;
+char MidRandPointsFile[1024];
+typedef struct MassPointElement
+{
+    long double X;
+    long double Y;
+	long double Z;
+	long double Mp;
+} MASS_POINT_ELEMENT, *PMASS_POINT_ELEMENT;
+
+MASS_POINT_ELEMENT MassPoints[(TOTAL_COEF+3)*(TOTAL_COEF+3)];
+long double TotalCheckPoints[1000][3];
+
     	
     // see http://vadimchazov.narod.ru/lepa_zov/lesat.pdf
     // P0 == P[0](x) = 1
@@ -276,6 +292,7 @@ long double C_S_nk[(TOTAL_COEF+3)*(TOTAL_COEF+3)][2];
 //#define MAX_FLUX_TABLE 365*2
 //int iStarting1007JD;
 //long double FLUX107[MAX_FLUX_TABLE];
+// coefs for smuzining
 long double AlternativePoints[360 ][3] ={
 -0.0100,0.0100,92,
 4.7500,5.2500,49,
@@ -1391,7 +1408,7 @@ typedef struct CpuMemory {
     HANDLE		hWaitCmdStop[32];
     HANDLE		Callback_Thread[32];
 
-//#define THREAD_SIGNAL SET_EVENT
+#define THREAD_SIGNAL SET_EVENT
 #ifdef THREAD_SIGNAL
 #define WAIT_THREAD_POINT while((ResWait = WaitForMultipleObjects(2,hList,FALSE,INFINITE)) != WAIT_OBJECT_0 )
 #define DONE_THREAD_SIGNAL SetEvent(my->hWaitCmdDoneCalc[cpuid]);
@@ -4531,7 +4548,9 @@ char SimulationType[1024];
                           //       RawX=<X(m)> RawY=<Y(m)> RawZ=<Z(m)> RawVX=<VX(m)> RawVY=<VY(m)> RawVZ=<VZ(m)>
                           // for PULSAR:
                           //  Time=<time-from-simulation-output-time>, PULSAR=<ID>, DaltaT=<time btw two pulsars signals>
-                          
+
+
+
 #define MAX_OUTPUT_TIMES 64
 int SimulationOutputCount = 0;
 long double SimulationOutputTime[MAX_OUTPUT_TIMES];
@@ -4560,8 +4579,6 @@ typedef struct Mesurement
     long double VX;
     long double VY;
     long double VZ;
-
-
 } MESAUREMENT, *PMEASUREMENT;
 
 #define MAX_MEASURES 128
@@ -8584,6 +8601,32 @@ void ParamProb(char *szString)
     }
 
     XML_SECTION_END
+
+	///////////////////////////////////////////////////////////////////////////////////////MassInfo
+    XML_SECTION(MassInfo)
+    IF_XML_READ(ModelOutput)
+    {
+        strcpy(szMassPointsModelFile, pszQuo);
+        if (strchr(szMassPointsModelFile, '\"'))
+            *strchr(szMassPointsModelFile, '\"')=0;
+    }
+    IF_XML_READ(MidRandPointsFile)
+    {
+        strcpy(MidRandPointsFile, pszQuo);
+        if (strchr(MidRandPointsFile, '\"'))
+            *strchr(MidRandPointsFile, '\"')=0;
+    }
+    IF_XML_READ(MinH)
+    {
+        MinH = atof(pszQuo);
+    }
+
+    IF_XML_READ(MaxH)
+    {
+        MaxH = atof(pszQuo);
+    }
+    XML_SECTION_END
+
     ///////////////////////////////////////////////////////////////////////////////////////ModeInfo
     XML_SECTION(ModeInfo)
     IF_XML_READ(Mode)
