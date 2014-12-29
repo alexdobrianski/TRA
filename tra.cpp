@@ -1408,6 +1408,7 @@ typedef struct CpuMemory {
     HANDLE		hWaitCmdStop[32];
     HANDLE		Callback_Thread[32];
 
+// uncomment - for thread signalling used SetEvent ; commented - for thread signalling used pooling
 #define THREAD_SIGNAL SET_EVENT
 #ifdef THREAD_SIGNAL
 #define WAIT_THREAD_POINT while((ResWait = WaitForMultipleObjects(2,hList,FALSE,INFINITE)) != WAIT_OBJECT_0 )
@@ -1566,15 +1567,6 @@ typedef struct CpuMemory {
         long double tempX;
         long double tempY;
         long double tempZ;
-#define TEST_STATIC_EARTH 1
-#ifdef TEST_STATIC_EARTH
-        precEps =0;
-        precTet =0;
-        precZ =0;
-        nutEpsilon =0;
-        nutDFeta = 0;
-        Lambda = 0;
-#endif
         // matrix Deps
             cos_precEps= cos(precEps); sin_precEps= sin(precEps);
             //| cos(eps)   sin(eps) 0 |
@@ -4967,6 +4959,16 @@ void IteraSat(int TimeDirection, TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfC
 
     Sat->Lambda = GreenwichAscensionFromTLEEpoch(TimeOfCalc,Sat->precEps,Sat->precTet,Sat->precZ,Sat->nutEpsilon,Sat->nutDFeta);
 
+#define TEST_STATIC_EARTH 1
+#ifdef TEST_STATIC_EARTH
+    Sat->precEps =0;
+    Sat->precTet =0;
+    Sat->precZ =0;
+    Sat->nutEpsilon =0;
+    Sat->nutDFeta = 0;
+    Sat->Lambda = 0;
+#endif
+
     CalcSatForces(SlS, Sat, TimeOfCalc);
 
     if (Sat->RunOne)
@@ -6990,6 +6992,15 @@ long double AngleBtw(long double X1,long double Y1,long double Z1,long double X2
 	long double Angle = acos(Cosv1v2);
 	return (Angle * 180 /M_PI);
 }
+long double AngleBtwNorm(long double X1,long double Y1,long double Z1,long double X2,long double Y2,long double Z2)
+{
+	long double v1Len = 1.0;
+	long double v2Len = 1.0;
+	long double Cosv1v2 = (X1*X2 + Y1*Y2 + Z1*Z2)/v1Len/v2Len;
+	long double Angle = acos(Cosv1v2);
+	return Angle;
+}
+
 // calculates ortogonal vector
 void Ort(long double &Xpr, long double &Ypr, long double &Zpr, long double u1, long double u2, long double u3, long double v1, long double v2, long double v3)
 {
@@ -11705,6 +11716,247 @@ void RunProp(TRAOBJ *SlS, TRAOBJ *Sat,TRAIMPLOBJ *Eng, long double ldFrom,long d
         DrawFinalBody(SlS, MOON, Sat, iSec,"TRA", SlS, RGBReferenceBody, dRGBScale, StartSequence);
 #endif
 }
+long double Functional(long double MassPer, long double SumZeroX, long double SumZeroY, long double SumZeroZ,
+TRAOBJ *Sat, int iTotalCheckPoints, int dk, int nStart, int nStop, int kStart, int kStop)
+{
+    int i;
+    int k;
+    long double Height;
+    long double DHeight;
+    long double Xt, Yt, Zt;
+    long double X, Y, Z;
+    long double Xadd, Yadd, Zadd;
+    long double sinTetta, XdivR, YdivR;
+    long double Xk[TOTAL_COEF+3];
+    long double Yk[TOTAL_COEF+3];
+    long double FX,FY,FZ;
+    long double ForceDD;
+    long double Norm;
+    long double Xn, Yn, Zn;
+    long double Angl;
+    long double NormZero;
+    long double ZeroX, ZeroY, ZeroZ;
+
+    long double ErrorMain;
+    long double MidDist;
+    long double ValX0;
+    long double ValY0;
+    long double ValZ0;
+    long double tD_Obj1Obj2;
+    long double tD_;
+    long double Sat_ForceDD_i_j;
+    long double Sat_ForceDD_i_j_div_Sat_Distance_i_j;
+    long double Sat_FX;
+    long double Sat_FY;
+    long double Sat_FZ;
+    ErrorMain = 0;
+
+    for (i = 0; i < iTotalCheckPoints; i++)
+    {
+        Height =MinH;
+        DHeight = (MaxH - MinH)/dk;
+
+        for( k= 0; k < dk; k++, Height+=DHeight)
+        {
+            ForceDD = GM_MODEL / (Height*Height);
+            Xt = Height*TotalCheckPoints[i][0];
+            Yt = Height*TotalCheckPoints[i][1];
+            Zt = Height*TotalCheckPoints[i][2];
+            sinTetta = TotalCheckPoints[i][2];
+            XdivR =    TotalCheckPoints[i][0];
+            YdivR =    TotalCheckPoints[i][1];
+            Sat->R0divR[0] = 1;
+            Sat->R0divR[1] = R0_MODEL/Height;
+            Sat->FillXkYk(XdivR, YdivR, Xk, Yk);
+            Sat->PowerR(Sat->R0divR);
+            Sat->PartSummXYZ (Xk,Yk, sinTetta,  X, Xadd, Yadd, Zadd, nStart, nStop, kStart, kStop);
+                           Y=X;            Z=X;
+            X=1-X;         Y=1-Y;          Z=1-Z;
+            Xadd = -Xadd;  Yadd = -Yadd;   Zadd = -Zadd;
+            FX =X*XdivR + Xadd;
+            FY =Y*YdivR + Yadd;
+            FZ =Z*sinTetta + Zadd;
+            FX *=ForceDD;
+            FY *=ForceDD;
+            FZ *=ForceDD;
+            ValX0 = (Xt-SumZeroX);
+            ValY0 = (Yt-SumZeroY);
+            ValZ0 = (Zt-SumZeroZ);
+            tD_Obj1Obj2 = ValX0*ValX0 + ValY0*ValY0 + ValZ0*ValZ0;
+            tD_ = sqrt(tD_Obj1Obj2);
+            Sat_ForceDD_i_j = MassPer * GM_MODEL / tD_Obj1Obj2;
+            Sat_ForceDD_i_j_div_Sat_Distance_i_j = Sat_ForceDD_i_j/ tD_;
+            Sat_FX = (ValX0) * Sat_ForceDD_i_j_div_Sat_Distance_i_j;
+            Sat_FY = (ValY0) * Sat_ForceDD_i_j_div_Sat_Distance_i_j;
+            Sat_FZ = (ValZ0) * Sat_ForceDD_i_j_div_Sat_Distance_i_j;
+            ErrorMain += sqrt((Sat_FX-FX)*(Sat_FX-FX) + (Sat_FY-FY)*(Sat_FY-FY) + (Sat_FZ-FZ)*(Sat_FZ-FZ));
+        }
+    }
+    return ErrorMain;
+}
+void MassPointGen(TRAOBJ *SlS, TRAOBJ *Sat,TRAIMPLOBJ *Eng, long double ldFrom,long double ldFromTLEEpoch, long long iAllSec, int iItPerS, long double tSl)
+{
+    int i;
+    int k;
+    char szLine[1024];
+    int iTotalCheckPoints;
+    FILE * CheckPointsFile = fopen(MidRandPointsFile, "r");
+    if (CheckPointsFile)
+    {
+        memset(szLine, 0, sizeof(szLine));
+        fgets(szLine,sizeof(szLine), CheckPointsFile);
+        iTotalCheckPoints = atoi(szLine);
+
+        for (i = 0; i < sizeof(TotalCheckPoints)/sizeof(long double)/3; i++)
+        {
+            memset(szLine, 0, sizeof(szLine));
+            fgets(szLine,sizeof(szLine), CheckPointsFile);
+            TotalCheckPoints[i][0] = atof(szLine);
+            TotalCheckPoints[i][1] = atof(&szLine[26]);
+            TotalCheckPoints[i][2] = atof(&szLine[52]);
+        }
+        fclose(CheckPointsFile);
+    }
+    else
+    {
+        CheckPointsFile = fopen(MidRandPointsFile, "w");
+        if (CheckPointsFile)
+        {
+            for (i = 0; i < sizeof(TotalCheckPoints)/sizeof(long double)/3; i++)
+            {
+                GetRandomNVector(TotalCheckPoints[i][0], TotalCheckPoints[i][1], TotalCheckPoints[i][2]);
+            }
+            fprintf(CheckPointsFile, "1000\n");
+            for (i = 0; i < sizeof(TotalCheckPoints)/sizeof(long double)/3; i++)
+            {
+                fprintf(CheckPointsFile, "%+25.17Le %+25.17Le %+25.17Le \n", TotalCheckPoints[i][0], TotalCheckPoints[i][1], TotalCheckPoints[i][2]);
+            }
+            fclose(CheckPointsFile);
+        } 
+    }
+    MinH += EarthR;
+    MaxH += EarthR;
+    Sat->precEps =0;
+    Sat->precTet =0;
+    Sat->precZ =0;
+    Sat->nutEpsilon =0;
+    Sat->nutDFeta = 0;
+    Sat->Lambda = 0;
+    int dk = 5;
+    long double Height;
+    long double DHeight;
+    long double Xt, Yt, Zt;
+    long double X, Y, Z;
+    long double Xadd, Yadd, Zadd;
+    long double sinTetta, XdivR, YdivR;
+    long double Xk[TOTAL_COEF+3];
+    long double Yk[TOTAL_COEF+3];
+    long double FX,FY,FZ;
+    long double ForceDD;
+    long double Norm;
+    long double Xn, Yn, Zn;
+    long double Angl;
+    long double NormZero;
+    long double ZeroX, ZeroY, ZeroZ;
+
+    long double SumZeroX, SumZeroY, SumZeroZ;
+
+    long double MidDist;
+    long double ValX0;
+    long double ValY0;
+    long double ValZ0;
+    long double tD_Obj1Obj2;
+    long double tD_;
+    long double Sat_ForceDD_i_j;
+    long double Sat_ForceDD_i_j_div_Sat_Distance_i_j;
+    long double Sat_FX;
+    long double Sat_FY;
+    long double Sat_FZ;
+
+    // first run - to find point
+    SumZeroX = 0; SumZeroY = 0; SumZeroZ = 0;
+
+    for (i = 0; i < iTotalCheckPoints; i++)
+    {
+        Height =MinH;
+        DHeight = (MaxH - MinH)/dk;
+
+        for( k= 0; k < dk; k++, Height+=DHeight)
+        {
+            ForceDD = GM_MODEL / (Height*Height);
+            Xt = Height*TotalCheckPoints[i][0];
+            Yt = Height*TotalCheckPoints[i][1];
+            Zt = Height*TotalCheckPoints[i][2];
+            sinTetta = TotalCheckPoints[i][2];
+            XdivR =    TotalCheckPoints[i][0];
+            YdivR =    TotalCheckPoints[i][1];
+            Sat->R0divR[0] = 1;
+            Sat->R0divR[1] = R0_MODEL/Height;
+            Sat->FillXkYk(XdivR, YdivR, Xk, Yk);
+            Sat->PowerR(Sat->R0divR);
+            Sat->PartSummXYZ (Xk,Yk, sinTetta,  X, Xadd, Yadd, Zadd, 2, 2, 0, 0);
+                           Y=X;            Z=X;
+            X=1-X;         Y=1-Y;          Z=1-Z;
+            Xadd = -Xadd;  Yadd = -Yadd;   Zadd = -Zadd;
+            FX =X*XdivR + Xadd;
+            FY =Y*YdivR + Yadd;
+            FZ =Z*sinTetta + Zadd;
+            FX *=ForceDD;
+            FY *=ForceDD;
+            FZ *=ForceDD;
+            Norm = sqrt(FX*FX + FY*FY + FZ*FZ);
+            Xn = FX/Norm;
+            Yn = FY/Norm;
+            Zn = FZ/Norm;
+            Angl = AngleBtwNorm(TotalCheckPoints[i][0],TotalCheckPoints[i][1],TotalCheckPoints[i][2],Xn,Yn,Zn);
+            NormZero = Height * cos(Angl);
+            ZeroX = -NormZero *Xn;
+            ZeroY = -NormZero *Yn;
+            ZeroZ = -NormZero *Zn;
+            ZeroX +=Xt;
+            ZeroY +=Yt;
+            ZeroZ +=Zt;
+            SumZeroX +=ZeroX; SumZeroY +=ZeroY; SumZeroZ +=ZeroZ;
+        }
+    }
+    SumZeroX /= iTotalCheckPoints *dk;
+    SumZeroY /= iTotalCheckPoints *dk;
+    SumZeroZ /= iTotalCheckPoints *dk;
+    // second run to find the mass
+
+    long double MassPer = 1;
+
+    long double ErrorMain1 = Functional(MassPer, SumZeroX, SumZeroY, SumZeroZ, Sat, iTotalCheckPoints, dk, 2, 2, 0, 0);
+    long double ErrorMain2;
+    long double Step = -0.1;
+    MassPer +=Step;
+    ErrorMain2 = Functional(MassPer, SumZeroX, SumZeroY, SumZeroZ, Sat, iTotalCheckPoints, dk, 2, 2, 0, 0);
+    MassPer +=Step;
+    long double ErrorMain3= Functional(MassPer, SumZeroX, SumZeroY, SumZeroZ, Sat, iTotalCheckPoints, dk, 2, 2, 0, 0);
+    /*
+    while (1)
+    {
+        if (ErrorMain2 < ErrorMain1)
+        {
+            if (ErrorMain3 < ErrorMain2)
+            {
+                // step continue
+            }
+            else
+            {
+                // step reverce direction and halfed
+                Step =  - Step/2;
+            }
+        }
+        else
+        {
+            // step reverce direction
+            MassPer
+            Step = 
+        }
+
+    }*/
+}
 int main(int argc, char * argv[])
 {
     int iDay;
@@ -11964,6 +12216,10 @@ int main(int argc, char * argv[])
         }
         else if (memcmp(Mode,"OPTIM",5)==0)
         {
+        }
+        else if (memcmp(Mode,"MASSPOINTS",10)==0)
+        {
+            MassPointGen(&SolarSystem,&Sat,&Engine[0], dStartJD,dStartTLEEpoch, iTotalSec, iItearationsPerSec, TimeSl);
         }
 	}
     if (CpuCore)
