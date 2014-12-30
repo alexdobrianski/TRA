@@ -85,7 +85,7 @@ typedef struct MassPointElement
 } MASS_POINT_ELEMENT, *PMASS_POINT_ELEMENT;
 
 MASS_POINT_ELEMENT MassPoints[(TOTAL_COEF+3)*(TOTAL_COEF+3)];
-long double TotalCheckPoints[1000][3];
+long double TotalCheckPoints[10000][3];
 
     	
     // see http://vadimchazov.narod.ru/lepa_zov/lesat.pdf
@@ -11794,55 +11794,10 @@ TRAOBJ *Sat, int iTotalCheckPoints, int dk, int nStart, int nStop, int kStart, i
     }
     return ErrorMain;
 }
-void MassPointGen(TRAOBJ *SlS, TRAOBJ *Sat,TRAIMPLOBJ *Eng, long double ldFrom,long double ldFromTLEEpoch, long long iAllSec, int iItPerS, long double tSl)
+void GetOneMassPoint(long double &SumZeroX, long double &SumZeroY,long double &SumZeroZ, long double &MassPer, long double &ErrorMain1, long double &Step, int nStart, int nEnd, int kStart, int kEnd, int dk,
+    int iTotalCheckPoints, TRAOBJ *Sat)
 {
-    int i;
-    int k;
-    char szLine[1024];
-    int iTotalCheckPoints;
-    FILE * CheckPointsFile = fopen(MidRandPointsFile, "r");
-    if (CheckPointsFile)
-    {
-        memset(szLine, 0, sizeof(szLine));
-        fgets(szLine,sizeof(szLine), CheckPointsFile);
-        iTotalCheckPoints = atoi(szLine);
-
-        for (i = 0; i < sizeof(TotalCheckPoints)/sizeof(long double)/3; i++)
-        {
-            memset(szLine, 0, sizeof(szLine));
-            fgets(szLine,sizeof(szLine), CheckPointsFile);
-            TotalCheckPoints[i][0] = atof(szLine);
-            TotalCheckPoints[i][1] = atof(&szLine[26]);
-            TotalCheckPoints[i][2] = atof(&szLine[52]);
-        }
-        fclose(CheckPointsFile);
-    }
-    else
-    {
-        CheckPointsFile = fopen(MidRandPointsFile, "w");
-        if (CheckPointsFile)
-        {
-            for (i = 0; i < sizeof(TotalCheckPoints)/sizeof(long double)/3; i++)
-            {
-                GetRandomNVector(TotalCheckPoints[i][0], TotalCheckPoints[i][1], TotalCheckPoints[i][2]);
-            }
-            fprintf(CheckPointsFile, "1000\n");
-            for (i = 0; i < sizeof(TotalCheckPoints)/sizeof(long double)/3; i++)
-            {
-                fprintf(CheckPointsFile, "%+25.17Le %+25.17Le %+25.17Le \n", TotalCheckPoints[i][0], TotalCheckPoints[i][1], TotalCheckPoints[i][2]);
-            }
-            fclose(CheckPointsFile);
-        } 
-    }
-    MinH += EarthR;
-    MaxH += EarthR;
-    Sat->precEps =0;
-    Sat->precTet =0;
-    Sat->precZ =0;
-    Sat->nutEpsilon =0;
-    Sat->nutDFeta = 0;
-    Sat->Lambda = 0;
-    int dk = 5;
+    int i,k;
     long double Height;
     long double DHeight;
     long double Xt, Yt, Zt;
@@ -11858,20 +11813,6 @@ void MassPointGen(TRAOBJ *SlS, TRAOBJ *Sat,TRAIMPLOBJ *Eng, long double ldFrom,l
     long double Angl;
     long double NormZero;
     long double ZeroX, ZeroY, ZeroZ;
-
-    long double SumZeroX, SumZeroY, SumZeroZ;
-
-    long double MidDist;
-    long double ValX0;
-    long double ValY0;
-    long double ValZ0;
-    long double tD_Obj1Obj2;
-    long double tD_;
-    long double Sat_ForceDD_i_j;
-    long double Sat_ForceDD_i_j_div_Sat_Distance_i_j;
-    long double Sat_FX;
-    long double Sat_FY;
-    long double Sat_FZ;
 
     // first run - to find point
     SumZeroX = 0; SumZeroY = 0; SumZeroZ = 0;
@@ -11924,38 +11865,98 @@ void MassPointGen(TRAOBJ *SlS, TRAOBJ *Sat,TRAIMPLOBJ *Eng, long double ldFrom,l
     SumZeroZ /= iTotalCheckPoints *dk;
     // second run to find the mass
 
-    long double MassPer = 1;
-
-    long double ErrorMain1 = Functional(MassPer, SumZeroX, SumZeroY, SumZeroZ, Sat, iTotalCheckPoints, dk, 2, 2, 0, 0);
+    ErrorMain1 = Functional(MassPer, SumZeroX, SumZeroY, SumZeroZ, Sat, iTotalCheckPoints, dk, 2, 2, 0, 0);
     long double ErrorMain2;
-    long double Step = -0.1;
+    Step = -0.1;
     MassPer +=Step;
     ErrorMain2 = Functional(MassPer, SumZeroX, SumZeroY, SumZeroZ, Sat, iTotalCheckPoints, dk, 2, 2, 0, 0);
-    MassPer +=Step;
-    long double ErrorMain3= Functional(MassPer, SumZeroX, SumZeroY, SumZeroZ, Sat, iTotalCheckPoints, dk, 2, 2, 0, 0);
-    /*
+    
     while (1)
     {
-        if (ErrorMain2 < ErrorMain1)
+        if (fabs(ErrorMain1 - ErrorMain2) <1e-17)
         {
-            if (ErrorMain3 < ErrorMain2)
-            {
-                // step continue
-            }
+            if (ErrorMain1 >= ErrorMain2)
+                break;
             else
             {
-                // step reverce direction and halfed
-                Step =  - Step/2;
+                MassPer -=Step;
+                break;
             }
+        }
+
+        if (ErrorMain2 < ErrorMain1)
+        {
+            // contine steps
+            ErrorMain1 = ErrorMain2;
         }
         else
         {
-            // step reverce direction
-            MassPer
-            Step = 
-        }
+            // step reverce direction and make step twice smaller
+            ErrorMain1 = ErrorMain2;
 
-    }*/
+            Step = -Step/2;
+            if (fabs(Step) < 1e-17)
+                break;
+        }
+        MassPer +=Step;
+        ErrorMain2 = Functional(MassPer, SumZeroX, SumZeroY, SumZeroZ, Sat, iTotalCheckPoints, dk, 2, 2, 0, 0);
+    }
+}
+void MassPointGen(TRAOBJ *SlS, TRAOBJ *Sat,TRAIMPLOBJ *Eng, long double ldFrom,long double ldFromTLEEpoch, long long iAllSec, int iItPerS, long double tSl)
+{
+    int i;
+    int k;
+    char szLine[1024];
+    int iTotalCheckPoints;
+    FILE * CheckPointsFile = fopen(MidRandPointsFile, "r");
+    if (CheckPointsFile)
+    {
+        memset(szLine, 0, sizeof(szLine));
+        fgets(szLine,sizeof(szLine), CheckPointsFile);
+        iTotalCheckPoints = atoi(szLine);
+
+        for (i = 0; i < iTotalCheckPoints; i++)
+        {
+            memset(szLine, 0, sizeof(szLine));
+            fgets(szLine,sizeof(szLine), CheckPointsFile);
+            TotalCheckPoints[i][0] = atof(szLine);
+            TotalCheckPoints[i][1] = atof(&szLine[26]);
+            TotalCheckPoints[i][2] = atof(&szLine[52]);
+        }
+        fclose(CheckPointsFile);
+    }
+    else
+    {
+        CheckPointsFile = fopen(MidRandPointsFile, "w");
+        if (CheckPointsFile)
+        {
+            for (i = 0; i < sizeof(TotalCheckPoints)/sizeof(long double)/3; i++)
+            {
+                GetRandomNVector(TotalCheckPoints[i][0], TotalCheckPoints[i][1], TotalCheckPoints[i][2]);
+            }
+            fprintf(CheckPointsFile, "%d\n",sizeof(TotalCheckPoints)/sizeof(long double)/3);
+            for (i = 0; i < sizeof(TotalCheckPoints)/sizeof(long double)/3; i++)
+            {
+                fprintf(CheckPointsFile, "%+25.17Le %+25.17Le %+25.17Le \n", TotalCheckPoints[i][0], TotalCheckPoints[i][1], TotalCheckPoints[i][2]);
+            }
+            fclose(CheckPointsFile);
+        } 
+        return;
+    }
+    MinH += EarthR;
+    MaxH += EarthR;
+    Sat->precEps =0;
+    Sat->precTet =0;
+    Sat->precZ =0;
+    Sat->nutEpsilon =0;
+    Sat->nutDFeta = 0;
+    Sat->Lambda = 0;
+    int dk = 5;
+    long double MassPer;
+    long double SumZeroX, SumZeroY, SumZeroZ;
+    long double Gerror, step;
+    int imp = 0;
+    GetOneMassPoint(MassPoints[imp].X, MassPoints[imp].Y, MassPoints[imp].Z, MassPoints[imp].Mp, Gerror, step, 2, 2, 0, 0, dk,iTotalCheckPoints, Sat);
 }
 int main(int argc, char * argv[])
 {
