@@ -85,7 +85,7 @@ typedef struct MassPointElement
 } MASS_POINT_ELEMENT, *PMASS_POINT_ELEMENT;
 
 MASS_POINT_ELEMENT MassPoints[(TOTAL_COEF+3)*(TOTAL_COEF+3)];
-long double TotalCheckPoints[10000][3];
+long double TotalCheckPoints[100000][3];
 
     	
     // see http://vadimchazov.narod.ru/lepa_zov/lesat.pdf
@@ -11717,7 +11717,7 @@ void RunProp(TRAOBJ *SlS, TRAOBJ *Sat,TRAIMPLOBJ *Eng, long double ldFrom,long d
 #endif
 }
 long double Functional(long double MassPer, long double SumZeroX, long double SumZeroY, long double SumZeroZ,
-TRAOBJ *Sat, int iTotalCheckPoints, int dk, int nStart, int nStop, int kStart, int kStop)
+TRAOBJ *Sat, int iTotalCheckPoints, int dk, int iDoList[10][4], int nDoList,int iSkipList[10][4], int nSkipList, int imp)
 {
     int i;
     int k;
@@ -11726,6 +11726,9 @@ TRAOBJ *Sat, int iTotalCheckPoints, int dk, int nStart, int nStop, int kStart, i
     long double Xt, Yt, Zt;
     long double X, Y, Z;
     long double Xadd, Yadd, Zadd;
+    long double X_, Y_, Z_;
+    long double Xadd_, Yadd_, Zadd_;
+
     long double sinTetta, XdivR, YdivR;
     long double Xk[TOTAL_COEF+3];
     long double Yk[TOTAL_COEF+3];
@@ -11736,7 +11739,7 @@ TRAOBJ *Sat, int iTotalCheckPoints, int dk, int nStart, int nStop, int kStart, i
     long double Angl;
     long double NormZero;
     long double ZeroX, ZeroY, ZeroZ;
-
+    long double ErrorMainX,ErrorMainY, ErrorMainZ;
     long double ErrorMain;
     long double MidDist;
     long double ValX0;
@@ -11769,16 +11772,24 @@ TRAOBJ *Sat, int iTotalCheckPoints, int dk, int nStart, int nStop, int kStart, i
             Sat->R0divR[1] = R0_MODEL/Height;
             Sat->FillXkYk(XdivR, YdivR, Xk, Yk);
             Sat->PowerR(Sat->R0divR);
-            Sat->PartSummXYZ (Xk,Yk, sinTetta,  X, Xadd, Yadd, Zadd, nStart, nStop, kStart, kStop);
+            Sat->PartSummXYZ (Xk,Yk, sinTetta,  X, Xadd, Yadd, Zadd, iDoList[0][0], iDoList[0][1], iDoList[0][2], iDoList[0][3]);
                            Y=X;            Z=X;
-            X=1-X;         Y=1-Y;          Z=1-Z;
+            X=-X;          Y=-Y;           Z=-Z;
             Xadd = -Xadd;  Yadd = -Yadd;   Zadd = -Zadd;
+            for (int id =1; id < nDoList; id++)
+            {
+                Sat->PartSummXYZ (Xk,Yk, sinTetta,  X_, Xadd_, Yadd_, Zadd_, iDoList[id][0], iDoList[id][1], iDoList[id][2], iDoList[id][3]);
+                X+=-X_; Y+=-X_; Z+=-X_;
+                Xadd += -Xadd_; Yadd += -Yadd_; Zadd += -Zadd_;
+            }
+            X+=1; Y+=1;Z+=1;
             FX =X*XdivR + Xadd;
             FY =Y*YdivR + Yadd;
             FZ =Z*sinTetta + Zadd;
             FX *=ForceDD;
             FY *=ForceDD;
             FZ *=ForceDD;
+
             ValX0 = (Xt-SumZeroX);
             ValY0 = (Yt-SumZeroY);
             ValZ0 = (Zt-SumZeroZ);
@@ -11789,13 +11800,36 @@ TRAOBJ *Sat, int iTotalCheckPoints, int dk, int nStart, int nStop, int kStart, i
             Sat_FX = (ValX0) * Sat_ForceDD_i_j_div_Sat_Distance_i_j;
             Sat_FY = (ValY0) * Sat_ForceDD_i_j_div_Sat_Distance_i_j;
             Sat_FZ = (ValZ0) * Sat_ForceDD_i_j_div_Sat_Distance_i_j;
-            ErrorMain += sqrt((Sat_FX-FX)*(Sat_FX-FX) + (Sat_FY-FY)*(Sat_FY-FY) + (Sat_FZ-FZ)*(Sat_FZ-FZ));
+            ErrorMainX = Sat_FX-FX;
+            ErrorMainY = Sat_FY-FY;
+            ErrorMainZ = Sat_FZ-FZ;
+            //ErrorMain += sqrt((Sat_FX-FX)*(Sat_FX-FX) + (Sat_FY-FY)*(Sat_FY-FY) + (Sat_FZ-FZ)*(Sat_FZ-FZ));
+            if (imp) // no needs to minus all prev masspoints
+            {
+                for (int imp_ = 0; imp_ < imp; imp_++)
+                {
+                    ValX0 = (Xt-MassPoints[imp_].X);
+                    ValY0 = (Yt-MassPoints[imp_].Y);
+                    ValZ0 = (Zt-MassPoints[imp_].Z);
+                    tD_Obj1Obj2 = ValX0*ValX0 + ValY0*ValY0 + ValZ0*ValZ0;
+                    tD_ = sqrt(tD_Obj1Obj2);
+                    Sat_ForceDD_i_j = MassPoints[imp_].Mp * GM_MODEL / tD_Obj1Obj2;
+                    Sat_ForceDD_i_j_div_Sat_Distance_i_j = Sat_ForceDD_i_j/ tD_;
+                    Sat_FX = (ValX0) * Sat_ForceDD_i_j_div_Sat_Distance_i_j;
+                    Sat_FY = (ValY0) * Sat_ForceDD_i_j_div_Sat_Distance_i_j;
+                    Sat_FZ = (ValZ0) * Sat_ForceDD_i_j_div_Sat_Distance_i_j;
+                    ErrorMainX += Sat_FX; ErrorMainY += Sat_FY; ErrorMainZ += Sat_FZ;
+                    
+                }
+            }
+            ErrorMain += sqrt(ErrorMainX*ErrorMainX + ErrorMainY*ErrorMainY + ErrorMainZ*ErrorMainZ);
         }
     }
     return ErrorMain;
 }
-void GetOneMassPoint(long double &SumZeroX, long double &SumZeroY,long double &SumZeroZ, long double &MassPer, long double &ErrorMain1, long double &Step, int nStart, int nEnd, int kStart, int kEnd, int dk,
-    int iTotalCheckPoints, TRAOBJ *Sat)
+void GetOneMassPoint(long double &SumZeroX, long double &SumZeroY,long double &SumZeroZ, long double &MassPer, long double &ErrorMain1, 
+    long double &Step, int iDoList[10][4], int nDoList, int dk,
+    int iTotalCheckPoints, TRAOBJ *Sat, int iSkipList[10][4], int nSkipList, int imp)
 {
     int i,k;
     long double Height;
@@ -11803,6 +11837,8 @@ void GetOneMassPoint(long double &SumZeroX, long double &SumZeroY,long double &S
     long double Xt, Yt, Zt;
     long double X, Y, Z;
     long double Xadd, Yadd, Zadd;
+    long double X_, Y_, Z_;
+    long double Xadd_, Yadd_, Zadd_;
     long double sinTetta, XdivR, YdivR;
     long double Xk[TOTAL_COEF+3];
     long double Yk[TOTAL_COEF+3];
@@ -11835,13 +11871,45 @@ void GetOneMassPoint(long double &SumZeroX, long double &SumZeroY,long double &S
             Sat->R0divR[1] = R0_MODEL/Height;
             Sat->FillXkYk(XdivR, YdivR, Xk, Yk);
             Sat->PowerR(Sat->R0divR);
-            Sat->PartSummXYZ (Xk,Yk, sinTetta,  X, Xadd, Yadd, Zadd, 2, 2, 0, 0);
+            Sat->PartSummXYZ (Xk,Yk, sinTetta,  X, Xadd, Yadd, Zadd, iDoList[0][0], iDoList[0][1], iDoList[0][2], iDoList[0][3]);
                            Y=X;            Z=X;
-            X=1-X;         Y=1-Y;          Z=1-Z;
+            if (nSkipList)
+            {
+                X=-X;         Y=-Y;          Z=-Z;
+            }
+            else
+            {
+                X=1-X;         Y=1-Y;          Z=1-Z;
+            }
             Xadd = -Xadd;  Yadd = -Yadd;   Zadd = -Zadd;
-            FX =X*XdivR + Xadd;
-            FY =Y*YdivR + Yadd;
-            FZ =Z*sinTetta + Zadd;
+            for (int id =1; id < nDoList; id++)
+            {
+                Sat->PartSummXYZ (Xk,Yk, sinTetta,  X_, Xadd_, Yadd_, Zadd_, iDoList[id][0], iDoList[id][1], iDoList[id][2], iDoList[id][3]);
+                           Y_=X_;            Z_=X_;
+                X_=-X_;         Y_=-Y_;          Z_=-Z_;
+                Xadd_ = -Xadd_;  Yadd_ = -Yadd_;   Zadd_ = -Zadd_;
+                X+=X_; Y+=Y_; Z+=Z_;
+                Xadd += Xadd_; Yadd += Yadd_; Zadd += Zadd_;
+            }
+            long double Xm1, Ym1, Zm1;
+            long double Xaddm1, Yaddm1, Zaddm1;
+            Xm1 = 0; Ym1 = 0; Zm1 = 0; Xaddm1 = 0; Yaddm1 = 0; Zaddm1 = 0;
+            if (nSkipList) // minused value
+            {
+                long double Xm2;
+                long double Xaddm2, Yaddm2, Zaddm2;
+                
+                for (int is = 0; is < nSkipList; is++)
+                {
+                    Sat->PartSummXYZ (Xk,Yk, sinTetta,  Xm2, Xaddm2, Yaddm2, Zaddm2, iSkipList[is][0], iSkipList[is][1], iSkipList[is][2], iSkipList[is][3]);
+                    Xm1+=-Xm2;         Ym1+=-Xm2;          Zm1+=-Xm2;
+
+                    Xaddm1 += -Xaddm2;  Yaddm1 += -Yaddm2;   Zaddm1 += -Zaddm2;
+                }
+            }
+            FX =(X-Xm1)*XdivR + (Xadd-Xaddm1);
+            FY =(Y-Ym1)*YdivR + (Yadd-Yaddm1);
+            FZ =(Z-Zm1)*sinTetta + (Zadd-Zaddm1);
             FX *=ForceDD;
             FY *=ForceDD;
             FZ *=ForceDD;
@@ -11864,12 +11932,12 @@ void GetOneMassPoint(long double &SumZeroX, long double &SumZeroY,long double &S
     SumZeroY /= iTotalCheckPoints *dk;
     SumZeroZ /= iTotalCheckPoints *dk;
     // second run to find the mass
-
-    ErrorMain1 = Functional(MassPer, SumZeroX, SumZeroY, SumZeroZ, Sat, iTotalCheckPoints, dk, 2, 2, 0, 0);
+    MassPer = 0;
+    ErrorMain1 = Functional(MassPer, SumZeroX, SumZeroY, SumZeroZ, Sat, iTotalCheckPoints, dk, iDoList, nDoList,iSkipList, nSkipList, imp);
     long double ErrorMain2;
     Step = -0.1;
     MassPer +=Step;
-    ErrorMain2 = Functional(MassPer, SumZeroX, SumZeroY, SumZeroZ, Sat, iTotalCheckPoints, dk, 2, 2, 0, 0);
+    ErrorMain2 = Functional(MassPer, SumZeroX, SumZeroY, SumZeroZ, Sat, iTotalCheckPoints, dk, iDoList, nDoList,iSkipList, nSkipList, imp);
     
     while (1)
     {
@@ -11899,7 +11967,7 @@ void GetOneMassPoint(long double &SumZeroX, long double &SumZeroY,long double &S
                 break;
         }
         MassPer +=Step;
-        ErrorMain2 = Functional(MassPer, SumZeroX, SumZeroY, SumZeroZ, Sat, iTotalCheckPoints, dk, 2, 2, 0, 0);
+        ErrorMain2 = Functional(MassPer, SumZeroX, SumZeroY, SumZeroZ, Sat, iTotalCheckPoints, dk, iDoList, nDoList,iSkipList, nSkipList, imp);
     }
 }
 void MassPointGen(TRAOBJ *SlS, TRAOBJ *Sat,TRAIMPLOBJ *Eng, long double ldFrom,long double ldFromTLEEpoch, long long iAllSec, int iItPerS, long double tSl)
@@ -11907,7 +11975,11 @@ void MassPointGen(TRAOBJ *SlS, TRAOBJ *Sat,TRAIMPLOBJ *Eng, long double ldFrom,l
     int i;
     int k;
     char szLine[1024];
+    int iSkipList[10][4];
+    int nSkipList = 0;
     int iTotalCheckPoints;
+    int iDoList[10][4];
+    int nDoList;
     FILE * CheckPointsFile = fopen(MidRandPointsFile, "r");
     if (CheckPointsFile)
     {
@@ -11951,12 +12023,27 @@ void MassPointGen(TRAOBJ *SlS, TRAOBJ *Sat,TRAIMPLOBJ *Eng, long double ldFrom,l
     Sat->nutEpsilon =0;
     Sat->nutDFeta = 0;
     Sat->Lambda = 0;
-    int dk = 5;
+    int dk = 1;
     long double MassPer;
     long double SumZeroX, SumZeroY, SumZeroZ;
     long double Gerror, step;
     int imp = 0;
-    GetOneMassPoint(MassPoints[imp].X, MassPoints[imp].Y, MassPoints[imp].Z, MassPoints[imp].Mp, Gerror, step, 2, 2, 0, 0, dk,iTotalCheckPoints, Sat);
+    iDoList[0][0] =2; iDoList[0][1] =2;iDoList[0][2] =0;iDoList[0][3] =0;
+    nDoList  =1;
+    GetOneMassPoint(MassPoints[imp].X, MassPoints[imp].Y, MassPoints[imp].Z, MassPoints[imp].Mp, Gerror, step,
+        iDoList, nDoList, dk,iTotalCheckPoints, Sat,
+        iSkipList, nSkipList, imp);
+    while (imp <= 36)
+    {
+        imp++;
+        iDoList[0][0] =2; iDoList[0][1] =imp+2;iDoList[0][2] =0;iDoList[0][3] =0;
+        iSkipList[0][0] = 2; iSkipList[0][1] = imp+1; iSkipList[0][2] = 0; iSkipList[0][3] = 0;
+        nSkipList = 1;
+    
+        GetOneMassPoint(MassPoints[imp].X, MassPoints[imp].Y, MassPoints[imp].Z, MassPoints[imp].Mp, Gerror, step,
+            iDoList, nDoList, dk,iTotalCheckPoints, Sat,
+            iSkipList, nSkipList, imp);
+    }
 }
 int main(int argc, char * argv[])
 {
