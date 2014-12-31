@@ -11833,7 +11833,9 @@ void GetOneMassPoint(long double &SumZeroX, long double &SumZeroY,long double &S
     // 3. find closes points P_close_list (k_val) to P_candidate add to a list P_close_list+P_candidate (size == k_val+1)
     // 4. find optimized value of masses in the P_close_list:
     //    a) loop for each point in the P_close_list find for mass minimum of the functional
-    //    b) repeat loop till functional is minimal 
+    //    b) repeat loop till functional is minimal
+    //    (all is ehuristic process == BAD == points position has to be optimized)
+    //    lets try montecarlo - kill the problem with random data
     int i,j,k;
     long double Height;
     long double DHeight;
@@ -11965,7 +11967,7 @@ void GetOneMassPoint(long double &SumZeroX, long double &SumZeroY,long double &S
             NVectorZ = Zt - CenterOfMAssZ;
             NVectorLen = sqrt(NVectorX*NVectorX + NVectorY*NVectorY + NVectorZ*NVectorZ);
             NVectorX /= NVectorLen; NVectorY /= NVectorLen; NVectorZ /= NVectorLen;
-#if 1
+#if 0
             if (NormMax < Norm)
             {
                 iMax = i;
@@ -11992,7 +11994,7 @@ void GetOneMassPoint(long double &SumZeroX, long double &SumZeroY,long double &S
 #endif
         }
     }
-#if 1
+#if 0
     Xn = FXmax/NormMax;
     Yn = FYmax/NormMax;
     Zn = FZmax/NormMax;
@@ -12120,11 +12122,25 @@ void MassPointGen(TRAOBJ *SlS, TRAOBJ *Sat,TRAIMPLOBJ *Eng, long double ldFrom,l
         iSkipList, nSkipList, imp);
     printf("\n%03d p=%10f %10f %10f m= %10f e= %f", imp, MassPoints[imp].X, MassPoints[imp].Y, MassPoints[imp].Z, MassPoints[imp].Mp, Gerror);
 
-    long double ErrorMain1 = Functional(MassPoints[imp].Mp, MassPoints[imp].X, MassPoints[imp].Y, MassPoints[imp].Z, Sat, iTotalCheckPoints, dk, iDoList, nDoList,iSkipList, nSkipList, imp);
+    imp++;
+    GetOneMassPoint(MassPoints[imp].X, MassPoints[imp].Y, MassPoints[imp].Z, MassPoints[imp].Mp, Gerror, step,
+        iDoList, nDoList, dk,iTotalCheckPoints, Sat,
+        iSkipList, nSkipList, imp);
+    printf("\n%03d p=%10f %10f %10f m= %10f e= %f", imp, MassPoints[imp].X, MassPoints[imp].Y, MassPoints[imp].Z, MassPoints[imp].Mp, Gerror);
+
+    long double RaX, RaY, RaZ;
+    
+
+    long double InitX, InitY, InitZ;
+    InitX = MassPoints[0].X; InitY=MassPoints[0].Y; InitZ= MassPoints[0].Z;
+
+    long double ErrorMain1 = Functional(MassPoints[imp].Mp, InitX, InitY, MassPoints[imp].Z, Sat, iTotalCheckPoints, dk, iDoList, nDoList,iSkipList, nSkipList, imp);
     long double ErrorMain2;
-    long double Step = -0.1;
-    MassPoints[0].Mp +=Step; MassPoints[imp].Mp -=Step;
-    ErrorMain2 = Functional(MassPoints[imp].Mp, MassPoints[imp].X, MassPoints[imp].Y, MassPoints[imp].Z, Sat, iTotalCheckPoints, dk, iDoList, nDoList,iSkipList, nSkipList, imp);
+    long double Step = 100;
+    
+    GetRandomNVector(RaX, RaY, RaZ);
+
+    ErrorMain2 = Functional(MassPoints[0].Mp, InitX, InitY, InitZ, Sat, iTotalCheckPoints, dk, iDoList, nDoList,iSkipList, nSkipList, imp);
     
     while (1)
     {
