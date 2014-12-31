@@ -11831,6 +11831,14 @@ void GetOneMassPoint(long double &SumZeroX, long double &SumZeroY,long double &S
     long double &Step, int iDoList[10][4], int nDoList, int dk,
     int iTotalCheckPoints, TRAOBJ *Sat, int iSkipList[10][4], int nSkipList, int imp)
 {
+    // initial algorithm in:
+    // from ftp://ftp.gfz-potsdam.de/home/sf/bar/publications/BaDie-Milan90.pdf
+    // 1. loop for all points and find max abs value of the GP - (summ of all GPf of N-1 points)
+    // 2. from selected point goes to the center of the planet to get minimum of the functonal (summ all errors are minimum) that point will be P_candidate
+    // 3. find closes points P_close_list (k_val) to P_candidate add to a list P_close_list+P_candidate (size == k_val+1)
+    // 4. find optimized value of masses in the P_close_list:
+    //    a) loop for each point in the P_close_list find for mass minimum of the functional
+    //    b) repeat loop till functional is minimal 
     int i,k;
     long double Height;
     long double DHeight;
@@ -11849,10 +11857,28 @@ void GetOneMassPoint(long double &SumZeroX, long double &SumZeroY,long double &S
     long double Angl;
     long double NormZero;
     long double ZeroX, ZeroY, ZeroZ;
-
+    long double CenterOfMAssX, CenterOfMAssY, CenterOfMAssZ,Mass;
+    long double NVectorX, NVectorY, NVectorZ, NVectorLen;
+    CenterOfMAssX =0; CenterOfMAssY=0; CenterOfMAssZ=0; Mass=0;
+    if (imp)
+    {
+        for (i = 0; i < imp; i++)
+        {
+            CenterOfMAssX+= MassPoints[i].X*MassPoints[i].Mp;
+            CenterOfMAssY+= MassPoints[i].Y*MassPoints[i].Mp;
+            CenterOfMAssZ+= MassPoints[i].Z*MassPoints[i].Mp;
+            Mass += MassPoints[i].Mp;
+        }
+        CenterOfMAssX/=Mass; CenterOfMAssY/=Mass; CenterOfMAssZ/=Mass;
+    }
+    
     // first run - to find point
     SumZeroX = 0; SumZeroY = 0; SumZeroZ = 0;
-
+    long double NormMax = 0;
+    int iMax = 0;
+    long double FXmax, FYmax, FZmax;
+    long double NVectorXmax, NVectorYmax, NVectorZmax,NVectorLenmax;
+    long double Xtmax,Ytmax,Ztmax;
     for (i = 0; i < iTotalCheckPoints; i++)
     {
         Height =MinH;
@@ -11864,6 +11890,11 @@ void GetOneMassPoint(long double &SumZeroX, long double &SumZeroY,long double &S
             Xt = Height*TotalCheckPoints[i][0];
             Yt = Height*TotalCheckPoints[i][1];
             Zt = Height*TotalCheckPoints[i][2];
+            NVectorX = Xt - CenterOfMAssX;
+            NVectorY = Yt - CenterOfMAssY;
+            NVectorZ = Zt - CenterOfMAssZ;
+            NVectorLen = sqrt(NVectorX*NVectorX + NVectorY*NVectorY + NVectorZ*NVectorZ);
+            NVectorX /= NVectorLen; NVectorY /= NVectorLen; NVectorZ /= NVectorLen;
             sinTetta = TotalCheckPoints[i][2];
             XdivR =    TotalCheckPoints[i][0];
             YdivR =    TotalCheckPoints[i][1];
@@ -11914,23 +11945,32 @@ void GetOneMassPoint(long double &SumZeroX, long double &SumZeroY,long double &S
             FY *=ForceDD;
             FZ *=ForceDD;
             Norm = sqrt(FX*FX + FY*FY + FZ*FZ);
-            Xn = FX/Norm;
-            Yn = FY/Norm;
-            Zn = FZ/Norm;
-            Angl = AngleBtwNorm(TotalCheckPoints[i][0],TotalCheckPoints[i][1],TotalCheckPoints[i][2],Xn,Yn,Zn);
-            NormZero = Height * cos(Angl);
-            ZeroX = -NormZero *Xn;
-            ZeroY = -NormZero *Yn;
-            ZeroZ = -NormZero *Zn;
-            ZeroX +=Xt;
-            ZeroY +=Yt;
-            ZeroZ +=Zt;
-            SumZeroX +=ZeroX; SumZeroY +=ZeroY; SumZeroZ +=ZeroZ;
+            if (NormMax < Norm)
+            {
+                iMax = i;
+                NormMax = Norm;
+                FXmax = FX; FYmax = FY; FZmax = FZ;
+                NVectorXmax = NVectorX; NVectorYmax=NVectorY; NVectorZmax=NVectorZ;
+                NVectorLenmax = NVectorLen;
+                Xtmax=Xt; Ytmax=Yt; Ztmax=Zt;
+            }
         }
     }
-    SumZeroX /= iTotalCheckPoints *dk;
-    SumZeroY /= iTotalCheckPoints *dk;
-    SumZeroZ /= iTotalCheckPoints *dk;
+    Xn = FXmax/NormMax;
+    Yn = FYmax/NormMax;
+    Zn = FZmax/NormMax;
+    Angl = AngleBtwNorm(NVectorXmax,NVectorYmax,NVectorZmax,Xn,Yn,Zn);
+    NormZero = NVectorLenmax * cos(Angl);
+    ZeroX = -NVectorLenmax *Xn;
+    ZeroY = -NVectorLenmax *Yn;
+    ZeroZ = -NVectorLenmax *Zn;
+    ZeroX +=Xtmax;
+    ZeroY +=Ytmax;
+    ZeroZ +=Ztmax;
+    SumZeroX = ZeroX; SumZeroY = ZeroY; SumZeroZ = ZeroZ;
+    //SumZeroX /= iTotalCheckPoints *dk*SummNorm;
+    //SumZeroY /= iTotalCheckPoints *dk*SummNorm;
+    //SumZeroZ /= iTotalCheckPoints *dk*SummNorm;
     // second run to find the mass
     MassPer = 0;
     ErrorMain1 = Functional(MassPer, SumZeroX, SumZeroY, SumZeroZ, Sat, iTotalCheckPoints, dk, iDoList, nDoList,iSkipList, nSkipList, imp);
@@ -12033,6 +12073,7 @@ void MassPointGen(TRAOBJ *SlS, TRAOBJ *Sat,TRAIMPLOBJ *Eng, long double ldFrom,l
     GetOneMassPoint(MassPoints[imp].X, MassPoints[imp].Y, MassPoints[imp].Z, MassPoints[imp].Mp, Gerror, step,
         iDoList, nDoList, dk,iTotalCheckPoints, Sat,
         iSkipList, nSkipList, imp);
+    printf("\n%03d p=%10f %10f %10f m= %10f e= %f", imp, MassPoints[imp].X, MassPoints[imp].Y, MassPoints[imp].Z, MassPoints[imp].Mp, Gerror);
     while (imp <= 36)
     {
         imp++;
@@ -12043,6 +12084,7 @@ void MassPointGen(TRAOBJ *SlS, TRAOBJ *Sat,TRAIMPLOBJ *Eng, long double ldFrom,l
         GetOneMassPoint(MassPoints[imp].X, MassPoints[imp].Y, MassPoints[imp].Z, MassPoints[imp].Mp, Gerror, step,
             iDoList, nDoList, dk,iTotalCheckPoints, Sat,
             iSkipList, nSkipList, imp);
+        printf("\n%03d p=%10f %10f %10f m= %10f e= %f", imp, MassPoints[imp].X, MassPoints[imp].Y, MassPoints[imp].Z, MassPoints[imp].Mp, Gerror);
     }
 }
 int main(int argc, char * argv[])
