@@ -11800,27 +11800,22 @@ TRAOBJ *Sat, int iTotalCheckPoints, int dk, int iDoList[10][4], int nDoList,int 
             Sat_FX = (ValX0) * Sat_ForceDD_i_j_div_Sat_Distance_i_j;
             Sat_FY = (ValY0) * Sat_ForceDD_i_j_div_Sat_Distance_i_j;
             Sat_FZ = (ValZ0) * Sat_ForceDD_i_j_div_Sat_Distance_i_j;
-            ErrorMainX = Sat_FX-FX;
-            ErrorMainY = Sat_FY-FY;
-            ErrorMainZ = Sat_FZ-FZ;
-            //ErrorMain += sqrt((Sat_FX-FX)*(Sat_FX-FX) + (Sat_FY-FY)*(Sat_FY-FY) + (Sat_FZ-FZ)*(Sat_FZ-FZ));
-            if (imp) // no needs to minus all prev masspoints
+            ErrorMainX = FX - Sat_FX;
+            ErrorMainY = FY - Sat_FY;
+            ErrorMainZ = FZ - Sat_FZ;
+
+            for (int imp_ = 0; imp_ < imp; imp_++)
             {
-                for (int imp_ = 0; imp_ < imp; imp_++)
-                {
-                    ValX0 = (Xt-MassPoints[imp_].X);
-                    ValY0 = (Yt-MassPoints[imp_].Y);
-                    ValZ0 = (Zt-MassPoints[imp_].Z);
-                    tD_Obj1Obj2 = ValX0*ValX0 + ValY0*ValY0 + ValZ0*ValZ0;
-                    tD_ = sqrt(tD_Obj1Obj2);
-                    Sat_ForceDD_i_j = MassPoints[imp_].Mp * GM_MODEL / tD_Obj1Obj2;
-                    Sat_ForceDD_i_j_div_Sat_Distance_i_j = Sat_ForceDD_i_j/ tD_;
-                    Sat_FX = (ValX0) * Sat_ForceDD_i_j_div_Sat_Distance_i_j;
-                    Sat_FY = (ValY0) * Sat_ForceDD_i_j_div_Sat_Distance_i_j;
-                    Sat_FZ = (ValZ0) * Sat_ForceDD_i_j_div_Sat_Distance_i_j;
-                    ErrorMainX += Sat_FX; ErrorMainY += Sat_FY; ErrorMainZ += Sat_FZ;
-                    
-                }
+                ValX0 = (Xt-MassPoints[imp_].X);
+                ValY0 = (Yt-MassPoints[imp_].Y);
+                ValZ0 = (Zt-MassPoints[imp_].Z);
+                tD_Obj1Obj2 = ValX0*ValX0 + ValY0*ValY0 + ValZ0*ValZ0;
+                tD_ = sqrt(tD_Obj1Obj2);
+                Sat_ForceDD_i_j = MassPoints[imp_].Mp * GM_MODEL / tD_Obj1Obj2;
+                Sat_ForceDD_i_j_div_Sat_Distance_i_j = Sat_ForceDD_i_j/ tD_;
+                ErrorMainX -= (ValX0) * Sat_ForceDD_i_j_div_Sat_Distance_i_j;
+                ErrorMainY -= (ValY0) * Sat_ForceDD_i_j_div_Sat_Distance_i_j;
+                ErrorMainZ -= (ValZ0) * Sat_ForceDD_i_j_div_Sat_Distance_i_j;
             }
             ErrorMain += sqrt(ErrorMainX*ErrorMainX + ErrorMainY*ErrorMainY + ErrorMainZ*ErrorMainZ);
         }
@@ -11839,7 +11834,7 @@ void GetOneMassPoint(long double &SumZeroX, long double &SumZeroY,long double &S
     // 4. find optimized value of masses in the P_close_list:
     //    a) loop for each point in the P_close_list find for mass minimum of the functional
     //    b) repeat loop till functional is minimal 
-    int i,k;
+    int i,j,k;
     long double Height;
     long double DHeight;
     long double Xt, Yt, Zt;
@@ -11874,6 +11869,7 @@ void GetOneMassPoint(long double &SumZeroX, long double &SumZeroY,long double &S
     
     // first run - to find point
     SumZeroX = 0; SumZeroY = 0; SumZeroZ = 0;
+    long double SumNorm = 0;
     long double NormMax = 0;
     int iMax = 0;
     long double FXmax, FYmax, FZmax;
@@ -11886,15 +11882,11 @@ void GetOneMassPoint(long double &SumZeroX, long double &SumZeroY,long double &S
 
         for( k= 0; k < dk; k++, Height+=DHeight)
         {
+            // calculation of the forces from Legender Poly model
             ForceDD = GM_MODEL / (Height*Height);
             Xt = Height*TotalCheckPoints[i][0];
             Yt = Height*TotalCheckPoints[i][1];
             Zt = Height*TotalCheckPoints[i][2];
-            NVectorX = Xt - CenterOfMAssX;
-            NVectorY = Yt - CenterOfMAssY;
-            NVectorZ = Zt - CenterOfMAssZ;
-            NVectorLen = sqrt(NVectorX*NVectorX + NVectorY*NVectorY + NVectorZ*NVectorZ);
-            NVectorX /= NVectorLen; NVectorY /= NVectorLen; NVectorZ /= NVectorLen;
             sinTetta = TotalCheckPoints[i][2];
             XdivR =    TotalCheckPoints[i][0];
             YdivR =    TotalCheckPoints[i][1];
@@ -11904,6 +11896,7 @@ void GetOneMassPoint(long double &SumZeroX, long double &SumZeroY,long double &S
             Sat->PowerR(Sat->R0divR);
             Sat->PartSummXYZ (Xk,Yk, sinTetta,  X, Xadd, Yadd, Zadd, iDoList[0][0], iDoList[0][1], iDoList[0][2], iDoList[0][3]);
                            Y=X;            Z=X;
+            // if skiplist present then 1 can be skipped
             if (nSkipList)
             {
                 X=-X;         Y=-Y;          Z=-Z;
@@ -11913,6 +11906,7 @@ void GetOneMassPoint(long double &SumZeroX, long double &SumZeroY,long double &S
                 X=1-X;         Y=1-Y;          Z=1-Z;
             }
             Xadd = -Xadd;  Yadd = -Yadd;   Zadd = -Zadd;
+            // data to calulate in DoList
             for (int id =1; id < nDoList; id++)
             {
                 Sat->PartSummXYZ (Xk,Yk, sinTetta,  X_, Xadd_, Yadd_, Zadd_, iDoList[id][0], iDoList[id][1], iDoList[id][2], iDoList[id][3]);
@@ -11922,6 +11916,7 @@ void GetOneMassPoint(long double &SumZeroX, long double &SumZeroY,long double &S
                 X+=X_; Y+=Y_; Z+=Z_;
                 Xadd += Xadd_; Yadd += Yadd_; Zadd += Zadd_;
             }
+            // next minus value - Poly from n=2 k= 0 can be ignored
             long double Xm1, Ym1, Zm1;
             long double Xaddm1, Yaddm1, Zaddm1;
             Xm1 = 0; Ym1 = 0; Zm1 = 0; Xaddm1 = 0; Yaddm1 = 0; Zaddm1 = 0;
@@ -11941,10 +11936,36 @@ void GetOneMassPoint(long double &SumZeroX, long double &SumZeroY,long double &S
             FX =(X-Xm1)*XdivR + (Xadd-Xaddm1);
             FY =(Y-Ym1)*YdivR + (Yadd-Yaddm1);
             FZ =(Z-Zm1)*sinTetta + (Zadd-Zaddm1);
-            FX *=ForceDD;
-            FY *=ForceDD;
-            FZ *=ForceDD;
+            // get FORCE from Legandre Poly
+            FX *=ForceDD;   FY *=ForceDD;      FZ *=ForceDD;
+            // now needs to minus all forces from previous Mass Points
+            long double ValX0, ValY0, ValZ0, tD_Obj1Obj2, tD_, Sat_ForceDD_i_j, Sat_ForceDD_i_j_div_Sat_Distance_i_j;
+            for (j = 0; j < imp; j++)
+            {
+                ValX0 = (Xt-MassPoints[j].X);
+                ValY0 = (Yt-MassPoints[j].Y);
+                ValZ0 = (Zt-MassPoints[j].Z);
+                tD_Obj1Obj2 = ValX0*ValX0 + ValY0*ValY0 + ValZ0*ValZ0;
+                tD_ = sqrt(tD_Obj1Obj2);
+                Sat_ForceDD_i_j = MassPoints[j].Mp * GM_MODEL / tD_Obj1Obj2;
+                Sat_ForceDD_i_j_div_Sat_Distance_i_j = Sat_ForceDD_i_j/ tD_;
+                FX -= (ValX0) * Sat_ForceDD_i_j_div_Sat_Distance_i_j;
+                FY -= (ValY0) * Sat_ForceDD_i_j_div_Sat_Distance_i_j;
+                FZ -= (ValZ0) * Sat_ForceDD_i_j_div_Sat_Distance_i_j;
+            }
+
+
+            // normal of the FORCE vector
             Norm = sqrt(FX*FX + FY*FY + FZ*FZ);
+            Xn = FX/Norm;   Yn = FY/Norm;      Zn = FZ/Norm;
+
+            // get center of mass point of the all prev Mass Points 
+            NVectorX = Xt - CenterOfMAssX;
+            NVectorY = Yt - CenterOfMAssY;
+            NVectorZ = Zt - CenterOfMAssZ;
+            NVectorLen = sqrt(NVectorX*NVectorX + NVectorY*NVectorY + NVectorZ*NVectorZ);
+            NVectorX /= NVectorLen; NVectorY /= NVectorLen; NVectorZ /= NVectorLen;
+#if 1
             if (NormMax < Norm)
             {
                 iMax = i;
@@ -11954,8 +11975,24 @@ void GetOneMassPoint(long double &SumZeroX, long double &SumZeroY,long double &S
                 NVectorLenmax = NVectorLen;
                 Xtmax=Xt; Ytmax=Yt; Ztmax=Zt;
             }
+#else
+
+            // angle
+            Angl = AngleBtwNorm(NVectorX,NVectorY,NVectorZ,Xn,Yn,Zn);
+
+            // probable point
+            NormZero = NVectorLen * cos(Angl);
+            ZeroX = Xt -NormZero *Xn;
+            ZeroY = Yt -NormZero *Yn;
+            ZeroZ = Zt -NormZero *Zn;
+
+            // calc medium val
+            SumZeroX +=ZeroX; SumZeroY +=ZeroY; SumZeroZ +=ZeroZ;
+            SumNorm += Norm;
+#endif
         }
     }
+#if 1
     Xn = FXmax/NormMax;
     Yn = FYmax/NormMax;
     Zn = FZmax/NormMax;
@@ -11968,9 +12005,11 @@ void GetOneMassPoint(long double &SumZeroX, long double &SumZeroY,long double &S
     ZeroY +=Ytmax;
     ZeroZ +=Ztmax;
     SumZeroX = ZeroX; SumZeroY = ZeroY; SumZeroZ = ZeroZ;
-    //SumZeroX /= iTotalCheckPoints *dk*SummNorm;
-    //SumZeroY /= iTotalCheckPoints *dk*SummNorm;
-    //SumZeroZ /= iTotalCheckPoints *dk*SummNorm;
+#else
+    SumZeroX /= iTotalCheckPoints *dk;
+    SumZeroY /= iTotalCheckPoints *dk;
+    SumZeroZ /= iTotalCheckPoints *dk;
+#endif
     // second run to find the mass
     MassPer = 0;
     ErrorMain1 = Functional(MassPer, SumZeroX, SumZeroY, SumZeroZ, Sat, iTotalCheckPoints, dk, iDoList, nDoList,iSkipList, nSkipList, imp);
@@ -12074,17 +12113,217 @@ void MassPointGen(TRAOBJ *SlS, TRAOBJ *Sat,TRAIMPLOBJ *Eng, long double ldFrom,l
         iDoList, nDoList, dk,iTotalCheckPoints, Sat,
         iSkipList, nSkipList, imp);
     printf("\n%03d p=%10f %10f %10f m= %10f e= %f", imp, MassPoints[imp].X, MassPoints[imp].Y, MassPoints[imp].Z, MassPoints[imp].Mp, Gerror);
+
+    imp++;
+    GetOneMassPoint(MassPoints[imp].X, MassPoints[imp].Y, MassPoints[imp].Z, MassPoints[imp].Mp, Gerror, step,
+        iDoList, nDoList, dk,iTotalCheckPoints, Sat,
+        iSkipList, nSkipList, imp);
+    printf("\n%03d p=%10f %10f %10f m= %10f e= %f", imp, MassPoints[imp].X, MassPoints[imp].Y, MassPoints[imp].Z, MassPoints[imp].Mp, Gerror);
+
+    long double ErrorMain1 = Functional(MassPoints[imp].Mp, MassPoints[imp].X, MassPoints[imp].Y, MassPoints[imp].Z, Sat, iTotalCheckPoints, dk, iDoList, nDoList,iSkipList, nSkipList, imp);
+    long double ErrorMain2;
+    long double Step = -0.1;
+    MassPoints[0].Mp +=Step; MassPoints[imp].Mp -=Step;
+    ErrorMain2 = Functional(MassPoints[imp].Mp, MassPoints[imp].X, MassPoints[imp].Y, MassPoints[imp].Z, Sat, iTotalCheckPoints, dk, iDoList, nDoList,iSkipList, nSkipList, imp);
+    
+    while (1)
+    {
+        if (fabs(ErrorMain1 - ErrorMain2) <1e-17)
+        {
+            if (ErrorMain1 >= ErrorMain2)
+                break;
+            else
+            {
+                MassPer -=Step;
+                break;
+            }
+        }
+
+        if (ErrorMain2 < ErrorMain1)
+        {
+            // contine steps
+            ErrorMain1 = ErrorMain2;
+        }
+        else
+        {
+            // step reverce direction and make step twice smaller
+            ErrorMain1 = ErrorMain2;
+
+            Step = -Step/2;
+            if (fabs(Step) < 1e-17)
+                break;
+        }
+        MassPoints[0].Mp +=Step; MassPoints[imp].Mp -=Step;
+        ErrorMain2 = Functional(MassPoints[imp].Mp, MassPoints[imp].X, MassPoints[imp].Y, MassPoints[imp].Z, Sat, iTotalCheckPoints, dk, iDoList, nDoList,iSkipList, nSkipList, imp);
+    }
+
+    imp++;
+    GetOneMassPoint(MassPoints[imp].X, MassPoints[imp].Y, MassPoints[imp].Z, MassPoints[imp].Mp, Gerror, step,
+        iDoList, nDoList, dk,iTotalCheckPoints, Sat,
+        iSkipList, nSkipList, imp);
+    printf("\n%03d p=%10f %10f %10f m= %10f e= %f", imp, MassPoints[imp].X, MassPoints[imp].Y, MassPoints[imp].Z, MassPoints[imp].Mp, Gerror);
+
+    ErrorMain1 = Functional(MassPoints[imp].Mp, MassPoints[imp].X, MassPoints[imp].Y, MassPoints[imp].Z, Sat, iTotalCheckPoints, dk, iDoList, nDoList,iSkipList, nSkipList, imp);
+    ErrorMain2;
+    Step = -0.1;
+    MassPoints[1].Mp +=Step; MassPoints[imp].Mp -=Step;
+    ErrorMain2 = Functional(MassPoints[imp].Mp, MassPoints[imp].X, MassPoints[imp].Y, MassPoints[imp].Z, Sat, iTotalCheckPoints, dk, iDoList, nDoList,iSkipList, nSkipList, imp);
+    
+    while (1)
+    {
+        if (fabs(ErrorMain1 - ErrorMain2) <1e-17)
+        {
+            if (ErrorMain1 >= ErrorMain2)
+                break;
+            else
+            {
+                MassPer -=Step;
+                break;
+            }
+        }
+
+        if (ErrorMain2 < ErrorMain1)
+        {
+            // contine steps
+            ErrorMain1 = ErrorMain2;
+        }
+        else
+        {
+            // step reverce direction and make step twice smaller
+            ErrorMain1 = ErrorMain2;
+
+            Step = -Step/2;
+            if (fabs(Step) < 1e-17)
+                break;
+        }
+        MassPoints[1].Mp +=Step; MassPoints[imp].Mp -=Step;
+        ErrorMain2 = Functional(MassPoints[imp].Mp, MassPoints[imp].X, MassPoints[imp].Y, MassPoints[imp].Z, Sat, iTotalCheckPoints, dk, iDoList, nDoList,iSkipList, nSkipList, imp);
+    }
+    imp++;
+    GetOneMassPoint(MassPoints[imp].X, MassPoints[imp].Y, MassPoints[imp].Z, MassPoints[imp].Mp, Gerror, step,
+        iDoList, nDoList, dk,iTotalCheckPoints, Sat,
+        iSkipList, nSkipList, imp);
+    printf("\n%03d p=%10f %10f %10f m= %10f e= %f", imp, MassPoints[imp].X, MassPoints[imp].Y, MassPoints[imp].Z, MassPoints[imp].Mp, Gerror);
+    ErrorMain1 = Functional(MassPoints[imp].Mp, MassPoints[imp].X, MassPoints[imp].Y, MassPoints[imp].Z, Sat, iTotalCheckPoints, dk, iDoList, nDoList,iSkipList, nSkipList, imp);
+    ErrorMain2;
+    Step = -0.1;
+    MassPoints[2].Mp +=Step; MassPoints[imp].Mp -=Step;
+    ErrorMain2 = Functional(MassPoints[imp].Mp, MassPoints[imp].X, MassPoints[imp].Y, MassPoints[imp].Z, Sat, iTotalCheckPoints, dk, iDoList, nDoList,iSkipList, nSkipList, imp);
+    
+    while (1)
+    {
+        if (fabs(ErrorMain1 - ErrorMain2) <1e-17)
+        {
+            if (ErrorMain1 >= ErrorMain2)
+                break;
+            else
+            {
+                MassPer -=Step;
+                break;
+            }
+        }
+
+        if (ErrorMain2 < ErrorMain1)
+        {
+            // contine steps
+            ErrorMain1 = ErrorMain2;
+        }
+        else
+        {
+            // step reverce direction and make step twice smaller
+            ErrorMain1 = ErrorMain2;
+
+            Step = -Step/2;
+            if (fabs(Step) < 1e-17)
+                break;
+        }
+        MassPoints[2].Mp +=Step; MassPoints[imp].Mp -=Step;
+        ErrorMain2 = Functional(MassPoints[imp].Mp, MassPoints[imp].X, MassPoints[imp].Y, MassPoints[imp].Z, Sat, iTotalCheckPoints, dk, iDoList, nDoList,iSkipList, nSkipList, imp);
+    }
+
+    ErrorMain1 = Functional(MassPoints[imp].Mp, MassPoints[imp].X, MassPoints[imp].Y, MassPoints[imp].Z, Sat, iTotalCheckPoints, dk, iDoList, nDoList,iSkipList, nSkipList, imp);
+    ErrorMain2;
+    Step = -0.1;
+    MassPoints[0].Mp +=Step; MassPoints[1].Mp -=Step;
+    ErrorMain2 = Functional(MassPoints[imp].Mp, MassPoints[imp].X, MassPoints[imp].Y, MassPoints[imp].Z, Sat, iTotalCheckPoints, dk, iDoList, nDoList,iSkipList, nSkipList, imp);
+    
+    while (1)
+    {
+        if (fabs(ErrorMain1 - ErrorMain2) <1e-17)
+        {
+            if (ErrorMain1 >= ErrorMain2)
+                break;
+            else
+            {
+                MassPer -=Step;
+                break;
+            }
+        }
+
+        if (ErrorMain2 < ErrorMain1)
+        {
+            // contine steps
+            ErrorMain1 = ErrorMain2;
+        }
+        else
+        {
+            // step reverce direction and make step twice smaller
+            ErrorMain1 = ErrorMain2;
+
+            Step = -Step/2;
+            if (fabs(Step) < 1e-17)
+                break;
+        }
+        MassPoints[0].Mp +=Step; MassPoints[1].Mp -=Step;
+        ErrorMain2 = Functional(MassPoints[imp].Mp, MassPoints[imp].X, MassPoints[imp].Y, MassPoints[imp].Z, Sat, iTotalCheckPoints, dk, iDoList, nDoList,iSkipList, nSkipList, imp);
+    }
+
     while (imp <= 36)
     {
         imp++;
         iDoList[0][0] =2; iDoList[0][1] =imp+2;iDoList[0][2] =0;iDoList[0][3] =0;
         iSkipList[0][0] = 2; iSkipList[0][1] = imp+1; iSkipList[0][2] = 0; iSkipList[0][3] = 0;
-        nSkipList = 1;
+        nSkipList = 0;
     
         GetOneMassPoint(MassPoints[imp].X, MassPoints[imp].Y, MassPoints[imp].Z, MassPoints[imp].Mp, Gerror, step,
             iDoList, nDoList, dk,iTotalCheckPoints, Sat,
             iSkipList, nSkipList, imp);
         printf("\n%03d p=%10f %10f %10f m= %10f e= %f", imp, MassPoints[imp].X, MassPoints[imp].Y, MassPoints[imp].Z, MassPoints[imp].Mp, Gerror);
+
+        ErrorMain1 = Functional(MassPoints[imp].Mp, MassPoints[imp].X, MassPoints[imp].Y, MassPoints[imp].Z, Sat, iTotalCheckPoints, dk, iDoList, nDoList,iSkipList, nSkipList, imp);
+        ErrorMain2;
+        Step = -0.1;
+        MassPoints[imp-1].Mp +=Step; MassPoints[imp].Mp -=Step;
+        ErrorMain2 = Functional(MassPoints[imp].Mp, MassPoints[imp].X, MassPoints[imp].Y, MassPoints[imp].Z, Sat, iTotalCheckPoints, dk, iDoList, nDoList,iSkipList, nSkipList, imp);
+    
+        while (1)
+        {
+            if (fabs(ErrorMain1 - ErrorMain2) <1e-17)
+            {
+                if (ErrorMain1 >= ErrorMain2)
+                    break;
+                else
+                {
+                    MassPer -=Step;
+                    break;
+                }
+            }
+            if (ErrorMain2 < ErrorMain1)
+            {
+                // contine steps
+                ErrorMain1 = ErrorMain2;
+            }
+            else
+            {
+                // step reverce direction and make step twice smaller
+                ErrorMain1 = ErrorMain2;
+                Step = -Step/2;
+                if (fabs(Step) < 1e-17)
+                    break;
+            }
+            MassPoints[imp-1].Mp +=Step; MassPoints[imp].Mp -=Step;
+            ErrorMain2 = Functional(MassPoints[imp].Mp, MassPoints[imp].X, MassPoints[imp].Y, MassPoints[imp].Z, Sat, iTotalCheckPoints, dk, iDoList, nDoList,iSkipList, nSkipList, imp);
+        }
     }
 }
 int main(int argc, char * argv[])
