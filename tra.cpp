@@ -11822,6 +11822,12 @@ TRAOBJ *Sat, int iTotalCheckPoints, int dk, int iDoList[10][4], int nDoList,int 
     }
     return ErrorMain;
 }
+void CalcForcesPoly(long double Xpos, long double Ypos, long double Zpos, 
+                    long double Fx, long double Fy, long double Fz,
+                    int iDoList[10][4], int nDoList, int iSkipList[10][4], int nSkipList)
+{
+
+}
 void GetOneMassPoint(long double &SumZeroX, long double &SumZeroY,long double &SumZeroZ, long double &MassPer, long double &ErrorMain1, 
     long double &Step, int iDoList[10][4], int nDoList, int dk,
     int iTotalCheckPoints, TRAOBJ *Sat, int iSkipList[10][4], int nSkipList, int imp)
