@@ -7179,7 +7179,9 @@ long double GreenwichAscensionFromTLEEpoch(long double EP, long double &preEps, 
         nutEpsilon = nutEpsilon *M_PI / 180;
         nutDFeta = dFeta *M_PI / 180;
         DeltaH = dFeta * cos(nutEpsilon)/360.0;
-        H0 = 24110.54841 + (8640184.812866 + (0.093104- 6.2e-10*Tstar)*Tstar)*Tstar +   (PartOfTheDay-DeltaH)*86401.84812866;//86636.555367908688
+        //H0 = 24110.54841 + (8640184.812866 + (0.093104- 6.2e-10*Tstar)*Tstar)*Tstar +   (PartOfTheDay-DeltaH)*86401.84812866;//86636.555367908688 // wrong!!!
+        //H0 = 24110.54841 + (8640184.812866 + (0.093104- 6.2e-10*Tstar)*Tstar)*Tstar +   (PartOfTheDay-DeltaH)*86636.555367908688;//
+        //H0 = 24110.54841 + (8640184.812866 + (0.093104- 6.2e-10*Tstar)*Tstar)*Tstar +   (PartOfTheDay-DeltaH)*86636.555367908577283124054644656;
         H0 = 24110.54841 + (8640184.812866 + (0.093104- 6.2e-10*Tstar)*Tstar)*Tstar +   (1.002737909350795+(5.9006e-11 -5.9E-15*Tstar)*Tstar)*86400*(PartOfTheDay-DeltaH);//*86401.84812866;//86636.555367908688
         THETAG = H0/86400 * 2.0*M_PI;
         THETAG =fmod(THETAG, (long double)2.0*M_PI);
