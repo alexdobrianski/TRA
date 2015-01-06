@@ -6656,12 +6656,13 @@ M_110:
     VY = VYm3;
     VZ = VZm3;
 }
-
+double ConvertDateTimeToTLEEpoch(int iDay, int iMonth, int iYear, int iHour, int iMin, int iSec, int iMills);
 long double ConvertJulianDayToDateAndTime(double JulianDay, SYSTEMTIME *ThatTime)
 {
-    long daysfrom2000 = (long)(JulianDay - 2451544.5);
+    long daysfrom2000 = (long)(JulianDay - 2451544.5); // noon 1 jan 2000
     long double flInDay = (JulianDay - 2451544.5) - (long double)daysfrom2000; 
     long double RetTime = flInDay;
+    flInDay += 1.0/(60.0*60.0*24.0*1000); // last one is for rounding milliseconds
     int iYear = 0;
     daysfrom2000 += 1; // 1Jan must be 1;
     while (daysfrom2000 > 366)
@@ -6743,7 +6744,8 @@ long double ConvertJulianDayToDateAndTime(double JulianDay, SYSTEMTIME *ThatTime
     ThatTime->wSecond = iSec;
     ThatTime->wMilliseconds = iMils;
     ThatTime->wDayOfWeek = 0;
-    return RetTime + (long double)DaysFromTheBeginigOfTheYear + (long double)(iYear*1000);
+    //RetTime += (long double)DaysFromTheBeginigOfTheYear + (long double)(iYear*1000);//-1.0/(60.0*60.0*24.0*1000);
+    return ConvertDateTimeToTLEEpoch(ThatTime->wDay, ThatTime->wMonth, ThatTime->wYear, ThatTime->wHour, ThatTime->wMinute, ThatTime->wSecond, ThatTime->wMilliseconds);
 }
 long double ConverTLEEpochDate2JulianDay(long double KeplerDate)
 {
@@ -6786,7 +6788,7 @@ long double ConverTLEEpochDate2JulianDay(long double KeplerDate)
     //double RestOfTheDay = t2000_01_01_01 - (double)it2000_01_01_01;
     return t2000_01_01_01// - RestOfTheDay 
             + KeplerDate - ((long double)(iYear*1000))
-            -1; // epoch date is 1== 1 Jan - needs to adjust date.
+            -1; // epoch date is 1== 1 Jan - needs to adjust one day.
 }
 
 
@@ -6902,7 +6904,7 @@ BOOL ParsURL(char * URLServer, int *port, char* URL,  char * szParsingName)
     }
     return FALSE;
 }
-void ConvertDateFromXML(char *pszQuo, long double &ld_TotalDays, long double &ld_dStartJD, long double ld_dStartTLEEpoch)
+void ConvertDateFromXML(char *pszQuo, long double &ld_TotalDays, long double &ld_dStartJD, long double &ld_dStartTLEEpoch)
 {
     ld_TotalDays = 0;
     ld_dStartJD = atof(pszQuo);    // format: <TRA:setting name="dStartJD0" value="2455625.1696833" />
@@ -7105,6 +7107,14 @@ END
 // The function subroutine THETAG is passed the epoch time exactly as it appears on the input element cards.
 // The routine converts this time to days since 1950 Jan 0.0 UTC, stores this in the COMMON E1,
 // and returns the right ascension of Greenwich at epoch (in radians).
+
+// usefull: http://en.wikipedia.org/wiki/Equation_of_time
+//          http://www2.arnes.si/~gljsentvid10/sidereal.htm
+//          http://www.iausofa.org/2001_0331/sofa/eqeq94.for
+//          http://www.iausofa.org/2001_0331/sofa/gmst82.for
+//          http://misc.gis.tu-berlin.de/igg/htdocs-kw/fileadmin/Daten_MCA/EM1/bsp.pdf
+//          http://misc.gis.tu-berlin.de/igg/htdocs-kw/fileadmin/Daten_MCA/EM1/a6.pdf
+
 long double GreenwichAscensionFromTLEEpoch(long double EP, long double &preEps, long double &preTetta, long double &preZ, long double &nutEpsilon, long double &nutDFeta)
 {
     
@@ -7114,15 +7124,18 @@ long double GreenwichAscensionFromTLEEpoch(long double EP, long double &preEps, 
 	//DOUBLE PRECISION EPOCH,D,THETA,TWOPI,YR,TEMP,EP,DS50
 	long double EPOCH,D,THETA,TWOPI,YR,TEMP,DS50;
     long double THETAG;
-    long double DaysFrom2000;
-    long iDaysFrom2000;
+    long double DaysFromJ2000;
+    long iDaysFromJ2000;
     long double PartOfTheDay;
-    long double CenturyFrom2000;
+    long double CenturyFromJ2000;
+
     long double Tstar;
     long double dFeta,dEpsilon;
     long double _Epsilon;
     long double H0;
     long double DeltaH;
+    // J000 == 2451545,0 JD == 01/Jan/2000 12:00
+
 	TWOPI=2.0*M_PI;//6.28318530717959D0
 	YR=(EP+2.e-7)*1.e-3;
 	int JY=(int)(YR);
@@ -7135,7 +7148,7 @@ long double GreenwichAscensionFromTLEEpoch(long double EP, long double &preEps, 
     preZ = 0;
 
 #if 1    
-    if (JY < 20) // just from J2000
+    if (JY < 20) // just from J2000 == 
     {
         // from J2000:
         // 24110.54841sec / 12/60/60 * M_PI= 1.7533685592332655129130610478964 
@@ -7146,22 +7159,28 @@ long double GreenwichAscensionFromTLEEpoch(long double EP, long double &preEps, 
             N = 0;
         else 
             N = (JY-1)/4+1;
-        DaysFrom2000=365.0*(JY) +N + D-1;  // tle epoch jan 1 (0 day of the year) is the day number 1
-        iDaysFrom2000= (long)(DaysFrom2000);
-        CenturyFrom2000 = DaysFrom2000/36525.0;
-        Tstar =CenturyFrom2000;
+        // tle epoch jan 1 (0 day of the year) is the day number 1 and noon is 0.5 day (has to be minused)
+        // also it referce as d0
+        DaysFromJ2000=365.0*(JY) +N + D-1.0-0.5;  
+        // that is integer value of d0 the days
+        iDaysFromJ2000= (long)(DaysFromJ2000);
+        // that is also T0 == d0/36525
+        CenturyFromJ2000 = DaysFromJ2000/36525.0;
+        // that is Tstar==Deltat == (JD( at 0 hour of day ) - JD (J2000 at 12 hour UT))/36525
+        Tstar =(((long double)iDaysFromJ2000)+0.5)/36525.0;
         PartOfTheDay = D - (double long)(long)D;
         // from https://www2.mps.mpg.de/homes/fraenz/systems/systems2art/node3.html
-        dFeta = -0.0048*sin((125-0.05295*DaysFrom2000)*M_PI/180) - 0.0004*cos((200.9 +1.97129*DaysFrom2000)*M_PI/180);
-        dEpsilon = 0.0026 * cos((125-0.05295*DaysFrom2000)*M_PI/180) - 0.0002*sin((200.9 +1.97129*DaysFrom2000)*M_PI/180);
+        dFeta = -0.0048*sin((125-0.05295*DaysFromJ2000)*M_PI/180) - 0.0004*cos((200.9 +1.97129*DaysFromJ2000)*M_PI/180);
+        dEpsilon = 0.0026 * cos((125-0.05295*DaysFromJ2000)*M_PI/180) - 0.0002*sin((200.9 +1.97129*DaysFromJ2000)*M_PI/180);
         //dFeta = dFeta *M_PI / 180;
         // Epsilon = _Epsilon + dEpsilon (page 12 from http://www.scharmn.narod.ru/AVD/bookAES2nn.pdf) 
-        _Epsilon = 23.43921111 + (-0.013004167 - 0.000000164*Tstar)*Tstar;
+        _Epsilon = 23.43921111 + (-0.013004167 + (-0.000000164 - 0.000000504*Tstar)*Tstar)*Tstar;
         nutEpsilon = _Epsilon + dEpsilon;
         nutEpsilon = nutEpsilon *M_PI / 180;
         nutDFeta = dFeta *M_PI / 180;
         DeltaH = dFeta * cos(nutEpsilon)/360.0;
-        H0 = 24110.54841 + (8640184.812866 + (0.093104- 6.2e-10*Tstar)*Tstar)*Tstar + (DaysFrom2000-DeltaH)*86401.84812866;
+        H0 = 24110.54841 + (8640184.812866 + (0.093104- 6.2e-10*Tstar)*Tstar)*Tstar +   (PartOfTheDay-DeltaH)*86401.84812866;//86636.555367908688
+        H0 = 24110.54841 + (8640184.812866 + (0.093104- 6.2e-10*Tstar)*Tstar)*Tstar +   (1.002737909350795+(5.9006e-11 -5.9E-15*Tstar)*Tstar)*86400*(PartOfTheDay-DeltaH);//*86401.84812866;//86636.555367908688
         THETAG = H0/86400 * 2.0*M_PI;
         THETAG =fmod(THETAG, (long double)2.0*M_PI);
         preEps = (2306.2181 + (0.30188 + 0.017998*Tstar)*Tstar)*Tstar; // in seconds
