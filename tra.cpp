@@ -11907,7 +11907,118 @@ long double BallanceMass(long double StoreMass[(TOTAL_COEF+3)*(TOTAL_COEF+3)], i
     }
     return (1.0 - TotalMass + Step);
 }
+void FindPosWinMinError(long double &NormZero, long double ForceNorm, long double Angl, long double &NVectorLen, long double PreSeeror,
+    long double Xt, long double Yt, long double Zt, long double Xn, long double Yn, long double Zn,
+    int iDoList[10][4], int nDoList, 
+    int iTotalCheckPoints, TRAOBJ *Sat, int iSkipList[10][4], int nSkipList, int imp, int imp_skip, int imp_set)
+{
+    // initial step
+    NormZero = NVectorLen * cos(Angl);
+    long double ZeroX = Xt -NormZero *Xn;
+    long double ZeroY = Yt -NormZero *Yn;
+    long double ZeroZ = Zt -NormZero *Zn;
 
+    long double Xtt = Xt - 2.0*NormZero *Xn;
+    long double Ytt = Yt - 2.0*NormZero *Yn;
+    long double Ztt = Zt - 2.0*NormZero *Zn;
+
+    long double Heightt = sqrt(Xtt*Xtt + Ytt*Ytt + Ztt*Ztt);
+    long double XttdivH = Xtt/ Heightt;
+    long double YttdivH = Ytt/Heightt;
+    long double ZttdivH = Ztt/Heightt;
+            //Sat_ForceDD_i_j = MassPoints[j].Mp * GM_MODEL / (tD_Obj1Obj2*tD_);
+
+    MassPoints[imp_set].Mp = ForceNorm * NormZero*NormZero / GM_MODEL;
+    MassPoints[imp_set].X = ZeroX; MassPoints[imp_set].Y = ZeroY; MassPoints[imp_set].Z = ZeroZ;
+    long double FX,FY,FZ;
+
+    CalcForcesPoly(Sat, XttdivH, YttdivH, ZttdivH, Heightt, FX,FY,FZ,    iDoList, nDoList, iSkipList,nSkipList);
+    int iSet = imp_set;
+    if (iSet >= imp)
+        iSet = imp+1;
+    MinusPointForces(FX, FY, FZ, Xtt, Ytt, Ztt, iSet, imp_skip);
+
+    long double ErrorMain1 = FX*FX + FY*FY + FZ*FZ;
+    PreSeeror *= ErrorMain1;
+
+    long double Step = 1.0;
+
+    NVectorLen += Step;
+
+    NormZero = NVectorLen * cos(Angl);
+    ZeroX = Xt -NormZero *Xn;
+    ZeroY = Yt -NormZero *Yn;
+    ZeroZ = Zt -NormZero *Zn;
+
+    Xtt = Xt - 2.0*NormZero *Xn;
+    Ytt = Yt - 2.0*NormZero *Yn;
+    Ztt = Zt - 2.0*NormZero *Zn;
+
+    Heightt = sqrt(Xtt*Xtt + Ytt*Ytt + Ztt*Ztt);
+    XttdivH = Xtt/ Heightt;
+    YttdivH = Ytt/Heightt;
+    ZttdivH = Ztt/Heightt;
+            //Sat_ForceDD_i_j = MassPoints[j].Mp * GM_MODEL / (tD_Obj1Obj2*tD_);
+
+    MassPoints[imp_set].Mp = ForceNorm * NormZero*NormZero / GM_MODEL;
+    MassPoints[imp_set].X = ZeroX; MassPoints[imp_set].Y = ZeroY; MassPoints[imp_set].Z = ZeroZ;
+
+    CalcForcesPoly(Sat, XttdivH, YttdivH, ZttdivH, Heightt, FX,FY,FZ,    iDoList, nDoList, iSkipList,nSkipList);
+    MinusPointForces(FX, FY, FZ, Xtt, Ytt, Ztt, iSet, imp_skip);
+
+    long double ErrorMain2 = FX*FX + FY*FY + FZ*FZ;
+    while (1)
+    {
+        if (fabs(ErrorMain1 - ErrorMain2) <PreSeeror)
+        {
+            if (ErrorMain1 >= ErrorMain2)
+                break;
+            else
+            {
+                break;
+            }
+        }
+
+        if (ErrorMain2 < ErrorMain1)
+        {
+            // contine steps
+            ErrorMain1 = ErrorMain2;
+        }
+        else
+        {
+            // step reverce direction and make step twice smaller
+            ErrorMain1 = ErrorMain2;
+
+            Step = -Step/2;
+            if (fabs(Step) < PreSeeror)
+                break;
+        }
+        NVectorLen += Step;
+
+        NormZero = NVectorLen * cos(Angl);
+        ZeroX = Xt -NormZero *Xn;
+        ZeroY = Yt -NormZero *Yn;
+        ZeroZ = Zt -NormZero *Zn;
+
+        Xtt = Xt - 2.0*NormZero *Xn;
+        Ytt = Yt - 2.0*NormZero *Yn;
+        Ztt = Zt - 2.0*NormZero *Zn;
+
+        Heightt = sqrt(Xtt*Xtt + Ytt*Ytt + Ztt*Ztt);
+        XttdivH = Xtt/ Heightt;
+        YttdivH = Ytt/Heightt;
+        ZttdivH = Ztt/Heightt;
+            //Sat_ForceDD_i_j = MassPoints[j].Mp * GM_MODEL / (tD_Obj1Obj2*tD_);
+
+        MassPoints[imp_set].Mp = ForceNorm * NormZero*NormZero / GM_MODEL;
+        MassPoints[imp_set].X = ZeroX; MassPoints[imp_set].Y = ZeroY; MassPoints[imp_set].Z = ZeroZ;
+
+        CalcForcesPoly(Sat, XttdivH, YttdivH, ZttdivH, Heightt, FX,FY,FZ,    iDoList, nDoList, iSkipList,nSkipList);
+        MinusPointForces(FX, FY, FZ, Xtt, Ytt, Ztt, iSet, imp_skip);
+        ErrorMain2 = FX*FX + FY*FY + FZ*FZ;
+    }
+
+}
 void GetOneMassPoint( long double &ErrorMain1, 
     long double &Step, int iDoList[10][4], int nDoList, int dk,
     int iTotalCheckPoints, TRAOBJ *Sat, int iSkipList[10][4], int nSkipList, int imp, int imp_skip, int imp_set)
@@ -12009,28 +12120,22 @@ void GetOneMassPoint( long double &ErrorMain1,
             Angl = AngleBtwNorm(NVectorX,NVectorY,NVectorZ,Xn,Yn,Zn);
 
             // probable point
+            FindPosWinMinError(NormZero, Norm, Angl, NVectorLen, 0.00001,
+                            Xt, Yt, Zt, Xn, Yn, Zn,
+                            iDoList, nDoList, iTotalCheckPoints, Sat, iSkipList, nSkipList, imp, imp_skip, imp_set);
+            
             NormZero = NVectorLen * cos(Angl);
             ZeroX = Xt -NormZero *Xn;
             ZeroY = Yt -NormZero *Yn;
             ZeroZ = Zt -NormZero *Zn;
 
-            long double Xtt = Xt - 2.0*NormZero *Xn;
-            long double Ytt = Yt - 2.0*NormZero *Yn;
-            long double Ztt = Zt - 2.0*NormZero *Zn;
 
-            long double Heightt = sqrt(Xtt*Xtt + Ytt*Ytt + Ztt*Ztt);
-            long double XttdivH = Xtt/ Heightt;
-            long double YttdivH = Ytt/Heightt;
-            long double ZttdivH = Ztt/Heightt;
-
-
-            long double ForceDDtt = GM_MODEL / (Heightt*Heightt);
-            CalcForcesPoly(Sat, XttdivH, YttdivH, ZttdivH, Heightt, FX,FY,FZ,    iDoList, nDoList, iSkipList,nSkipList);
-            MinusPointForces(FX, FY, FZ, Xtt, Ytt, Ztt, imp, imp_skip);
+            MassPoints[imp_set].Mp = Norm * NormZero*NormZero / GM_MODEL;
+            MassPoints[imp_set].X = ZeroX; MassPoints[imp_set].Y = ZeroY; MassPoints[imp_set].Z = ZeroZ;
 
             // calc medium val
-            SumZeroX +=ZeroX; SumZeroY +=ZeroY; SumZeroZ +=ZeroZ;
-            SumNorm += Norm;
+            SumZeroX +=ZeroX*MassPoints[imp_set].Mp; SumZeroY +=ZeroY*MassPoints[imp_set].Mp; SumZeroZ +=ZeroZ*MassPoints[imp_set].Mp;
+            SumNorm += MassPoints[imp_set].Mp;
 #endif
         }
     }
@@ -12048,9 +12153,9 @@ void GetOneMassPoint( long double &ErrorMain1,
     ZeroZ +=Ztmax;
     SumZeroX = ZeroX; SumZeroY = ZeroY; SumZeroZ = ZeroZ;
 #else
-    SumZeroX /= iTotalCheckPoints *dk;
-    SumZeroY /= iTotalCheckPoints *dk;
-    SumZeroZ /= iTotalCheckPoints *dk;
+    SumZeroX /= iTotalCheckPoints *dk*SumNorm;
+    SumZeroY /= iTotalCheckPoints *dk*SumNorm;
+    SumZeroZ /= iTotalCheckPoints *dk*SumNorm;
 #endif
     for(i = 0; i < imp; i++)
     {
@@ -12168,7 +12273,7 @@ void MassPointGen(TRAOBJ *SlS, TRAOBJ *Sat,TRAIMPLOBJ *Eng, long double ldFrom,l
     long double SumZeroX, SumZeroY, SumZeroZ;
     long double Gerror, step;
     int imp = 0;
-    iDoList[0][0] =2; iDoList[0][1] =2;iDoList[0][2] =0;iDoList[0][3] =0;
+    iDoList[0][0] =2; iDoList[0][1] =6;iDoList[0][2] =0;iDoList[0][3] =6;
     nDoList  =1;
     GetOneMassPoint( Gerror, step,iDoList, nDoList, dk,iTotalCheckPoints, Sat, iSkipList, nSkipList, imp,-1, imp);
     printf("\n%03d p=%10f %10f %10f m= %10f e= %f", imp, MassPoints[imp].X, MassPoints[imp].Y, MassPoints[imp].Z, MassPoints[imp].Mp, Gerror);
