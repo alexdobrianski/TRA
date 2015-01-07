@@ -12047,7 +12047,7 @@ void NormMassPoints(int imp, long double StepM, int j, MASS_POINT_ELEMENT MassPo
             if (SummM < MassPoints[i].Mp)
                 SummM =MassPoints[i].Mp;
         }
-        if (SummM > 1.0)
+        if (SummM > 2.0)
         {
             for( i = 0; i < imp+1; i++)
             {
@@ -12336,15 +12336,17 @@ void GetOneMassPoint( long double &ErrorMain1,
         if (MIN_val_functional < MIN_PrevFunc)
         {
             MIN_PrevFunc = MIN_val_functional;
-            CountContinue = 1000;
+            CountContinue = 64;
             stepxyz = StepXYZ;
         }
         else // tried values are bigger then prev one
         {
             if (--CountContinue <0)
             {
-                CountContinue = 1000;
+                CountContinue = 64;
                 stepxyz *= 2.0;
+                if (stepxyz > 2000.0)
+                    stepxyz = 10.0;
             }
             continue;
         }
@@ -12366,13 +12368,13 @@ void GetOneMassPoint( long double &ErrorMain1,
         for (j = 0; j < 10; j++)
         {
             FunctionalVal[j] = (MAX_val_functional - FunctionalVal[j])/MIN_coef;///(MAX_val_functional/1.1);
-            AllVal += 0.5*FunctionalValOld[j]+0.5*FunctionalVal[j];
+            AllVal += FunctionalVal[j];
             for (i = 0; i < imp+1; i++)
             {
-                MassPointsSumm[i].X = 0.5*MassPointsSumm[i].X*FunctionalValOld[j] + 0.5* MassPointsV[j][i].X*FunctionalVal[j];
-                MassPointsSumm[i].Y = 0.5*MassPointsSumm[i].Y*FunctionalValOld[j] + 0.5* MassPointsV[j][i].Y*FunctionalVal[j];
-                MassPointsSumm[i].Z = 0.5*MassPointsSumm[i].Z*FunctionalValOld[j] + 0.5* MassPointsV[j][i].Z*FunctionalVal[j];
-                MassPointsSumm[i].Mp = 0.5*MassPointsSumm[i].Mp*FunctionalValOld[j] + 0.5* MassPointsV[j][i].Mp*FunctionalVal[j];
+                MassPointsSumm[i].X = (0.5*MassPointsSumm[i].X + 0.5* MassPointsV[j][i].X)*FunctionalVal[j];
+                MassPointsSumm[i].Y = (0.5*MassPointsSumm[i].Y + 0.5* MassPointsV[j][i].Y)*FunctionalVal[j];
+                MassPointsSumm[i].Z = (0.5*MassPointsSumm[i].Z + 0.5* MassPointsV[j][i].Z)*FunctionalVal[j];
+                MassPointsSumm[i].Mp = (0.5*MassPointsSumm[i].Mp + 0.5* MassPointsV[j][i].Mp)*FunctionalVal[j];
             }
         }
         // set preferable vector
@@ -12398,6 +12400,7 @@ void MassPointGen(TRAOBJ *SlS, TRAOBJ *Sat,TRAIMPLOBJ *Eng, long double ldFrom,l
     int iTotalCheckPoints;
     int iDoList[10][4];
     int nDoList;
+
     FILE * CheckPointsFile = fopen(MidRandPointsFile, "r");
     if (CheckPointsFile)
     {
@@ -12459,6 +12462,7 @@ void MassPointGen(TRAOBJ *SlS, TRAOBJ *Sat,TRAIMPLOBJ *Eng, long double ldFrom,l
     int imp = 0;
     iDoList[0][0] =2; iDoList[0][1] =2;iDoList[0][2] =0;iDoList[0][3] =0;
     nDoList  =1;
+
     GetOneMassPoint( Gerror, step,iDoList, nDoList, dk,iTotalCheckPoints, Sat, iSkipList, nSkipList, imp,-1, imp);
     printf("\n%03d p=%10f %10f %10f m= %10f e= %f", imp, MassPoints[imp].X, MassPoints[imp].Y, MassPoints[imp].Z, MassPoints[imp].Mp, Gerror);
 
