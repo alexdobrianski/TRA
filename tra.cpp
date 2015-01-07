@@ -12157,13 +12157,15 @@ void GetOneMassPoint( long double &ErrorMain1,
     SumZeroY /= iTotalCheckPoints *dk*SumNorm;
     SumZeroZ /= iTotalCheckPoints *dk*SumNorm;
 #endif
+    
     for(i = 0; i < imp; i++)
     {
         StoreMass[i] = MassPoints[i].Mp;
     }
+    
     MassPoints[imp_set].X = SumZeroX; MassPoints[imp_set].Y = SumZeroY; MassPoints[imp_set].Z = SumZeroZ;
     // second run to find the mass
-
+    
     MassPoints[imp_set].Mp = BallanceMass(StoreMass, imp+1, imp_set, 0);
     
     ErrorMain1 = Functional( Sat, iTotalCheckPoints, dk, iDoList, nDoList,iSkipList, nSkipList, imp+1, imp_skip);
@@ -12201,6 +12203,101 @@ void GetOneMassPoint( long double &ErrorMain1,
         }
         MassPoints[imp_set].Mp = BallanceMass(StoreMass, imp+1, imp_set, MassPoints[imp_set].Mp+Step);
         ErrorMain2 = Functional(Sat, iTotalCheckPoints, dk, iDoList, nDoList,iSkipList, nSkipList, imp+1, imp_skip);
+    }
+    if (imp<=1)
+        return;
+
+    // some how point found 
+    // now optimization:
+    // 1.generate 10 random vectors (each with dimention 4 * [number of points]
+    // 2.calulates 10 functionals on all this vectors
+    // 3. calc summ_vector with Weight == MAX_val_functional - functional + 1 that is a vector with more probable direction
+    // 4 generate 10 random vectors + summ_vector
+    // 5. calulate 10 functionals on all this vectors
+    // 6. calc (0.25*old_summ_vector + 0.75*summ_vector) (0.25 & 0.75 are params)
+    // 7. loop to pp 4
+    MASS_POINT_ELEMENT MassPointsI[(TOTAL_COEF+3)*(TOTAL_COEF+3)];
+    MASS_POINT_ELEMENT MassPointsSumm[(TOTAL_COEF+3)*(TOTAL_COEF+3)];
+    MASS_POINT_ELEMENT MassPointsV[10][(TOTAL_COEF+3)*(TOTAL_COEF+3)];
+    long double FunctionalVal[10];
+    long double FunctionalValOld[10];
+    long double StepM = 0.1; // for mass initial step is 0.1
+    long double StepXYZ = 10.0; // for position initial step is 10m
+    for (j = 0; j < 10; j++)
+    {
+        FunctionalValOld[j] = 0.0;
+    }
+    for (i = 0; i < imp+1; i++)
+    {
+        MassPointsI[i].X = MassPoints[i].X;  MassPointsI[i].Y = MassPoints[i].Y;  MassPointsI[i].Z = MassPoints[i].Z;  MassPointsI[i].Mp = MassPoints[i].Mp;
+        MassPointsSumm[i].X =0;  MassPointsSumm[i].Y =0;  MassPointsSumm[i].Z =0;  MassPointsSumm[i].Mp =0;
+    }
+    while(1)
+    {
+        long double MAX_val_functional = 0;
+        int jmax =0;
+        long double AllVal = 0;
+
+        long double MIN_val_functional = 10e+50;
+        int jmin =0;
+    
+        for (j = 0; j < 10; j++)
+        {
+            for (i = 0; i < imp+1; i++)
+            {
+                MassPointsV[j][i].Mp = StepM * (long double)(ra()-256L) / (long double)ra();
+                GetRandomNVector(MassPointsV[j][i].X, MassPointsV[j][i].Y, MassPointsV[j][i].Z);
+                MassPointsV[j][i].X *= StepXYZ;  MassPointsV[j][i].Y *= StepXYZ;  MassPointsV[j][i].Z *= StepXYZ;
+                MassPoints[i].X = MassPointsI[i].X + 0.5*MassPointsSumm[i].X + 0.5*MassPointsV[j][i].X;
+                MassPoints[i].Y = MassPointsI[i].Y + 0.5*MassPointsSumm[i].Y + 0.5*MassPointsV[j][i].Y;
+                MassPoints[i].Z = MassPointsI[i].Z + 0.5*MassPointsSumm[i].Z + 0.5*MassPointsV[j][i].Z;
+                MassPoints[i].Mp = MassPointsI[i].Mp + 0.5*MassPointsSumm[i].Mp + 0.5*MassPointsV[j][i].Mp;
+            }
+            FunctionalVal[j] = Functional(Sat, iTotalCheckPoints, dk, iDoList, nDoList,iSkipList, nSkipList, imp+1, imp_skip);
+            if (MAX_val_functional < FunctionalVal[j])
+            {
+                MAX_val_functional = FunctionalVal[j];
+                jmax = j;
+            }
+            if (MIN_val_functional >= FunctionalVal[j])
+            {
+                MIN_val_functional = FunctionalVal[j];
+                jmin = j;
+            }
+        }
+        // set minimum of the functional
+        for (i = 0; i <  imp+1; i++)
+        {
+            MassPointsI[i].X += MassPoints[i].X;
+            MassPointsI[i].Y += MassPoints[i].Y;
+            MassPointsI[i].Z += MassPoints[i].Z;
+            MassPointsI[i].Mp += MassPoints[i].Mp;
+        }
+
+        MAX_val_functional *= 1.1;
+        // get preferable vector
+        for (j = 0; j < 10; j++)
+        {
+            FunctionalVal[j] = (MAX_val_functional - FunctionalVal[j])/MAX_val_functional;
+            AllVal += 0.25*FunctionalValOld[j]+0.75*FunctionalVal[j];
+            for (i = 0; i < imp+1; i++)
+            {
+                MassPointsSumm[i].X = 0.25*MassPointsSumm[i].X*FunctionalValOld[j] + 0.75* MassPointsV[j][i].X*FunctionalVal[j];
+                MassPointsSumm[i].Y = 0.25*MassPointsSumm[i].Y*FunctionalValOld[j] + 0.75* MassPointsV[j][i].Y*FunctionalVal[j];
+                MassPointsSumm[i].Z = 0.25*MassPointsSumm[i].Z*FunctionalValOld[j] + 0.75* MassPointsV[j][i].Z*FunctionalVal[j];
+                MassPointsSumm[i].Mp = 0.25*MassPointsSumm[i].Mp*FunctionalValOld[j] + 0.75* MassPointsV[j][i].Mp*FunctionalVal[j];
+            }
+        }
+        // set preferable vector
+        for (i = 0; i <  imp+1; i++)
+        {
+            MassPointsSumm[i].X /= 10 * AllVal; MassPointsSumm[i].Y /= 10 * AllVal; MassPointsSumm[i].Z /= 10 * AllVal; MassPointsSumm[i].Mp /= 10 * AllVal;
+        }
+        
+        for(j = 0; j < 10; j++)
+        {
+            FunctionalValOld[j] = FunctionalVal[j];
+        }
     }
 
 }
