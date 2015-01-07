@@ -11939,6 +11939,8 @@ void FindPosWinMinError(long double &NormZero, long double ForceNorm, long doubl
     MinusPointForces(FX, FY, FZ, Xtt, Ytt, Ztt, iSet, imp_skip);
 
     long double ErrorMain1 = FX*FX + FY*FY + FZ*FZ;
+    if (ErrorMain1 == 0)
+        return;
     PreSeeror *= ErrorMain1;
 
     long double Step = 1.0;
@@ -12018,6 +12020,60 @@ void FindPosWinMinError(long double &NormZero, long double ForceNorm, long doubl
         ErrorMain2 = FX*FX + FY*FY + FZ*FZ;
     }
 
+}
+void NormMassPoints(int imp, long double StepM, int j, MASS_POINT_ELEMENT MassPointsI[(TOTAL_COEF+3)*(TOTAL_COEF+3)],
+    MASS_POINT_ELEMENT MassPointsSumm[(TOTAL_COEF+3)*(TOTAL_COEF+3)],
+    MASS_POINT_ELEMENT MassPointsV[10][(TOTAL_COEF+3)*(TOTAL_COEF+3)])
+{
+    // first step nothing can be bigger than 1
+    int i;
+    long double SummM = 0;
+    for( i = 0; i < imp+1; i++)
+    {
+        SummM += MassPoints[i].Mp;
+    }
+    SummM -= MassPoints[0].Mp ;
+    if (SummM != 0.0)
+    {
+        SummM /= imp;
+        for( i = 1; i < imp+1; i++)
+        {
+            MassPoints[i].Mp -= SummM;
+        }
+        // now make it less then 1 each
+        SummM = MassPoints[0].Mp ;
+        for( i = 1; i < imp+1; i++)
+        {
+            if (SummM < MassPoints[i].Mp)
+                SummM =MassPoints[i].Mp;
+        }
+        if (SummM > 1.0)
+        {
+            for( i = 1; i < imp+1; i++)
+            {
+                MassPoints[i].Mp/=SummM;
+            }
+            SummM = 0;
+            for( i = 0; i < imp+1; i++)
+            {
+                SummM += MassPoints[i].Mp;
+            }
+            if (SummM != 1.0)
+            {
+                SummM /= imp;
+                for( i = 1; i < imp+1; i++)
+                {
+                    MassPoints[i].Mp -= SummM;
+                }
+            }
+        }
+    }
+    for( i = 0; i < imp+1; i++)
+    {
+        //MassPoints[i].Mp = MassPointsI[i].Mp + 0.5*MassPointsSumm[i].Mp + 0.5*MassPointsV[j][i].Mp;
+        MassPointsV[j][i].Mp = (MassPoints[i].Mp - (MassPointsI[i].Mp + 0.5*MassPointsSumm[i].Mp))/0.5;
+    }
+    
 }
 void GetOneMassPoint( long double &ErrorMain1, 
     long double &Step, int iDoList[10][4], int nDoList, int dk,
@@ -12166,12 +12222,12 @@ void GetOneMassPoint( long double &ErrorMain1,
     MassPoints[imp_set].X = SumZeroX; MassPoints[imp_set].Y = SumZeroY; MassPoints[imp_set].Z = SumZeroZ;
     // second run to find the mass
     
-    MassPoints[imp_set].Mp = BallanceMass(StoreMass, imp+1, imp_set, 0);
+    MassPoints[imp_set].Mp = 0;
     
     ErrorMain1 = Functional( Sat, iTotalCheckPoints, dk, iDoList, nDoList,iSkipList, nSkipList, imp+1, imp_skip);
     long double ErrorMain2;
     Step = -0.1;
-    MassPoints[imp_set].Mp = BallanceMass(StoreMass, imp+1, imp_set, Step);
+    MassPoints[imp_set].Mp = Step;
     ErrorMain2 = Functional(Sat, iTotalCheckPoints, dk, iDoList, nDoList,iSkipList, nSkipList, imp+1, imp_skip);
     
     while (1)
@@ -12201,7 +12257,7 @@ void GetOneMassPoint( long double &ErrorMain1,
             if (fabs(Step) < 1e-17)
                 break;
         }
-        MassPoints[imp_set].Mp = BallanceMass(StoreMass, imp+1, imp_set, MassPoints[imp_set].Mp+Step);
+        MassPoints[imp_set].Mp += Step;
         ErrorMain2 = Functional(Sat, iTotalCheckPoints, dk, iDoList, nDoList,iSkipList, nSkipList, imp+1, imp_skip);
     }
     if (imp<=1)
@@ -12245,14 +12301,22 @@ void GetOneMassPoint( long double &ErrorMain1,
         {
             for (i = 0; i < imp+1; i++)
             {
-                MassPointsV[j][i].Mp = StepM * (long double)(ra()-256L) / (long double)ra();
                 GetRandomNVector(MassPointsV[j][i].X, MassPointsV[j][i].Y, MassPointsV[j][i].Z);
                 MassPointsV[j][i].X *= StepXYZ;  MassPointsV[j][i].Y *= StepXYZ;  MassPointsV[j][i].Z *= StepXYZ;
                 MassPoints[i].X = MassPointsI[i].X + 0.5*MassPointsSumm[i].X + 0.5*MassPointsV[j][i].X;
                 MassPoints[i].Y = MassPointsI[i].Y + 0.5*MassPointsSumm[i].Y + 0.5*MassPointsV[j][i].Y;
                 MassPoints[i].Z = MassPointsI[i].Z + 0.5*MassPointsSumm[i].Z + 0.5*MassPointsV[j][i].Z;
+                MassPointsV[j][i].Mp = StepM * ((long double)ra()-(long double)ra()) / (2.0*(long double)4294967295L);
                 MassPoints[i].Mp = MassPointsI[i].Mp + 0.5*MassPointsSumm[i].Mp + 0.5*MassPointsV[j][i].Mp;
+                if (i == 0)
+                    MassPoints[i].Mp = 1;
+                //while (MassPoints[i].Mp > 1) /////?????
+                //{
+                //    MassPointsV[j][i].Mp = StepM * ((long double)ra()-(long double)ra()) / (2.0*(long double)4294967295L);
+                //    MassPoints[i].Mp = MassPointsI[i].Mp + 0.5*MassPointsSumm[i].Mp + 0.5*MassPointsV[j][i].Mp;
+                //}
             }
+            NormMassPoints(imp, StepM, j, MassPointsI, MassPointsSumm, MassPointsV);
             FunctionalVal[j] = Functional(Sat, iTotalCheckPoints, dk, iDoList, nDoList,iSkipList, nSkipList, imp+1, imp_skip);
             if (MAX_val_functional < FunctionalVal[j])
             {
@@ -12268,10 +12332,13 @@ void GetOneMassPoint( long double &ErrorMain1,
         // set minimum of the functional
         for (i = 0; i <  imp+1; i++)
         {
-            MassPointsI[i].X += MassPoints[i].X;
-            MassPointsI[i].Y += MassPoints[i].Y;
-            MassPointsI[i].Z += MassPoints[i].Z;
-            MassPointsI[i].Mp += MassPoints[i].Mp;
+            MassPointsI[i].X =  + 0.5*MassPointsSumm[i].X + 0.5*MassPointsV[jmin][i].X;
+            MassPointsI[i].Y = MassPointsI[i].Y + 0.5*MassPointsSumm[i].Y + 0.5*MassPointsV[jmin][i].Y;
+            MassPointsI[i].Z = MassPointsI[i].Z + 0.5*MassPointsSumm[i].Z + 0.5*MassPointsV[jmin][i].Z;
+            if ( i == 0)
+                MassPointsI[i].Mp = 1;
+            else
+                MassPointsI[i].Mp = MassPointsI[i].Mp + 0.5*MassPointsSumm[i].Mp + 0.5*MassPointsV[jmin][i].Mp;
         }
 
         MAX_val_functional *= 1.1;
@@ -12279,13 +12346,13 @@ void GetOneMassPoint( long double &ErrorMain1,
         for (j = 0; j < 10; j++)
         {
             FunctionalVal[j] = (MAX_val_functional - FunctionalVal[j])/MAX_val_functional;
-            AllVal += 0.25*FunctionalValOld[j]+0.75*FunctionalVal[j];
+            AllVal += 0.5*FunctionalValOld[j]+0.5*FunctionalVal[j];
             for (i = 0; i < imp+1; i++)
             {
-                MassPointsSumm[i].X = 0.25*MassPointsSumm[i].X*FunctionalValOld[j] + 0.75* MassPointsV[j][i].X*FunctionalVal[j];
-                MassPointsSumm[i].Y = 0.25*MassPointsSumm[i].Y*FunctionalValOld[j] + 0.75* MassPointsV[j][i].Y*FunctionalVal[j];
-                MassPointsSumm[i].Z = 0.25*MassPointsSumm[i].Z*FunctionalValOld[j] + 0.75* MassPointsV[j][i].Z*FunctionalVal[j];
-                MassPointsSumm[i].Mp = 0.25*MassPointsSumm[i].Mp*FunctionalValOld[j] + 0.75* MassPointsV[j][i].Mp*FunctionalVal[j];
+                MassPointsSumm[i].X = 0.5*MassPointsSumm[i].X*FunctionalValOld[j] + 0.5* MassPointsV[j][i].X*FunctionalVal[j];
+                MassPointsSumm[i].Y = 0.5*MassPointsSumm[i].Y*FunctionalValOld[j] + 0.5* MassPointsV[j][i].Y*FunctionalVal[j];
+                MassPointsSumm[i].Z = 0.5*MassPointsSumm[i].Z*FunctionalValOld[j] + 0.5* MassPointsV[j][i].Z*FunctionalVal[j];
+                MassPointsSumm[i].Mp = 0.5*MassPointsSumm[i].Mp*FunctionalValOld[j] + 0.5* MassPointsV[j][i].Mp*FunctionalVal[j];
             }
         }
         // set preferable vector
@@ -12370,7 +12437,7 @@ void MassPointGen(TRAOBJ *SlS, TRAOBJ *Sat,TRAIMPLOBJ *Eng, long double ldFrom,l
     long double SumZeroX, SumZeroY, SumZeroZ;
     long double Gerror, step;
     int imp = 0;
-    iDoList[0][0] =2; iDoList[0][1] =6;iDoList[0][2] =0;iDoList[0][3] =6;
+    iDoList[0][0] =2; iDoList[0][1] =2;iDoList[0][2] =0;iDoList[0][3] =0;
     nDoList  =1;
     GetOneMassPoint( Gerror, step,iDoList, nDoList, dk,iTotalCheckPoints, Sat, iSkipList, nSkipList, imp,-1, imp);
     printf("\n%03d p=%10f %10f %10f m= %10f e= %f", imp, MassPoints[imp].X, MassPoints[imp].Y, MassPoints[imp].Z, MassPoints[imp].Mp, Gerror);
