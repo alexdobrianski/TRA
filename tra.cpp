@@ -12322,6 +12322,7 @@ void GetOneMassPoint( long double &ErrorMain1,
     long double stepxyz = StepXYZ;
     long long llFound = 0;
     long double stepm = StepM;
+    long double Devisor = 2.0;
     while(1)
     {
         long double MAX_val_functional = 0;
@@ -12438,18 +12439,27 @@ void GetOneMassPoint( long double &ErrorMain1,
         }
 #else
         stepxyz = 0;
+        //Devisor = 2.0;
         for (i = 0; i < imp+1; i++)
         {
-            MassPointsSumm[i].X = (1.5*MassPointsSumm[i].X + 0.5* MassPointsV[jmin][i].X)/2.0;
-            MassPointsSumm[i].Y = (1.5*MassPointsSumm[i].Y + 0.5* MassPointsV[jmin][i].Y)/2.0;
-            MassPointsSumm[i].Z = (1.5*MassPointsSumm[i].Z + 0.5* MassPointsV[jmin][i].Z)/2.0;
-            MassPointsSumm[i].Mp = (1.5*MassPointsSumm[i].Mp + 0.5* MassPointsV[jmin][i].Mp)/2.0;
+            MassPointsSumm[i].X = (1.5*MassPointsSumm[i].X + 0.5* MassPointsV[jmin][i].X)/Devisor;
+            MassPointsSumm[i].Y = (1.5*MassPointsSumm[i].Y + 0.5* MassPointsV[jmin][i].Y)/Devisor;
+            MassPointsSumm[i].Z = (1.5*MassPointsSumm[i].Z + 0.5* MassPointsV[jmin][i].Z)/Devisor;
+            MassPointsSumm[i].Mp = (1.5*MassPointsSumm[i].Mp + 0.5* MassPointsV[jmin][i].Mp)/Devisor;
             stepxyz += MassPointsSumm[i].X*MassPointsSumm[i].X + MassPointsSumm[i].Y*MassPointsSumm[i].Y +MassPointsSumm[i].Z*MassPointsSumm[i].Z;
         }
 #endif
         StepXYZ = 1000.0* MIN_PrevFunc / ((long double)iTotalCheckPoints * (long double)dk);
         StepM = StepXYZ / 100.0;
         stepxyz = 0.5*sqrt(stepxyz/3.0);
+        //Devisor *= 0.995;
+        //if (Devisor < 1.7)
+            Devisor = 2.0;
+        //if (stepxyz > (StepXYZ*5.0))
+        //{
+        //    stepxyz = StepXYZ;
+        //    Devisor = 2.0;
+        //}
         if (stepxyz < 0.2)
             stepxyz = StepXYZ;
         stepm = StepM;
