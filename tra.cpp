@@ -12460,6 +12460,8 @@ void GetOneMassPoint( long double &ErrorMain1,
         //    stepxyz = StepXYZ;
         //    Devisor = 2.0;
         //}
+        if (stepxyz > 10*StepXYZ)
+            stepxyz = StepXYZ;
         if (stepxyz < 0.1)
             stepxyz = StepXYZ;
         stepm = StepM;
