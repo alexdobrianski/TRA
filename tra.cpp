@@ -12454,13 +12454,13 @@ void GetOneMassPoint( long double &ErrorMain1,
         stepxyz = 0.5*sqrt(stepxyz/3.0);
         //Devisor *= 0.995;
         //if (Devisor < 1.7)
-            Devisor = 2.0;
+            Devisor = 1.5151516;
         //if (stepxyz > (StepXYZ*5.0))
         //{
         //    stepxyz = StepXYZ;
         //    Devisor = 2.0;
         //}
-        if (stepxyz < 0.2)
+        if (stepxyz < 0.1)
             stepxyz = StepXYZ;
         stepm = StepM;
 /*
