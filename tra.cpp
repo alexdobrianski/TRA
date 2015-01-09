@@ -12323,6 +12323,7 @@ void GetOneMassPoint( long double &ErrorMain1,
     long long llFound = 0;
     long double stepm = StepM;
     long double Devisor = 2.0;
+    long double RealStepWas = 0;
     while(1)
     {
         long double MAX_val_functional = 0;
@@ -12338,6 +12339,190 @@ void GetOneMassPoint( long double &ErrorMain1,
             {
                 for (i = 0; i < imp+1; i++)
                 {
+                    if (j == 1)
+                    {
+                        // case: optimization point from j=0 used but with different mass points
+                        MassPointsV[j][i].X = MassPointsV[0][i].X;  MassPointsV[j][i].Y = MassPointsV[0][i].Y;  MassPointsV[j][i].Z = MassPointsV[0][i].Z;
+                        MassPoints[i].X = MassPointsI[i].X + MassPointsSumm[i].X + MassPointsV[j][i].X;
+                        MassPoints[i].Y = MassPointsI[i].Y + MassPointsSumm[i].Y + MassPointsV[j][i].Y;
+                        MassPoints[i].Z = MassPointsI[i].Z + MassPointsSumm[i].Z + MassPointsV[j][i].Z;
+                        MassPointsV[j][i].Mp = stepm * ((long double)ra()-(long double)ra()) / (2.0*(long double)4294967295L);
+                        MassPoints[i].Mp = MassPointsI[i].Mp + MassPointsSumm[i].Mp + MassPointsV[j][i].Mp;
+                        continue;
+                    }
+                    else if (j == 2)
+                    {
+                        // case: initial point from prev step but mass points values from j== 0
+                        MassPointsV[j][i].X = -MassPointsSumm[i].X;  MassPointsV[j][i].Y = -MassPointsSumm[i].Y;  MassPointsV[j][i].Z = -MassPointsSumm[i].Z;
+                        MassPoints[i].X = MassPointsI[i].X + MassPointsSumm[i].X + MassPointsV[j][i].X;
+                        MassPoints[i].Y = MassPointsI[i].Y + MassPointsSumm[i].Y + MassPointsV[j][i].Y;
+                        MassPoints[i].Z = MassPointsI[i].Z + MassPointsSumm[i].Z + MassPointsV[j][i].Z;
+                        MassPointsV[j][i].Mp = MassPointsV[0][i].Mp;
+                        MassPoints[i].Mp = MassPointsI[i].Mp + MassPointsSumm[i].Mp + MassPointsV[j][i].Mp;
+                        continue;
+                    }
+                    else if (j == 3)
+                    {
+                        // case: 0.5 step
+                        GetRandomNVector(MassPointsV[j][i].X, MassPointsV[j][i].Y, MassPointsV[j][i].Z);
+                        MassPointsV[j][i].X *= 0.5*stepxyz;  MassPointsV[j][i].Y *= 0.5*stepxyz;  MassPointsV[j][i].Z *= 0.5*stepxyz;
+                        MassPoints[i].X = MassPointsI[i].X + MassPointsSumm[i].X + MassPointsV[j][i].X;
+                        MassPoints[i].Y = MassPointsI[i].Y + MassPointsSumm[i].Y + MassPointsV[j][i].Y;
+                        MassPoints[i].Z = MassPointsI[i].Z + MassPointsSumm[i].Z + MassPointsV[j][i].Z;
+                        MassPointsV[j][i].Mp = 0.5*stepm * ((long double)ra()-(long double)ra()) / (2.0*(long double)4294967295L);
+                        MassPoints[i].Mp = MassPointsI[i].Mp + MassPointsSumm[i].Mp + MassPointsV[j][i].Mp;
+                        continue;
+                    }
+                    else if (j == 4)
+                    {
+                        // case: 0.25 step
+                        GetRandomNVector(MassPointsV[j][i].X, MassPointsV[j][i].Y, MassPointsV[j][i].Z);
+                        MassPointsV[j][i].X *= 0.25*stepxyz;  MassPointsV[j][i].Y *= 0.25*stepxyz;  MassPointsV[j][i].Z *= 0.25*stepxyz;
+                        MassPoints[i].X = MassPointsI[i].X + MassPointsSumm[i].X + MassPointsV[j][i].X;
+                        MassPoints[i].Y = MassPointsI[i].Y + MassPointsSumm[i].Y + MassPointsV[j][i].Y;
+                        MassPoints[i].Z = MassPointsI[i].Z + MassPointsSumm[i].Z + MassPointsV[j][i].Z;
+                        MassPointsV[j][i].Mp = 0.25*stepm * ((long double)ra()-(long double)ra()) / (2.0*(long double)4294967295L);
+                        MassPoints[i].Mp = MassPointsI[i].Mp + MassPointsSumm[i].Mp + MassPointsV[j][i].Mp;
+                        continue;
+                    }
+                    else if (j == 5)
+                    {
+                        // case: 0.25 step 
+                        if (FunctionalVal[1] < MIN_PrevFunc) // for j == 3 (0.5 step) was found min => search in this area
+                        {
+                            GetRandomNVector(MassPointsV[j][i].X, MassPointsV[j][i].Y, MassPointsV[j][i].Z);
+                            MassPointsV[j][i].X *= 0.25*stepxyz;  MassPointsV[j][i].Y *= 0.25*stepxyz;  MassPointsV[j][i].Z *= 0.25*stepxyz;
+                            MassPointsV[j][i].X += MassPointsV[1][i].X;  MassPointsV[j][i].Y += MassPointsV[1][i].Y;  MassPointsV[j][i].Z += MassPointsV[1][i].Z;
+                            MassPoints[i].X = MassPointsI[i].X + MassPointsSumm[i].X + MassPointsV[j][i].X;
+                            MassPoints[i].Y = MassPointsI[i].Y + MassPointsSumm[i].Y + MassPointsV[j][i].Y;
+                            MassPoints[i].Z = MassPointsI[i].Z + MassPointsSumm[i].Z + MassPointsV[j][i].Z;
+                            MassPointsV[j][i].Mp = 0.25*stepm * ((long double)ra()-(long double)ra()) / (2.0*(long double)4294967295L);
+                            MassPointsV[j][i].Mp += MassPointsV[1][i].Mp;
+                            MassPoints[i].Mp = MassPointsI[i].Mp + MassPointsSumm[i].Mp + MassPointsV[j][i].Mp;
+                            continue;
+                        }
+                        else if (FunctionalVal[2] < MIN_PrevFunc) // for j == 3 (0.5 step) was found min => search in this area
+                        {
+                            GetRandomNVector(MassPointsV[j][i].X, MassPointsV[j][i].Y, MassPointsV[j][i].Z);
+                            MassPointsV[j][i].X *= 0.25*stepxyz;  MassPointsV[j][i].Y *= 0.25*stepxyz;  MassPointsV[j][i].Z *= 0.25*stepxyz;
+                            MassPointsV[j][i].X += MassPointsV[2][i].X;  MassPointsV[j][i].Y += MassPointsV[2][i].Y;  MassPointsV[j][i].Z += MassPointsV[2][i].Z;
+                            MassPoints[i].X = MassPointsI[i].X + MassPointsSumm[i].X + MassPointsV[j][i].X;
+                            MassPoints[i].Y = MassPointsI[i].Y + MassPointsSumm[i].Y + MassPointsV[j][i].Y;
+                            MassPoints[i].Z = MassPointsI[i].Z + MassPointsSumm[i].Z + MassPointsV[j][i].Z;
+                            MassPointsV[j][i].Mp = 0.25*stepm * ((long double)ra()-(long double)ra()) / (2.0*(long double)4294967295L);
+                            MassPointsV[j][i].Mp += MassPointsV[2][i].Mp;
+                            MassPoints[i].Mp = MassPointsI[i].Mp + MassPointsSumm[i].Mp + MassPointsV[j][i].Mp;
+                            continue;
+                        }
+                        else if (FunctionalVal[3] < MIN_PrevFunc) // for j == 3 (0.5 step) was found min => search in this area
+                        {
+                            GetRandomNVector(MassPointsV[j][i].X, MassPointsV[j][i].Y, MassPointsV[j][i].Z);
+                            MassPointsV[j][i].X *= 0.25*stepxyz;  MassPointsV[j][i].Y *= 0.25*stepxyz;  MassPointsV[j][i].Z *= 0.25*stepxyz;
+                            MassPointsV[j][i].X += MassPointsV[3][i].X;  MassPointsV[j][i].Y += MassPointsV[3][i].Y;  MassPointsV[j][i].Z += MassPointsV[3][i].Z;
+                            MassPoints[i].X = MassPointsI[i].X + MassPointsSumm[i].X + MassPointsV[j][i].X;
+                            MassPoints[i].Y = MassPointsI[i].Y + MassPointsSumm[i].Y + MassPointsV[j][i].Y;
+                            MassPoints[i].Z = MassPointsI[i].Z + MassPointsSumm[i].Z + MassPointsV[j][i].Z;
+                            MassPointsV[j][i].Mp = 0.25*stepm * ((long double)ra()-(long double)ra()) / (2.0*(long double)4294967295L);
+                            MassPointsV[j][i].Mp += MassPointsV[3][i].Mp;
+                            MassPoints[i].Mp = MassPointsI[i].Mp + MassPointsSumm[i].Mp + MassPointsV[j][i].Mp;
+                            continue;
+                        }
+                        if (FunctionalVal[4] < MIN_PrevFunc) // for j == 4 (0.25 step) was found min => search in this area
+                        {
+                            GetRandomNVector(MassPointsV[j][i].X, MassPointsV[j][i].Y, MassPointsV[j][i].Z);
+                            MassPointsV[j][i].X *= 0.25*stepxyz;  MassPointsV[j][i].Y *= 0.25*stepxyz;  MassPointsV[j][i].Z *= 0.25*stepxyz;
+                            MassPointsV[j][i].X += MassPointsV[4][i].X;  MassPointsV[j][i].Y += MassPointsV[4][i].Y;  MassPointsV[j][i].Z += MassPointsV[4][i].Z;
+                            MassPoints[i].X = MassPointsI[i].X + MassPointsSumm[i].X + MassPointsV[j][i].X;
+                            MassPoints[i].Y = MassPointsI[i].Y + MassPointsSumm[i].Y + MassPointsV[j][i].Y;
+                            MassPoints[i].Z = MassPointsI[i].Z + MassPointsSumm[i].Z + MassPointsV[j][i].Z;
+                            MassPointsV[j][i].Mp = 0.25*stepm * ((long double)ra()-(long double)ra()) / (2.0*(long double)4294967295L);
+                            MassPointsV[j][i].Mp += MassPointsV[4][i].Mp;
+                            MassPoints[i].Mp = MassPointsI[i].Mp + MassPointsSumm[i].Mp + MassPointsV[j][i].Mp;
+                            continue;
+                        }
+                        
+                        {
+                            GetRandomNVector(MassPointsV[j][i].X, MassPointsV[j][i].Y, MassPointsV[j][i].Z);
+                            MassPointsV[j][i].X *= 0.25*stepxyz;  MassPointsV[j][i].Y *= 0.25*stepxyz;  MassPointsV[j][i].Z *= 0.25*stepxyz;
+                            MassPointsV[j][i].X += MassPointsV[0][i].X;  MassPointsV[j][i].Y += MassPointsV[0][i].Y;  MassPointsV[j][i].Z += MassPointsV[0][i].Z;
+                            MassPoints[i].X = MassPointsI[i].X + MassPointsSumm[i].X + MassPointsV[j][i].X;
+                            MassPoints[i].Y = MassPointsI[i].Y + MassPointsSumm[i].Y + MassPointsV[j][i].Y;
+                            MassPoints[i].Z = MassPointsI[i].Z + MassPointsSumm[i].Z + MassPointsV[j][i].Z;
+                            MassPointsV[j][i].Mp = 0.25*stepm * ((long double)ra()-(long double)ra()) / (2.0*(long double)4294967295L);
+                            MassPointsV[j][i].Mp += MassPointsV[0][i].Mp;
+                            MassPoints[i].Mp = MassPointsI[i].Mp + MassPointsSumm[i].Mp + MassPointsV[j][i].Mp;
+                            continue;
+                        }
+                    }
+                    else if (j==6)
+                    {
+                        if (FunctionalVal[5] < MIN_PrevFunc)
+                        {
+                            GetRandomNVector(MassPointsV[j][i].X, MassPointsV[j][i].Y, MassPointsV[j][i].Z);
+                            MassPointsV[j][i].X *= 0.25*stepxyz;  MassPointsV[j][i].Y *= 0.25*stepxyz;  MassPointsV[j][i].Z *= 0.25*stepxyz;
+                            MassPointsV[j][i].X += MassPointsV[5][i].X;  MassPointsV[j][i].Y += MassPointsV[5][i].Y;  MassPointsV[j][i].Z += MassPointsV[5][i].Z;
+                            MassPoints[i].X = MassPointsI[i].X + MassPointsSumm[i].X + MassPointsV[j][i].X;
+                            MassPoints[i].Y = MassPointsI[i].Y + MassPointsSumm[i].Y + MassPointsV[j][i].Y;
+                            MassPoints[i].Z = MassPointsI[i].Z + MassPointsSumm[i].Z + MassPointsV[j][i].Z;
+                            MassPointsV[j][i].Mp = 0.25*stepm * ((long double)ra()-(long double)ra()) / (2.0*(long double)4294967295L);
+                            MassPointsV[j][i].Mp += MassPointsV[5][i].Mp;
+                            MassPoints[i].Mp = MassPointsI[i].Mp + MassPointsSumm[i].Mp + MassPointsV[j][i].Mp;
+                            continue;
+                        }
+                        {
+                            GetRandomNVector(MassPointsV[j][i].X, MassPointsV[j][i].Y, MassPointsV[j][i].Z);
+                            MassPointsV[j][i].X *= 0.125*stepxyz;  MassPointsV[j][i].Y *= 0.125*stepxyz;  MassPointsV[j][i].Z *= 0.125*stepxyz;
+                            MassPointsV[j][i].X += MassPointsV[0][i].X;  MassPointsV[j][i].Y += MassPointsV[0][i].Y;  MassPointsV[j][i].Z += MassPointsV[0][i].Z;
+                            MassPoints[i].X = MassPointsI[i].X + MassPointsSumm[i].X + MassPointsV[j][i].X;
+                            MassPoints[i].Y = MassPointsI[i].Y + MassPointsSumm[i].Y + MassPointsV[j][i].Y;
+                            MassPoints[i].Z = MassPointsI[i].Z + MassPointsSumm[i].Z + MassPointsV[j][i].Z;
+                            MassPointsV[j][i].Mp = 0.125*stepm * ((long double)ra()-(long double)ra()) / (2.0*(long double)4294967295L);
+                            MassPointsV[j][i].Mp += MassPointsV[0][i].Mp;
+                            MassPoints[i].Mp = MassPointsI[i].Mp + MassPointsSumm[i].Mp + MassPointsV[j][i].Mp;
+                            continue;
+                        }
+                    }
+                    else if ((j == 7) || (j == 8))
+                    {
+                        int iCUrMin = 0;
+                        
+                        long double ldCUrMin = FunctionalVal[0];
+                        long double StepWas = 0;
+                        long double StepMassWas = 0;
+                        for (int ise = 0; ise < j; ise++)
+                        {
+                            if (ldCUrMin > FunctionalVal[ise])
+                            {
+                                ldCUrMin = FunctionalVal[ise];
+                                iCUrMin = ise;
+                            }
+                        }
+                        StepWas = (MassPointsSumm[i].X + MassPointsV[iCUrMin][i].X)*(MassPointsSumm[i].X + MassPointsV[iCUrMin][i].X) + 
+                            (MassPointsSumm[i].Y + MassPointsV[iCUrMin][i].Y)*(MassPointsSumm[i].Y + MassPointsV[iCUrMin][i].Y) + 
+                            (MassPointsSumm[i].Z + MassPointsV[iCUrMin][i].Z)*(MassPointsSumm[i].Z + MassPointsV[iCUrMin][i].Z);
+                        StepWas = sqrt(StepWas);
+                        StepMassWas = MassPointsSumm[i].Mp + MassPointsV[iCUrMin][i].Mp;
+                        if (j==7)
+                        {
+                            StepWas *= 0.0625;
+                            StepMassWas = fabs(StepMassWas * 0.0625);
+                        }
+                        else if (j==8)
+                        {
+                            StepWas *= 0.03125;
+                            StepMassWas =  fabs(StepMassWas* 0.03125);
+                        }
+                        GetRandomNVector(MassPointsV[j][i].X, MassPointsV[j][i].Y, MassPointsV[j][i].Z);
+                        MassPointsV[j][i].X *= StepWas;  MassPointsV[j][i].Y *= StepWas;  MassPointsV[j][i].Z *= StepWas;
+                        MassPointsV[j][i].X += MassPointsV[iCUrMin][i].X;  MassPointsV[j][i].Y += MassPointsV[iCUrMin][i].Y;  MassPointsV[j][i].Z += MassPointsV[iCUrMin][i].Z;
+                        MassPoints[i].X = MassPointsI[i].X + MassPointsSumm[i].X + MassPointsV[j][i].X;
+                        MassPoints[i].Y = MassPointsI[i].Y + MassPointsSumm[i].Y + MassPointsV[j][i].Y;
+                        MassPoints[i].Z = MassPointsI[i].Z + MassPointsSumm[i].Z + MassPointsV[j][i].Z;
+                        MassPointsV[j][i].Mp = StepMassWas * ((long double)ra()-(long double)ra()) / (2.0*(long double)4294967295L);
+                        MassPointsV[j][i].Mp += MassPointsV[iCUrMin][i].Mp;
+                        MassPoints[i].Mp = MassPointsI[i].Mp + MassPointsSumm[i].Mp + MassPointsV[j][i].Mp;
+                        continue;
+                    }
                     GetRandomNVector(MassPointsV[j][i].X, MassPointsV[j][i].Y, MassPointsV[j][i].Z);
                     MassPointsV[j][i].X *= stepxyz;  MassPointsV[j][i].Y *= stepxyz;  MassPointsV[j][i].Z *= stepxyz;
                     MassPoints[i].X = MassPointsI[i].X + MassPointsSumm[i].X + MassPointsV[j][i].X;
@@ -12345,36 +12530,57 @@ void GetOneMassPoint( long double &ErrorMain1,
                     MassPoints[i].Z = MassPointsI[i].Z + MassPointsSumm[i].Z + MassPointsV[j][i].Z;
                     MassPointsV[j][i].Mp = stepm * ((long double)ra()-(long double)ra()) / (2.0*(long double)4294967295L);
                     MassPoints[i].Mp = MassPointsI[i].Mp + MassPointsSumm[i].Mp + MassPointsV[j][i].Mp;
-                    //if (i == 0)
-                    //    MassPoints[i].Mp = 1;
-                    //while (MassPoints[i].Mp > 1) /////?????
-                    //{
-                    //    MassPointsV[j][i].Mp = StepM * ((long double)ra()-(long double)ra()) / (2.0*(long double)4294967295L);
-                    //    MassPoints[i].Mp = MassPointsI[i].Mp + MassPointsSumm[i].Mp + MassPointsV[j][i].Mp;
-                    //}
                 }
                 NormMassPoints(imp, stepm, j, MassPointsI, MassPointsSumm, MassPointsV);
                 FunctionalVal[j] = Functional(Sat, iTotalCheckPoints, dk, iDoList, nDoList,iSkipList, nSkipList, imp+1, imp_skip);
                 if (FunctionalVal[j] > MIN_PrevFunc)
                 {
-                    if (--CountContinue <0)
+                    if (j ==0)
                     {
-                        CountContinue = 1024;
-                        stepxyz *= 1.2;
-                        if (stepxyz > 150000.0)
+                        if (--CountContinue <0)
+                        {
+                            CountContinue = 1024;
+                            stepxyz *= 1.2;
+                            if (stepxyz > StepXYZ* 10000.0)
+                                stepxyz = StepXYZ/4.0;
+                            stepm *= 1.1;
+                            if (stepm > StepM*100.0)
+                                stepm = StepM/4.0;
+                        }
+                        llFound ++;
+                        if (llFound > 500000)
+                        {
+                            for (i = 0; i < imp+1; i++)
+                            {
+                                MassPointsSumm[i].X =0;  MassPointsSumm[i].Y =0;  MassPointsSumm[i].Z =0;  MassPointsSumm[i].Mp =0;
+                            }
                             stepxyz = StepXYZ/4.0;
-                        stepm *= 1.1;
-                        if (stepm > 0.15)
                             stepm = StepM/4.0;
+                            llFound = 0;
+                        }
+                        continue;
                     }
-                    if (j >= 1)
+                    else if (j ==2)
                     {
                         CountContinue = 1024;
-                        //stepxyz = StepXYZ;
                         break;
                     }
-                    llFound ++;
-                    continue;
+                    else if (j <=8)
+                    {
+                        if (--CountContinue <0)
+                        {
+                            CountContinue = 1024;
+                            break;
+                        }
+                        continue;
+                    }
+                    else if (j <=10)
+                    {
+                        CountContinue = 1024;
+                        break;
+                    }
+                    CountContinue = 1024;
+                    break;
                 }
                 else
                 {
@@ -12382,7 +12588,7 @@ void GetOneMassPoint( long double &ErrorMain1,
                     //stepxyz = StepXYZ;
                     llFound = 0;
                     stepm = StepM;
-                    break;;
+                    break;
                 }
             } 
             if (MAX_val_functional < FunctionalVal[j])
@@ -12452,6 +12658,7 @@ void GetOneMassPoint( long double &ErrorMain1,
         StepXYZ = 1000.0* MIN_PrevFunc / ((long double)iTotalCheckPoints * (long double)dk);
         StepM = StepXYZ / 100.0;
         stepxyz = 0.5*sqrt(stepxyz/3.0);
+        RealStepWas = 2.0*stepxyz ;
         //Devisor *= 0.995;
         //if (Devisor < 1.7)
             Devisor = 1.5151516;
@@ -12461,7 +12668,7 @@ void GetOneMassPoint( long double &ErrorMain1,
         //    Devisor = 2.0;
         //}
         if (stepxyz > 10*StepXYZ)
-            stepxyz = StepXYZ;
+            stepxyz = 10*StepXYZ;
         if (stepxyz < 0.1)
             stepxyz = StepXYZ;
         stepm = StepM;
@@ -12472,7 +12679,7 @@ void GetOneMassPoint( long double &ErrorMain1,
             printf("%03d %+25.17Le %+25.17Le %+25.17Le %+25.17Le\n", i, MassPointsSumm[i].X, MassPointsSumm[i].Y, MassPointsSumm[i].Z, MassPointsSumm[i].Mp);
         }
         */
-        printf ("\n opt %015f n=%03d %03d k=%03d %03d points=%03d stepXYZ=%f stepm =%f Vals:\n",MIN_PrevFunc, iDoList[0][0], iDoList[0][1], iDoList[0][2], iDoList[0][3],imp+1,stepxyz,stepm);
+        printf ("\n opt %015f n=%03d %03d k=%03d %03d points=%03d stepXYZ=%f stepm =%f jmin =%d was=%f Vals:\n",MIN_PrevFunc, iDoList[0][0], iDoList[0][1], iDoList[0][2], iDoList[0][3],imp+1,stepxyz,stepm,jmin,RealStepWas);
         for (i = 0; i <  imp+1; i++)
         {
             printf("%03d %+25.17Le %+25.17Le %+25.17Le %+25.17Le\n", i, MassPointsI[i].X, MassPointsI[i].Y, MassPointsI[i].Z, MassPointsI[i].Mp);
