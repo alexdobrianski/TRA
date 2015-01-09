@@ -9997,6 +9997,195 @@ void PostXMLToServer(char* URLServer, int urlport, char* URLFileName, char* File
         }
     }
 }
+FILE *fInputReadUrlOrFile; 
+int GetFileString(char *_szXMLFileName, char *_szLocalFileName, int FileStatusFlag, char *szString, int sizeof_szString)
+{
+    if (FileStatusFlag == 0) // that is OPEN operation
+    {
+        if (strstr(_szXMLFileName,"http://"))
+        {
+            // needs to copy original http file from server to a local with temporary name, than process temporary
+            char szURLFileName[3*_MAX_PATH];
+            char szURLServer[3*_MAX_PATH];
+            char sztempFileName[3*_MAX_PATH];
+            char szWebServerResp[8096];
+            int UrlPort=80;
+       	    CHttpConnection* m_MainHttpServer = NULL;
+    	    CInternetSession  *m_MainInternetConnection = NULL;
+
+            if (ParsURL(szURLServer, &UrlPort, szURLFileName, _szXMLFileName))
+            {
+                //strcpy(_szXMLFileName, _szLocalFileName);
+            }
+            else
+            {
+                printf("\n file %s was wrongly parsed",_szXMLFileName);
+                return 3;
+            }
+            if (m_MainHttpServer == NULL)
+	        {
+                m_MainInternetConnection = new CInternetSession("SessionToControlServer",12,INTERNET_OPEN_TYPE_DIRECT,NULL, // proxi name
+				            NULL, // proxi bypass
+				            INTERNET_FLAG_DONT_CACHE|INTERNET_FLAG_TRANSFER_BINARY);
+		        try
+		        {
+                    m_MainHttpServer = 	m_MainInternetConnection->GetHttpConnection( szURLServer, 0, UrlPort, NULL, NULL );
+    		    }
+	    	    catch(CInternetException *e)
+		        {
+                    m_MainHttpServer = NULL;
+                    printf("\n file %s failure to open (no intenet connection)", _szXMLFileName);
+                    return 1;
+		        }
+	        }
+	        if (m_MainHttpServer)
+	        {
+                CHttpFile* myCHttpFile = NULL;
+			    try
+			    {
+                    myCHttpFile = m_MainHttpServer->OpenRequest( CHttpConnection::HTTP_VERB_GET,
+					    szURLFileName,
+					    NULL,//((CGrStnApp*)AfxGetApp())->szLoginRQ,
+					    NULL,//12345678,
+					    NULL, 
+					    NULL, 
+					    INTERNET_FLAG_EXISTING_CONNECT|
+					    INTERNET_FLAG_DONT_CACHE|
+					    INTERNET_FLAG_RELOAD );
+			    }
+			    catch(CInternetException *e)
+			    {
+                    m_MainHttpServer->Close();
+                    printf("\n file %s failure to open", _szXMLFileName);
+                    return 1;
+			    }
+
+			    if (myCHttpFile !=NULL)
+			    {
+                    try
+				    {
+					    myCHttpFile->SendRequest();
+					    memset(szWebServerResp, 0, sizeof(szWebServerResp));
+                        DWORD dwSize;
+                        CString strSize;
+                        myCHttpFile->QueryInfo(HTTP_QUERY_CONTENT_LENGTH,strSize);
+                        dwSize = atoi(strSize.GetString());
+                        FILE *TempFile = fopen(_szLocalFileName, "wb");
+                        if (TempFile)
+                        {
+                            if (dwSize > (sizeof(szWebServerResp)-1))
+                            {
+                                for (DWORD dwread=0; dwread < dwSize; dwread+= (sizeof(szWebServerResp)-1))
+                                {
+                                    if ((dwSize - dwread) > (sizeof(szWebServerResp)-1))
+                                    {
+                                        if (myCHttpFile->Read(&szWebServerResp,(sizeof(szWebServerResp)-1)))
+                                        {
+                                            fwrite(&szWebServerResp,(sizeof(szWebServerResp)-1),1,TempFile);
+                                        }
+
+                                    }
+                                    else
+                                    {
+                                        if (myCHttpFile->Read(&szWebServerResp,(dwSize - dwread)))
+                                        {
+                                            fwrite(&szWebServerResp,(dwSize - dwread),1,TempFile);
+                                        }
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                if (myCHttpFile->Read(&szWebServerResp,dwSize))
+                                {
+                                    fwrite(&szWebServerResp,dwSize,1,TempFile);
+                                }
+                            }
+                            fclose(TempFile);
+                        }
+                        else
+                        {
+                            printf("\n file %s failure to write into %s", _szXMLFileName,_szLocalFileName);
+                        }
+                    }
+                    catch(CInternetException *e)
+                    {
+                        myCHttpFile->Close();
+                        m_MainHttpServer->Close();
+                        m_MainInternetConnection->Close();
+					    //ptrApp->m_MainHttpServer = NULL;
+                        printf("\n file %s failure to read", _szXMLFileName);
+                        return 3;
+				    }
+                    myCHttpFile->Close();
+				    delete myCHttpFile;
+                }
+                else
+                {
+                    m_MainHttpServer->Close();
+                    m_MainInternetConnection->Close();
+                    //ptrApp->m_MainHttpServer = NULL;
+                    printf("\n file %s failure to read", _szXMLFileName);
+                    return 3;
+                }
+                m_MainHttpServer->Close();
+                m_MainInternetConnection->Close();
+            }
+            else
+            {
+                m_MainInternetConnection->Close();
+                //ptrApp->m_MainHttpServer = NULL;
+                printf("\n file %s failure to open", _szXMLFileName);
+                return 3;
+            }
+            fInputReadUrlOrFile = fopen(_szLocalFileName, "r");
+            if (fInputReadUrlOrFile != NULL)
+            {
+                //fclose(fInputReadUrlOrFile);
+                return 0;
+            }
+            else
+            {
+                printf("\n file %s missing", _szLocalFileName);
+                return 3;
+            }
+        }
+        else
+        {
+            fInputReadUrlOrFile = fopen(_szXMLFileName, "r");
+            if (fInputReadUrlOrFile != NULL)
+            {
+                return 0;
+            }
+            else
+            {
+                printf("\n file %s missing", _szLocalFileName);
+                return 3;
+            }
+        }
+    }
+    if (FileStatusFlag == 1) // that is READ/CLOSE operation
+    {
+        if (fInputReadUrlOrFile != NULL)
+        {
+            if (fgets(szString, sizeof_szString-1, fInputReadUrlOrFile) != NULL)
+            {
+                return 0;
+            }
+            else  // end of the file reached
+            {
+                fclose(fInputReadUrlOrFile);
+                return 1;
+            }
+
+        }
+        else
+        {
+            return 2;
+        }
+    }
+}
+
 
 FILE *VisualFile = NULL;
 
@@ -10356,6 +10545,7 @@ void dumpXMLParam(TRAOBJ *Sat, TRAIMPLOBJ *MyEngine, int iNumbOfEng)
         fclose(EnginesFile);
     }
 }
+
 
 // this will be a check doe it need to optimize next engine base on a results of a prev one
 int CheckWhatnext(TRAOPTIMOBJ* Opt, TRAOBJ *Sat, TRAIMPLOBJ *Eng, TRAIMPLOBJ *EngStore, 
@@ -12104,7 +12294,7 @@ void NormMassPoints(int imp, long double StepM, int j, MASS_POINT_ELEMENT MassPo
     }
     
 }
-void GetOneMassPoint( long double &ErrorMain1, 
+void GetOneMassPoint( int iModeRun, long double &ErrorMain1, 
     long double &Step, int iDoList[10][4], int nDoList, int dk,
     int iTotalCheckPoints, TRAOBJ *Sat, int iSkipList[10][4], int nSkipList, int imp, int imp_skip, int imp_set)
 {
@@ -12138,7 +12328,6 @@ void GetOneMassPoint( long double &ErrorMain1,
     long double ZeroX, ZeroY, ZeroZ;
     long double CenterOfMAssX, CenterOfMAssY, CenterOfMAssZ,Mass;
     long double NVectorX, NVectorY, NVectorZ, NVectorLen;
-
     long double StoreMass[(TOTAL_COEF+3)*(TOTAL_COEF+3)];
     CenterOfMAssX =0; CenterOfMAssY=0; CenterOfMAssZ=0; Mass=0;
     if (imp)
@@ -12150,12 +12339,11 @@ void GetOneMassPoint( long double &ErrorMain1,
             CenterOfMAssZ+= MassPoints[i].Z*MassPoints[i].Mp;
             Mass += MassPoints[i].Mp;
         }
+        // Mass = sqrt( Mass);
         CenterOfMAssX/=Mass; CenterOfMAssY/=Mass; CenterOfMAssZ/=Mass;
     }
-    
     // first run - to find point
     long double SumZeroX, SumZeroY, SumZeroZ;
-
     SumZeroX = 0; SumZeroY = 0; SumZeroZ = 0;
     long double SumNorm = 0;
     long double NormMax = 0;
@@ -12163,134 +12351,128 @@ void GetOneMassPoint( long double &ErrorMain1,
     long double FXmax, FYmax, FZmax;
     long double NVectorXmax, NVectorYmax, NVectorZmax,NVectorLenmax;
     long double Xtmax,Ytmax,Ztmax;
-    for (i = 0; i < iTotalCheckPoints; i++)
+    if (iModeRun ==0)
     {
-        Height =MinH;
-        DHeight = (MaxH - MinH)/dk;
-
-        for( k= 0; k < dk; k++, Height+=DHeight)
+        for (i = 0; i < iTotalCheckPoints; i++)
         {
-            // calculation of the forces from Legender Poly model
-            ForceDD = GM_MODEL / (Height*Height);
-            Xt = Height*TotalCheckPoints[i][0];
-            Yt = Height*TotalCheckPoints[i][1];
-            Zt = Height*TotalCheckPoints[i][2];
-            CalcForcesPoly(Sat, TotalCheckPoints[i][0], TotalCheckPoints[i][1], TotalCheckPoints[i][2], Height,
-                    FX,FY,FZ,    iDoList, nDoList, iSkipList,nSkipList);
-            // now needs to minus all forces from previous Mass Points
-            MinusPointForces(FX, FY, FZ, Xt, Yt, Zt, imp, imp_skip);
-            // normal of the FORCE vector
-            Norm = sqrt(FX*FX + FY*FY + FZ*FZ);
-            Xn = FX/Norm;   Yn = FY/Norm;      Zn = FZ/Norm;
-
-            // get center of mass point of the all prev Mass Points 
-            NVectorX = Xt;// - CenterOfMAssX;
-            NVectorY = Yt;// - CenterOfMAssY;
-            NVectorZ = Zt;// - CenterOfMAssZ;
-            NVectorLen = sqrt(NVectorX*NVectorX + NVectorY*NVectorY + NVectorZ*NVectorZ);
-            NVectorX /= NVectorLen; NVectorY /= NVectorLen; NVectorZ /= NVectorLen;
-#if 0
-            if (NormMax < Norm)
+            Height =MinH;
+            DHeight = (MaxH - MinH)/dk;
+            for( k= 0; k < dk; k++, Height+=DHeight)
             {
-                iMax = i;
-                NormMax = Norm;
-                FXmax = FX; FYmax = FY; FZmax = FZ;
-                NVectorXmax = NVectorX; NVectorYmax=NVectorY; NVectorZmax=NVectorZ;
-                NVectorLenmax = NVectorLen;
-                Xtmax=Xt; Ytmax=Yt; Ztmax=Zt;
-            }
-#else
+                // calculation of the forces from Legender Poly model
+                ForceDD = GM_MODEL / (Height*Height);
+                Xt = Height*TotalCheckPoints[i][0];
+                Yt = Height*TotalCheckPoints[i][1];
+                Zt = Height*TotalCheckPoints[i][2];
+                CalcForcesPoly(Sat, TotalCheckPoints[i][0], TotalCheckPoints[i][1], TotalCheckPoints[i][2], Height,
+                    FX,FY,FZ,    iDoList, nDoList, iSkipList,nSkipList);
+                // now needs to minus all forces from previous Mass Points
+                MinusPointForces(FX, FY, FZ, Xt, Yt, Zt, imp, imp_skip);
+                // normal of the FORCE vector
+                Norm = sqrt(FX*FX + FY*FY + FZ*FZ);
+                Xn = FX/Norm;   Yn = FY/Norm;      Zn = FZ/Norm;
 
-            // angle
-            Angl = AngleBtwNorm(NVectorX,NVectorY,NVectorZ,Xn,Yn,Zn);
-
-            // probable point
-            FindPosWinMinError(NormZero, Norm, Angl, NVectorLen, 0.00001,
-                            Xt, Yt, Zt, Xn, Yn, Zn,
-                            iDoList, nDoList, iTotalCheckPoints, Sat, iSkipList, nSkipList, imp, imp_skip, imp_set);
-            
-            NormZero = NVectorLen * cos(Angl);
-            ZeroX = Xt -NormZero *Xn;
-            ZeroY = Yt -NormZero *Yn;
-            ZeroZ = Zt -NormZero *Zn;
-
-
-            MassPoints[imp_set].Mp = Norm * NormZero*NormZero / GM_MODEL;
-            MassPoints[imp_set].X = ZeroX; MassPoints[imp_set].Y = ZeroY; MassPoints[imp_set].Z = ZeroZ;
-
-            // calc medium val
-            SumZeroX +=ZeroX*MassPoints[imp_set].Mp; SumZeroY +=ZeroY*MassPoints[imp_set].Mp; SumZeroZ +=ZeroZ*MassPoints[imp_set].Mp;
-            SumNorm += MassPoints[imp_set].Mp;
-#endif
-        }
-    }
+                // get center of mass point of the all prev Mass Points 
+                NVectorX = Xt;// - CenterOfMAssX;
+                NVectorY = Yt;// - CenterOfMAssY;
+                NVectorZ = Zt;// - CenterOfMAssZ;
+                NVectorLen = sqrt(NVectorX*NVectorX + NVectorY*NVectorY + NVectorZ*NVectorZ);
+                NVectorX /= NVectorLen; NVectorY /= NVectorLen; NVectorZ /= NVectorLen;
 #if 0
-    Xn = FXmax/NormMax;
-    Yn = FYmax/NormMax;
-    Zn = FZmax/NormMax;
-    Angl = AngleBtwNorm(NVectorXmax,NVectorYmax,NVectorZmax,Xn,Yn,Zn);
-    NormZero = NVectorLenmax * cos(Angl);
-    ZeroX = -NVectorLenmax *Xn;
-    ZeroY = -NVectorLenmax *Yn;
-    ZeroZ = -NVectorLenmax *Zn;
-    ZeroX +=Xtmax;
-    ZeroY +=Ytmax;
-    ZeroZ +=Ztmax;
-    SumZeroX = ZeroX; SumZeroY = ZeroY; SumZeroZ = ZeroZ;
+                if (NormMax < Norm)
+                {
+                    iMax = i;
+                    NormMax = Norm;
+                    FXmax = FX; FYmax = FY; FZmax = FZ;
+                    NVectorXmax = NVectorX; NVectorYmax=NVectorY; NVectorZmax=NVectorZ;
+                    NVectorLenmax = NVectorLen;
+                    Xtmax=Xt; Ytmax=Yt; Ztmax=Zt;
+                }
 #else
-    SumZeroX /= iTotalCheckPoints *dk*SumNorm;
-    SumZeroY /= iTotalCheckPoints *dk*SumNorm;
-    SumZeroZ /= iTotalCheckPoints *dk*SumNorm;
+                // angle
+                Angl = AngleBtwNorm(NVectorX,NVectorY,NVectorZ,Xn,Yn,Zn);
+                // probable point
+                FindPosWinMinError(NormZero, Norm, Angl, NVectorLen, 0.00001,
+                    Xt, Yt, Zt, Xn, Yn, Zn,
+                            iDoList, nDoList, iTotalCheckPoints, Sat, iSkipList, nSkipList, imp, imp_skip, imp_set);
+                NormZero = NVectorLen * cos(Angl);
+                ZeroX = Xt -NormZero *Xn;
+                ZeroY = Yt -NormZero *Yn;
+                ZeroZ = Zt -NormZero *Zn;
+                MassPoints[imp_set].Mp = Norm * NormZero*NormZero / GM_MODEL;
+                MassPoints[imp_set].X = ZeroX; MassPoints[imp_set].Y = ZeroY; MassPoints[imp_set].Z = ZeroZ;
+                // calc medium val
+                SumZeroX +=ZeroX*MassPoints[imp_set].Mp; SumZeroY +=ZeroY*MassPoints[imp_set].Mp; SumZeroZ +=ZeroZ*MassPoints[imp_set].Mp;
+                SumNorm += MassPoints[imp_set].Mp;
 #endif
-    
-    for(i = 0; i < imp; i++)
-    {
-        StoreMass[i] = MassPoints[i].Mp;
-    }
-    
-    MassPoints[imp_set].X = SumZeroX; MassPoints[imp_set].Y = SumZeroY; MassPoints[imp_set].Z = SumZeroZ;
-    // second run to find the mass
-    
-    MassPoints[imp_set].Mp = 0;
-    
-    ErrorMain1 = Functional( Sat, iTotalCheckPoints, dk, iDoList, nDoList,iSkipList, nSkipList, imp+1, imp_skip);
-    long double ErrorMain2;
-    Step = -0.1;
-    MassPoints[imp_set].Mp = Step;
-    ErrorMain2 = Functional(Sat, iTotalCheckPoints, dk, iDoList, nDoList,iSkipList, nSkipList, imp+1, imp_skip);
-    
-    while (1)
-    {
-        if (fabs(ErrorMain1 - ErrorMain2) <1e-17)
+            }
+        }
+#if 0
+        Xn = FXmax/NormMax;
+        Yn = FYmax/NormMax;
+        Zn = FZmax/NormMax;
+        Angl = AngleBtwNorm(NVectorXmax,NVectorYmax,NVectorZmax,Xn,Yn,Zn);
+        NormZero = NVectorLenmax * cos(Angl);
+        ZeroX = -NVectorLenmax *Xn;
+        ZeroY = -NVectorLenmax *Yn;
+        ZeroZ = -NVectorLenmax *Zn;
+        ZeroX +=Xtmax;
+        ZeroY +=Ytmax;
+        ZeroZ +=Ztmax;
+        SumZeroX = ZeroX; SumZeroY = ZeroY; SumZeroZ = ZeroZ;
+#else
+        SumZeroX /= iTotalCheckPoints *dk*SumNorm;
+        SumZeroY /= iTotalCheckPoints *dk*SumNorm;
+        SumZeroZ /= iTotalCheckPoints *dk*SumNorm;
+#endif
+        
+        for(i = 0; i < imp; i++)
         {
-            if (ErrorMain1 >= ErrorMain2)
-                break;
+            StoreMass[i] = MassPoints[i].Mp;
+        }
+        
+        MassPoints[imp_set].X = SumZeroX; MassPoints[imp_set].Y = SumZeroY; MassPoints[imp_set].Z = SumZeroZ;
+        // second run to find the mass
+        MassPoints[imp_set].Mp = 0;
+        ErrorMain1 = Functional( Sat, iTotalCheckPoints, dk, iDoList, nDoList,iSkipList, nSkipList, imp+1, imp_skip);
+        long double ErrorMain2;
+        Step = -0.1;
+        MassPoints[imp_set].Mp = Step;
+        ErrorMain2 = Functional(Sat, iTotalCheckPoints, dk, iDoList, nDoList,iSkipList, nSkipList, imp+1, imp_skip);
+        while (1)
+        {
+            if (fabs(ErrorMain1 - ErrorMain2) <1e-17)
+            {
+                if (ErrorMain1 >= ErrorMain2)
+                    break;
+                else
+                {
+                    MassPoints[imp_set].Mp -=Step;
+                    break;
+                }
+            }
+            if (ErrorMain2 < ErrorMain1)
+            {
+                // contine steps
+                ErrorMain1 = ErrorMain2;
+            }
             else
             {
-                MassPoints[imp_set].Mp -=Step;
-                break;
+                // step reverce direction and make step twice smaller
+                ErrorMain1 = ErrorMain2;
+                Step = -Step/2;
+                if (fabs(Step) < 1e-17)
+                    break;
             }
+            MassPoints[imp_set].Mp += Step;
+            ErrorMain2 = Functional(Sat, iTotalCheckPoints, dk, iDoList, nDoList,iSkipList, nSkipList, imp+1, imp_skip);
         }
-
-        if (ErrorMain2 < ErrorMain1)
+        if (imp<=1)
         {
-            // contine steps
-            ErrorMain1 = ErrorMain2;
+            return;
         }
-        else
-        {
-            // step reverce direction and make step twice smaller
-            ErrorMain1 = ErrorMain2;
-
-            Step = -Step/2;
-            if (fabs(Step) < 1e-17)
-                break;
-        }
-        MassPoints[imp_set].Mp += Step;
-        ErrorMain2 = Functional(Sat, iTotalCheckPoints, dk, iDoList, nDoList,iSkipList, nSkipList, imp+1, imp_skip);
+        ErrorMain1 = ErrorMain2;
     }
-    if (imp<=1)
-        return;
 
     // some how point found 
     // now optimization:
@@ -12306,8 +12488,8 @@ void GetOneMassPoint( long double &ErrorMain1,
     MASS_POINT_ELEMENT MassPointsV[10][(TOTAL_COEF+3)*(TOTAL_COEF+3)];
     long double FunctionalVal[10];
     long double FunctionalValOld[10];
-    long double StepM = 10.0* ErrorMain2 / ((long double)iTotalCheckPoints * (long double)dk); // for mass initial step is 0.1
-    long double StepXYZ = 1000.0* ErrorMain2 / ((long double)iTotalCheckPoints * (long double)dk); // for position initial step is 10m
+    long double StepM = 10.0* ErrorMain1 / ((long double)iTotalCheckPoints * (long double)dk); // for mass initial step is 0.1
+    long double StepXYZ = 1000.0* ErrorMain1 / ((long double)iTotalCheckPoints * (long double)dk); // for position initial step is 10m
     for (j = 0; j < 10; j++)
     {
         FunctionalValOld[j] = 0.0;
@@ -12324,6 +12506,12 @@ void GetOneMassPoint( long double &ErrorMain1,
     long double stepm = StepM;
     long double Devisor = 2.0;
     long double RealStepWas = 0;
+    int iCUrMin_ = 0;
+    BOOL bStepWas_ = FALSE;
+    long double ldCUrMin_ = 0;
+    long double StepWas_ = 0;
+    long double StepMassWas_ = 0;
+
     while(1)
     {
         long double MAX_val_functional = 0;
@@ -12484,45 +12672,60 @@ void GetOneMassPoint( long double &ErrorMain1,
                     }
                     else if ((j == 7) || (j == 8))
                     {
-                        int iCUrMin = 0;
-                        
-                        long double ldCUrMin = FunctionalVal[0];
-                        long double StepWas = 0;
-                        long double StepMassWas = 0;
-                        for (int ise = 0; ise < j; ise++)
+                        if (bStepWas_ == FALSE)
                         {
-                            if (ldCUrMin > FunctionalVal[ise])
+                            iCUrMin_ = 0;
+                            ldCUrMin_ = FunctionalVal[0];
+                            StepWas_ = 0;
+                            StepMassWas_ = 0;
+
+                            for (int ise = 0; ise < j; ise++)
                             {
-                                ldCUrMin = FunctionalVal[ise];
-                                iCUrMin = ise;
+                                if (ldCUrMin_ > FunctionalVal[ise])
+                                {
+                                    ldCUrMin_ = FunctionalVal[ise];
+                                    iCUrMin_ = ise;
+                                }
+                            }
+                            StepWas_ = (MassPointsSumm[i].X + MassPointsV[iCUrMin_][i].X)*(MassPointsSumm[i].X + MassPointsV[iCUrMin_][i].X) + 
+                                (MassPointsSumm[i].Y + MassPointsV[iCUrMin_][i].Y)*(MassPointsSumm[i].Y + MassPointsV[iCUrMin_][i].Y) + 
+                                (MassPointsSumm[i].Z + MassPointsV[iCUrMin_][i].Z)*(MassPointsSumm[i].Z + MassPointsV[iCUrMin_][i].Z);
+                            StepWas_ = sqrt(StepWas_);
+                            StepMassWas_ = MassPointsSumm[i].Mp + MassPointsV[iCUrMin_][i].Mp;
+                            bStepWas_ = TRUE;
+                            if (j==7)
+                            {
+                                StepWas_ *= 0.0625;
+                                StepMassWas_ = fabs(StepMassWas_ * 0.0625);
+                            }
+                            else if (j==8)
+                            {
+                                StepWas_ *= 0.03125;
+                                StepMassWas_ =  fabs(StepMassWas_* 0.03125);
                             }
                         }
-                        StepWas = (MassPointsSumm[i].X + MassPointsV[iCUrMin][i].X)*(MassPointsSumm[i].X + MassPointsV[iCUrMin][i].X) + 
-                            (MassPointsSumm[i].Y + MassPointsV[iCUrMin][i].Y)*(MassPointsSumm[i].Y + MassPointsV[iCUrMin][i].Y) + 
-                            (MassPointsSumm[i].Z + MassPointsV[iCUrMin][i].Z)*(MassPointsSumm[i].Z + MassPointsV[iCUrMin][i].Z);
-                        StepWas = sqrt(StepWas);
-                        StepMassWas = MassPointsSumm[i].Mp + MassPointsV[iCUrMin][i].Mp;
-                        if (j==7)
-                        {
-                            StepWas *= 0.0625;
-                            StepMassWas = fabs(StepMassWas * 0.0625);
-                        }
-                        else if (j==8)
-                        {
-                            StepWas *= 0.03125;
-                            StepMassWas =  fabs(StepMassWas* 0.03125);
-                        }
                         GetRandomNVector(MassPointsV[j][i].X, MassPointsV[j][i].Y, MassPointsV[j][i].Z);
-                        MassPointsV[j][i].X *= StepWas;  MassPointsV[j][i].Y *= StepWas;  MassPointsV[j][i].Z *= StepWas;
-                        MassPointsV[j][i].X += MassPointsV[iCUrMin][i].X;  MassPointsV[j][i].Y += MassPointsV[iCUrMin][i].Y;  MassPointsV[j][i].Z += MassPointsV[iCUrMin][i].Z;
+                        MassPointsV[j][i].X *= StepWas_;  MassPointsV[j][i].Y *= StepWas_;  MassPointsV[j][i].Z *= StepWas_;
+                        MassPointsV[j][i].X += MassPointsV[iCUrMin_][i].X;  MassPointsV[j][i].Y += MassPointsV[iCUrMin_][i].Y;  MassPointsV[j][i].Z += MassPointsV[iCUrMin_][i].Z;
                         MassPoints[i].X = MassPointsI[i].X + MassPointsSumm[i].X + MassPointsV[j][i].X;
                         MassPoints[i].Y = MassPointsI[i].Y + MassPointsSumm[i].Y + MassPointsV[j][i].Y;
                         MassPoints[i].Z = MassPointsI[i].Z + MassPointsSumm[i].Z + MassPointsV[j][i].Z;
-                        MassPointsV[j][i].Mp = StepMassWas * ((long double)ra()-(long double)ra()) / (2.0*(long double)4294967295L);
-                        MassPointsV[j][i].Mp += MassPointsV[iCUrMin][i].Mp;
+                        MassPointsV[j][i].Mp = StepMassWas_ * ((long double)ra()-(long double)ra()) / (2.0*(long double)4294967295L);
+                        MassPointsV[j][i].Mp += MassPointsV[iCUrMin_][i].Mp;
                         MassPoints[i].Mp = MassPointsI[i].Mp + MassPointsSumm[i].Mp + MassPointsV[j][i].Mp;
                         continue;
                     }
+                    /*else if (j == 9)
+                    {
+                        // just in case case: initial point from prev step
+                        MassPointsV[j][i].X = -MassPointsSumm[i].X;  MassPointsV[j][i].Y = -MassPointsSumm[i].Y;  MassPointsV[j][i].Z = -MassPointsSumm[i].Z;
+                        MassPoints[i].X = MassPointsI[i].X + MassPointsSumm[i].X + MassPointsV[j][i].X;
+                        MassPoints[i].Y = MassPointsI[i].Y + MassPointsSumm[i].Y + MassPointsV[j][i].Y;
+                        MassPoints[i].Z = MassPointsI[i].Z + MassPointsSumm[i].Z + MassPointsV[j][i].Z;
+                        MassPointsV[j][i].Mp = -MassPointsSumm[i].Mp;
+                        MassPoints[i].Mp = MassPointsI[i].Mp + MassPointsSumm[i].Mp + MassPointsV[j][i].Mp;
+                        continue;
+                    }*/
                     GetRandomNVector(MassPointsV[j][i].X, MassPointsV[j][i].Y, MassPointsV[j][i].Z);
                     MassPointsV[j][i].X *= stepxyz;  MassPointsV[j][i].Y *= stepxyz;  MassPointsV[j][i].Z *= stepxyz;
                     MassPoints[i].X = MassPointsI[i].X + MassPointsSumm[i].X + MassPointsV[j][i].X;
@@ -12570,9 +12773,15 @@ void GetOneMassPoint( long double &ErrorMain1,
                         if (--CountContinue <0)
                         {
                             CountContinue = 1024;
+                            bStepWas_ = FALSE;
                             break;
                         }
                         continue;
+                    }
+                    else if (j ==9)
+                    {
+                        CountContinue = 1024;
+                        break;
                     }
                     else if (j <=10)
                     {
@@ -12588,6 +12797,7 @@ void GetOneMassPoint( long double &ErrorMain1,
                     //stepxyz = StepXYZ;
                     llFound = 0;
                     stepm = StepM;
+                    bStepWas_ = FALSE;
                     break;
                 }
             } 
@@ -12762,23 +12972,91 @@ void MassPointGen(TRAOBJ *SlS, TRAOBJ *Sat,TRAIMPLOBJ *Eng, long double ldFrom,l
     int imp = 0;
     iDoList[0][0] =2; iDoList[0][1] =2;iDoList[0][2] =0;iDoList[0][3] =0;
     nDoList  =1;
+    char szOpt[20] = {" ini"};
+    FILE * fMassPointOutput = NULL;
+    if (GetFileString(szMassPointsModelFile, "@ModelOutput", 0, NULL, 0) == 0) // open was successfull fInputReadUrlOrFile is a handler
+    {
+        char szString[1024];
+        int status_modelfileread = 0;
+        int ik; // last read
+        
+        while(GetFileString(szMassPointsModelFile, "@ModelOutput", 1, szString, sizeof(szString)) == 0)
+        {
+            if (status_modelfileread ==0)
+            {
+                status_modelfileread = 1;
+                // opt 00000000.056894 n=002 002 k=000 000 points=003 stepXYZ=0.568940 stepm =0.000569 jmin =3 was=1.867428 Vals:
+                //012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890
+                //0         1         2         3         4         5         6         7         8         9         10
+                memset(szOpt, 0, sizeof(szOpt));
+                memcpy(szOpt,&szString[0], 4);
+                Gerror = atof(&szString[5]);
+                iDoList[0][0] =atoi(&szString[23]);
+                iDoList[0][1] =atoi(&szString[27]);
+                iDoList[0][2] =atoi(&szString[33]);
+                iDoList[0][3] =atoi(&szString[37]);
+                nDoList  =1;
+                imp = atoi(&szString[48]);
+            }
+            else
+            {
+                //000 +3.35596057677783980e+003 -6.90090131721902250e+002 +2.91567834116732230e+004 +1.99982885630231770e+000
+                //012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890
+                //0         1         2         3         4         5         6         7         8         9         10
+                ik= atoi(&szString[0]);
+                if (ik < imp)
+                {
+                    MassPoints[ik].X = atof(&szString[4]);
+                    MassPoints[ik].Y = atof(&szString[30]);
+                    MassPoints[ik].Z = atof(&szString[56]);
+                    MassPoints[ik].Mp = atof(&szString[82]);
+                }
+                else
+                {
+                    printf("\n error inside mass points file");
+                    exit (33);
+                }
+            }
+        }
+        if ((ik+1) != imp)
+        {
+            printf("\n error in mass point file");
+            exit (33);
+        }
+    }
+    if (strstr(szOpt, " ini"))
+    {
+        GetOneMassPoint(0, Gerror, step,iDoList, nDoList, dk,iTotalCheckPoints, Sat, iSkipList, nSkipList, imp,-1, imp);
+        printf("\n%03d p=%10f %10f %10f m= %10f e= %f", imp, MassPoints[imp].X, MassPoints[imp].Y, MassPoints[imp].Z, MassPoints[imp].Mp, Gerror);
 
-    GetOneMassPoint( Gerror, step,iDoList, nDoList, dk,iTotalCheckPoints, Sat, iSkipList, nSkipList, imp,-1, imp);
-    printf("\n%03d p=%10f %10f %10f m= %10f e= %f", imp, MassPoints[imp].X, MassPoints[imp].Y, MassPoints[imp].Z, MassPoints[imp].Mp, Gerror);
+        imp++;
+        GetOneMassPoint(0, Gerror, step, iDoList, nDoList, dk,iTotalCheckPoints, Sat, iSkipList, nSkipList, imp,-1,imp);
+        printf("\n%03d p=%10f %10f %10f m= %10f e= %f", imp, MassPoints[imp].X, MassPoints[imp].Y, MassPoints[imp].Z, MassPoints[imp].Mp, Gerror);
 
-    imp++;
-    GetOneMassPoint( Gerror, step, iDoList, nDoList, dk,iTotalCheckPoints, Sat, iSkipList, nSkipList, imp,-1,imp);
-    printf("\n%03d p=%10f %10f %10f m= %10f e= %f", imp, MassPoints[imp].X, MassPoints[imp].Y, MassPoints[imp].Z, MassPoints[imp].Mp, Gerror);
+        imp++;
+        GetOneMassPoint(0, Gerror, step, iDoList, nDoList, dk,iTotalCheckPoints, Sat, iSkipList, nSkipList, imp,-1,imp);
+        printf("\n%03d p=%10f %10f %10f m= %10f e= %f", imp, MassPoints[imp].X, MassPoints[imp].Y, MassPoints[imp].Z, MassPoints[imp].Mp, Gerror);
+        imp++;
+        GetOneMassPoint(0, Gerror, step, iDoList, nDoList, dk,iTotalCheckPoints, Sat, iSkipList, nSkipList, imp,-1,imp);
+        printf("\n%03d p=%10f %10f %10f m= %10f e= %f", imp, MassPoints[imp].X, MassPoints[imp].Y, MassPoints[imp].Z, MassPoints[imp].Mp, Gerror);
+    }
+    else
+    {
+        imp--;
+        // jast to finish initial job:
+        GetOneMassPoint(1, Gerror, step, iDoList, nDoList, dk,iTotalCheckPoints, Sat, iSkipList, nSkipList, imp,-1,imp);
+    }
+    fMassPointOutput = fopen("@ModelOutput", "w");
+    if (fMassPointOutput)
+    {
+        fprintf (fMassPointOutput,"\n opt %015f n=%03d %03d k=%03d %03d points=%03d stepXYZ=%f stepm =%f jmin =%d was=%f Vals:\n",Gerror, iDoList[0][0], iDoList[0][1], iDoList[0][2], iDoList[0][3],imp+1, 0.0, 0.0, 0, 0.0);
 
-    imp++;
-    GetOneMassPoint( Gerror, step, iDoList, nDoList, dk,iTotalCheckPoints, Sat, iSkipList, nSkipList, imp,-1,imp);
-    printf("\n%03d p=%10f %10f %10f m= %10f e= %f", imp, MassPoints[imp].X, MassPoints[imp].Y, MassPoints[imp].Z, MassPoints[imp].Mp, Gerror);
-    //printf("\n%03d p=%10f %10f %10f m= %10f e= %f", 0, MassPoints[0].X, MassPoints[0].Y, MassPoints[0].Z, MassPoints[0].Mp, Gerror);
-    //printf("\n%03d p=%10f %10f %10f m= %10f e= %f", 1, MassPoints[1].X, MassPoints[1].Y, MassPoints[1].Z, MassPoints[1].Mp, Gerror);
-    //printf("\n%03d p=%10f %10f %10f m= %10f e= %f", imp, MassPoints[imp].X, MassPoints[imp].Y, MassPoints[imp].Z, MassPoints[imp].Mp, Gerror);
-    imp++;
-    GetOneMassPoint( Gerror, step, iDoList, nDoList, dk,iTotalCheckPoints, Sat, iSkipList, nSkipList, imp,-1,imp);
-    printf("\n%03d p=%10f %10f %10f m= %10f e= %f", imp, MassPoints[imp].X, MassPoints[imp].Y, MassPoints[imp].Z, MassPoints[imp].Mp, Gerror);
+        for (i = 0; i <  imp+1; i++)
+        {
+            fprintf(fMassPointOutput,"%03d %+25.17Le %+25.17Le %+25.17Le %+25.17Le\n", i, MassPoints[i].X, MassPoints[i].Y, MassPoints[i].Z, MassPoints[i].Mp);
+        }
+    }
+
 }
 int main(int argc, char * argv[])
 {
@@ -12873,7 +13151,18 @@ int main(int argc, char * argv[])
             strcpy(szXMLFileName,argv[1]);
         }
     }
+    AfxSocketInit();
 
+    fInputReadUrlOrFile = NULL;
+    if (GetFileString(szXMLFileName, "@tra.xml", 0, NULL, 0) == 0) // open was successfull fInputReadUrlOrFile is a handler
+    {
+        ParamDoAll(fInputReadUrlOrFile);
+        fclose(fInputReadUrlOrFile);
+        fInputReadUrlOrFile = NULL;
+    }
+    else
+        exit(1);
+    /*
     if (strstr(szXMLFileName,"http://"))
     {
         // needs to copy original http file from server to a local with temporary name, than process temporary
@@ -12991,6 +13280,7 @@ int main(int argc, char * argv[])
         printf("\n file %s missing", szXMLFileName);
         exit(1);
     }
+    */
 	{
         Interpolate_State( dStartJD , 2 , &StateEarth );
         StartSequence = 0;
