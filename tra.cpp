@@ -580,6 +580,18 @@ long iTotalSec;
 long double IterPerSec;
 int iItearationsPerSec; // that is "int" == IterPerSec
 long double StepsValInDay; // step's value in day measurement
+typedef struct XYZ_Split_Ponter_Var
+{
+    long double valX;
+    long double valY;
+    long double valZ;
+    long double valXM;
+    long double valYM;
+    long double valZM;
+    long double valXS;
+    long double valYS;
+    long double valZS;
+} XYZ_SPLIT_POINTER_VAR, *PXYZ_SPLIT_POINTER_VAR;
 //long iCurSec; // current second from begining of the simulation
 //int iCurPortionOfTheSecond;
 //#define SIMPSON_INTEGRAL 1 
@@ -694,16 +706,16 @@ typedef struct Long_Double_Intergal_Var
             return VZ+VZ_temp; 
     };
 #ifndef SIMPSON_INTEGRAL
-    void Addpos(long double valVX,long double valX,long double valVY,long double valY, long double valVZ,long double valZ)
+    void Addpos(XYZ_SPLIT_POINTER_VAR *XYZdata,XYZ_SPLIT_POINTER_VAR *XYZdataVel)
     {
-        X+=valX;  Y+=valY;   Z+=valZ;
-        VX+=valVX;  VY+=valVY;   VZ+=valVZ;
+        X+=XYZdata->valX;  Y+=XYZdata->valY;   Z+=XYZdata->valZ;
+        VX+=XYZdataVel->valX;  VY+=XYZdataVel->valY;   VZ+=XYZdataVel->valZ;
     }
-    void Add(long double valX,long double valY, long double valZ)
+    void Add(XYZ_SPLIT_POINTER_VAR *XYZdata)
     {
-        X+=valX;
-        Y+=valY;
-        Z+=valZ;
+        X+=XYZdata->valX;
+        Y+=XYZdata->valY;
+        Z+=XYZdata->valZ;
         //nX0++;
         //x6[i6] =valX; y6[i6] =valY; z6[i6] =valZ;
         //if (++i6 == 6)
@@ -715,25 +727,25 @@ typedef struct Long_Double_Intergal_Var
         //}
     }
 #else
-    void Add(long double valX,long double valY, long double valZ)
+    void Add(XYZ_SPLIT_POINTER_VAR *XYZdata)
     {
         //nX0++;
-        x6[i6] =valX; y6[i6] =valY; z6[i6] =valZ;
+        x6[i6] =XYZdata->valX; y6[i6] =XYZdata->valY; z6[i6] =XYZdata->valZ;
         if (++i6 == 4)
         {
             X6[1] += x6[1]; X6[2] += x6[2];
             Y6[1] += y6[1]; Y6[2] += y6[2];
             Z6[1] += z6[1]; Z6[2] += z6[2];
-            X_temp =  (x6[0] + 4.0* (X6[1]+X6_h[1]+X6_hh[1]+X6_hhh[1]) + 2.0* (X6[2]+X6_h[2]+X6_hh[2]+X6_hhh[2]) + valX)/3.0; X = x6[3];
-            Y_temp =  (y6[0] + 4.0* (Y6[1]+Y6_h[1]+Y6_hh[1]+Y6_hhh[1]) + 2.0* (Y6[2]+Y6_h[2]+Y6_hh[2]+Y6_hhh[2]) + valY)/3.0; Y = y6[3];
-            Z_temp =  (z6[0] + 4.0* (Z6[1]+Z6_h[1]+Z6_hh[1]+Z6_hhh[1]) + 2.0* (Z6[2]+Z6_h[2]+Z6_hh[2]+Z6_hhh[2]) + valZ)/3.0; Z = z6[3];
+            X_temp =  (x6[0] + 4.0* (X6[1]+X6_h[1]+X6_hh[1]+X6_hhh[1]) + 2.0* (X6[2]+X6_h[2]+X6_hh[2]+X6_hhh[2]) + XYZdata->valX)/3.0; X = x6[3];
+            Y_temp =  (y6[0] + 4.0* (Y6[1]+Y6_h[1]+Y6_hh[1]+Y6_hhh[1]) + 2.0* (Y6[2]+Y6_h[2]+Y6_hh[2]+Y6_hhh[2]) + XYZdata->valY)/3.0; Y = y6[3];
+            Z_temp =  (z6[0] + 4.0* (Z6[1]+Z6_h[1]+Z6_hh[1]+Z6_hhh[1]) + 2.0* (Z6[2]+Z6_h[2]+Z6_hh[2]+Z6_hhh[2]) + XYZdata->valZ)/3.0; Z = z6[3];
             i6 = 1;
-            x6[i6] =valX; y6[i6] =valY; z6[i6] =valZ;
+            x6[i6] =XYZdata->valX; y6[i6] =XYZdata->valY; z6[i6] =XYZdata->valZ;
             i6 = 2;
         }
         else
         {
-            X+=valX;   Y+=valY;   Z+=valZ;
+            X+=XYZdata->valX;   Y+=XYZdata->valY;   Z+=XYZdata->valZ;
         }
     }
 #endif
@@ -4861,6 +4873,8 @@ void IteraSolarSystem(BOOL ForceWasCalculated, TRAOBJ * SlS)
 #define NO_SEPARATION_VEL_POS 1
 void IteraSolarSystem(BOOL ForceWasCalculated, TRAOBJ * SlS)
 {
+    XYZ_SPLIT_POINTER_VAR XYZdataPos;
+    XYZ_SPLIT_POINTER_VAR XYZdataVel;
     int i;
     //int j;
     // calculation of a[i] based on x[i]
@@ -4893,26 +4907,30 @@ void IteraSolarSystem(BOOL ForceWasCalculated, TRAOBJ * SlS)
     }
     for (i = 0; i < SlS->Elem; i++)
     {
-#ifdef NO_SEPARATION_VEL_POS
-        SlS->_position_[i].Add((SlS->_velosity_[i].x())+ SlS->FX[i],
-                                    (SlS->_velosity_[i].y())+ SlS->FY[i],
-                                    (SlS->_velosity_[i].z())+ SlS->FZ[i]);
+        XYZdataPos.valX = (SlS->_velosity_[i].x())+ SlS->FX[i];
+        XYZdataPos.valY = (SlS->_velosity_[i].y())+ SlS->FY[i];
+        XYZdataPos.valZ = (SlS->_velosity_[i].z())+ SlS->FZ[i];
+        XYZdataPos.valXM = 0;   XYZdataPos.valYM = 0;  XYZdataPos.valZM = 0;
+        XYZdataPos.valXS = 0;   XYZdataPos.valYS = 0;  XYZdataPos.valZS = 0;
 
-        SlS->_velosity_[i].Add(SlS->FX[i],
-                                   SlS->FY[i],
-                                   SlS->FZ[i]);
+        XYZdataVel.valX = SlS->FX[i];
+        XYZdataVel.valY = SlS->FY[i];
+        XYZdataVel.valZ = SlS->FZ[i];
+        XYZdataVel.valXM = 0;   XYZdataVel.valYM = 0;  XYZdataVel.valZM = 0;
+        XYZdataVel.valXS = 0;   XYZdataVel.valYS = 0;  XYZdataVel.valZS = 0;
+
+#ifdef NO_SEPARATION_VEL_POS
+        SlS->_position_[i].Add(&XYZdataPos);
+
+        SlS->_velosity_[i].Add(&XYZdataVel);
         SlS->_position_[i].adjustAll();
         SlS->_velosity_[i].adjustall();
         SlS->_position_[i].getIntegral(SlS->X[i], SlS->Y[i], SlS->Z[i]);
 
 #else
-        SlS->_position_[i].Addpos((SlS->_velosity_[i].x()), SlS->FX[i],
-                                    (SlS->_velosity_[i].y()), SlS->FY[i],
-                                    (SlS->_velosity_[i].z()), SlS->FZ[i]);
+        SlS->_position_[i].Addpos(&XYZdataPos, &XYZdataVel);
 
-        SlS->_velosity_[i].Add(SlS->FX[i],
-                                   SlS->FY[i],
-                                   SlS->FZ[i]);
+        SlS->_velosity_[i].Add(&XYZdataVel);
         SlS->_position_[i].adjustAllpos();
         SlS->_velosity_[i].adjustall();
         SlS->_position_[i].getIntegralpos(SlS->X[i], SlS->Y[i], SlS->Z[i]);
@@ -4957,6 +4975,8 @@ void IteraSat(int TimeDirection, TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfC
 {
     int i;
     //int j;
+    XYZ_SPLIT_POINTER_VAR XYZdataPos;
+    XYZ_SPLIT_POINTER_VAR XYZdataVel;
 
     Sat->Lambda = GreenwichAscensionFromTLEEpoch(TimeOfCalc,Sat->precEps,Sat->precTet,Sat->precZ,Sat->nutEpsilon,Sat->nutDFeta);
 
@@ -4998,23 +5018,28 @@ void IteraSat(int TimeDirection, TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfC
     }
     for (i = 0; i < Sat->Elem; i++)
     {
+        XYZdataPos.valX = (Sat->_velosity_[i].x())+ Sat->FX[i];
+        XYZdataPos.valY = (Sat->_velosity_[i].y())+ Sat->FY[i];
+        XYZdataPos.valZ = (Sat->_velosity_[i].z())+ Sat->FZ[i];
+        XYZdataPos.valXM = 0;   XYZdataPos.valYM = 0;  XYZdataPos.valZM = 0;
+        XYZdataPos.valXS = 0;   XYZdataPos.valYS = 0;  XYZdataPos.valZS = 0;
+
+        XYZdataVel.valX = Sat->FX[i];
+        XYZdataVel.valY = Sat->FY[i];
+        XYZdataVel.valZ = Sat->FZ[i];
+        XYZdataVel.valXM = 0;   XYZdataVel.valYM = 0;  XYZdataVel.valZM = 0;
+        XYZdataVel.valXS = 0;   XYZdataVel.valYS = 0;  XYZdataVel.valZS = 0;
+
+
 #ifdef NO_SEPARATION_VEL_POS
-        Sat->_position_[i].Add((Sat->_velosity_[i].x())+ Sat->FX[i],
-                                (Sat->_velosity_[i].y())+ Sat->FY[i],
-                                (Sat->_velosity_[i].z())+ Sat->FZ[i]);
-        Sat->_velosity_[i].Add(Sat->FX[i],
-                                   Sat->FY[i],
-                                   Sat->FZ[i]);
+        Sat->_position_[i].Add(&XYZdataPos);
+        Sat->_velosity_[i].Add(&XYZdataVel);
         Sat->_position_[i].adjustAll();
         Sat->_velosity_[i].adjustall();
         Sat->_position_[i].getIntegral(Sat->X[i], Sat->Y[i], Sat->Z[i]);
 #else
-        Sat->_position_[i].Addpos((Sat->_velosity_[i].x()), Sat->FX[i],
-                                (Sat->_velosity_[i].y()), Sat->FY[i],
-                                (Sat->_velosity_[i].z()), Sat->FZ[i]);
-        Sat->_velosity_[i].Add(Sat->FX[i],
-                                   Sat->FY[i],
-                                   Sat->FZ[i]);
+        Sat->_position_[i].Addpos(&XYZdataPos, &XYZdataVel);
+        Sat->_velosity_[i].Add(&XYZdataVel);
         Sat->_position_[i].adjustAllpos();
         Sat->_velosity_[i].adjustall();
         Sat->_position_[i].getIntegralpos(Sat->X[i], Sat->Y[i], Sat->Z[i]);
@@ -12422,7 +12447,7 @@ void GetOneMassPoint(long double ldUseOne, int iModeRun, long double &ErrorMain1
     long double FXmax, FYmax, FZmax;
     long double NVectorXmax, NVectorYmax, NVectorZmax,NVectorLenmax;
     long double Xtmax,Ytmax,Ztmax;
-    if (iModeRun ==0)
+    if ((iModeRun ==0) || (iModeRun ==2))
     {
         for (i = 0; i < iTotalCheckPoints; i++)
         {
@@ -12505,44 +12530,47 @@ void GetOneMassPoint(long double ldUseOne, int iModeRun, long double &ErrorMain1
         MassPoints[imp_set].X = SumZeroX; MassPoints[imp_set].Y = SumZeroY; MassPoints[imp_set].Z = SumZeroZ;
         // second run to find the mass
         MassPoints[imp_set].Mp = 0;
-        ErrorMain1 = Functional(ldUseOne, Sat, iTotalCheckPoints, dk, iDoList, nDoList,iSkipList, nSkipList, imp+1, imp_skip);
-        long double ErrorMain2;
-        Step = -0.1;
-        MassPoints[imp_set].Mp = Step;
-        ErrorMain2 = Functional(ldUseOne,Sat, iTotalCheckPoints, dk, iDoList, nDoList,iSkipList, nSkipList, imp+1, imp_skip);
-        while (1)
+        if (iModeRun ==0)
         {
-            if (fabs(ErrorMain1 - ErrorMain2) <1e-17)
+            ErrorMain1 = Functional(ldUseOne, Sat, iTotalCheckPoints, dk, iDoList, nDoList,iSkipList, nSkipList, imp+1, imp_skip);
+            long double ErrorMain2;
+            Step = -0.1;
+            MassPoints[imp_set].Mp = Step;
+            ErrorMain2 = Functional(ldUseOne,Sat, iTotalCheckPoints, dk, iDoList, nDoList,iSkipList, nSkipList, imp+1, imp_skip);
+            while (1)
             {
-                if (ErrorMain1 >= ErrorMain2)
-                    break;
+                if (fabs(ErrorMain1 - ErrorMain2) <1e-17)
+                {
+                    if (ErrorMain1 >= ErrorMain2)
+                        break;
+                    else
+                    {
+                        MassPoints[imp_set].Mp -=Step;
+                        break;
+                    }
+                }
+                if (ErrorMain2 < ErrorMain1)
+                {
+                    // contine steps
+                    ErrorMain1 = ErrorMain2;
+                }
                 else
                 {
-                    MassPoints[imp_set].Mp -=Step;
-                    break;
+                    // step reverce direction and make step twice smaller
+                    ErrorMain1 = ErrorMain2;
+                    Step = -Step/2;
+                    if (fabs(Step) < 1e-17)
+                        break;
                 }
+                MassPoints[imp_set].Mp += Step;
+                ErrorMain2 = Functional(ldUseOne,Sat, iTotalCheckPoints, dk, iDoList, nDoList,iSkipList, nSkipList, imp+1, imp_skip);
             }
-            if (ErrorMain2 < ErrorMain1)
+            if (imp<=1)
             {
-                // contine steps
-                ErrorMain1 = ErrorMain2;
+                return;
             }
-            else
-            {
-                // step reverce direction and make step twice smaller
-                ErrorMain1 = ErrorMain2;
-                Step = -Step/2;
-                if (fabs(Step) < 1e-17)
-                    break;
-            }
-            MassPoints[imp_set].Mp += Step;
-            ErrorMain2 = Functional(ldUseOne,Sat, iTotalCheckPoints, dk, iDoList, nDoList,iSkipList, nSkipList, imp+1, imp_skip);
+            ErrorMain1 = ErrorMain2;
         }
-        if (imp<=1)
-        {
-            return;
-        }
-        ErrorMain1 = ErrorMain2;
     }
 
     // some how point found 
@@ -12571,7 +12599,7 @@ void GetOneMassPoint(long double ldUseOne, int iModeRun, long double &ErrorMain1
         MassPointsI[i].X = MassPoints[i].X;  MassPointsI[i].Y = MassPoints[i].Y;  MassPointsI[i].Z = MassPoints[i].Z;  MassPointsI[i].Mp = MassPoints[i].Mp;
         MassPointsSumm[i].X =0;  MassPointsSumm[i].Y =0;  MassPointsSumm[i].Z =0;  MassPointsSumm[i].Mp =0;
     }
-    long double MIN_PrevFunc = 10e+50;
+    long double MIN_PrevFunc = 1e+50;//ErrorMain1;
     long int CountContinue = 1000;
     long double stepxyz = StepXYZ;
     long long llFound = 0;
@@ -13158,6 +13186,11 @@ void MassPointGen(TRAOBJ *SlS, TRAOBJ *Sat,TRAIMPLOBJ *Eng, long double ldFrom,l
         imp++;
         GetOneMassPoint(0.0,0, Gerror, step, iDoList, nDoList, dk,iTotalCheckPoints, Sat, iSkipList, nSkipList, imp,-1,imp);
         printf("\n%03d p=%10f %10f %10f m= %10f e= %f", imp, MassPoints[imp].X, MassPoints[imp].Y, MassPoints[imp].Z, MassPoints[imp].Mp, Gerror);
+    }
+    else if (strstr(szOpt, " add"))
+    {
+        // add one point:
+        GetOneMassPoint(0.0,2, Gerror, step, iDoList, nDoList, dk,iTotalCheckPoints, Sat, iSkipList, nSkipList, imp,-1,imp);
     }
     else
     {
