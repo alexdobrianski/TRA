@@ -599,6 +599,16 @@ typedef struct XYZ_Split_Ponter_Var
 typedef struct Long_Double_Intergal_Var
 {
     long long nX0;
+
+    long double X0M;
+    long double Y0M;
+    long double Z0M;
+
+    long double X0S;
+    long double Y0S;
+    long double Z0S;
+
+
     long double X0;
     long double Y0;
     long double Z0;
@@ -706,16 +716,19 @@ typedef struct Long_Double_Intergal_Var
             return VZ+VZ_temp; 
     };
 #ifndef SIMPSON_INTEGRAL
-    void Addpos(XYZ_SPLIT_POINTER_VAR *XYZdata,XYZ_SPLIT_POINTER_VAR *XYZdataVel)
-    {
-        X+=XYZdata->valX;  Y+=XYZdata->valY;   Z+=XYZdata->valZ;
-        VX+=XYZdataVel->valX;  VY+=XYZdataVel->valY;   VZ+=XYZdataVel->valZ;
-    }
+    //void Addpos(XYZ_SPLIT_POINTER_VAR *XYZdata,XYZ_SPLIT_POINTER_VAR *XYZdataVel)
+    //{
+    //    X+=XYZdata->valX;  Y+=XYZdata->valY;   Z+=XYZdata->valZ;
+    //    X0M +=XYZdata->valXM; Y0M +=XYZdata->valYM; Z0M +=XYZdata->valZM;
+    //    X0S +=XYZdata->valXS; Y0S +=XYZdata->valYS; Z0S +=XYZdata->valZS;
+    //    VX+=XYZdataVel->valX;  VY+=XYZdataVel->valY;   VZ+=XYZdataVel->valZ;
+    //    
+    //}
     void Add(XYZ_SPLIT_POINTER_VAR *XYZdata)
     {
-        X+=XYZdata->valX;
-        Y+=XYZdata->valY;
-        Z+=XYZdata->valZ;
+        X+=XYZdata->valX;  Y+=XYZdata->valY;  Z+=XYZdata->valZ;
+        X0M +=XYZdata->valXM; Y0M +=XYZdata->valYM; Z0M +=XYZdata->valZM;
+        X0S +=XYZdata->valXS; Y0S +=XYZdata->valYS; Z0S +=XYZdata->valZS;
         //nX0++;
         //x6[i6] =valX; y6[i6] =valY; z6[i6] =valZ;
         //if (++i6 == 6)
@@ -752,26 +765,26 @@ typedef struct Long_Double_Intergal_Var
     void getIntegralpos(long double &valVX, long double &valVY, long double &valVZ)
     {
 #ifndef SIMPSON_INTEGRAL
-            valVX = (x()+X0+vx()+VX0);    
-            valVY = (y()+Y0+vy()+VY0);    
-            valVZ = (z()+Z0+vz()+VZ0);
+            valVX = (x()+X0+vx()+VX0 + X0M +X0S);    
+            valVY = (y()+Y0+vy()+VY0 + Y0M +Y0S);    
+            valVZ = (z()+Z0+vz()+VZ0 + Z0M +Z0S);
 #else
-            valVX = (X_temp+X+X0);    
-            valVY = (Y_temp+Y+Y0);    
-            valVZ = (Z_temp+Z+Z0);
+            valVX = (X_temp + X + X0 + X0M + X0S);    
+            valVY = (Y_temp + Y + Y0 + Y0M + Y0S);    
+            valVZ = (Z_temp + Z + Z0 + Z0M + Z0S);
 #endif
     }
 
     void getIntegral(long double &valVX, long double &valVY, long double &valVZ)
     {
 #ifndef SIMPSON_INTEGRAL
-            valVX = (x()+X0);    
-            valVY = (y()+Y0);    
-            valVZ = (z()+Z0);
+            valVX = (x()+X0 + X0M + X0S);    
+            valVY = (y()+Y0 + Y0M + Y0S);    
+            valVZ = (z()+Z0 + Z0M + Z0S);
 #else
-            valVX = (X_temp+X+X0);    
-            valVY = (Y_temp+Y+Y0);    
-            valVZ = (Z_temp+Z+Z0);
+            valVX = (X_temp+X+X0 + X0M + X0S);    
+            valVY = (Y_temp+Y+Y0 + Y0M + Y0S);    
+            valVZ = (Z_temp+Z+Z0 + Z0M + Z0S);
 #endif
     }
     void adjustAllpos(void)
@@ -1039,6 +1052,9 @@ typedef struct Long_Double_Intergal_Var
 #endif
     void ZeroIntegral (void)
     {
+        X0M = 0.0; Y0M = 0.0; Z0M = 0.0;
+        X0S = 0.0; Y0S = 0.0; Z0S = 0.0;
+
         nX0 = 0;
         X = 0.0;      Y = 0.0;      Z = 0.0;
         X_h =0.0;    Y_h =0.0;    Z_h =0.0;
@@ -1228,6 +1244,14 @@ typedef struct TraObj
     long long CountNz;
     BOOL RunOne;
 
+    long double FXM[PLANET_COUNT];
+    long double FYM[PLANET_COUNT];
+    long double FZM[PLANET_COUNT];
+
+    long double FXS[PLANET_COUNT];
+    long double FYS[PLANET_COUNT];
+    long double FZS[PLANET_COUNT];
+    
     long double X_[PLANET_COUNT];
     long double VX_[PLANET_COUNT];
     long double FX[PLANET_COUNT];
@@ -2635,7 +2659,7 @@ typedef struct CpuMemory {
         {
             CpuPartSummXYZ (&MainCpu, sinTetta,  X, Xadd, Yadd, Zadd, 2, iLeg, 0, iLeg);
                            Y=X;            Z=X;
-            X=1-X;         Y=1-Y;          Z=1-Z;
+            X=-X;         Y=-Y;          Z=-Z;
             Xadd = -Xadd;  Yadd = -Yadd;   Zadd = -Zadd;
         }
 #endif 
@@ -2691,7 +2715,7 @@ typedef struct CpuMemory {
                 Xadd += CPUID[ipr].xadd;  Yadd += CPUID[ipr].yadd;  Zadd += CPUID[ipr].zadd;
             }
                            Y=X;            Z=X;
-            X=1-X;         Y=1-Y;          Z=1-Z;
+            X=-X;         Y=-Y;          Z=-Z;
 #else
             long double xx[4], xadd[4], yadd[4],zadd[4];
             PowerR(R0divR);
@@ -2702,7 +2726,7 @@ typedef struct CpuMemory {
             PartSummXYZ ( MainCpu.Xk, MainCpu.Yk, sinTetta,  xx[3], xadd[3], yadd[3], zadd[3], i_split[3][0], iLeg, i_split[3][0], iLeg         );
             X = xx[0]+xx[1]+xx[2]+xx[3];
                            Y=X;            Z=X;
-            X=1-X;         Y=1-Y;          Z=1-Z;
+            X=-X;         Y=-Y;          Z=-Z;
             Xadd = xadd[0]+xadd[1]+xadd[2]+xadd[3];
             Yadd = yadd[0]+yadd[1]+yadd[2]+yadd[3];
             Zadd = zadd[0]+zadd[1]+zadd[2]+zadd[3];
@@ -2712,6 +2736,7 @@ typedef struct CpuMemory {
         trs_2_gcrs(Xadd, Yadd, Zadd);
     };
 #else
+    // outdated : just for historic reference (to keep in source code instead in VSS)
     void FastSummXYZ( long double ValX, long double ValY, long double ValZ, long double ValR, long double &X, long double &Y, long double &Z, 
             long double &Xadd, long double &Yadd, long double &Zadd,
             int iCurSat)
@@ -3165,6 +3190,7 @@ typedef struct CpuMemory {
     };
 #endif
 #else
+    // outdated : just for historic reference (to keep in source code instead in VSS)
     void FastSummXYZ( long double ValX, long double ValY, long double ValZ, long double ValR, long double &X, long double &Y, long double &Z, int iCurSat)
     {
         int n,k;
@@ -3388,6 +3414,7 @@ typedef struct CpuMemory {
     };
 #endif
 #else
+    // outdated : just for historic reference (to keep in source code instead in VSS)
     void FastSummXYZ( long double ValX, long double ValY, long double ValZ, long double ValR, long double &X, long double &Y, long double &Z, int iCurSat)
     {
         int n,k;
@@ -3902,6 +3929,7 @@ typedef struct CpuMemory {
         return 0;
     };
 
+    // outdated : just for historic reference (to keep in source code instead in VSS)
     void SummXYZ(int SatCalc, long double &X, long double &Y, long double &Z)
     {
         int n,k;
@@ -4768,16 +4796,12 @@ void CalcSatForces(TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfCalc)
 
                     Sat->FastSummXYZ(ValX0,ValY0,ValZ0,Sat->Distance[i][j],DX1,DY1,DZ1, DX,DY,DZ,i);
 #define _NO_GM_CORRECTION 1
-#ifndef _NO_GM_CORRECTION
-                    *Sat_DeltaVX_i_j =DX/ModelCoef;
-                    *Sat_DeltaVY_i_j =DY/ModelCoef;
-                    *Sat_DeltaVZ_i_j =DZ/ModelCoef;
-#else
-                    *Sat_DeltaVX_i_j =DX1*oXdivR + DX;
-                    *Sat_DeltaVY_i_j =DY1*oYdivR + DY;
-                    *Sat_DeltaVZ_i_j =DZ1*oZdivR + DZ;
+                    *Sat_DeltaVX_i_j =oXdivR + DX1*oXdivR + DX;
+                    *Sat_DeltaVY_i_j =oYdivR + DY1*oYdivR + DY;
+                    *Sat_DeltaVZ_i_j =oZdivR + DZ1*oZdivR + DZ;
+                    Sat->FXS[j] = DX;  Sat->FYS[j] = DY;  Sat->FZS[j] = DZ;
+
                     //printf("\n %04d %20.18f %20.18f %20.18f %20.18f %20.18f %20.18f %20.18f", printcount++, DX1, DX1*oXdivR, DX1*oYdivR, DX1*oZdivR, DX, DY, DZ); 
-#endif
                 }
             }
             else
@@ -4818,6 +4842,7 @@ void CalcSatForces(TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfCalc)
                 *Sat_FX_i += - *Sat_DeltaVX_i_j* *Sat_ForceDD_i_j;
                 *Sat_FY_i += - *Sat_DeltaVY_i_j* *Sat_ForceDD_i_j;
                 *Sat_FZ_i += - *Sat_DeltaVZ_i_j* *Sat_ForceDD_i_j;
+                Sat->FXS[j] *= *Sat_ForceDD_i_j; Sat->FYS[j] *= *Sat_ForceDD_i_j; Sat->FZS[j] *= *Sat_ForceDD_i_j;
 
 #if 1
                 if (Sat->ProbSquare[i])
@@ -4928,6 +4953,7 @@ void IteraSolarSystem(BOOL ForceWasCalculated, TRAOBJ * SlS)
         SlS->_position_[i].getIntegral(SlS->X[i], SlS->Y[i], SlS->Z[i]);
 
 #else
+
         SlS->_position_[i].Addpos(&XYZdataPos, &XYZdataVel);
 
         SlS->_velosity_[i].Add(&XYZdataVel);
@@ -9319,11 +9345,7 @@ void ParamProb(char *szString)
             // the amoun of yhe core can be grabed from kernel - but it will be nice to have a control
 
 
-#ifndef _NO_GM_CORRECTION
-            ModelCoef = SolarSystem.GM[EARTH]/ GM_MODEL;
-#else
             ModelCoef = 1;
-#endif
             
 #ifdef USE_MODEL_LOAD
             Sat.iLeg = EarthModelCoefs;
