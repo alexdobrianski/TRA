@@ -693,15 +693,15 @@ typedef struct Long_Double_Intergal_Var
 
     long double x() 
     { 
-           return X+X_temp; 
+           return X+X_temp+X0M+X0S; 
     };
     long double y() 
     { 
-            return Y+Y_temp; 
+            return Y+Y_temp+Y0M+Y0S; 
     };
     long double z() 
     { 
-            return Z+Z_temp; 
+            return Z+Z_temp+Z0M+Z0S; 
     };
     long double vx() 
     { 
@@ -778,9 +778,9 @@ typedef struct Long_Double_Intergal_Var
     void getIntegral(long double &valVX, long double &valVY, long double &valVZ)
     {
 #ifndef SIMPSON_INTEGRAL
-            valVX = (x()+X0 + X0M + X0S);    
-            valVY = (y()+Y0 + Y0M + Y0S);    
-            valVZ = (z()+Z0 + Z0M + Z0S);
+            valVX = (x()+X0);    
+            valVY = (y()+Y0);    
+            valVZ = (z()+Z0);
 #else
             valVX = (X_temp+X+X0 + X0M + X0S);    
             valVY = (Y_temp+Y+Y0 + Y0M + Y0S);    
@@ -1244,14 +1244,23 @@ typedef struct TraObj
     long long CountNz;
     BOOL RunOne;
 
-    long double FXM[PLANET_COUNT];
-    long double FYM[PLANET_COUNT];
-    long double FZM[PLANET_COUNT];
+    long double FXM[PLANET_COUNT][PLANET_COUNT];
+    long double FYM[PLANET_COUNT][PLANET_COUNT];
+    long double FZM[PLANET_COUNT][PLANET_COUNT];
 
-    long double FXS[PLANET_COUNT];
-    long double FYS[PLANET_COUNT];
-    long double FZS[PLANET_COUNT];
-    
+    long double FXS[PLANET_COUNT][PLANET_COUNT];
+    long double FYS[PLANET_COUNT][PLANET_COUNT];
+    long double FZS[PLANET_COUNT][PLANET_COUNT];
+
+    long double Fxm[PLANET_COUNT];
+    long double Fym[PLANET_COUNT];
+    long double Fzm[PLANET_COUNT];
+
+    long double Fxs[PLANET_COUNT];
+    long double Fys[PLANET_COUNT];
+    long double Fzs[PLANET_COUNT];
+
+
     long double X_[PLANET_COUNT];
     long double VX_[PLANET_COUNT];
     long double FX[PLANET_COUNT];
@@ -4780,6 +4789,8 @@ void CalcSatForces(TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfCalc)
             *Sat_DeltaVX_i_j =0;
             *Sat_DeltaVY_i_j =0;
             *Sat_DeltaVZ_i_j =0;
+            Sat->FXS[i][j] = 0;  Sat->FYS[i][j] = 0;  Sat->FZS[i][j] = 0;
+            Sat->FXM[i][j] = 0;  Sat->FYM[i][j] = 0;  Sat->FZM[i][j] = 0;
 
             if (j == Sat->LegBody)
             {
@@ -4796,10 +4807,12 @@ void CalcSatForces(TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfCalc)
 
                     Sat->FastSummXYZ(ValX0,ValY0,ValZ0,Sat->Distance[i][j],DX1,DY1,DZ1, DX,DY,DZ,i);
 #define _NO_GM_CORRECTION 1
-                    *Sat_DeltaVX_i_j =oXdivR + DX1*oXdivR + DX;
-                    *Sat_DeltaVY_i_j =oYdivR + DY1*oYdivR + DY;
-                    *Sat_DeltaVZ_i_j =oZdivR + DZ1*oZdivR + DZ;
-                    Sat->FXS[j] = DX;  Sat->FYS[j] = DY;  Sat->FZS[j] = DZ;
+                    *Sat_DeltaVX_i_j =oXdivR;// + DX1*oXdivR + DX;
+                    *Sat_DeltaVY_i_j =oYdivR;// + DY1*oYdivR + DY;
+                    *Sat_DeltaVZ_i_j =oZdivR;// + DZ1*oZdivR + DZ;
+                    Sat->FXS[i][j] = DX;  Sat->FYS[i][j] = DY;  Sat->FZS[i][j] = DZ;
+
+                    Sat->FXM[i][j] = DX1*oXdivR;  Sat->FYM[i][j] = DY1*oYdivR;  Sat->FZM[i][j] = DZ1*oZdivR;
 
                     //printf("\n %04d %20.18f %20.18f %20.18f %20.18f %20.18f %20.18f %20.18f", printcount++, DX1, DX1*oXdivR, DX1*oYdivR, DX1*oZdivR, DX, DY, DZ); 
                 }
@@ -4842,7 +4855,8 @@ void CalcSatForces(TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfCalc)
                 *Sat_FX_i += - *Sat_DeltaVX_i_j* *Sat_ForceDD_i_j;
                 *Sat_FY_i += - *Sat_DeltaVY_i_j* *Sat_ForceDD_i_j;
                 *Sat_FZ_i += - *Sat_DeltaVZ_i_j* *Sat_ForceDD_i_j;
-                Sat->FXS[j] *= *Sat_ForceDD_i_j; Sat->FYS[j] *= *Sat_ForceDD_i_j; Sat->FZS[j] *= *Sat_ForceDD_i_j;
+                Sat->Fxs[i] = - Sat->FXS[i][j] * *Sat_ForceDD_i_j; Sat->Fys[i] = - Sat->FYS[i][j] * *Sat_ForceDD_i_j; Sat->Fzs[i] = - Sat->FZS[i][j] * *Sat_ForceDD_i_j;
+                Sat->Fxm[i] = - Sat->FXM[i][j] * *Sat_ForceDD_i_j; Sat->Fym[i] = - Sat->FYM[i][j] * *Sat_ForceDD_i_j; Sat->Fzm[i] = - Sat->FZM[i][j] * *Sat_ForceDD_i_j;
 
 #if 1
                 if (Sat->ProbSquare[i])
@@ -5020,6 +5034,7 @@ void IteraSat(int TimeDirection, TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfC
 
     if (Sat->RunOne)
     {
+        Sat->RunOne = FALSE;
         for (i = 0; i < Sat->Elem; i++)
         {
            
@@ -5047,15 +5062,20 @@ void IteraSat(int TimeDirection, TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfC
         XYZdataPos.valX = (Sat->_velosity_[i].x())+ Sat->FX[i];
         XYZdataPos.valY = (Sat->_velosity_[i].y())+ Sat->FY[i];
         XYZdataPos.valZ = (Sat->_velosity_[i].z())+ Sat->FZ[i];
-        XYZdataPos.valXM = 0;   XYZdataPos.valYM = 0;  XYZdataPos.valZM = 0;
-        XYZdataPos.valXS = 0;   XYZdataPos.valYS = 0;  XYZdataPos.valZS = 0;
+        XYZdataPos.valXM = Sat->Fxm[i];   XYZdataPos.valYM = Sat->Fym[i];  XYZdataPos.valZM = Sat->Fzm[i];
+        XYZdataPos.valXS = Sat->Fxs[i];   XYZdataPos.valYS = Sat->Fys[i];  XYZdataPos.valZS = Sat->Fzs[i];
+
+        //XYZdataPos.valXM = 0;   XYZdataPos.valYM = 0;  XYZdataPos.valZM = 0;
+        //XYZdataPos.valXS = 0;   XYZdataPos.valYS = 0;  XYZdataPos.valZS = 0;
 
         XYZdataVel.valX = Sat->FX[i];
         XYZdataVel.valY = Sat->FY[i];
         XYZdataVel.valZ = Sat->FZ[i];
-        XYZdataVel.valXM = 0;   XYZdataVel.valYM = 0;  XYZdataVel.valZM = 0;
-        XYZdataVel.valXS = 0;   XYZdataVel.valYS = 0;  XYZdataVel.valZS = 0;
+        XYZdataVel.valXM = Sat->Fxm[i];   XYZdataVel.valYM = Sat->Fym[i];  XYZdataVel.valZM = Sat->Fzm[i];
+        XYZdataVel.valXS = Sat->Fxs[i];   XYZdataVel.valYS = Sat->Fys[i];  XYZdataVel.valZS = Sat->Fzs[i];
 
+        //XYZdataVel.valXM = 0;   XYZdataVel.valYM = 0;  XYZdataVel.valZM = 0;
+        //XYZdataVel.valXS = 0;   XYZdataVel.valYS = 0;  XYZdataVel.valZS = 0;
 
 #ifdef NO_SEPARATION_VEL_POS
         Sat->_position_[i].Add(&XYZdataPos);
