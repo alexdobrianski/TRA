@@ -88,6 +88,13 @@ MASS_POINT_ELEMENT MassPoints[(TOTAL_COEF+3)*(TOTAL_COEF+3)];
 #define MAX_CHECK_POINTS 1000
 long double TotalCheckPoints[MAX_CHECK_POINTS][3];
 
+int iSimTotalLocations = 0;;
+char SimNAME[32][80];
+long double SimLat[32];
+long double SimLong[32];
+long double SimH[32];
+
+
     	
     // see http://vadimchazov.narod.ru/lepa_zov/lesat.pdf
     // P0 == P[0](x) = 1
@@ -1934,8 +1941,8 @@ typedef struct CpuMemory {
     void LatLongToTRS(long double Long,long double Lat,long double h, long double a, long double b, long double &PosX,long double &PosY,long double &PosZ)
     {
         //initial calculations
-        long cos_lat = cos(Lat* M_PI/180.0);
-        long sin_lat = sin(Lat* M_PI/180.0);
+        long double cos_lat = cos(Lat* M_PI/180.0);
+        long double sin_lat = sin(Lat* M_PI/180.0);
         long double f = (a-b)/a;
         long double c= a/(1-f);
         long double e2 = f*(2-f);
@@ -8639,6 +8646,9 @@ void ParamProb(char *szString)
             measures[iMAxMesaures-1].ErrD3 =atof(pszQuo);
     XML_GROUP_END
 
+    XML_GROUP(hPULSARmeasure)
+    XML_GROUP_END
+
     XML_SECTION_END
 
     ///////////////////////////////////////////////////////////////////////////////////////SimInfo
@@ -8662,8 +8672,6 @@ void ParamProb(char *szString)
             UrlTraSimPort = 0;
 
     }
-
-
     IF_XML_READ(SimulationOutputTime)
     {
         if (++SimulationOutputCount <= MAX_OUTPUT_TIMES)
@@ -8677,6 +8685,25 @@ void ParamProb(char *szString)
             printf("\n Max output times for simulation limit reached - .XML file is incorrect");
         }
     }
+    IF_XML_READ(SimNAME)
+    {
+        strcpy(SimNAME[iSimTotalLocations], pszQuo);
+        if (strchr(SimNAME[iSimTotalLocations], '\"'))
+            *strchr(SimNAME[iSimTotalLocations], '\"')=0;
+    }
+    IF_XML_READ(SimLat)
+    {
+        SimLat[iSimTotalLocations]=  atof(pszQuo);
+    }
+    IF_XML_READ(SimLong)
+    {
+        SimLong[iSimTotalLocations]=  atof(pszQuo);
+    }
+    IF_XML_READ(SimH)
+    {
+        SimH[iSimTotalLocations++]=  atof(pszQuo);
+    }
+
 
     XML_SECTION_END
 
@@ -11289,22 +11316,27 @@ void JustRun(TRAOBJ *SlS, TRAOBJ *Sat,TRAIMPLOBJ *Eng, long double ldFrom,long d
         IteraSolarSystem(TRUE, SlS);
     }
 }
-unsigned char bRandBuffer[2048];
+unsigned char bRandBuffer[2048000];
 int iRa=sizeof(bRandBuffer)/sizeof(unsigned long);
+HCRYPTPROV hCryptProv = 0;
 void Ra(unsigned char *bBuffer, int iBufferSize)
 {
-    HCRYPTPROV hCryptProv = 0;
-    if (!CryptAcquireContextW(&hCryptProv,0, 0, PROV_RSA_FULL, 0))
+    if (hCryptProv == 0)
     {
-        hCryptProv = NULL;
-        if (CryptAcquireContextW(&hCryptProv, 0, 0, PROV_RSA_FULL, CRYPT_NEWKEYSET))
+        if (!CryptAcquireContextW(&hCryptProv,0, 0, PROV_RSA_FULL, 0))
         {
+            hCryptProv = NULL;
+            if (CryptAcquireContextW(&hCryptProv, 0, 0, PROV_RSA_FULL, CRYPT_NEWKEYSET))
+            {
+            }
         }
+        if (hCryptProv)
+            CryptGenRandom(hCryptProv, iBufferSize, bRandBuffer);
+        //if (hCryptProv)
+        //    CryptReleaseContext(hCryptProv, 0);
     }
-    if (hCryptProv)
+    else
         CryptGenRandom(hCryptProv, iBufferSize, bRandBuffer);
-    if (hCryptProv)
-        CryptReleaseContext(hCryptProv, 0);
 }
 unsigned long ra(void)
 {
@@ -11511,31 +11543,48 @@ NEXT_MEASURE:;
 }
 void RunSim(TRAOBJ *SlS, TRAOBJ *Sat,TRAIMPLOBJ *Eng, long double ldFrom,long double ldFromTLEEpoch, long long iAllSec, int iItPerS, long double tSl)
 {
+    int iCheck = 0;
+    long double AE = 1.0;
+#if _USE_ORIGINAL
+    long double XKMPER = 6378.1350;//XKMPER kilometers/Earth radii 6378.135
+#else
+    long double XKMPER = 6378.137;
+#endif
+	//long double XKE = BIG_XKE;//.743669161E-1;
+    //long double XJ2 = 1.082616E-3;
+    //long double CK2=.5*XJ2*AE*AE;
+    long double XMNPDA = 1440.0; // XMNPDA time units(minutes) /day 1440.0
+    long double TEMP=2*M_PI/XMNPDA/XMNPDA; // 2*pi / (1440 **2)
+    long double ProbMeanMotion = Sat->ProbMeanMotion[iCheck];
+    long double XNO=ProbMeanMotion*TEMP*XMNPDA; // rotation per day * 2*pi /1440 == rotation per day on 1 unit (1 min)
+    long double XNDT2O=Sat->ProbFirstDervMeanMotion[iCheck]*TEMP;
+    long double XNDD6O=Sat->ProbSecondDervmeanMotion[iCheck]*TEMP/XMNPDA;
+    long double BSTAR=Sat->ProbDragterm[iCheck]/AE;
+    long double tProbX,tProbY,tProbZ,tProbVX,tProbVY,tProbVZ;
+    int i,j;
+    stateType  StateBS;
+    stateType  StateMoon;
+    double dEMRAT = Find_DataInHeader("EMRAT ");
+    double dAU = Find_DataInHeader("AU    ")*1000.0;
+    double BSX;
+    double BSY;
+    double BSZ;
+    long double Lat;
+    long double Long;
+    long double Height;
+    long double PosX;
+    long double PosY;
+    long double PosZ;
+    SYSTEMTIME ThatTime;
+    long double dTLEtime;
+
+
     FILE *FileOut = fopen(SimulationTempOutputFile,"w");
     if (FileOut)
     {
         if (memcmp(SimulationType,"TLE",3) == 0)
         {
-            int iCheck = 0;
-            long double AE = 1.0;
-#if _USE_ORIGINAL
-            long double XKMPER = 6378.1350;//XKMPER kilometers/Earth radii 6378.135
-#else
-            long double XKMPER = 6378.137;
-#endif
-		    //long double XKE = BIG_XKE;//.743669161E-1;
-            //long double XJ2 = 1.082616E-3;
-            //long double CK2=.5*XJ2*AE*AE;
-            long double XMNPDA = 1440.0; // XMNPDA time units(minutes) /day 1440.0
-            long double TEMP=2*M_PI/XMNPDA/XMNPDA; // 2*pi / (1440 **2)
-            long double ProbMeanMotion = Sat->ProbMeanMotion[iCheck];
-            long double XNO=ProbMeanMotion*TEMP*XMNPDA; // rotation per day * 2*pi /1440 == rotation per day on 1 unit (1 min)
-            long double XNDT2O=Sat->ProbFirstDervMeanMotion[iCheck]*TEMP;
-            long double XNDD6O=Sat->ProbSecondDervmeanMotion[iCheck]*TEMP/XMNPDA;
-            long double BSTAR=Sat->ProbDragterm[iCheck]/AE;
-            long double tProbX,tProbY,tProbZ,tProbVX,tProbVY,tProbVZ;
-            // next lines has to be removed ==> today they are included only to avoid drag effect
-            for (int i = 0; i < SimulationOutputCount; i++)
+            for (i = 0; i < SimulationOutputCount; i++)
             {
                 if (memcmp(UseSatData, "SGP",3)==0) 
                 {
@@ -11600,17 +11649,13 @@ void RunSim(TRAOBJ *SlS, TRAOBJ *Sat,TRAIMPLOBJ *Eng, long double ldFrom,long do
                 }
                 else if (strcmp(SimulationType,"TLE_H_CRS")==0) // it was request to generate position data with reference to solar system CRS
                 {
-                    stateType  StateEarth;
-                    stateType  StateMoon;
-                    double dEMRAT = Find_DataInHeader("EMRAT ");
-                    double dAU = Find_DataInHeader("AU    ")*1000.0;
 
-                    Interpolate_State( SimulationOutputTime[i], EARTH , &StateEarth );
+                    Interpolate_State( SimulationOutputTime[i], EARTH , &StateBS );
                     Interpolate_State( SimulationOutputTime[i], MOON , &StateMoon );
 
-                    double BSX = StateEarth.Position[0]*1000.0 ;
-                    double BSY = StateEarth.Position[1]*1000.0 ;
-                    double BSZ = StateEarth.Position[2]*1000.0 ;
+                    BSX = StateBS.Position[0]*1000.0 ;
+                    BSY = StateBS.Position[1]*1000.0 ;
+                    BSZ = StateBS.Position[2]*1000.0 ;
                     SlS->X[EARTH] = BSX - (StateMoon.Position[0]*1000.0/(dEMRAT+1));//*SlS->M[MOON]/(SlS->M[EARTH]+SlS->M[MOON]));
                     SlS->Y[EARTH] = BSY - (StateMoon.Position[1]*1000.0/(dEMRAT+1));//*SlS->M[MOON]/(SlS->M[EARTH]+SlS->M[MOON]));
                     SlS->Z[EARTH] = BSZ - (StateMoon.Position[2]*1000.0/(dEMRAT+1));//*SlS->M[MOON]/(SlS->M[EARTH]+SlS->M[MOON]));
@@ -11632,7 +11677,78 @@ void RunSim(TRAOBJ *SlS, TRAOBJ *Sat,TRAIMPLOBJ *Eng, long double ldFrom,long do
         }
         else if (memcmp(SimulationType,"PULSAR",6) ==0) //simulate PULSAR receving signal from all pulsars at specific time
         {
+            for (i = 0; i < SimulationOutputCount; i++)
+            {
+                for (j = 0; j <iSimTotalLocations; j++)
+                {
+                    //(SimNAME[iSimTotalLocations], pszQuo);
+                    //SimLat[iSimTotalLocations]=  atof(pszQuo);
+                    //SimLong[iSimTotalLocations]=  atof(pszQuo);
+                    //SimH[iSimTotalLocations++]=  atof(pszQuo);
+                    
+                    Interpolate_State( SimulationOutputTime[i], EARTH , &StateBS );
+                    Interpolate_State( SimulationOutputTime[i], MOON , &StateMoon );
+                    BSX = StateBS.Position[0]*1000.0 ;
+                    BSY = StateBS.Position[1]*1000.0 ;
+                    BSZ = StateBS.Position[2]*1000.0 ;
+                    SlS->X[EARTH] = BSX - (StateMoon.Position[0]*1000.0/(dEMRAT+1));//*SlS->M[MOON]/(SlS->M[EARTH]+SlS->M[MOON]));
+                    SlS->Y[EARTH] = BSY - (StateMoon.Position[1]*1000.0/(dEMRAT+1));//*SlS->M[MOON]/(SlS->M[EARTH]+SlS->M[MOON]));
+                    SlS->Z[EARTH] = BSZ - (StateMoon.Position[2]*1000.0/(dEMRAT+1));//*SlS->M[MOON]/(SlS->M[EARTH]+SlS->M[MOON]));
+                    SlS->X[MOON] = BSX + StateMoon.Position[0]*1000.0;
+                    SlS->Y[MOON] = BSY + StateMoon.Position[1]*1000.0;
+                    SlS->Z[MOON] = BSZ + StateMoon.Position[2]*1000.0;
+                    if (memcmp(SimNAME[j], "EARTH",5)==0)
+                    {
+                        Lat = SimLat[j];
+                        Long = SimLong[j];
+                        Height = SimH[j];
+                        dTLEtime = ConvertJulianDayToDateAndTime(SimulationOutputTime[i], &ThatTime);
 
+
+                        SlS->LatLongToCRS(Long,Lat,Height, 6378245.000, 6356863.019, dTLEtime, PosX,PosY,PosZ);
+                        fprintf(FileOut,"\n\t<hPULSARmeasure>");
+                        fprintf(FileOut,"\n\t <M>-1</M>");
+                        fprintf(FileOut,"\n\t\t<T>%.11f</T>\n\t\t<X>%.5f</X>\n\t\t<Y>%.5f</Y>\n\t\t<Z>%.5f</Z>", SimulationOutputTime[i],PosX+SlS->X[EARTH], PosY+SlS->Y[EARTH], PosZ+SlS->Z[EARTH]);
+                        fprintf(FileOut,"\n\t\t<E>1000</E>\n\t\t<D1>0.0</D1>\n\t\t<E1>0.0</E1>\n\t\t<T2>0.0</T2>\n\t\t<E2>0.0</E2>\n\t\t<D3>0.0</D3>\n\t\t<E3>0.0</E3>");
+                        fprintf(FileOut,"\n\t</hPULSARmeasure>");
+                    }
+                    else if (memcmp(SimNAME[j], "MOON",4)==0)
+                    {
+                    }
+                    else if (memcmp(SimNAME[j], "ORBIT",5)==0)
+                    {
+                        if (memcmp(UseSatData, "SGP",3)==0) 
+                        {
+                            if (memcmp(UseSatData, "SGP4",4)==0)
+                            {
+			                    SGP4((SimulationOutputTime[i] - Sat->ProbJD[iCheck])*XMNPDA, 
+                                    XNDT2O,XNDD6O,BSTAR,Sat->ProbIncl[iCheck], Sat->ProbAscNode[iCheck],Sat->ProbEcc[iCheck], Sat->ProbArgPer[iCheck], Sat->ProbMeanAnom[iCheck],XNO, 
+				                    tProbX,tProbY,tProbZ,tProbVX,tProbVY,tProbVZ);
+                            }
+                            else if (memcmp(UseSatData, "SGP8",4)==0)
+                            {
+			                    SGP8((SimulationOutputTime[i] - Sat->ProbJD[iCheck])*XMNPDA, 
+                                    XNDT2O,XNDD6O,BSTAR,Sat->ProbIncl[iCheck], Sat->ProbAscNode[iCheck],Sat->ProbEcc[iCheck], Sat->ProbArgPer[iCheck], Sat->ProbMeanAnom[iCheck],XNO, 
+	        			            tProbX,tProbY,tProbZ,tProbVX,tProbVY,tProbVZ);
+                            }
+                            else if  (memcmp(UseSatData, "SGP",3)==0)
+                            {
+			                    SGP((SimulationOutputTime[i] - Sat->ProbJD[iCheck])*XMNPDA, 
+                                    XNDT2O,XNDD6O,BSTAR,Sat->ProbIncl[iCheck], Sat->ProbAscNode[iCheck],Sat->ProbEcc[iCheck], Sat->ProbArgPer[iCheck], Sat->ProbMeanAnom[iCheck],XNO, 
+				                    tProbX,tProbY,tProbZ,tProbVX,tProbVY,tProbVZ);
+                            }
+                            tProbX=tProbX*XKMPER/AE*1000.0;                 tProbY=tProbY*XKMPER/AE*1000.0;                 tProbZ=tProbZ*XKMPER/AE*1000.0;
+			                tProbVX=tProbVX*XKMPER/AE*XMNPDA/86400.*1000.0;	tProbVY=tProbVY*XKMPER/AE*XMNPDA/86400.*1000.0;	tProbVZ=tProbVZ*XKMPER/AE*XMNPDA/86400.*1000.0;
+                        }
+                        else    
+                        {
+                            KeplerPosition(Sat->ProbJD[iCheck],SimulationOutputTime[i],      // prob epoch, and curent time
+	    			            Sat->ProbTSec[iCheck], Sat->ProbEcc[iCheck], Sat->ProbIncl[iCheck], Sat->ProbAscNode[iCheck],  Sat->ProbArgPer[iCheck], Sat->ProbMeanAnom[iCheck], BSTAR,
+                            Gbig *SolarSystem.M[EARTH],1, tProbX,tProbY,tProbZ,tProbVX,tProbVY,tProbVZ, Sat->ProbMeanMotion[iCheck]);
+                        }
+                    }
+                }
+            }
         }
         fclose(FileOut);
         FileOut = NULL;
@@ -13388,6 +13504,8 @@ int main(int argc, char * argv[])
     {
         Sat.StopThreads();
     }
+    if (hCryptProv)
+        CryptReleaseContext(hCryptProv, 0);
 	return 0;
 }
 

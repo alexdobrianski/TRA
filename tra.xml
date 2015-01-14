@@ -8,18 +8,27 @@
                           //    OPTIM = calculation of the engines firing to reach the moon
                           //    MASSPOINTS = calculation Mass Pint model of the graviatation
                -->
-    <TRA:setting name="Mode" value="PROP" />
+    <TRA:setting name="Mode" value="SIM" />
 
 </TRA:section>
 <TRA:section name="MassInfo" value="0.0">
-    <TRA:setting name="ModelOutput" value="masspoints.txt" />
+    <TRA:setting name="ModelOutput" value="mass_points.txt" />
     <TRA:setting name="MinH" value="200000" />
     <TRA:setting name="MaxH" value="500000" />
     <TRA:setting name="MidRandPointsFile" value="RandomPoints.txt" />
+
 </TRA:section>
 
 <TRA:section name="SimInfo" value="0.0">
-    <TRA:setting name="SimulationType" value="TLE_H_CRS" />
+    <TRA:setting name="@SimulationType" value="TLE_H_CRS" />
+    <TRA:setting name="SimulationType" value="PULSAR" />
+    <TRA:setting name="SimNAME" value="EARTH" />
+    <TRA:setting name="@SimNAME" value="MOON" />
+    <TRA:setting name="@SimNAME" value="ORBIT" />
+    <TRA:setting name="SimLat" value="49.257735" />
+    <TRA:setting name="SimLong" value="-123.123904" />
+    <TRA:setting name="SimH" value="+30.5" />
+
     <TRA:setting name="SimulationOutputTime" value="07/05/14 08:28:00:000" />
     <TRA:setting name="SimulationOutputTime" value="07/05/14 10:00:52:000" />
     <TRA:setting name="SimulationOutputTime" value="07/05/14 11:33:44:000" />
@@ -41,6 +50,247 @@
 
 
 <TRA:section name="CalcInfo" value="0.0">
+	<hPULSARmeasure>
+	 <M>-1</M>
+		<T>2456784.85277777770</T>
+		<X>-103620283306.11351</X>
+		<Y>-100744584682.77396</Y>
+		<Z>-43685252635.22724</Z>
+		<E>1000</E>
+		<D1>0.0</D1>
+		<E1>0.0</E1>
+		<T2>0.0</T2>
+		<E2>0.0</E2>
+		<D3>0.0</D3>
+		<E3>0.0</E3>
+	</hPULSARmeasure>
+	<hPULSARmeasure>
+	 <M>-1</M>
+		<T>2456784.91726851840</T>
+		<X>-103500929580.45749</X>
+		<Y>-100850645158.43579</Y>
+		<Z>-43730874524.34018</Z>
+		<E>1000</E>
+		<D1>0.0</D1>
+		<E1>0.0</E1>
+		<T2>0.0</T2>
+		<E2>0.0</E2>
+		<D3>0.0</D3>
+		<E3>0.0</E3>
+	</hPULSARmeasure>
+	<hPULSARmeasure>
+	 <M>-1</M>
+		<T>2456784.98175925950</T>
+		<X>-103381244293.43810</X>
+		<Y>-100955938010.12814</Y>
+		<Z>-43776443717.04771</Z>
+		<E>1000</E>
+		<D1>0.0</D1>
+		<E1>0.0</E1>
+		<T2>0.0</T2>
+		<E2>0.0</E2>
+		<D3>0.0</D3>
+		<E3>0.0</E3>
+	</hPULSARmeasure>
+	<hPULSARmeasure>
+	 <M>-1</M>
+		<T>2456785.11074074080</T>
+		<X>-103141915326.21643</X>
+		<Y>-101164155320.95219</Y>
+		<Z>-43867425242.60449</Z>
+		<E>1000</E>
+		<D1>0.0</D1>
+		<E1>0.0</E1>
+		<T2>0.0</T2>
+		<E2>0.0</E2>
+		<D3>0.0</D3>
+		<E3>0.0</E3>
+	</hPULSARmeasure>
+	<hPULSARmeasure>
+	 <M>-1</M>
+		<T>2456785.17523148140</T>
+		<X>-103022812446.26755</X>
+		<Y>-101267381893.48628</Y>
+		<Z>-43912838224.63526</Z>
+		<E>1000</E>
+		<D1>0.0</D1>
+		<E1>0.0</E1>
+		<T2>0.0</T2>
+		<E2>0.0</E2>
+		<D3>0.0</D3>
+		<E3>0.0</E3>
+	</hPULSARmeasure>
+	<hPULSARmeasure>
+	 <M>-1</M>
+		<T>2456785.23972222210</T>
+		<X>-102904246365.66296</X>
+		<Y>-101370325782.30707</Y>
+		<Z>-43958199512.20049</Z>
+		<E>1000</E>
+		<D1>0.0</D1>
+		<E1>0.0</E1>
+		<T2>0.0</T2>
+		<E2>0.0</E2>
+		<D3>0.0</D3>
+		<E3>0.0</E3>
+	</hPULSARmeasure>
+	<hPULSARmeasure>
+	 <M>-1</M>
+		<T>2456785.30421296270</T>
+		<X>-102786227212.04819</X>
+		<Y>-101473260754.05791</Y>
+		<Z>-44003509071.09859</Z>
+		<E>1000</E>
+		<D1>0.0</D1>
+		<E1>0.0</E1>
+		<T2>0.0</T2>
+		<E2>0.0</E2>
+		<D3>0.0</D3>
+		<E3>0.0</E3>
+	</hPULSARmeasure>
+	<hPULSARmeasure>
+	 <M>-1</M>
+		<T>2456785.36870370390</T>
+		<X>-102668656056.37325</X>
+		<Y>-101576442218.93504</Y>
+		<Z>-44048766717.14381</Z>
+		<E>1000</E>
+		<D1>0.0</D1>
+		<E1>0.0</E1>
+		<T2>0.0</T2>
+		<E2>0.0</E2>
+		<D3>0.0</D3>
+		<E3>0.0</E3>
+	</hPULSARmeasure>
+	<hPULSARmeasure>
+	 <M>-1</M>
+		<T>2456785.43319444450</T>
+		<X>-102551341049.78952</X>
+		<Y>-101680065621.22382</Y>
+		<Z>-44093972137.01206</Z>
+		<E>1000</E>
+		<D1>0.0</D1>
+		<E1>0.0</E1>
+		<T2>0.0</T2>
+		<E2>0.0</E2>
+		<D3>0.0</D3>
+		<E3>0.0</E3>
+	</hPULSARmeasure>
+	<hPULSARmeasure>
+	 <M>-1</M>
+		<T>2456785.49769675920</T>
+		<X>-102434007614.58859</X>
+		<Y>-101784253344.52008</Y>
+		<Z>-44139133031.96468</Z>
+		<E>1000</E>
+		<D1>0.0</D1>
+		<E1>0.0</E1>
+		<T2>0.0</T2>
+		<E2>0.0</E2>
+		<D3>0.0</D3>
+		<E3>0.0</E3>
+	</hPULSARmeasure>
+	<hPULSARmeasure>
+	 <M>-1</M>
+		<T>2456785.56218749980</T>
+		<X>-102316365524.74402</X>
+		<Y>-101888921292.99773</Y>
+		<Z>-44184232688.33543</Z>
+		<E>1000</E>
+		<D1>0.0</D1>
+		<E1>0.0</E1>
+		<T2>0.0</T2>
+		<E2>0.0</E2>
+		<D3>0.0</D3>
+		<E3>0.0</E3>
+	</hPULSARmeasure>
+	<hPULSARmeasure>
+	 <M>-1</M>
+		<T>2456785.62667824100</T>
+		<X>-102198282234.13866</X>
+		<Y>-101994038693.55602</Y>
+		<Z>-44229279012.51333</Z>
+		<E>1000</E>
+		<D1>0.0</D1>
+		<E1>0.0</E1>
+		<T2>0.0</T2>
+		<E2>0.0</E2>
+		<D3>0.0</D3>
+		<E3>0.0</E3>
+	</hPULSARmeasure>
+	<hPULSARmeasure>
+	 <M>-1</M>
+		<T>2456785.69116898160</T>
+		<X>-102079499515.88846</X>
+		<Y>-102099391115.91310</Y>
+		<Z>-44274271599.12407</Z>
+		<E>1000</E>
+		<D1>0.0</D1>
+		<E1>0.0</E1>
+		<T2>0.0</T2>
+		<E2>0.0</E2>
+		<D3>0.0</D3>
+		<E3>0.0</E3>
+	</hPULSARmeasure>
+	<hPULSARmeasure>
+	 <M>-1</M>
+		<T>2456785.75565972230</T>
+		<X>-101959923318.96027</X>
+		<Y>-102204721093.25696</Y>
+		<Z>-44319210270.13207</Z>
+		<E>1000</E>
+		<D1>0.0</D1>
+		<E1>0.0</E1>
+		<T2>0.0</T2>
+		<E2>0.0</E2>
+		<D3>0.0</D3>
+		<E3>0.0</E3>
+	</hPULSARmeasure>
+	<hPULSARmeasure>
+	 <M>-1</M>
+		<T>2456785.82015046290</T>
+		<X>-101839568978.49420</X>
+		<Y>-102309754878.37413</Y>
+		<Z>-44364094998.04998</Z>
+		<E>1000</E>
+		<D1>0.0</D1>
+		<E1>0.0</E1>
+		<T2>0.0</T2>
+		<E2>0.0</E2>
+		<D3>0.0</D3>
+		<E3>0.0</E3>
+	</hPULSARmeasure>
+	<hPULSARmeasure>
+	 <M>-1</M>
+		<T>2456785.88464120360</T>
+		<X>-101718558742.78284</X>
+		<Y>-102414247003.31546</Y>
+		<Z>-44408925902.95400</Z>
+		<E>1000</E>
+		<D1>0.0</D1>
+		<E1>0.0</E1>
+		<T2>0.0</T2>
+		<E2>0.0</E2>
+		<D3>0.0</D3>
+		<E3>0.0</E3>
+	</hPULSARmeasure>
+	<hPULSARmeasure>
+	 <M>-1</M>
+		<T>2456792.88464120360</T>
+		<X>-88034856801.52445</X>
+		<Y>-112886778873.64682</Y>
+		<Z>-48949670228.00474</Z>
+		<E>1000</E>
+		<D1>0.0</D1>
+		<E1>0.0</E1>
+		<T2>0.0</T2>
+		<E2>0.0</E2>
+		<D3>0.0</D3>
+		<E3>0.0</E3>
+	</hPULSARmeasure>
+</TRA:section>
+
+<TRA:section name="@CalcInfo" value="0.0">
 	<hCRSmeasure>
 	 <M>-1</M>
 		<T>2456784.85277777770</T>
@@ -456,7 +706,7 @@
     <TRA:setting name="R0_MODEL" value="6378137.00" />
 
 <!-- Cnk and Snk file data n max value do be used from the file  -->
-    <TRA:setting name="EarthModelCoefs" value="36" />
+    <TRA:setting name="EarthModelCoefs" value="64" />
 
 <!-- amount threads to do calclulation in parallel =0== one thread 
      that paramether must be after EarthModelCoefs 
@@ -466,10 +716,10 @@
 
 
     <TRA:setting name="IterPerSec9" value="127" />
-    <TRA:setting name="IterPerSec" value="479" />
+    <TRA:setting name="IterPerSec0" value="479" />
     <TRA:setting name="IterPerSec2" value="1013" />
     <TRA:setting name="IterPerSec3" value="1523" />
-    <TRA:setting name="IterPerSec5" value="3167" />
+    <TRA:setting name="IterPerSec" value="3167" />
     <TRA:setting name="IterPerSec5" value="5507" />
     <TRA:setting name="IterPerSec11" value="11014" />
 
@@ -479,8 +729,8 @@
 <!-- know GMMoon and GMEarth will give proper value for M -->
     <TRA:setting name="Gbig" value="6.6742799999999995e-011" />
     <TRA:setting name="Gbig0" value="6.6738177929210037e-011" />
-    <TRA:setting name="TotalDays" value="0.2" />
-    <TRA:setting name="TotalDays0" value="16" />
+    <TRA:setting name="TotalDays0" value="0.2" />
+    <TRA:setting name="TotalDays" value="16" />
 
     <TRA:setting name="TotalDays0" value="0.062337962962962962962962962962963" />
     <TRA:setting name="TotalDays0" value="0.124675925925925925925925925924" />
