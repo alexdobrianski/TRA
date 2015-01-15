@@ -8275,19 +8275,19 @@ void ParamCommon(char *szString)
         }
         IF_XML_READ(ELONG)
         {
-            Pulsars[nPulsars].ELONG = atoi(pszQuo);
+            Pulsars[nPulsars].ELONG = atof(pszQuo);
         }
         IF_XML_READ(ELAT)
         {
-            Pulsars[nPulsars].ELAT = atoi(pszQuo);
+            Pulsars[nPulsars].ELAT = atof(pszQuo);
         }
         IF_XML_READ(P0)
         {
-            Pulsars[nPulsars].P0 = atoi(pszQuo);
+            Pulsars[nPulsars].P0 = atof(pszQuo);
         }
         IF_XML_READ(S400mJy)
         {
-            Pulsars[nPulsars].S400mJy = atoi(pszQuo);
+            Pulsars[nPulsars].S400mJy = atof(pszQuo);
             if (++nPulsars >= NPULSARS)
                 nPulsars = NPULSARS-1;
         }
@@ -11561,7 +11561,7 @@ void RunSim(TRAOBJ *SlS, TRAOBJ *Sat,TRAIMPLOBJ *Eng, long double ldFrom,long do
     long double XNDD6O=Sat->ProbSecondDervmeanMotion[iCheck]*TEMP/XMNPDA;
     long double BSTAR=Sat->ProbDragterm[iCheck]/AE;
     long double tProbX,tProbY,tProbZ,tProbVX,tProbVY,tProbVZ;
-    int i,j;
+    int i,j,k;
     stateType  StateBS;
     stateType  StateMoon;
     double dEMRAT = Find_DataInHeader("EMRAT ");
@@ -11706,11 +11706,85 @@ void RunSim(TRAOBJ *SlS, TRAOBJ *Sat,TRAIMPLOBJ *Eng, long double ldFrom,long do
 
 
                         SlS->LatLongToCRS(Long,Lat,Height, 6378245.000, 6356863.019, dTLEtime, PosX,PosY,PosZ);
-                        fprintf(FileOut,"\n\t<hPULSARmeasure>");
-                        fprintf(FileOut,"\n\t <M>-1</M>");
-                        fprintf(FileOut,"\n\t\t<T>%.11f</T>\n\t\t<X>%.5f</X>\n\t\t<Y>%.5f</Y>\n\t\t<Z>%.5f</Z>", SimulationOutputTime[i],PosX+SlS->X[EARTH], PosY+SlS->Y[EARTH], PosZ+SlS->Z[EARTH]);
-                        fprintf(FileOut,"\n\t\t<E>1000</E>\n\t\t<D1>0.0</D1>\n\t\t<E1>0.0</E1>\n\t\t<T2>0.0</T2>\n\t\t<E2>0.0</E2>\n\t\t<D3>0.0</D3>\n\t\t<E3>0.0</E3>");
-                        fprintf(FileOut,"\n\t</hPULSARmeasure>");
+                        long double Dnorm = sqrt(PosX*PosX + PosY*PosY + PosZ*PosZ);
+                        long double Xnorm = PosX / Dnorm;
+                        long double Ynorm = PosY / Dnorm;
+                        long double Znorm = PosZ / Dnorm;
+
+                        for (k =0; k < nPulsars; k++)
+                        {
+                            long double Xpulsar, Ypulsar, Zpulsar;
+                            SlS->LatLongToTRS(Pulsars[k].ELONG,Pulsars[k].ELAT,0.0, 1.0, 1.0, Xpulsar,Ypulsar,Zpulsar);
+                            long double AngleFromNormal = AngleBtwNorm(Xnorm,Ynorm,Znorm,Xpulsar,Ypulsar,Zpulsar) * 180/ M_PI;
+                            if (fabs(AngleFromNormal) < 45.0)
+                            {
+                                // now needs to find the point for the time
+                                long double tperiod = Pulsars[k].P0;
+                                long double stepP = 0.001;
+                                long double AngleFromNormal2;
+                                long double realD;
+                                long double dTLEtime2;
+                                long double PosX2,PosY2,PosZ2, norm2;
+                                long double realT = 0;
+                                long double RealT[3];
+                                for (int n = 0; n < 3; n++)
+                                {
+                                    tperiod = (n+1)*Pulsars[k].P0;
+                                    BOOL directionPlus = TRUE;
+                                    stepP = 0.001;
+                                    realT = 0;
+                                    while(fabs(realT - (n+1)*Pulsars[k].P0) > 1.0e-12)
+                                    {
+                                        dTLEtime2 = ConvertJulianDayToDateAndTime(SimulationOutputTime[i]+tperiod/(24.0*60.0*60.0), &ThatTime);
+                                        SlS->LatLongToCRS(Long,Lat,Height, 6378245.000, 6356863.019, dTLEtime2, PosX2,PosY2,PosZ2);
+                                        Interpolate_State( SimulationOutputTime[i]+tperiod/(24.0*60.0*60.0), EARTH , &StateBS );
+                                        Interpolate_State( SimulationOutputTime[i]+tperiod/(24.0*60.0*60.0), MOON , &StateMoon );
+                                        BSX = StateBS.Position[0]*1000.0 ;
+                                        BSY = StateBS.Position[1]*1000.0 ;
+                                        BSZ = StateBS.Position[2]*1000.0 ;
+                                        long double DIfEX = BSX - (StateMoon.Position[0]*1000.0/(dEMRAT+1)) - SlS->X[EARTH];
+                                        long double DifEY = BSY - (StateMoon.Position[1]*1000.0/(dEMRAT+1)) - SlS->Y[EARTH];
+                                        long double DifEZ = BSZ - (StateMoon.Position[2]*1000.0/(dEMRAT+1)) - SlS->Z[EARTH];
+
+                                        // vector from XYZ2 to XYZ
+                                        PosX2 = PosX -(PosX2+DIfEX); PosY2 = PosY -(PosY2+DifEY); PosZ2 = PosZ -(PosZ2+DifEZ);
+                                        norm2 = sqrt(PosX2*PosX2 +PosY2*PosY2 +PosZ2*PosZ2);
+                                        PosX2 = PosX2/norm2; PosY2 = PosY2/norm2; PosZ2 = PosZ2/norm2;
+                                        AngleFromNormal2 = AngleBtwNorm(PosX2,PosZ2,PosZ2,Xpulsar,Ypulsar,Zpulsar);
+                                        realD = norm2*cos(AngleFromNormal2);
+                                        realT = tperiod+ realD/299792458.0;
+                                        if (realT < (n+1)*Pulsars[k].P0)
+                                        {
+                                            if (directionPlus)
+                                                ;
+                                            else
+                                            {
+                                                directionPlus = TRUE;
+                                                stepP = - stepP/2;
+                                            }
+                                        }
+                                        else
+                                        {
+                                            if (directionPlus)
+                                            {
+                                                directionPlus = FALSE;
+                                                stepP = - stepP/2;
+                                            }
+                                            else
+                                                ;
+                                        }
+                                        tperiod +=stepP;
+                                    }
+                                    RealT[n] = realT;
+                                }
+
+
+                                fprintf(FileOut,"\n\t<hPULSARmeasure>");
+                                fprintf(FileOut,"\n\t <M>2</M>"); // for earth
+                                fprintf(FileOut,"\n\t\t<T>%+25.17Le</T>\n\t\t<P1>%+25.17Le</P1>\n\t\t<P2>%+25.17Le</P2>\n\t\t<P3>%+25.17Le</P3>", SimulationOutputTime[i],RealT[0],RealT[1]-RealT[0], RealT[2]-RealT[1]);
+                                fprintf(FileOut,"\n\t</hPULSARmeasure>");
+                            }
+                        }
                     }
                     else if (memcmp(SimNAME[j], "MOON",4)==0)
                     {
