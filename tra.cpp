@@ -13416,6 +13416,7 @@ void MassPointGen(TRAOBJ *SlS, TRAOBJ *Sat,TRAIMPLOBJ *Eng, long double ldFrom,l
     }
 
 }
+
 int main(int argc, char * argv[])
 {
     int iDay;
