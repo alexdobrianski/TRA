@@ -95,6 +95,7 @@ long double SimLong[32];
 long double SimH[32];
 
 
+
     	
     // see http://vadimchazov.narod.ru/lepa_zov/lesat.pdf
     // P0 == P[0](x) = 1
@@ -4585,30 +4586,35 @@ char SimulationType[1024];
 int SimulationOutputCount = 0;
 long double SimulationOutputTime[MAX_OUTPUT_TIMES];
 char SimulationTempOutputFile[1024]={"@trasimoutput.xml"};
-char SimulationOutputFile[1024]={"@tra_sim_output.xml"};;
-int UrlTraSimPort=80; 
+char szURLServerSimulationOutputFile[1024]={0};
+int UrlTraSimPort=0; 
 char szURLTraSimFileName[1024];
 char szTraSimFileName[1024];
 
 char CalulationTempOutputFile[1024]={"@tracalc.xml"}; // in CALC mode the output file with 
-char CalulationOutputFile[1024]={"@tra_calc.xml"}; // in CALC mode the output file with 
-int UrlTraCalcPort=80; 
+char szURLServerCalulationOutputFile[1024]={0}; // in CALC mode the output file with 
+int UrlTraCalcPort=0; 
 char szURLTraCalcFileName[1024];
 char szTraCalcFileName[1024];
+
+char CalcinfoFile[_MAX_PATH]={0};
+char szURLServerCalcinfoFilename[256] = {0};
+int UrlCalcinfoFilePort= 0;
+char szURLCalcinfoFilename[256] = {0};
+char szCalcinfoFileName[256];
 typedef struct Mesurement
 {
     int NearBody;
+    int TypeOfmesaure;
 
-    long double T;
-    long double X, Y, Z;
-    long double H,LAT, LON;
-    long double Err;
-    long double D1, Err1;
-    long double T2, ErrT2;
-    long double D3, ErrD3;
-    long double VX;
-    long double VY;
-    long double VZ;
+    long double T; // time of measure
+    long double TError; // time measurement error (s)
+    long double X, Y, Z; // position measure (m)
+    long double H,LAT, LON; // H, LAT, LONG of the measure
+    long double Err;       // error of the X,Y,Z (m) 
+    long double D1, Err1;  // distance measure from XYZ to satelite and the error of the measure (m)
+    long double T2, ErrT2; // time processing of the distance (PING) message on the satellite and error for this measure
+    long double P1,P2,P3; // period measured by pulsar obrevation
 } MESAUREMENT, *PMEASUREMENT;
 
 #define MAX_MEASURES 128
@@ -8506,24 +8512,38 @@ void ParamProb(char *szString)
     XML_SECTION(CalcInfo)
     IF_XML_READ(CalculationOutputFile)
     {
-        strcpy(CalulationOutputFile, pszQuo);
-        if (strchr(CalulationOutputFile, '\"'))
-            *strchr(CalulationOutputFile, '\"')=0;
-        if (ParsURL(CalulationOutputFile, &UrlTraCalcPort, szURLTraCalcFileName,  szTraCalcFileName))
+        strcpy(szTraCalcFileName, pszQuo);
+        if (strchr(szTraCalcFileName, '\"'))
+            *strchr(szTraCalcFileName, '\"')=0;
+        if (ParsURL(szURLServerCalulationOutputFile, &UrlTraCalcPort, szURLTraCalcFileName,  szTraCalcFileName))
         {
         }
         else
             UrlTraCalcPort = 0;
+    }
+    IF_XML_READ(CalcinfoFile)
+    {
+        strcpy(CalcinfoFile, pszQuo);
+        if (strchr(CalcinfoFile, '\"'))
+            *strchr(CalcinfoFile, '\"')=0;
+        if (ParsURL(szURLServerCalcinfoFilename, &UrlCalcinfoFilePort, szURLCalcinfoFilename,  CalcinfoFile))
+        {
+        }
+        else
+            UrlCalcinfoFilePort = 0;
+        
     }
     XML_SECTION_GROUP_SEPARATOR
     //===============================================================gCRSmeasure Geocent Cel ref Sys
     XML_GROUP(gTRSmeasure)
         IF_XML_ELEMENT(T)
         {
+            
             if (++iMAxMesaures>MAX_MEASURES)
                 iMAxMesaures--;
             long double ld1=0,ld2=0;
             ConvertDateFromXML(pszQuo, ld1, measures[iMAxMesaures-1].T, ld2);
+            measures[iMAxMesaures-1].TypeOfmesaure = 1;
             measures[iMAxMesaures-1].X =0;
             measures[iMAxMesaures-1].Y =0;
             measures[iMAxMesaures-1].Z =0;
@@ -8552,19 +8572,17 @@ void ParamProb(char *szString)
             measures[iMAxMesaures-1].T2 =atof(pszQuo);
         IF_XML_ELEMENT(E2)
             measures[iMAxMesaures-1].ErrT2 =atof(pszQuo);
-        IF_XML_ELEMENT(D3)
-            measures[iMAxMesaures-1].D3 =atof(pszQuo);
-        IF_XML_ELEMENT(E3)
-            measures[iMAxMesaures-1].ErrD3 =atof(pszQuo);
     XML_GROUP_END
 
     XML_GROUP(gCRSmeasure)
+
         IF_XML_ELEMENT(T)
         {
             if (++iMAxMesaures>MAX_MEASURES)
                 iMAxMesaures--;
             long double ld1=0,ld2=0;
             ConvertDateFromXML(pszQuo, ld1, measures[iMAxMesaures-1].T, ld2);
+            measures[iMAxMesaures-1].TypeOfmesaure = 2;
         }
         IF_XML_ELEMENT(M)
             measures[iMAxMesaures-1].NearBody =atoi(pszQuo);
@@ -8589,10 +8607,6 @@ void ParamProb(char *szString)
             measures[iMAxMesaures-1].T2 =atof(pszQuo);
         IF_XML_ELEMENT(E2)
             measures[iMAxMesaures-1].ErrT2 =atof(pszQuo);
-        IF_XML_ELEMENT(D3)
-            measures[iMAxMesaures-1].D3 =atof(pszQuo);
-        IF_XML_ELEMENT(E3)
-            measures[iMAxMesaures-1].ErrD3 =atof(pszQuo);
     XML_GROUP_END
 
     XML_GROUP(hCRSmeasure)
@@ -8602,6 +8616,7 @@ void ParamProb(char *szString)
                 iMAxMesaures--;
             long double ld1=0,ld2=0;
             ConvertDateFromXML(pszQuo, ld1, measures[iMAxMesaures-1].T, ld2);
+            measures[iMAxMesaures-1].TypeOfmesaure = 3;
             measures[iMAxMesaures-1].X =0;
             measures[iMAxMesaures-1].Y =0;
             measures[iMAxMesaures-1].Z =0;
@@ -8613,8 +8628,6 @@ void ParamProb(char *szString)
             measures[iMAxMesaures-1].Err1 =0;
             measures[iMAxMesaures-1].T2 =0;
             measures[iMAxMesaures-1].ErrT2 =0;
-            measures[iMAxMesaures-1].D3 =0;
-            measures[iMAxMesaures-1].ErrD3 =0;
         }
         IF_XML_ELEMENT(M)
             measures[iMAxMesaures-1].NearBody =atoi(pszQuo);
@@ -8640,13 +8653,30 @@ void ParamProb(char *szString)
             measures[iMAxMesaures-1].T2 =atof(pszQuo);
         IF_XML_ELEMENT(E2)
             measures[iMAxMesaures-1].ErrT2 =atof(pszQuo);
-        IF_XML_ELEMENT(D3)
-            measures[iMAxMesaures-1].D3 =atof(pszQuo);
-        IF_XML_ELEMENT(E3)
-            measures[iMAxMesaures-1].ErrD3 =atof(pszQuo);
     XML_GROUP_END
 
     XML_GROUP(hPULSARmeasure)
+        IF_XML_ELEMENT(T)
+        {
+            if (++iMAxMesaures>MAX_MEASURES)
+                iMAxMesaures--;
+            long double ld1=0,ld2=0;
+            ConvertDateFromXML(pszQuo, ld1, measures[iMAxMesaures-1].T, ld2);
+            measures[iMAxMesaures-1].TypeOfmesaure = 4; // pulsar type
+            measures[iMAxMesaures-1].X =0;
+            measures[iMAxMesaures-1].Y =0;
+            measures[iMAxMesaures-1].Z =0;
+            measures[iMAxMesaures-1].H =0;
+            measures[iMAxMesaures-1].LAT =0;
+            measures[iMAxMesaures-1].LON =0;
+            measures[iMAxMesaures-1].Err =0;
+            measures[iMAxMesaures-1].D1 =0;
+            measures[iMAxMesaures-1].Err1 =0;
+            measures[iMAxMesaures-1].T2 =0;
+            measures[iMAxMesaures-1].ErrT2 =0;
+        }
+        IF_XML_ELEMENT(M)
+            measures[iMAxMesaures-1].NearBody =atoi(pszQuo);
     XML_GROUP_END
 
     XML_SECTION_END
@@ -8659,13 +8689,13 @@ void ParamProb(char *szString)
         if (strchr(SimulationType, '\"'))
             *strchr(SimulationType, '\"')=0;
     }
-    IF_XML_READ(SimulationOutputFile)
+    IF_XML_READ(szTraSimFileName)
     {
-        strcpy(SimulationOutputFile, pszQuo);
-        if (strchr(SimulationOutputFile, '\"'))
-            *strchr(SimulationOutputFile, '\"')=0;
+        strcpy(szTraSimFileName, pszQuo);
+        if (strchr(szTraSimFileName, '\"'))
+            *strchr(szTraSimFileName, '\"')=0;
 
-        if (ParsURL(SimulationOutputFile, &UrlTraSimPort, szURLTraSimFileName,  szTraSimFileName))
+        if (ParsURL(szURLServerSimulationOutputFile, &UrlTraSimPort, szURLTraSimFileName,  szTraSimFileName))
         {
         }
         else
@@ -11622,7 +11652,7 @@ void RunSim(TRAOBJ *SlS, TRAOBJ *Sat,TRAIMPLOBJ *Eng, long double ldFrom,long do
                     fprintf(FileOut,"\n\t<gCRSmeasure>");
                     fprintf(FileOut,"\n\t <M>%d</M>",EARTH);
                     fprintf(FileOut,"\n\t\t<T>%.11f</T>\n\t\t<X>%.5f</X>\n\t\t<Y>%.5f</Y>\n\t\t<Z>%.5f</Z>", SimulationOutputTime[i],tProbX, tProbY, tProbZ);
-                    fprintf(FileOut,"\n\t\t<E>1000</E>\n\t\t<D1>0.0</D1>\n\t\t<E1>0.0</E1>\n\t\t<T2>0.0</T2>\n\t\t<E2>0.0</E2>\n\t\t<D3>0.0</D3>\n\t\t<E3>0.0</E3>");
+                    fprintf(FileOut,"\n\t\t<E>1000</E>\n\t\t<D1>0.0</D1>\n\t\t<E1>0.0</E1>\n\t\t<T2>0.0</T2>\n\t\t<E2>0.0</E2>");
                     fprintf(FileOut,"\n\t</gCRSmeasure>");
 
                 }
@@ -11643,7 +11673,7 @@ void RunSim(TRAOBJ *SlS, TRAOBJ *Sat,TRAIMPLOBJ *Eng, long double ldFrom,long do
                     fprintf(FileOut,"\n\t <M>%d</M>",EARTH);
                     fprintf(FileOut,"\n\t\t<T>%.11f</T>\n\t\t<X>%.5f</X>\n\t\t<Y>%.5f</Y>\n\t\t<Z>%.5f</Z>", SimulationOutputTime[i],tProbX, tProbY, tProbZ);
                     fprintf(FileOut,"\n\t\t<H>%.5f</H>\n\t\t<LAT>%.11f</LAT>\n\t\t<LON>%.11f</LON>", H,dlLAT, dlLON);
-                    fprintf(FileOut,"\n\t\t<E>1000</E>\n\t\t<D1>0.0</D1>\n\t\t<E1>0.0</E1>\n\t\t<T2>0.0</T2>\n\t\t<E2>0.0</E2>\n\t\t<D3>0.0</D3>\n\t\t<E3>0.0</E3>");
+                    fprintf(FileOut,"\n\t\t<E>1000</E>\n\t\t<D1>0.0</D1>\n\t\t<E1>0.0</E1>\n\t\t<T2>0.0</T2>\n\t\t<E2>0.0</E2>");
                     fprintf(FileOut,"\n\t</gTRSmeasure>");
 #endif
                 }
@@ -11656,13 +11686,13 @@ void RunSim(TRAOBJ *SlS, TRAOBJ *Sat,TRAIMPLOBJ *Eng, long double ldFrom,long do
                     BSX = StateBS.Position[0]*1000.0 ;
                     BSY = StateBS.Position[1]*1000.0 ;
                     BSZ = StateBS.Position[2]*1000.0 ;
-                    SlS->X[EARTH] = BSX - (StateMoon.Position[0]*1000.0/(dEMRAT+1));//*SlS->M[MOON]/(SlS->M[EARTH]+SlS->M[MOON]));
-                    SlS->Y[EARTH] = BSY - (StateMoon.Position[1]*1000.0/(dEMRAT+1));//*SlS->M[MOON]/(SlS->M[EARTH]+SlS->M[MOON]));
-                    SlS->Z[EARTH] = BSZ - (StateMoon.Position[2]*1000.0/(dEMRAT+1));//*SlS->M[MOON]/(SlS->M[EARTH]+SlS->M[MOON]));
+                    SlS->X[EARTH] = BSX - (StateMoon.Position[0]*1000.0/(dEMRAT+1));
+                    SlS->Y[EARTH] = BSY - (StateMoon.Position[1]*1000.0/(dEMRAT+1));
+                    SlS->Z[EARTH] = BSZ - (StateMoon.Position[2]*1000.0/(dEMRAT+1));
                     fprintf(FileOut,"\n\t<hCRSmeasure>");
                     fprintf(FileOut,"\n\t <M>-1</M>");
                     fprintf(FileOut,"\n\t\t<T>%.11f</T>\n\t\t<X>%.5f</X>\n\t\t<Y>%.5f</Y>\n\t\t<Z>%.5f</Z>", SimulationOutputTime[i],tProbX+SlS->X[EARTH], tProbY+SlS->Y[EARTH], tProbZ+SlS->Z[EARTH]);
-                    fprintf(FileOut,"\n\t\t<E>1000</E>\n\t\t<D1>0.0</D1>\n\t\t<E1>0.0</E1>\n\t\t<T2>0.0</T2>\n\t\t<E2>0.0</E2>\n\t\t<D3>0.0</D3>\n\t\t<E3>0.0</E3>");
+                    fprintf(FileOut,"\n\t\t<E>1000</E>\n\t\t<D1>0.0</D1>\n\t\t<E1>0.0</E1>\n\t\t<T2>0.0</T2>\n\t\t<E2>0.0</E2>");
                     fprintf(FileOut,"\n\t</hCRSmeasure>");
                 }
             }
@@ -11828,7 +11858,7 @@ void RunSim(TRAOBJ *SlS, TRAOBJ *Sat,TRAIMPLOBJ *Eng, long double ldFrom,long do
         FileOut = NULL;
         if (UrlTraSimPort!= 0) // yes! it is agly - that is a case when visualization output must to be submit to some server
         {
-            PostXMLToServer(SimulationOutputFile, UrlTraSimPort, szURLTraSimFileName, szTraSimFileName);
+            PostXMLToServer(szURLServerSimulationOutputFile, UrlTraSimPort, szURLTraSimFileName, szTraSimFileName);
         }
     }
 }
@@ -13518,6 +13548,15 @@ int main(int argc, char * argv[])
         ParamDoAll(fInputReadUrlOrFile);
         fclose(fInputReadUrlOrFile);
         fInputReadUrlOrFile = NULL;
+        if (strlen(CalcinfoFile) !=0)
+        {
+            if (GetFileString(CalcinfoFile, "@tracalc.xml", 0, NULL, 0) == 0)
+            {
+                ParamDoAll(fInputReadUrlOrFile);
+                fclose(fInputReadUrlOrFile);
+                fInputReadUrlOrFile = NULL;
+            }
+        }
     }
     else
         exit(1);
