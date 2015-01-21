@@ -8677,6 +8677,16 @@ void ParamProb(char *szString)
         }
         IF_XML_ELEMENT(M)
             measures[iMAxMesaures-1].NearBody =atoi(pszQuo);
+        IF_XML_ELEMENT(T)
+            measures[iMAxMesaures-1].T =atoi(pszQuo);
+        IF_XML_ELEMENT(P1)
+            measures[iMAxMesaures-1].P1 =atoi(pszQuo); // first pulsar mesurement period
+        IF_XML_ELEMENT(P2)
+            measures[iMAxMesaures-1].P2 =atoi(pszQuo); // second pulsar mesurement period
+        IF_XML_ELEMENT(P3)
+            measures[iMAxMesaures-1].P3 =atoi(pszQuo); // third pulsar mesurement period
+        IF_XML_ELEMENT(E)
+            measures[iMAxMesaures-1].Err =atoi(pszQuo); // error in time of measurements
     XML_GROUP_END
 
     XML_SECTION_END
@@ -11407,6 +11417,22 @@ void RunCalc(TRAOBJ *SlS, TRAOBJ *Sat,TRAIMPLOBJ *Eng, long double ldFrom,long d
     SlS->TimeSl = tSl;
     SlS->TimeSl_2 = tSl*tSl;
 
+    if (memcmp(Mode,"CALC_ON_EARTH",12)==0) // one point on earth
+    {
+        AssignFromNASAData(SlS, measures[0].T); // starting time
+        for (int i =0; i< iMAxMesaures; i++)
+        {
+
+        }
+        return;
+    }
+
+    if (memcmp(Mode,"CALC_ON_MOON",12)==0) // one point on moon
+    {
+
+        return;
+    }
+    // calculation of the orbit.
     // adjust 
     for (int i =0; i< iMAxMesaures; i++)
     {
@@ -11727,15 +11753,61 @@ void RunSim(TRAOBJ *SlS, TRAOBJ *Sat,TRAIMPLOBJ *Eng, long double ldFrom,long do
                     SlS->X[MOON] = BSX + StateMoon.Position[0]*1000.0;
                     SlS->Y[MOON] = BSY + StateMoon.Position[1]*1000.0;
                     SlS->Z[MOON] = BSZ + StateMoon.Position[2]*1000.0;
-                    if (memcmp(SimNAME[j], "EARTH",5)==0)
+                    if ((memcmp(SimNAME[j], "EARTH",5)==0) || (memcmp(SimNAME[j], "MOON",4)==0))
                     {
+                        long double AXBig   = 6378245.000;
+                        long double AXSmall = 6356863.019;
+                        long double ErrorTime = 1.0;
+                        long double X_ME;
+                        long double Y_ME;
+                        long double XY_ME;
+                        int iEM = EARTH;
+                        
+                        if (i == 0) // that is the initial error
+                        {
+                            ErrorTime = 1.0;
+                        }
+                        else
+                        {
+                            ErrorTime = 1.0 + fabs((SimulationOutputTime[i] - SimulationOutputTime[0])/60.0); // 1 sec error in 60 days == crystal 32Mhz precision
+                        }
+                        
                         Lat = SimLat[j];
                         Long = SimLong[j];
                         Height = SimH[j];
-                        dTLEtime = ConvertJulianDayToDateAndTime(SimulationOutputTime[i], &ThatTime);
-
-
-                        SlS->LatLongToCRS(Long,Lat,Height, 6378245.000, 6356863.019, dTLEtime, PosX,PosY,PosZ);
+                        if (memcmp(SimNAME[j], "EARTH",5)==0)
+                        {
+                            AXBig   = 6378245.000;
+                            AXSmall = 6356863.019;
+                            dTLEtime = ConvertJulianDayToDateAndTime(SimulationOutputTime[i], &ThatTime);
+                            SlS->LatLongToCRS(Long,Lat,Height, AXBig, AXSmall, dTLEtime, PosX,PosY,PosZ);
+                            iEM = EARTH;
+                        }
+                        else
+                        {
+                            AXBig = 1738140.0;
+                            AXSmall = 1735970.0;
+                            SlS->LatLongToTRS(Long,Lat,Height, AXBig, AXSmall, PosX, PosY, PosZ);
+                            // moon is lookin by 0 meridian to the earth
+                            X_ME = SlS->X[MOON] - SlS->X[EARTH];
+                            Y_ME = SlS->Y[MOON] - SlS->Y[EARTH];
+                            XY_ME = sqrt(X_ME*X_ME + Y_ME*Y_ME);
+                            
+                            X_ME /= XY_ME; Y_ME /= XY_ME;
+                            if ((X_ME > 0) && (Y_ME > 0))
+                                SlS->Lambda = asin(Y_ME);
+                            else if ((X_ME <= 0) && (Y_ME > 0))
+                                SlS->Lambda = M_PI - asin(Y_ME);
+                            else if ((X_ME <= 0) && (Y_ME <= 0))
+                                SlS->Lambda = M_PI - asin(Y_ME);
+                            else
+                                SlS->Lambda = 2*M_PI + asin(Y_ME);
+                            SlS->precEps=0; SlS->precTet = 0; SlS->precZ = 0; SlS->nutEpsilon = 0; SlS->nutDFeta = 0;
+                            SlS->calc_tr_matrix();
+                            SlS->trs_2_gcrs(PosX, PosY, PosZ);
+                            iEM = MOON;
+                        }
+                        
                         long double Dnorm = sqrt(PosX*PosX + PosY*PosY + PosZ*PosZ);
                         long double Xnorm = PosX / Dnorm;
                         long double Ynorm = PosY / Dnorm;
@@ -11757,6 +11829,9 @@ void RunSim(TRAOBJ *SlS, TRAOBJ *Sat,TRAIMPLOBJ *Eng, long double ldFrom,long do
                                 long double PosX2,PosY2,PosZ2, norm2;
                                 long double realT = 0;
                                 long double RealT[3];
+                                long double DIfEX;
+                                long double DifEY;
+                                long double DifEZ;
                                 for (int n = 0; n < 3; n++)
                                 {
                                     tperiod = (n+1)*Pulsars[k].P0;
@@ -11766,15 +11841,49 @@ void RunSim(TRAOBJ *SlS, TRAOBJ *Sat,TRAIMPLOBJ *Eng, long double ldFrom,long do
                                     while(fabs(realT - (n+1)*Pulsars[k].P0) > 1.0e-12)
                                     {
                                         dTLEtime2 = ConvertJulianDayToDateAndTime(SimulationOutputTime[i]+tperiod/(24.0*60.0*60.0), &ThatTime);
-                                        SlS->LatLongToCRS(Long,Lat,Height, 6378245.000, 6356863.019, dTLEtime2, PosX2,PosY2,PosZ2);
+                                        if (iEM == EARTH)
+                                        {
+                                            SlS->LatLongToCRS(Long,Lat,Height, AXBig, AXSmall, dTLEtime2, PosX2,PosY2,PosZ2);
+                                        }
+                                        else
+                                        {
+                                            SlS->LatLongToTRS(Long,Lat,Height, AXBig, AXSmall, PosX2, PosY2, PosZ2);
+                                            // moon is lookin by 0 meridian to the earth
+                                            X_ME = SlS->X[MOON] - SlS->X[EARTH];
+                                            Y_ME = SlS->Y[MOON] - SlS->Y[EARTH];
+                                            XY_ME = sqrt(X_ME*X_ME + Y_ME*Y_ME);
+                            
+                                            X_ME /= XY_ME; Y_ME /= XY_ME;
+                                            if ((X_ME > 0) && (Y_ME > 0))
+                                                SlS->Lambda = asin(Y_ME);
+                                            else if ((X_ME <= 0) && (Y_ME > 0))
+                                                SlS->Lambda = M_PI - asin(Y_ME);
+                                            else if ((X_ME <= 0) && (Y_ME <= 0))
+                                                SlS->Lambda = M_PI - asin(Y_ME);
+                                            else
+                                                SlS->Lambda = 2*M_PI + asin(Y_ME);
+                                            SlS->precEps=0; SlS->precTet = 0; SlS->precZ = 0; SlS->nutEpsilon = 0; SlS->nutDFeta = 0;
+                                            SlS->calc_tr_matrix();
+                                            SlS->trs_2_gcrs(PosX, PosY, PosZ);
+                                            iEM = MOON;
+                                        }
                                         Interpolate_State( SimulationOutputTime[i]+tperiod/(24.0*60.0*60.0), EARTH , &StateBS );
                                         Interpolate_State( SimulationOutputTime[i]+tperiod/(24.0*60.0*60.0), MOON , &StateMoon );
                                         BSX = StateBS.Position[0]*1000.0 ;
                                         BSY = StateBS.Position[1]*1000.0 ;
                                         BSZ = StateBS.Position[2]*1000.0 ;
-                                        long double DIfEX = BSX - (StateMoon.Position[0]*1000.0/(dEMRAT+1)) - SlS->X[EARTH];
-                                        long double DifEY = BSY - (StateMoon.Position[1]*1000.0/(dEMRAT+1)) - SlS->Y[EARTH];
-                                        long double DifEZ = BSZ - (StateMoon.Position[2]*1000.0/(dEMRAT+1)) - SlS->Z[EARTH];
+                                        if (iEM == EARTH)
+                                        {
+                                            DIfEX = BSX - (StateMoon.Position[0]*1000.0/(dEMRAT+1)) - SlS->X[iEM];
+                                            DifEY = BSY - (StateMoon.Position[1]*1000.0/(dEMRAT+1)) - SlS->Y[iEM];
+                                            DifEZ = BSZ - (StateMoon.Position[2]*1000.0/(dEMRAT+1)) - SlS->Z[iEM];
+                                        }
+                                        else
+                                        {
+                                            DIfEX = BSX + StateMoon.Position[0]*1000.0 - SlS->X[iEM];
+                                            DifEY = BSY + StateMoon.Position[1]*1000.0 - SlS->Y[iEM];
+                                            DifEZ = BSZ + StateMoon.Position[2]*1000.0 - SlS->Z[iEM];
+                                        }
 
                                         // vector from XYZ2 to XYZ
                                         PosX2 = PosX -(PosX2+DIfEX); PosY2 = PosY -(PosY2+DifEY); PosZ2 = PosZ -(PosZ2+DifEZ);
@@ -11810,8 +11919,10 @@ void RunSim(TRAOBJ *SlS, TRAOBJ *Sat,TRAIMPLOBJ *Eng, long double ldFrom,long do
 
 
                                 fprintf(FileOut,"\n\t<hPULSARmeasure>");
-                                fprintf(FileOut,"\n\t <M>2</M>"); // for earth
+                                fprintf(FileOut,"\n\t <M>%d</M>",iEM); // for earth
+                                
                                 fprintf(FileOut,"\n\t\t<T>%+25.17Le</T>\n\t\t<P1>%+25.17Le</P1>\n\t\t<P2>%+25.17Le</P2>\n\t\t<P3>%+25.17Le</P3>", SimulationOutputTime[i],RealT[0],RealT[1]-RealT[0], RealT[2]-RealT[1]);
+                                fprintf(FileOut,"\n\t <E>%+25.17Le</M>",ErrorTime); // for earth
                                 fprintf(FileOut,"\n\t</hPULSARmeasure>");
                             }
                         }
@@ -13561,6 +13672,7 @@ int main(int argc, char * argv[])
     else
         exit(1);
 	{
+        AssignFromNASAData(&SolarSystem, dStartJD);
         Interpolate_State( dStartJD , 2 , &StateEarth );
         StartSequence = 0;
         iDay = 0;

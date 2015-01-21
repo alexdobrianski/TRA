@@ -5,10 +5,12 @@
                           //    PROP == (default) proparation of the orbit
                           //    SIM ==  simulation of the data from satellite
                           //    CALC == calculation of the orbit based on any of the data : PING, GPS, PULSAR 
+                          //    CALC_ON_EARTH == calculation of the position on the earth based on GPS, PULSAR 
+                          //    CALC_ON_ON_MOON == calculation of the position on the moon based on PULSAR 
                           //    OPTIM = calculation of the engines firing to reach the moon
                           //    MASSPOINTS = calculation Mass Pint model of the graviatation
                -->
-    <TRA:setting name="Mode" value="SIM" />
+    <TRA:setting name="Mode" value="CALC_ON_EARTH" />
 
 </TRA:section>
 <TRA:section name="MassInfo" value="0.0">
