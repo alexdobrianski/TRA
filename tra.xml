@@ -10,7 +10,7 @@
                           //    OPTIM = calculation of the engines firing to reach the moon
                           //    MASSPOINTS = calculation Mass Pint model of the graviatation
                -->
-    <TRA:setting name="Mode" value="CALC_ON_EARTH" />
+    <TRA:setting name="Mode" value="PROP" />
 
 </TRA:section>
 <TRA:section name="MassInfo" value="0.0">
@@ -230,6 +230,8 @@
 
 <!-- Cnk and Snk file data n max value do be used from the file  -->
     <TRA:setting name="EarthModelCoefs" value="64" />
+<!-- Smoothness Coefficients for "EartModelCoefs" -->
+    <TRA:setting name="EarthSmoothCoefStart" value="37" />
 
 <!-- amount threads to do calclulation in parallel =0== one thread 
      that paramether must be after EarthModelCoefs 
@@ -239,10 +241,10 @@
 
 
     <TRA:setting name="IterPerSec9" value="127" />
-    <TRA:setting name="IterPerSec0" value="479" />
+    <TRA:setting name="IterPerSec" value="479" />
     <TRA:setting name="IterPerSec2" value="1013" />
     <TRA:setting name="IterPerSec3" value="1523" />
-    <TRA:setting name="IterPerSec" value="3167" />
+    <TRA:setting name="IterPerSec4" value="3167" />
     <TRA:setting name="IterPerSec5" value="5507" />
     <TRA:setting name="IterPerSec11" value="11014" />
 
@@ -252,8 +254,8 @@
 <!-- know GMMoon and GMEarth will give proper value for M -->
     <TRA:setting name="Gbig" value="6.6742799999999995e-011" />
     <TRA:setting name="Gbig0" value="6.6738177929210037e-011" />
-    <TRA:setting name="TotalDays0" value="0.2" />
-    <TRA:setting name="TotalDays" value="16" />
+    <TRA:setting name="TotalDays" value="0.2" />
+    <TRA:setting name="TotalDaysX" value="16" />
 
     <TRA:setting name="TotalDays0" value="0.062337962962962962962962962962963" />
     <TRA:setting name="TotalDays0" value="0.124675925925925925925925925924" />

@@ -382,6 +382,7 @@ long double ModelCoef;// = SlS->GM[j]/ GM_MODEL;
 #ifdef USE_MODEL_LOAD
 char EarthModelFile[1024]={"egm96"};
 int EarthModelCoefs = 16;
+int EarthSmoothCoefStart = 0;
 int CpuCore = 0;
 //long  double GM_MODEL = 398600.4415E9;
 //#define R0_MODEL 6378136.30
@@ -8946,6 +8947,11 @@ void ParamProb(char *szString)
         {
             EarthModelCoefs = atoi(pszQuo);
         }
+		IF_XML_READ(EarthSmoothCoefStart)
+		{
+			EarthSmoothCoefStart = atoi(pszQuo);
+			//EarthSmoothCoefStart = 0;
+		}
         IF_XML_READ(CpuCore)
         {
             CpuCore = atoi(pszQuo);
@@ -9468,6 +9474,38 @@ void ParamProb(char *szString)
                         }
                     }
 DONE_WITH_LINE:
+					if(nk_lm_Numbers[iCounter_nk_lm_Numbers][0] >= EarthSmoothCoefStart && nk_lm_Numbers[iCounter_nk_lm_Numbers][1] >= EarthSmoothCoefStart) 
+					{
+						//method : Low Pass Filtering of Gravity Field Models by Gently Cutting the Spherical Harmonic Coe±cients of Higher Degrees
+						//C_S_nk[iCounter_nk_lm_Numbers][0]
+						long double coefL = pow( (long double)(((long double)(nk_lm_Numbers[iCounter_nk_lm_Numbers][0]) - (long double)(EarthSmoothCoefStart)) / ((long double)(EarthModelCoefs) - (long double)(EarthSmoothCoefStart))), (long double)4.0 ) - 
+                                            (long double)(2) * (pow( (long double)(((long double)(nk_lm_Numbers[iCounter_nk_lm_Numbers][0]) - (long double)(EarthSmoothCoefStart)) / ((long double)(EarthModelCoefs) - (long double)(EarthSmoothCoefStart))), (long double)2.0 )) + 1;
+						
+
+
+						long double coefM = pow( (long double)(((long double)(nk_lm_Numbers[iCounter_nk_lm_Numbers][1]) - (long double)(EarthSmoothCoefStart)) / ((long double)(EarthModelCoefs) - (long double)(EarthSmoothCoefStart))), (long double)4.0 ) - 
+                                            (long double)(2) * (pow( (long double)(((long double)(nk_lm_Numbers[iCounter_nk_lm_Numbers][1]) - (long double)(EarthSmoothCoefStart)) / ((long double)(EarthModelCoefs) - (long double)(EarthSmoothCoefStart))), (long double)2.0 )) + 1;
+						C_S_nk[iCounter_nk_lm_Numbers][0] *= coefL * coefM;
+                        C_S_nk[iCounter_nk_lm_Numbers][1] *= coefL * coefM;
+						
+
+						//C_S_nk[iCounter_nk_lm_Numbers][1]
+					}
+					else if(nk_lm_Numbers[iCounter_nk_lm_Numbers][0] >= EarthSmoothCoefStart)
+					{
+                        long double coefL = pow( (long double)(((long double)(nk_lm_Numbers[iCounter_nk_lm_Numbers][0]) - (long double)(EarthSmoothCoefStart)) / ((long double)(EarthModelCoefs) - (long double)(EarthSmoothCoefStart))), (long double)4.0 ) - 
+                                            (long double)(2) * (pow( (long double)(((long double)(nk_lm_Numbers[iCounter_nk_lm_Numbers][0]) - (long double)(EarthSmoothCoefStart)) / ((long double)(EarthModelCoefs) - (long double)(EarthSmoothCoefStart))), (long double)2.0 )) + 1;
+						C_S_nk[iCounter_nk_lm_Numbers][0] *= coefL;
+                        C_S_nk[iCounter_nk_lm_Numbers][1] *= coefL;
+					}
+					else if(nk_lm_Numbers[iCounter_nk_lm_Numbers][1] >= EarthSmoothCoefStart) 
+					{
+						long double coefM = pow( (long double)(((long double)(nk_lm_Numbers[iCounter_nk_lm_Numbers][1]) - (long double)(EarthSmoothCoefStart)) / ((long double)(EarthModelCoefs) - (long double)(EarthSmoothCoefStart))), (long double)4.0 ) - 
+                                            (long double)(2) * (pow( (long double)(((long double)(nk_lm_Numbers[iCounter_nk_lm_Numbers][1]) - (long double)(EarthSmoothCoefStart)) / ((long double)(EarthModelCoefs) - (long double)(EarthSmoothCoefStart))), (long double)2.0 )) + 1;
+						C_S_nk[iCounter_nk_lm_Numbers][0] *= coefM;
+                        C_S_nk[iCounter_nk_lm_Numbers][1] *= coefM;
+					}
+
                     Factor1 =1.0;
                     Factor2 =1.0;
                     Factor3 =1.0;
