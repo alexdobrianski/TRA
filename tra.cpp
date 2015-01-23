@@ -6233,19 +6233,19 @@ void AssignAllSatelites(TRAOBJ * SlS, int iBody, TRAOBJ * sat, double JDSec)
     }
     // this is done to reduce errors and avoid unnessary 5 mul/div operations
     // temporary X_, VX_ will just added (in paralel calculations can be done actualy faster) 
-    SolarSystem.TimeSl = TimeSl;
-    SolarSystem.TimeSl_2= SlS->TimeSl*SlS->TimeSl;
+    SlS->TimeSl = TimeSl;
+    SlS->TimeSl_2= SlS->TimeSl*SlS->TimeSl;
     for (int i = 0; i <sat->Elem; i++)
     {
         sat->VX_[i] = 0;    sat->VY_[i] = 0;    sat->VZ_[i] = 0;
         sat->X_[i] = 0 ;    sat->Y_[i] = 0 ;    sat->Z_[i] = 0 ;
         
         sat->X0divDt2[i]=sat->X[i] /SlS->TimeSl_2;
-        sat->Y0divDt2[i]=Sat.Y[i] /SlS->TimeSl_2;
-        sat->Z0divDt2[i]=Sat.Z[i] /SlS->TimeSl_2;
-        sat->VX0divDt[i]=Sat.VX[i] /SlS->TimeSl;
-        sat->VY0divDt[i]=Sat.VY[i] /SlS->TimeSl;
-        sat->VZ0divDt[i]=Sat.VZ[i] /SlS->TimeSl;
+        sat->Y0divDt2[i]=sat->Y[i] /SlS->TimeSl_2;
+        sat->Z0divDt2[i]=sat->Z[i] /SlS->TimeSl_2;
+        sat->VX0divDt[i]=sat->VX[i] /SlS->TimeSl;
+        sat->VY0divDt[i]=sat->VY[i] /SlS->TimeSl;
+        sat->VZ0divDt[i]=sat->VZ[i] /SlS->TimeSl;
         sat->iAtm[i] = 1;
     }
     sat->CountNx = 0; sat->CountNy = 0; sat->CountNz = 0;
@@ -9419,7 +9419,7 @@ void ParamProb(char *szString)
             // to account in graviational potential the shape of the earth 
             // needs to know this position
             //dStartGreenwichA = GreenwichAscensionFromTLEEpoch(Sat.ProbEpoch[0],Sat->precEps,Sat->precTet,Sat->precZ,Sat->nutEpsilon,Sat->nutDFeta);
-            //AssignAllSatelites(&SolarSystem, EARTH, &Sat, dStartJD);
+            AssignAllSatelites(&SolarSystem, EARTH, &Sat, dStartJD);
             for (int nSat = 0; nSat <Sat.Elem; nSat++)
             {
                 long double AE = 1.0;
