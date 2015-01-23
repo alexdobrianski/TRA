@@ -9474,12 +9474,13 @@ void ParamProb(char *szString)
                         }
                     }
 DONE_WITH_LINE:
-					if(nk_lm_Numbers[iCounter_nk_lm_Numbers][0] >= EarthSmoothCoefStart && nk_lm_Numbers[iCounter_nk_lm_Numbers][1] >= EarthSmoothCoefStart) 
-					{
-						//method : Low Pass Filtering of Gravity Field Models by Gently Cutting the Spherical Harmonic Coe±cients of Higher Degrees
-						//C_S_nk[iCounter_nk_lm_Numbers][0]
-						long double coefL = pow( (long double)(((long double)(nk_lm_Numbers[iCounter_nk_lm_Numbers][0]) - (long double)(EarthSmoothCoefStart)) / ((long double)(EarthModelCoefs) - (long double)(EarthSmoothCoefStart))), (long double)4.0 ) - 
-                                            (long double)(2) * (pow( (long double)(((long double)(nk_lm_Numbers[iCounter_nk_lm_Numbers][0]) - (long double)(EarthSmoothCoefStart)) / ((long double)(EarthModelCoefs) - (long double)(EarthSmoothCoefStart))), (long double)2.0 )) + 1;
+                    if(EarthSmoothCoefStart > 0 && EarthSmoothCoefStart < EarthModelCoefs) {
+					    if(nk_lm_Numbers[iCounter_nk_lm_Numbers][0] >= EarthSmoothCoefStart && nk_lm_Numbers[iCounter_nk_lm_Numbers][1] >= EarthSmoothCoefStart) 
+					    {
+						    //method : Low Pass Filtering of Gravity Field Models by Gently Cutting the Spherical Harmonic Coe±cients of Higher Degrees
+						    //C_S_nk[iCounter_nk_lm_Numbers][0]
+						    long double coefL = pow( (long double)(((long double)(nk_lm_Numbers[iCounter_nk_lm_Numbers][0]) - (long double)(EarthSmoothCoefStart)) / ((long double)(EarthModelCoefs) - (long double)(EarthSmoothCoefStart))), (long double)4.0 ) - 
+                                                (long double)(2) * (pow( (long double)(((long double)(nk_lm_Numbers[iCounter_nk_lm_Numbers][0]) - (long double)(EarthSmoothCoefStart)) / ((long double)(EarthModelCoefs) - (long double)(EarthSmoothCoefStart))), (long double)2.0 )) + 1;
 						
 
 
