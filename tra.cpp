@@ -6253,6 +6253,36 @@ void AssignAllSatelites(TRAOBJ * SlS, int iBody, TRAOBJ * sat, double JDSec)
     sat->RunOne = TRUE;
 }
 
+long double SwitchCalcTimePeriod(TRAOBJ * SlS, TRAOBJ * sat, long double NewTimePeriod)
+{
+    long double OldTperiod = SlS->TimeSl;
+    long double OldTperiod2 = SlS->TimeSl_2;
+    SlS->TimeSl = TimeSl;
+    SlS->TimeSl_2 = TimeSl*TimeSl;
+
+    for (int i = 0; i <sat->Elem; i++)
+    {
+        sat->X0divDt2[i] = (OldTperiod2* sat->X0divDt2[i])/SlS->TimeSl_2;
+        sat->Y0divDt2[i] = (OldTperiod2* sat->Y0divDt2[i])/SlS->TimeSl_2;
+        sat->Z0divDt2[i] = (OldTperiod2* sat->Z0divDt2[i])/SlS->TimeSl_2;
+
+        sat->VX0divDt[i] = (OldTperiod*sat->VX0divDt[i])/SlS->TimeSl;
+        sat->VY0divDt[i] = (OldTperiod*sat->VY0divDt[i])/SlS->TimeSl;
+        sat->VZ0divDt[i] = (OldTperiod*sat->VZ0divDt[i])/SlS->TimeSl;
+    }
+    for (int i = 0; i <SlS->Elem; i++)
+    {
+        SlS->X0divDt2[i]=(OldTperiod2*SlS->X0divDt2[i]) /SlS->TimeSl_2;
+        SlS->Y0divDt2[i]=(OldTperiod2*SlS->Y0divDt2[i]) /SlS->TimeSl_2;
+        SlS->Z0divDt2[i]=(OldTperiod2*SlS->Z0divDt2[i]) /SlS->TimeSl_2;
+
+        SlS->VX0divDt[i]=(OldTperiod*SlS->VX0divDt[i]) /SlS->TimeSl;
+        SlS->VY0divDt[i]=(OldTperiod*SlS->VY0divDt[i]) /SlS->TimeSl;
+        SlS->VZ0divDt[i]=(OldTperiod*SlS->VZ0divDt[i]) /SlS->TimeSl;
+    }
+    return OldTperiod;
+}
+
 // main engine to dump keplers elements as it is (no drag)
 void DumpKeplers(long double &T,long double &Ecc, long double &Incl, long double &AssNode, long double &ArgPer, long double &MeanAnm, long double Mass, long double mass, 
                     long double &X, long double &Y, long double &Z, long double &VX, long double &VY, long double &VZ)
@@ -11472,6 +11502,7 @@ void RunCalc(TRAOBJ *SlS, TRAOBJ *Sat,TRAIMPLOBJ *Eng, long double ldFrom,long d
     if (memcmp(Mode,"CALC_ON_EARTH",12)==0) // one point on earth
     {
         AssignFromNASAData(SlS, measures[0].T); // starting time
+        AssignAllSatelites(SlS, EARTH, Sat, measures[0].T);
         for (int i =0; i< iMAxMesaures; i++)
         {
 
