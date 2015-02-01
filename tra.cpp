@@ -730,15 +730,6 @@ typedef struct Long_Double_Intergal_Var
     {
         X+=XYZdata->valX;  Y+=XYZdata->valY;  Z+=XYZdata->valZ;
         X0M +=XYZdata->valXM; Y0M +=XYZdata->valYM; Z0M +=XYZdata->valZM;
-        //nX0++;
-        //x6[i6] =valX; y6[i6] =valY; z6[i6] =valZ;
-        //if (++i6 == 6)
-        //{
-        //    i6 = 0;
-        //}
-        //else
-        //{
-        //}
     }
 #else
     void Add(XYZ_SPLIT_POINTER_VAR *XYZdata)
@@ -6252,25 +6243,25 @@ void AssignAllSatelites(TRAOBJ * SlS, int iBody, TRAOBJ * sat, double JDSec)
     sat->CountNx = 0; sat->CountNy = 0; sat->CountNz = 0;
     sat->RunOne = TRUE;
 }
-
-long double SwitchCalcTimePeriod(TRAOBJ * SlS, TRAOBJ * sat, long double NewTimePeriod)
+BOOL SwitchWas = FALSE;
+long double OldTperiod;
+long long nX0_Sls[PLANET_COUNT];
+long long nX0_Sat[PLANET_COUNT];
+long long SetiMayTimes;
+BOOL SwitchCalcTimePeriod(TRAOBJ * SlS, TRAOBJ * sat, long long iMayTimes)
 {
-    long double OldTperiod = SlS->TimeSl;
+    int i;
+    if (SwitchWas == TRUE)
+        return FALSE;
+    SwitchWas = TRUE;
+    SetiMayTimes = iMayTimes;
+    OldTperiod = SlS->TimeSl;
     long double OldTperiod2 = SlS->TimeSl_2;
-    SlS->TimeSl = TimeSl;
-    SlS->TimeSl_2 = TimeSl*TimeSl;
+    long double NewTimePeriod = OldTperiod / (long double)iMayTimes;
+    SlS->TimeSl = NewTimePeriod;
+    SlS->TimeSl_2 = NewTimePeriod*NewTimePeriod;
 
-    for (int i = 0; i <sat->Elem; i++)
-    {
-        sat->X0divDt2[i] = (OldTperiod2* sat->X0divDt2[i])/SlS->TimeSl_2;
-        sat->Y0divDt2[i] = (OldTperiod2* sat->Y0divDt2[i])/SlS->TimeSl_2;
-        sat->Z0divDt2[i] = (OldTperiod2* sat->Z0divDt2[i])/SlS->TimeSl_2;
-
-        sat->VX0divDt[i] = (OldTperiod*sat->VX0divDt[i])/SlS->TimeSl;
-        sat->VY0divDt[i] = (OldTperiod*sat->VY0divDt[i])/SlS->TimeSl;
-        sat->VZ0divDt[i] = (OldTperiod*sat->VZ0divDt[i])/SlS->TimeSl;
-    }
-    for (int i = 0; i <SlS->Elem; i++)
+    for (i = 0; i <SlS->Elem; i++)
     {
         SlS->X0divDt2[i]=(OldTperiod2*SlS->X0divDt2[i]) /SlS->TimeSl_2;
         SlS->Y0divDt2[i]=(OldTperiod2*SlS->Y0divDt2[i]) /SlS->TimeSl_2;
@@ -6279,8 +6270,135 @@ long double SwitchCalcTimePeriod(TRAOBJ * SlS, TRAOBJ * sat, long double NewTime
         SlS->VX0divDt[i]=(OldTperiod*SlS->VX0divDt[i]) /SlS->TimeSl;
         SlS->VY0divDt[i]=(OldTperiod*SlS->VY0divDt[i]) /SlS->TimeSl;
         SlS->VZ0divDt[i]=(OldTperiod*SlS->VZ0divDt[i]) /SlS->TimeSl;
+
+#ifdef NO_SEPARATION_VEL_POS
+        SlS->_position_[i].X0 = SlS->X0divDt2[i]+ SlS->VX0divDt[i];
+        SlS->_position_[i].Y0 = SlS->Y0divDt2[i]+ SlS->VY0divDt[i];
+        SlS->_position_[i].Z0 = SlS->Z0divDt2[i]+ SlS->VZ0divDt[i];
+#else
+        SlS->_position_[i].X0 = SlS->X0divDt2[i]; SlS->_position_[i].VX0 = SlS->VX0divDt[i];
+        SlS->_position_[i].Y0 = SlS->Y0divDt2[i]; SlS->_position_[i].VY0 = SlS->VY0divDt[i];
+        SlS->_position_[i].Z0 = SlS->Z0divDt2[i]; SlS->_position_[i].VZ0 = SlS->VZ0divDt[i];
+#endif
+        SlS->_velosity_[i].X0 = SlS->VX0divDt[i];
+        SlS->_velosity_[i].Y0 = SlS->VY0divDt[i];
+        SlS->_velosity_[i].Z0 = SlS->VZ0divDt[i];
+        nX0_Sls[i] = SlS->_velosity_[i].nX0;
+        SlS->_velosity_[i].nX0 *= iMayTimes;
     }
-    return OldTperiod;
+
+    for (i = 0; i <sat->Elem; i++)
+    {
+        sat->X0divDt2[i] = (OldTperiod2* sat->X0divDt2[i])/SlS->TimeSl_2;
+        sat->Y0divDt2[i] = (OldTperiod2* sat->Y0divDt2[i])/SlS->TimeSl_2;
+        sat->Z0divDt2[i] = (OldTperiod2* sat->Z0divDt2[i])/SlS->TimeSl_2;
+
+        sat->VX0divDt[i] = (OldTperiod*sat->VX0divDt[i])/SlS->TimeSl;
+        sat->VY0divDt[i] = (OldTperiod*sat->VY0divDt[i])/SlS->TimeSl;
+        sat->VZ0divDt[i] = (OldTperiod*sat->VZ0divDt[i])/SlS->TimeSl;
+         
+        //Sat->X[i] = (Sat->X[i]+ Sat->_velosity_[i].X0 *Sat->_velosity_[i].nX0)* SlS->TimeSl_2;   
+        //Sat->Y[i] = (Sat->Y[i]+ Sat->_velosity_[i].Y0 *Sat->_velosity_[i].nX0)* SlS->TimeSl_2;   
+        //Sat->Z[i] = (Sat->Z[i]+ Sat->_velosity_[i].Z0 *Sat->_velosity_[i].nX0)* SlS->TimeSl_2;
+        //Sat->_velosity_[i].getIntegral(Sat->VX[i], Sat->VY[i], Sat->VZ[i]);
+        //Sat->VX[i] *= SlS->TimeSl; Sat->VY[i] *= SlS->TimeSl; Sat->VZ[i] *= SlS->TimeSl;
+#ifdef NO_SEPARATION_VEL_POS
+        sat->_position_[i].X0 = sat->X0divDt2[i] + sat->VX0divDt[i];
+        sat->_position_[i].Y0 = sat->Y0divDt2[i] + sat->VY0divDt[i];
+        sat->_position_[i].Z0 = sat->Z0divDt2[i] + sat->VZ0divDt[i];
+#else
+        Sat->_position_[i].X0 = sat->X0divDt2[i]; Sat->_position_[i].VX0 = sat->VX0divDt[i];
+        Sat->_position_[i].Y0 = sat->Y0divDt2[i]; Sat->_position_[i].VY0 = sat->VY0divDt[i];
+        Sat->_position_[i].Z0 = sat->Z0divDt2[i]; Sat->_position_[i].VZ0 = sat->VZ0divDt[i];
+#endif
+        sat->_velosity_[i].X0 = sat->VX0divDt[i];
+        sat->_velosity_[i].Y0 = sat->VY0divDt[i];
+        sat->_velosity_[i].Z0 = sat->VZ0divDt[i];
+        nX0_Sat[i] = sat->_velosity_[i].nX0;
+        sat->_velosity_[i].nX0 *= iMayTimes;
+    }
+    return TRUE;
+}
+
+
+BOOL SwitchBackCalcTimePeriod(TRAOBJ * SlS, TRAOBJ * sat)
+{
+    int i;
+    if (SwitchWas == FALSE)
+        return FALSE;
+    for (i = 0; i <SlS->Elem; i++)
+    {
+        if (SlS->_velosity_[i].nX0 % SetiMayTimes)
+            return FALSE;
+    }
+    for (i = 0; i <sat->Elem; i++)
+    {
+        if (sat->_velosity_[i].nX0 % SetiMayTimes)
+            return FALSE;
+    }
+    SwitchWas = FALSE;
+    long double OldTperiod2 = SlS->TimeSl_2;
+    long double NewTimePeriod = OldTperiod * (long double)SetiMayTimes;
+    SlS->TimeSl = NewTimePeriod;
+    SlS->TimeSl_2 = NewTimePeriod*NewTimePeriod;
+
+    for (i = 0; i <SlS->Elem; i++)
+    {
+        SlS->X0divDt2[i]=(OldTperiod2*SlS->X0divDt2[i]) /SlS->TimeSl_2;
+        SlS->Y0divDt2[i]=(OldTperiod2*SlS->Y0divDt2[i]) /SlS->TimeSl_2;
+        SlS->Z0divDt2[i]=(OldTperiod2*SlS->Z0divDt2[i]) /SlS->TimeSl_2;
+
+        SlS->VX0divDt[i]=(OldTperiod*SlS->VX0divDt[i]) /SlS->TimeSl;
+        SlS->VY0divDt[i]=(OldTperiod*SlS->VY0divDt[i]) /SlS->TimeSl;
+        SlS->VZ0divDt[i]=(OldTperiod*SlS->VZ0divDt[i]) /SlS->TimeSl;
+
+#ifdef NO_SEPARATION_VEL_POS
+        SlS->_position_[i].X0 = SlS->X0divDt2[i]+ SlS->VX0divDt[i];
+        SlS->_position_[i].Y0 = SlS->Y0divDt2[i]+ SlS->VY0divDt[i];
+        SlS->_position_[i].Z0 = SlS->Z0divDt2[i]+ SlS->VZ0divDt[i];
+#else
+        SlS->_position_[i].X0 = SlS->X0divDt2[i]; SlS->_position_[i].VX0 = SlS->VX0divDt[i];
+        SlS->_position_[i].Y0 = SlS->Y0divDt2[i]; SlS->_position_[i].VY0 = SlS->VY0divDt[i];
+        SlS->_position_[i].Z0 = SlS->Z0divDt2[i]; SlS->_position_[i].VZ0 = SlS->VZ0divDt[i];
+#endif
+        SlS->_velosity_[i].X0 = SlS->VX0divDt[i];
+        SlS->_velosity_[i].Y0 = SlS->VY0divDt[i];
+        SlS->_velosity_[i].Z0 = SlS->VZ0divDt[i];
+
+        SlS->_velosity_[i].nX0 = nX0_Sls[i]/SetiMayTimes;
+    }
+
+    for (i = 0; i <sat->Elem; i++)
+    {
+        sat->X0divDt2[i] = (OldTperiod2* sat->X0divDt2[i])/SlS->TimeSl_2;
+        sat->Y0divDt2[i] = (OldTperiod2* sat->Y0divDt2[i])/SlS->TimeSl_2;
+        sat->Z0divDt2[i] = (OldTperiod2* sat->Z0divDt2[i])/SlS->TimeSl_2;
+
+        sat->VX0divDt[i] = (OldTperiod*sat->VX0divDt[i])/SlS->TimeSl;
+        sat->VY0divDt[i] = (OldTperiod*sat->VY0divDt[i])/SlS->TimeSl;
+        sat->VZ0divDt[i] = (OldTperiod*sat->VZ0divDt[i])/SlS->TimeSl;
+         
+        //Sat->X[i] = (Sat->X[i]+ Sat->_velosity_[i].X0 *Sat->_velosity_[i].nX0)* SlS->TimeSl_2;   
+        //Sat->Y[i] = (Sat->Y[i]+ Sat->_velosity_[i].Y0 *Sat->_velosity_[i].nX0)* SlS->TimeSl_2;   
+        //Sat->Z[i] = (Sat->Z[i]+ Sat->_velosity_[i].Z0 *Sat->_velosity_[i].nX0)* SlS->TimeSl_2;
+        //Sat->_velosity_[i].getIntegral(Sat->VX[i], Sat->VY[i], Sat->VZ[i]);
+        //Sat->VX[i] *= SlS->TimeSl; Sat->VY[i] *= SlS->TimeSl; Sat->VZ[i] *= SlS->TimeSl;
+#ifdef NO_SEPARATION_VEL_POS
+        sat->_position_[i].X0 = sat->X0divDt2[i] + sat->VX0divDt[i];
+        sat->_position_[i].Y0 = sat->Y0divDt2[i] + sat->VY0divDt[i];
+        sat->_position_[i].Z0 = sat->Z0divDt2[i] + sat->VZ0divDt[i];
+#else
+        sat->_position_[i].X0 = sat->X0divDt2[i]; Sat->_position_[i].VX0 = sat->VX0divDt[i];
+        sat->_position_[i].Y0 = sat->Y0divDt2[i]; Sat->_position_[i].VY0 = sat->VY0divDt[i];
+        sat->_position_[i].Z0 = sat->Z0divDt2[i]; Sat->_position_[i].VZ0 = sat->VZ0divDt[i];
+#endif
+        sat->_velosity_[i].X0 = sat->VX0divDt[i];
+        sat->_velosity_[i].Y0 = sat->VY0divDt[i];
+        sat->_velosity_[i].Z0 = sat->VZ0divDt[i];
+        nX0_Sat[i] = sat->_velosity_[i].nX0;
+        sat->_velosity_[i].nX0 = nX0_Sat[i] *SetiMayTimes;
+    }
+    return TRUE;
 }
 
 // main engine to dump keplers elements as it is (no drag)
@@ -8925,7 +9043,6 @@ void ParamProb(char *szString)
     XML_GROUP(gTRSmeasure)
         IF_XML_ELEMENT(T)
         {
-            
             if (++iMAxMesaures>MAX_MEASURES)
                 iMAxMesaures--;
             long double ld1=0,ld2=0;
@@ -9043,12 +9160,11 @@ void ParamProb(char *szString)
     XML_GROUP_END
 
     XML_GROUP(hPULSARmeasure)
-        IF_XML_ELEMENT(T)
+        IF_XML_ELEMENT(M)
         {
             if (++iMAxMesaures>MAX_MEASURES)
                 iMAxMesaures--;
-            long double ld1=0,ld2=0;
-            ConvertDateFromXML(pszQuo, ld1, measures[iMAxMesaures-1].T, ld2);
+            measures[iMAxMesaures-1].NearBody =atoi(pszQuo);
             measures[iMAxMesaures-1].TypeOfmesaure = 4; // pulsar type
             measures[iMAxMesaures-1].X =0;
             measures[iMAxMesaures-1].Y =0;
@@ -9062,18 +9178,20 @@ void ParamProb(char *szString)
             measures[iMAxMesaures-1].T2 =0;
             measures[iMAxMesaures-1].ErrT2 =0;
         }
-        IF_XML_ELEMENT(M)
-            measures[iMAxMesaures-1].NearBody =atoi(pszQuo);
+
         IF_XML_ELEMENT(T)
-            measures[iMAxMesaures-1].T =atoi(pszQuo);
+        {
+            long double ld1=0,ld2=0;
+            ConvertDateFromXML(pszQuo, ld1, measures[iMAxMesaures-1].T, ld2);
+        }
         IF_XML_ELEMENT(P1)
-            measures[iMAxMesaures-1].P1 =atoi(pszQuo); // first pulsar mesurement period
+            measures[iMAxMesaures-1].P1 =atof(pszQuo); // first pulsar mesurement period
         IF_XML_ELEMENT(P2)
-            measures[iMAxMesaures-1].P2 =atoi(pszQuo); // second pulsar mesurement period
+            measures[iMAxMesaures-1].P2 =atof(pszQuo); // second pulsar mesurement period
         IF_XML_ELEMENT(P3)
-            measures[iMAxMesaures-1].P3 =atoi(pszQuo); // third pulsar mesurement period
+            measures[iMAxMesaures-1].P3 =atof(pszQuo); // third pulsar mesurement period
         IF_XML_ELEMENT(E)
-            measures[iMAxMesaures-1].Err =atoi(pszQuo); // error in time of measurements
+            measures[iMAxMesaures-1].Err =atof(pszQuo); // error in time of measurements
     XML_GROUP_END
 
     XML_SECTION_END
@@ -10818,6 +10936,7 @@ int CheckWhatnext(TRAOPTIMOBJ* Opt, TRAOBJ *Sat, TRAIMPLOBJ *Eng, TRAIMPLOBJ *En
     return iret;
 }
 
+void PrintPV(TRAOBJ *SlS, TRAOBJ *Sat, int iCheck, long double ldFrom, long double Time_SecondsFromStart);
 #define TEST_RUN_CALC_YEAR 1
 #define TEST_RUN_ERROR 1
 #define TEST_RUN_EARTH_ERROR 1
@@ -11417,19 +11536,71 @@ NextTry:
 #endif
 
 }
-void JustRun(TRAOBJ *SlS, TRAOBJ *Sat,TRAIMPLOBJ *Eng, long double ldFrom,long double ldFromTLEEpoch, long long iAllSec, int iItPerS, int irestRun, long double tSl)
+
+int JustRunApogee = 0;
+int JustRunPerigee = 10000000;
+int JustRunApPerStatus = 0; // search for apogee
+int JustRuniCountDelay= 0;
+
+void JustRun(TRAOBJ *SlS, TRAOBJ *Sat,TRAIMPLOBJ *Eng, long double ldFrom,long double ldFromTLEEpoch, long long iAllSec, int iItPerS, int irestRun, long double tSl, BOOL ShowData)
 {
     SlS->TimeSl = tSl;
     SlS->TimeSl_2 = tSl*tSl;
 
     long long iSec;
     int iPortionSec;
+    int iDistance =0;
+    //int Apogee = 0;
+    //int Perigee = 10000000;
+    //int ApPerStatus = 0; // search for apogee
+    //int iCountDelay= 0;
+    long double Time_SecondsFromStart=0;
+
     for (iSec = 0; iSec < iAllSec; iSec++)
     {
         for (iPortionSec = 0; iPortionSec < iItPerS; iPortionSec++)
         {
             IteraSat(1, SlS, Sat,ldFromTLEEpoch + (iSec +   (long double)iPortionSec/(long double)iItPerS) /86400.0) ;
             IteraSolarSystem(TRUE, SlS);
+        }
+        if (ShowData)
+        {
+            if (JustRunApPerStatus == 0)
+            {
+                if (JustRunApogee <= (int)Sat->Distance[0][EARTH])
+                    JustRunApogee = Sat->Distance[0][EARTH];
+                else
+                {
+                    JustRunApPerStatus = 1; // delay
+                    JustRuniCountDelay = 100;
+                    Time_SecondsFromStart = (iSec +   (long double)(iPortionSec+1)/(long double)iItPerS);
+                    PrintPV(SlS, Sat, 0, ldFrom, Time_SecondsFromStart);
+                }
+
+            } else if (JustRunApPerStatus == 1)
+            {
+                if (--JustRuniCountDelay == 0)
+                {
+                    JustRunApPerStatus = 2; // search for perigee
+                    JustRunPerigee = 1000000000;
+                }
+            } else if (JustRunApPerStatus == 2)
+            {
+                if (JustRunPerigee >= (int)Sat->Distance[0][EARTH])
+                    JustRunPerigee = Sat->Distance[0][EARTH];
+                else
+                {
+                    JustRunApPerStatus = 3; // delay
+                    JustRuniCountDelay = 100;
+                }
+            } else if (JustRunApPerStatus == 3)
+            {
+                if (--JustRuniCountDelay == 0)
+                {
+                    JustRunApPerStatus = 0; // search for apogee
+                    JustRunApogee  = 0;
+                }
+            }
         }
     }
     for (iPortionSec = 0; iPortionSec < irestRun; iPortionSec++)
@@ -11496,6 +11667,7 @@ void SetCalcSat(TRAOBJ *Sat, TRAOBJ *SlS, int iSat, long double X, long double Y
 }
 void RunCalc(TRAOBJ *SlS, TRAOBJ *Sat,TRAIMPLOBJ *Eng, long double ldFrom,long double ldFromTLEEpoch, long long iAllSec, int iItPerS, long double tSl)
 {
+    int i;
     SlS->TimeSl = tSl;
     SlS->TimeSl_2 = tSl*tSl;
 
@@ -11503,10 +11675,21 @@ void RunCalc(TRAOBJ *SlS, TRAOBJ *Sat,TRAIMPLOBJ *Eng, long double ldFrom,long d
     {
         AssignFromNASAData(SlS, measures[0].T); // starting time
         AssignAllSatelites(SlS, EARTH, Sat, measures[0].T);
-        for (int i =0; i< iMAxMesaures; i++)
-        {
 
-        }
+        SYSTEMTIME ThatTime;
+        long double ldRunFromTLEEpoch = ConvertJulianDayToDateAndTime(measures[0].T, &ThatTime);
+        long long iRunSec = ((measures[iMAxMesaures-1].T - measures[0].T)*(24.0*60.0*60.0));
+        long double ldRunFrom = measures[0].T;
+        
+        //for (i =0; i< iMAxMesaures; i++)
+        //{
+        //    iRunSec = ((measures[iMAxMesaures-1].T - measures[0].T)*(24.0*60.0*60.0));
+            JustRun(SlS, Sat,Eng, ldRunFrom,ldRunFromTLEEpoch, iRunSec, iItPerS, 0, tSl, TRUE);
+        //}
+
+        //SwitchBackCalcTimePeriod(SlS, sat);
+        //SwitchCalcTimePeriod(SlS, sat, 10000);
+
         return;
     }
 
@@ -11517,7 +11700,7 @@ void RunCalc(TRAOBJ *SlS, TRAOBJ *Sat,TRAIMPLOBJ *Eng, long double ldFrom,long d
     }
     // calculation of the orbit.
     // adjust 
-    for (int i =0; i< iMAxMesaures; i++)
+    for (i =0; i< iMAxMesaures; i++)
     {
         if (measures[i].NearBody >0) //gCRSmeasure -> hCRSmeasure
         {
@@ -11607,7 +11790,7 @@ DO_MATHC_AGAIN:
                     }
                     SolS1=*SlS; Sat11= *Sat;
                     SetCalcSat(&Sat11, &SolS1, 0, Xn[iC], Yn[iC], Zn[iC], VXn[iC], VYn[iC], VZn[iC]);
-                    JustRun(&SolS1, &Sat11,Eng, ldRunFrom,ldRunFromTLEEpoch, iRunSec, iItPerS, irestRun, tSl);
+                    JustRun(&SolS1, &Sat11,Eng, ldRunFrom,ldRunFromTLEEpoch, iRunSec, iItPerS, irestRun, tSl, FALSE);
                     Xe[iC] = Sat11.X[0]; Ye[iC] = Sat11.Y[0]; Ze[iC] = Sat11.Z[0];
                     _position_[iC] = Sat11._position_[0];_velosity_[iC] = Sat11._velosity_[0];
                     long double vrmin = sqrt((Xe[iC]-measures[m].X)*(Xe[iC]-measures[m].X)+(Ye[iC]-measures[m].Y)*(Ye[iC]-measures[m].Y)+(Ze[iC]-measures[m].Z)*(Ze[iC]-measures[m].Z));
@@ -12005,7 +12188,7 @@ void RunSim(TRAOBJ *SlS, TRAOBJ *Sat,TRAIMPLOBJ *Eng, long double ldFrom,long do
                                 fprintf(FileOut,"\n\t <M>%d</M>",iEM); // for earth
                                 
                                 fprintf(FileOut,"\n\t\t<T>%+25.17Le</T>\n\t\t<P1>%+25.17Le</P1>\n\t\t<P2>%+25.17Le</P2>\n\t\t<P3>%+25.17Le</P3>", SimulationOutputTime[i],RealT[0],RealT[1]-RealT[0], RealT[2]-RealT[1]);
-                                fprintf(FileOut,"\n\t <E>%+25.17Le</M>",ErrorTime); // for earth
+                                fprintf(FileOut,"\n\t <E>%+25.17Le</E>",ErrorTime); // for earth
                                 fprintf(FileOut,"\n\t</hPULSARmeasure>");
                             }
                         }
