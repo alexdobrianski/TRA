@@ -68,6 +68,8 @@
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>jpeglibr.lib</AdditionalDependencies>
+      <StackReserveSize>4196352</StackReserveSize>
+      <StackCommitSize>4098</StackCommitSize>
     </Link>
     <PreBuildEvent>
       <Command>

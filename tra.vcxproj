@@ -95,9 +95,11 @@
       <AdditionalDependencies>kernel32.lib;nafxcwd.lib;libcpmtd.lib;LIBCMTD.lib;OLDNAMES.lib;uuid.lib;%(AdditionalDependencies);jpeglib.lib</AdditionalDependencies>
       <IgnoreAllDefaultLibraries>
       </IgnoreAllDefaultLibraries>
-      <StackReserveSize>409800000</StackReserveSize>
-      <StackCommitSize>4098</StackCommitSize>
+      <StackReserveSize>209715200</StackReserveSize>
+      <StackCommitSize>1048576</StackCommitSize>
       <LargeAddressAware>true</LargeAddressAware>
+      <HeapReserveSize>209715200</HeapReserveSize>
+      <HeapCommitSize>1048576</HeapCommitSize>
     </Link>
     <PostBuildEvent>
       <Command>
@@ -119,18 +121,23 @@
       <FloatingPointModel>Precise</FloatingPointModel>
       <AssemblerOutput>AssemblyAndSourceCode</AssemblerOutput>
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
+      <WholeProgramOptimization>true</WholeProgramOptimization>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
     </ClCompile>
     <Link>
       <OutputFile>$(OutDir)tra.exe</OutputFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
-      <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <TargetMachine>MachineX86</TargetMachine>
       <AdditionalDependencies>kernel32.lib;nafxcw.lib;libcpmt.lib;LIBCMT.lib;OLDNAMES.lib;uuid.lib;jpeglibr.lib</AdditionalDependencies>
-      <StackReserveSize>409800000</StackReserveSize>
-      <StackCommitSize>4098</StackCommitSize>
+      <StackReserveSize>209715200</StackReserveSize>
+      <StackCommitSize>1048576</StackCommitSize>
       <LargeAddressAware>true</LargeAddressAware>
+      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
+      <HeapReserveSize>209715200</HeapReserveSize>
+      <HeapCommitSize>1048576</HeapCommitSize>
+      <DataExecutionPrevention>false</DataExecutionPrevention>
     </Link>
     <PostBuildEvent>
       <Command>
@@ -158,12 +165,14 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="ephem_read.cpp" />
+    <ClCompile Include="procXML.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="tra.cpp" />
     <ClCompile Include="traimg.cpp" />
+    <ClCompile Include="traXML.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h" />
