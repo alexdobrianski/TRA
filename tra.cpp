@@ -29,6 +29,11 @@
 #include <malloc.h>
 #include "ephem_read.h"
 
+#define USE_GLOBAL
+
+#include "procXML.h"
+#include "tra.h"
+
 //////////////////////////////////////////////////////////////////////////////
 //   predefine vaiable to build different flavor
 //#define FIND_IMPULSE_TIME 1
@@ -39,17 +44,7 @@
 void write_JPEG_file (char * filename, int quality, int SizeW, int SizeH, int SizeB, unsigned char *bArray, J_COLOR_SPACE ColorCode);
 #endif
 
-#define MERCURY 0
-#define VENUS 1
-#define EARTH 2
-#define MARS 3
-#define JUPITER 4
-#define SATURN 5
-#define URANUS 6
-#define NEPTUNE 7
-#define PLUTO 8
-#define MOON  9
-#define SUN 10
+
 
 #define PLANET_COUNT 11
     // Earth gravitation model
@@ -584,11 +579,7 @@ double EngCoeff = 1.0;
 
 long double GST,SLONG,SRASN, SDEC;
 long double dStartGreenwichA = 0.0;
-long double TotalDays;
-long iTotalSec;
-long double IterPerSec;
-int iItearationsPerSec; // that is "int" == IterPerSec
-long double StepsValInDay; // step's value in day measurement
+
 typedef struct XYZ_Split_Ponter_Var
 {
     long double valX;
@@ -4402,19 +4393,6 @@ typedef struct TraOptimObj
     long double Period;
 }TRAOPTIMOBJ, *PTRAOPTIMOBJ;
 
-int EngineToOptimize = 4; // 0 == first engine firing - search for apogee 
-                       // 1 == second engine firing - search for perigee
-                       // 2 == third engine firing 
-                       // 3 == 4th impulse
-                       // 4 == 5th impulse
-    
-    
-int TrajectoryOptimizationType = 0; 
-          //1 - search for a minimum by adjusting time of firing
-          //2 - search for a maximum by adjusting time of firing
-          //3 - search for minimum by adjusting time of firing
-          //4 - search fo minimum by adjusting angle of firing 
-
 #define MINIMUM_BY_TIME 1
 #define MAXIMUM_BY_TIME 2
 #define MINIMUM_BY_ANGLE 4
@@ -4439,18 +4417,10 @@ long OldCurentTimeSec;
 int OldCurentTimeTD;
 int OldCurentIteraPerSec;
 
-long double dMinFromNow = 3.0;
-long double dStartJD = 0.0;//2451544.5; // if value dStartJD not set (==0.0) then use value from keplers elements of a satelite 0
-// if it will be more then one satellite needs to set this value to a last epoch of all satellites
-long double dStartTLEEpoch;
-int JustFlySimulation =0;
 
-long double SunX =.0;
-long double SunY =.0;
-long double SunZ = .0;
+
 long double SunM = 1.9891E30;
 long double GMSun;
-long double SunR;
 long double GMEarth;
 long double GMEarthMoon;
 long double GMMoon;
@@ -4461,12 +4431,10 @@ long double EarthSmAxAU;
 
 TRAOBJ SolarSystem;
 TRAOBJ Sat;
-#define MAX_OPTIM 30
-int MaxOptim = MAX_OPTIM;
-int StartOptim = 0;
+
+
 TRAOPTIMOBJ Opt[MAX_OPTIM];
 int iOptPtr = 0;
-int iOptimizationStep = 0;
 
 
 int iFirstMinMax = 0;
@@ -4489,8 +4457,7 @@ long double EarthRE;
 long double EarthM = 5.9736E24;
 long double MassRatioSunToEarthPlusMoon;
 long double EarthTSolSec;
-long double EarthCurTime;
-long double EarthCurTimeS;
+
 long double EarthSmAx;
 long double EarthTDays;
 long double EarthTSec;
@@ -4522,10 +4489,7 @@ long double MoonCurTimeS;
 long double MoonTPeriod;
 int MoonKeplerDone = 0;
 
-long double StartLandingIteraPerSec = 0.0;
 int iStartLandingIteraPerSec = 0;
-
-long double Gbig = 0;//6.6725E-11;
 
 BOOL OutLast = FALSE;
 
@@ -4616,27 +4580,9 @@ int iMAxMesaures;
 int EnginesCount = 0;
 #define MAX_ENGINES 6
 TRAIMPLOBJ Engine[MAX_ENGINES];
-int LastEngine = 0;
 int iItaration = 0;
 
 
-// ground stations
-long double GrLat[10];
-long double GrLong[10];
-typedef struct tagPulsars
-{
-    int N;
-    char Name[20];
-    long double ELONG;
-    long double ELAT;
-    long double P0;
-    long double S400mJy;
-
-} PULSARS, *PPULSARS;
-
-#define NPULSARS 150
-int nPulsars= 0;
-PULSARS Pulsars[150];
 
 
 void CalcPlanetForces(TRAOBJ * SlS)
@@ -5257,20 +5203,13 @@ void GetXYZfromLatLong(double Long,double Lat,double &PosX,double &PosY,double &
 }
 
 #ifdef _DO_VISUALIZATION
-#define IMAGE_W 1280
-#define IMAGE_H 720
-int RGBReferenceBody = EARTH;
-unsigned char bRGBImage[IMAGE_W*IMAGE_H*3];
-int bRGBImageW = IMAGE_W;
-int bRGBImageH = IMAGE_H;
-double dRGBScale = 1000000000.0;
-int iProfile = 0; // 0 == XY , 1 == YZ, 2 == XZ 3 == -YZ 4 == -XZ 5==-XY
-// 0 or XY is a view from North to south, 5 (- XY) is a view from south to north
-// 1 or YZ is a view to easter
 
-int iMaxSeq = 128;
+
+unsigned char bRGBImage[IMAGE_W*IMAGE_H*3];
+
+
 int iCounterToSkip = 0;
-int iMaxCounter = 24*60*60;
+
 
                                   // mer      ven       ear      mar      jup         sat       urn      nep       plt       moon        sun
 unsigned char PlanetColors[16*3] ={50,50,50, 0,255,0, 0,0,255, 127,0,0, 127,127,0, 127,0,127, 0,127,127, 0,64,64, 64,0,64, 127,127,127, 255,0,0};
@@ -5725,9 +5664,7 @@ int RunOrVoidEngine(int TimeDirection, TRAIMPLOBJ * Engines, TRAOBJ * SlS, TRAOB
 }
 
 
-long double TimeSl = 0;//0.01;
 long double TimeSlOld = 0;//0.01;
-long double TimeSl_2 = 0;
 
 #define CALC_SOLAR_SYSTEM 1
 void AssignFromNASAData(TRAOBJ * SlS, double JDSec)
@@ -7428,45 +7365,9 @@ long double SubEpoch(long double One, long double Two)
         return One - Two;
     }
 }
-char szURLTraVisualFileName[3*_MAX_PATH];
-char szURLTraVisualServer[3*_MAX_PATH];
-char szTraVisualFileName[_MAX_PATH*3]={"travisual.xml"};
-int UrlTraVisualPort=80;
-BOOL VisualFileSet = FALSE;
-BOOL ParsURL(char * URLServer, int *port, char* URL,  char * szParsingName)
-{
-    char sztemp[3*_MAX_PATH];
-    *port=80;
-    strcpy(URL,szParsingName);
-    //strcpy(szTraVisualFileName, "@travisual.xml");
-    strcpy(URLServer,URL);
-    char *iFirst = strstr(URLServer,"http://");
-    if (iFirst)
-    {
-        iFirst += 7;
-        iFirst = strstr(iFirst,"/");
-        if (iFirst)
-        {
-            *iFirst++=0;
-            strcpy(URL,iFirst);
-            iFirst = strstr(&URLServer[7],":");
-            if (iFirst)  // found :8080 port number
-            {
-                *port = atoi(iFirst+1);
-                *iFirst =  0;
-            }
-            strcpy(sztemp,&URLServer[7]);
-            strcpy(URLServer,sztemp);
-        }
-        else
-        {
-            printf(" URL:%s is wrong", szParsingName);
-            exit(3);
-        }
-        return TRUE;
-    }
-    return FALSE;
-}
+
+
+
 void ConvertDateFromXML(char *pszQuo, long double &ld_TotalDays, long double &ld_dStartJD, long double &ld_dStartTLEEpoch)
 {
     ld_TotalDays = 0;
@@ -8581,230 +8482,7 @@ ZDOT=RDOT*UZ+RVDOT*VZ;
 //END
 }
 
-int iGr = 0;
 
-///////////////////////////////////////////////////////////////////////////
-// quick XML parser
-///
-char szSection[1024] =  {0};
-char szGroup[1024] =  {0};
-#define XML_READ(XML_PARAM) if (CallXMLPars(szString, #XML_PARAM)) XML_PARAM = atof(pszQuo);
-#define IF_XML_READ(XML_PARAM) if (CallXMLPars(szString, #XML_PARAM))
-#define XML_BEGIN char *pszQuo;
-#define XML_END ;
-#define XML_SECTION(XML_SEC_NAME) if (strcmp(szSection, #XML_SEC_NAME)==0){pszQuo = strstr(szString, "value=\"");if (pszQuo != NULL){pszQuo += sizeof("value=\"") -1;
-#define XML_SECTION_END }}
-#define XML_SECTION_GROUP_SEPARATOR } else {
-
-#define XML_GROUP(XML_ELEMENT) if (pszQuo=CallGroupPars(szString,#XML_ELEMENT)) strcpy(szGroup, pszQuo); if (strcmp(szGroup, #XML_ELEMENT) ==0) {
-#define XML_GROUP_END }
-
-#define IF_XML_ELEMENT(XML_ELEMENT) if (pszQuo=CallElementPars(szString,#XML_ELEMENT))
-
-int CallXMLPars(char *szString, char *XML_Params)
-{
-    char szFullComapre[1024] = {"name=\""};
-    strcat(szFullComapre, XML_Params);
-    strcat(szFullComapre, "\"");
-    if (strstr(szString, szFullComapre) != NULL)   
-        return 1;
-    else
-        return 0;
-}
-
-char *CallElementPars(char *szString, char *XML_Params)
-{
-    char szFullComapre[1024] = {"<"};
-    char szFullComapre2[1024] = {"</"};
-    strcat(szFullComapre, XML_Params);
-    strcat(szFullComapre2, XML_Params);
-    strcat(szFullComapre, ">");
-    strcat(szFullComapre2, ">");
-    if (strstr(szString, szFullComapre) != NULL)   
-    {
-        if (strstr(szString, szFullComapre2) != NULL)
-        {
-            char *szPrt = strstr(szString, szFullComapre);
-            szPrt += strlen(szFullComapre);
-            return szPrt;
-        }
-        return NULL;
-    }
-    else
-        return NULL;
-}
-
-char *CallGroupPars(char *szString, char *XML_Params)
-{
-    char szFullComapre[1024] = {"<"};
-    strcat(szFullComapre, XML_Params);
-    strcat(szFullComapre, ">");
-    if (strstr(szString, szFullComapre) != NULL)   
-    {
-        char *szPrt = strstr(szString, szFullComapre);
-        return XML_Params;
-    }
-    else
-        return NULL;
-}
-
-void ParamCommon(char *szString)
-{
-    XML_BEGIN;
-    XML_SECTION(TraInfo);
-    
-        IF_XML_READ(dMinFromNow) 
-        {
-            dMinFromNow = atof(pszQuo);
-        }
-        IF_XML_READ(GRSTNLat) 
-        {
-            GrLat[iGr] = atof(pszQuo);
-        }
-        IF_XML_READ(GRSTNLong) 
-        {
-            GrLong[iGr++] = atof(pszQuo);
-        }
-        IF_XML_READ(JustFlySimulation)
-        {
-            JustFlySimulation = atoi(pszQuo); // if 0 then do enegine firing ; if 1 no engines at all
-        }
-        IF_XML_READ(dStartJD) 
-        {
-            ConvertDateFromXML(pszQuo, TotalDays, dStartJD, dStartTLEEpoch);
-        }
-        XML_READ(TimeSl);
-        XML_READ(Gbig);
-        //XML_READ(IterPerSec);
-        IF_XML_READ(IterPerSec)
-        {
-             IterPerSec = atol(pszQuo);
-             iItearationsPerSec = (int)(IterPerSec);
-             TimeSl = 1.0 / IterPerSec;
-             TimeSl_2 = 1.0 / ((long double)IterPerSec*(long double)IterPerSec);
-             StepsValInDay = (1.0/((long double)IterPerSec))/24.0/60.0/60.0;
-             printf("\n IterPerSec =%d ", (int)IterPerSec);
-        }
-        XML_READ(StartLandingIteraPerSec);
-        IF_XML_READ(TotalDays) 
-        {
-			if (TotalDays<0)
-				TotalDays = -TotalDays;
-			else
-				TotalDays = atof(pszQuo);
-			iTotalSec = (int)(TotalDays * 24.0 * 60.0 * 60.0);
-
-		}
-        IF_XML_READ(EarthCurTime)  
-        {
-            EarthCurTime  = atof(pszQuo);
-            // TBD
-            EarthCurTimeS = EarthCurTime;
-        }
-        //IF_XML_READ(EarthSmAxAU)
-        //{
-        //    EarthSmAxAU = atof(pszQuo);
-        //    AUcalc = EarthSmAx / EarthSmAxAU;
-        //}
-        IF_XML_READ(TRAVisual)
-        {
-            strcpy(szTraVisualFileName,pszQuo);
-            char * iQuot = strstr(szTraVisualFileName,"\"");
-            if (iQuot)
-                *iQuot=0;
-            VisualFileSet = TRUE;
-            if (ParsURL(szURLTraVisualServer, &UrlTraVisualPort, szURLTraVisualFileName,  szTraVisualFileName))
-            {
-                strcpy(szTraVisualFileName, "@travisual.xml");
-            }
-        }
-#ifdef _DO_VISUALIZATION
-        IF_XML_READ(RGBImageW)
-        {
-            bRGBImageW = atoi(pszQuo);
-        }
-        IF_XML_READ(RGBImageH)
-        {
-            bRGBImageH = atoi(pszQuo);
-        }
-        IF_XML_READ(RGBView)
-        {
-            iProfile = atoi(pszQuo);
-        }
-        IF_XML_READ(RGBMaxPictures)
-        {
-            iMaxSeq = atoi(pszQuo);
-        }
-        IF_XML_READ(RGBSecPerPictures)
-        {
-            iMaxCounter = atoi(pszQuo);
-        }
-        IF_XML_READ(RGBScale)
-        {
-            dRGBScale = atof(pszQuo);
-        }
-
-        IF_XML_READ(RGBReferenceBody)
-        {
-            RGBReferenceBody = atoi(pszQuo);
-        }
-#endif
-        IF_XML_READ(EngineToOptimize)
-        {
-            EngineToOptimize = atoi(pszQuo);
-        }
-    
-        IF_XML_READ(TrajectoryOptimizationType)
-        {
-            TrajectoryOptimizationType = atoi(pszQuo);
-        }
-        IF_XML_READ(LastEngine)
-        {
-            LastEngine = atoi(pszQuo);
-        }
-        IF_XML_READ(MaxOptim)
-        {
-            MaxOptim = atoi(pszQuo);
-        }
-        IF_XML_READ(StartOptim)
-        {
-            StartOptim = atoi(pszQuo);
-            iOptimizationStep = StartOptim;
-        }
-
-            
-    XML_SECTION_END;
-    // processing pulsar coordinates and parameters
-    XML_SECTION(pulsars);
-        IF_XML_READ(N)
-        {
-            Pulsars[nPulsars].N = atoi(pszQuo);
-        }
-        IF_XML_READ(Name)
-        {
-            strcpy(Pulsars[nPulsars].Name,pszQuo);
-        }
-        IF_XML_READ(ELONG)
-        {
-            Pulsars[nPulsars].ELONG = atof(pszQuo);
-        }
-        IF_XML_READ(ELAT)
-        {
-            Pulsars[nPulsars].ELAT = atof(pszQuo);
-        }
-        IF_XML_READ(P0)
-        {
-            Pulsars[nPulsars].P0 = atof(pszQuo);
-        }
-        IF_XML_READ(S400mJy)
-        {
-            Pulsars[nPulsars].S400mJy = atof(pszQuo);
-            if (++nPulsars >= NPULSARS)
-                nPulsars = NPULSARS-1;
-        }
-    XML_SECTION_END;
-    XML_END;
-}
 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -8893,27 +8571,6 @@ void MoonXYZCalc(double &flX, double &flY, double &flZ, double tsec)
              2.5*sin( 1185.645*tsec + 5.167)+
              3.0*sin(  104.881*tsec + 2.555)+
              1.8*sin( 8399.116*tsec + 6.248))*1.0E6;
-}
-
-void ParamSun(char *szString)
-{
-    XML_BEGIN;
-    XML_SECTION(TraInfo);
-        
-        XML_READ(SunX);
-        XML_READ(SunY);
-        XML_READ(SunZ);
-		XML_READ(SunR);
-        //XML_READ(SunM);
-        //IF_XML_READ(GMSun) 
-        //{
-        //    GMSun = atof(pszQuo);
-        //    printf("\n Was  SunM= %f", SunM);
-        //    SunM = GMSun / Gbig;
-        //    printf("\n Calc SunM= %f", SunM);
-        //}
-    XML_SECTION_END;
-    XML_END;
 }
 
 void ParamEarth(char *szString)
@@ -13826,6 +13483,13 @@ void MassPointGen(TRAOBJ *SlS, TRAOBJ *Sat,TRAIMPLOBJ *Eng, long double ldFrom,l
 
 int main(int argc, char * argv[])
 {
+    //initializing procXML
+    init_proc_XML();
+
+    //initializing traXML
+    init_tra_XML();
+
+
     int iDay;
     int iFlag = 0;
     int flFindMax;
