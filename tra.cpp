@@ -475,8 +475,6 @@ long double Slm[MAX_COEF_J][MAX_COEF_J] = {
 // just for convinience to proper orbit clculation
 double EngCoeff = 1.0;
 
-
-long double GST,SLONG,SRASN, SDEC;
 long double dStartGreenwichA = 0.0;
 
 

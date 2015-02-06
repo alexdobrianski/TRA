@@ -3933,3 +3933,5 @@ GLOBAL_VARIABLE char szMassPointsModelFile[1024];
 GLOBAL_VARIABLE char MidRandPointsFile[1024];
 GLOBAL_VARIABLE long double MinH;
 GLOBAL_VARIABLE long double MaxH;
+
+GLOBAL_VARIABLE long double GST,SLONG,SRASN, SDEC;
