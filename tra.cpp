@@ -6063,6 +6063,8 @@ NextTry:
 
 }
 
+
+
 int JustRunApogee = 0;
 int JustRunPerigee = 10000000;
 int JustRunApPerStatus = 0; // search for apogee
@@ -6076,10 +6078,6 @@ void JustRun(TRAOBJ *SlS, TRAOBJ *Sat,TRAIMPLOBJ *Eng, long double ldFrom,long d
     long long iSec;
     int iPortionSec;
     int iDistance =0;
-    //int Apogee = 0;
-    //int Perigee = 10000000;
-    //int ApPerStatus = 0; // search for apogee
-    //int iCountDelay= 0;
     long double Time_SecondsFromStart=0;
 
     for (iSec = 0; iSec < iAllSec; iSec++)
@@ -6199,18 +6197,103 @@ void RunCalc(TRAOBJ *SlS, TRAOBJ *Sat,TRAIMPLOBJ *Eng, long double ldFrom,long d
 
     if (memcmp(Mode,"CALC_ON_EARTH",12)==0) // one point on earth
     {
-        AssignFromNASAData(SlS, measures[0].T); // starting time
-        AssignAllSatelites(SlS, EARTH, Sat, measures[0].T);
+        long double TimeIntervals[MAX_MEASURES][2];
+        long double tErrorTime = measures[0].Err;
+        tErrorTime /= 2.0;
+        long double tErrorTimeD = tErrorTime / (24.0*60.0*60.0);
+        AssignFromNASAData(SlS, measures[0].T - tErrorTimeD); // starting time
+        AssignAllSatelites(SlS, EARTH, Sat, measures[0].T- tErrorTimeD);
 
         SYSTEMTIME ThatTime;
-        long double ldRunFromTLEEpoch = ConvertJulianDayToDateAndTime(measures[0].T, &ThatTime);
-        long long iRunSec = ((measures[iMaxMeasures-1].T - measures[0].T)*(24.0*60.0*60.0));
-        long double ldRunFrom = measures[0].T;
-        
+        long double ldRunFromTLEEpoch = ConvertJulianDayToDateAndTime(measures[0].T- tErrorTimeD, &ThatTime);
+        long long iRunSec = ((measures[iMaxMeasures-1].T - measures[0].T)*(24.0*60.0*60.0))+tErrorTime*2.0;
+        long double ldRunFrom = measures[0].T- tErrorTimeD;
+        long long iSec;
+        int iDistance =0;
+        int iPortionSec;
+        long double Time_SecondsFromStart=0;
+        BOOL ShowData = TRUE;
+        int iPt = 0;
+        long double ldCT_TLE;
+        long double ldCT_jd;
+        BOOL StartPresize = FALSE;
+        for (iSec = 0; iSec < iRunSec; iSec++)
+        {
+            ldCT_TLE = ldRunFromTLEEpoch + (iSec) /86400.0;
+            ldCT_jd = ldRunFrom+ (iSec) /86400.0;
+            if (StartPresize == FALSE)
+            {
+                if (ldCT_jd >= (measures[iPt].T-tErrorTimeD)) // measuremt was started
+                {
+                    StartPresize = TRUE;
+                }
+            }
+            else
+            {
+                long double SecondsPerD = (measures[iPt].P1+measures[iPt].P2+measures[iPt].P3-tErrorTime)/86400.0;
+                if (ldCT_jd >= (measures[iPt].T+SecondsPerD)) // measuremt was started
+                {
+                    StartPresize = FALSE;
+                    if (++iPt >= iMaxMeasures)
+                        break;
+                }
+            }
+            
+            for (iPortionSec = 0; iPortionSec < iItPerS; iPortionSec++)
+            {
+                ldCT_TLE = ldRunFromTLEEpoch + (iSec +   (long double)iPortionSec/(long double)iItPerS) /86400.0;
+                ldCT_jd = ldRunFrom + (iSec +   (long double)iPortionSec/(long double)iItPerS) /86400.0;
+                IteraSat(1, SlS, Sat,ldCT_TLE) ;
+                IteraSolarSystem(TRUE, SlS);
+            }
+            if (ShowData)
+            {
+                if (JustRunApPerStatus == 0)
+                {
+                    if (JustRunApogee <= (int)Sat->Distance[0][EARTH])
+                        JustRunApogee = Sat->Distance[0][EARTH];
+                    else
+                    {
+                        JustRunApPerStatus = 1; // delay
+                        JustRuniCountDelay = 100;
+                        Time_SecondsFromStart = (iSec +   (long double)(iPortionSec+1)/(long double)iItPerS);
+                        PrintPV(SlS, Sat, 0, ldRunFrom, Time_SecondsFromStart);
+                    }
+
+                } else if (JustRunApPerStatus == 1)
+                {
+                    if (--JustRuniCountDelay == 0)
+                    {
+                        JustRunApPerStatus = 2; // search for perigee
+                        JustRunPerigee = 1000000000;
+                    }
+                } else if (JustRunApPerStatus == 2)
+                {
+                    if (JustRunPerigee >= (int)Sat->Distance[0][EARTH])
+                        JustRunPerigee = Sat->Distance[0][EARTH];
+                    else
+                    {
+                        JustRunApPerStatus = 3; // delay
+                        JustRuniCountDelay = 100;
+                    }
+                } else if (JustRunApPerStatus == 3)
+                {
+                    if (--JustRuniCountDelay == 0)
+                    {
+                        JustRunApPerStatus = 0; // search for apogee
+                        JustRunApogee  = 0;
+                    }
+                }
+            }
+        }
         //for (i =0; i< iMaxMeasures; i++)
         //{
+        //    iRunSec = ( measures[i].P1 + measures[i].P2 + measures[i].P3 + measures[i].Err ) + 1;
+        //    SwitchCalcTimePeriod(SlS, sat, 10000);
+        //    JustRun(SlS, Sat,Eng, ldRunFrom,ldRunFromTLEEpoch, iRunSec, iItPerS*10000, 0, tSl, TRUE);
+        //    SwitchBackCalcTimePeriod(SlS, sat);
         //    iRunSec = ((measures[iMaxMeasures-1].T - measures[0].T)*(24.0*60.0*60.0));
-            JustRun(SlS, Sat,Eng, ldRunFrom,ldRunFromTLEEpoch, iRunSec, iItPerS, 0, tSl, TRUE);
+        //    JustRun(SlS, Sat,Eng, ldRunFrom,ldRunFromTLEEpoch, iRunSec, iItPerS, 0, tSl, TRUE);
         //}
 
         //SwitchBackCalcTimePeriod(SlS, sat);
