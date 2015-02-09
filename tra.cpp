@@ -6197,7 +6197,9 @@ void RunCalc(TRAOBJ *SlS, TRAOBJ *Sat,TRAIMPLOBJ *Eng, long double ldFrom,long d
 
     if (memcmp(Mode,"CALC_ON_EARTH",12)==0) // one point on earth
     {
-        long double TimeIntervals[MAX_MEASURES][2];
+        int ListM[MAX_MEASURES];
+        int iListM = 0;
+
         long double tErrorTime = measures[0].Err;
         tErrorTime /= 2.0;
         long double tErrorTimeD = tErrorTime / (24.0*60.0*60.0);
@@ -6223,20 +6225,36 @@ void RunCalc(TRAOBJ *SlS, TRAOBJ *Sat,TRAIMPLOBJ *Eng, long double ldFrom,long d
             ldCT_jd = ldRunFrom+ (iSec) /86400.0;
             if (StartPresize == FALSE)
             {
-                if (ldCT_jd >= (measures[iPt].T-tErrorTimeD)) // measuremt was started
+                for (int k = 0; k < iMaxMeasures; k++)
                 {
-                    StartPresize = TRUE;
+                    if (ldCT_jd >= (measures[k].T-tErrorTimeD)) // measuremt was started
+                    {
+                        StartPresize = TRUE;
+                        ListM[iListM] = k;
+                        if (++iListM >= iMaxMeasures)
+                            iListM = iMaxMeasures-1;
+                    }
                 }
             }
             else
             {
-                long double SecondsPerD = (measures[iPt].P1+measures[iPt].P2+measures[iPt].P3-tErrorTime)/86400.0;
-                if (ldCT_jd >= (measures[iPt].T+SecondsPerD)) // measuremt was started
+                int AllFind = 0;
+                for (int k = 0; k < iListM; k++)
                 {
+                    long double SecondsPerD = (measures[ListM[k]].P1+measures[ListM[k]].P2+measures[ListM[k]].P3-tErrorTime)/86400.0;
+                    if (ldCT_jd >= (measures[ListM[k]].T+SecondsPerD)) // measuremt was started
+                    {
+                        AllFind++;
+                    }
+                }
+                if (AllFind == iListM)
+                {
+                    iListM = 0;
                     StartPresize = FALSE;
                     if (++iPt >= iMaxMeasures)
-                        break;
+                         break;
                 }
+
             }
             
             for (iPortionSec = 0; iPortionSec < iItPerS; iPortionSec++)
