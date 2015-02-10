@@ -6203,13 +6203,13 @@ void RunCalc(TRAOBJ *SlS, TRAOBJ *Sat,TRAIMPLOBJ *Eng, long double ldFrom,long d
         long double tErrorTime = measures[0].Err;
         tErrorTime /= 2.0;
         long double tErrorTimeD = tErrorTime / (24.0*60.0*60.0);
-        AssignFromNASAData(SlS, measures[0].T - tErrorTimeD); // starting time
-        AssignAllSatelites(SlS, EARTH, Sat, measures[0].T- tErrorTimeD);
+        AssignFromNASAData(SlS, measures[0].T - tErrorTimeD- 1.0/86400.0); // starting time
+        AssignAllSatelites(SlS, EARTH, Sat, measures[0].T- tErrorTimeD- 1.0/86400.0);
 
         SYSTEMTIME ThatTime;
-        long double ldRunFromTLEEpoch = ConvertJulianDayToDateAndTime(measures[0].T- tErrorTimeD, &ThatTime);
-        long long iRunSec = ((measures[iMaxMeasures-1].T - measures[0].T)*(24.0*60.0*60.0))+tErrorTime*2.0;
-        long double ldRunFrom = measures[0].T- tErrorTimeD;
+        long double ldRunFromTLEEpoch = ConvertJulianDayToDateAndTime(measures[0].T- tErrorTimeD - 1.0/86400.0, &ThatTime);
+        long long iRunSec = ((measures[iMaxMeasures-1].T - measures[0].T)*(24.0*60.0*60.0))+tErrorTime*2.0 + 1;
+        long double ldRunFrom = measures[0].T- tErrorTimeD - 1.0/86400.0 ;
         long long iSec;
         int iDistance =0;
         int iPortionSec;
@@ -6225,9 +6225,11 @@ void RunCalc(TRAOBJ *SlS, TRAOBJ *Sat,TRAIMPLOBJ *Eng, long double ldFrom,long d
             ldCT_jd = ldRunFrom+ (iSec) /86400.0;
             if (StartPresize == FALSE)
             {
+                // check that any measurements is in a reach of mesurement time
                 for (int k = 0; k < iMaxMeasures; k++)
                 {
-                    if (ldCT_jd >= (measures[k].T-tErrorTimeD)) // measuremt was started
+                    long double SecondsPerD = (measures[k].P1+measures[k].P2+measures[k].P3-tErrorTime)/86400.0;
+                    if ((ldCT_jd >= (measures[k].T-tErrorTimeD)) &&  (ldCT_jd <= (measures[k].T+SecondsPerD)))// measuremt was started
                     {
                         StartPresize = TRUE;
                         ListM[iListM] = k;
@@ -6235,28 +6237,65 @@ void RunCalc(TRAOBJ *SlS, TRAOBJ *Sat,TRAIMPLOBJ *Eng, long double ldFrom,long d
                             iListM = iMaxMeasures-1;
                     }
                 }
+                if (StartPresize == TRUE)
+                {
+#define PRECISE_TIME_PERIOD_DIVIDER 100
+                    SwitchCalcTimePeriod(SlS, Sat, PRECISE_TIME_PERIOD_DIVIDER);
+                    iItPerS = iItPerS*PRECISE_TIME_PERIOD_DIVIDER;
+                }
             }
             else
             {
-                int AllFind = 0;
+                // add any measurements if it is in a reach of measurement time
+                for (int k = 0; k < iMaxMeasures; k++)
+                {
+                    long double SecondsPerD = (measures[k].P1+measures[k].P2+measures[k].P3-tErrorTime)/86400.0;
+                    if ((ldCT_jd >= (measures[k].T-tErrorTimeD)) &&  (ldCT_jd <= (measures[k].T+SecondsPerD)))// measuremt was started
+                    {
+                        // check - is it already in the list?
+                        BOOL FindInList = FALSE;
+                        for (int m=0; m < iListM; m++)
+                        {
+                            if (ListM[m] == k)
+                            {
+                                FindInList = TRUE;
+                                break;
+                            }
+                        }
+                        // if not in the list then add
+                        if (FindInList == FALSE)
+                        {
+                            ListM[iListM] = k;
+                            if (++iListM >= iMaxMeasures)
+                                iListM = iMaxMeasures-1;
+                        }
+                    }
+                }
+                // check that measurement is out of measurement time of any measurement record
                 for (int k = 0; k < iListM; k++)
                 {
                     long double SecondsPerD = (measures[ListM[k]].P1+measures[ListM[k]].P2+measures[ListM[k]].P3-tErrorTime)/86400.0;
-                    if (ldCT_jd >= (measures[ListM[k]].T+SecondsPerD)) // measuremt was started
+                    if (ldCT_jd >= (measures[ListM[k]].T+SecondsPerD)) // measuremt was started and passed max time
                     {
-                        AllFind++;
+                        // now needs to detele record from the list
+                        for (int m = k+1; m < iListM; m++)
+                        {
+                            ListM[m-1] = ListM[m];
+                        }
+                        iListM--;
+                        k--;
+                        if (iListM == 0)
+                        {
+                            StartPresize = FALSE;
+                        }
                     }
                 }
-                if (AllFind == iListM)
+                if (StartPresize == FALSE)
                 {
-                    iListM = 0;
-                    StartPresize = FALSE;
-                    if (++iPt >= iMaxMeasures)
-                         break;
+                    SwitchBackCalcTimePeriod(SlS, Sat);
+                    iItPerS /=PRECISE_TIME_PERIOD_DIVIDER;
                 }
-
             }
-            
             for (iPortionSec = 0; iPortionSec < iItPerS; iPortionSec++)
             {
                 ldCT_TLE = ldRunFromTLEEpoch + (iSec +   (long double)iPortionSec/(long double)iItPerS) /86400.0;
