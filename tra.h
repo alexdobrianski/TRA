@@ -84,6 +84,18 @@ GLOBAL_VARIABLE long double __L0[2][5][7];
 
 GLOBAL_VARIABLE long double __BO[2][5][7];
 
+GLOBAL_VARIABLE    long double __CH[2][7];
+GLOBAL_VARIABLE    long double __CO[2][5][7];
+GLOBAL_VARIABLE    long double __NO[2][3][7];
+GLOBAL_VARIABLE    long double __FEO[2][1][7];
+GLOBAL_VARIABLE    long double __DH[2][7];
+GLOBAL_VARIABLE    long double __DO[2][5][7];
+GLOBAL_VARIABLE   long double __EH[2][7];
+GLOBAL_VARIABLE    long double __EO[2][9][7];
+GLOBAL_VARIABLE   long double __ET[2][4][7];
+
+
+
 GLOBAL_VARIABLE int CpuCore;
 
 GLOBAL_VARIABLE int nk_lm_Numbers[(TOTAL_COEF+3)*(TOTAL_COEF+3)][2];
