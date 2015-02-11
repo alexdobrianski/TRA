@@ -44,15 +44,9 @@
 void write_JPEG_file (char * filename, int quality, int SizeW, int SizeH, int SizeB, unsigned char *bArray, J_COLOR_SPACE ColorCode);
 #endif
 
-
-
-
 #define _NORMALIZED_COEF 1
 
 #define MAX_COEF_J 18
-
-int iCounter_nk_lm_Numbers;
-
 
 
 
@@ -60,10 +54,7 @@ MASS_POINT_ELEMENT MassPoints[(TOTAL_COEF+3)*(TOTAL_COEF+3)];
 #define MAX_CHECK_POINTS 1000
 long double TotalCheckPoints[MAX_CHECK_POINTS][3];
 
-
-
-
-    	
+  	
     // see http://vadimchazov.narod.ru/lepa_zov/lesat.pdf
     // P0 == P[0](x) = 1
     // P1 == P[1](x) = x
@@ -131,10 +122,6 @@ long double TotalCheckPoints[MAX_CHECK_POINTS][3];
     //          (r0/r)**8 *P88(sinPHI) * (C88 * cos(8*Lambda) + S86*sin(8*Lambda))         )
 
     // moon 0.0002027
-
-
-
-
 
 
     long double __CH[2][7] = {            120,         120,         120,          120,         120,         120,         120,  
@@ -216,9 +203,6 @@ long double TotalCheckPoints[MAX_CHECK_POINTS][3];
                                   8.8385e-4,   6.9025e-4,   5.7456e-4,    5.0585e-4,   4.5512e-4,   4.2548e-4,    3.7068e-4};
 
 
-
-
-
 //#define MAX_FLUX_TABLE 365*2
 //int iStarting1007JD;
 //long double FLUX107[MAX_FLUX_TABLE];
@@ -298,7 +282,7 @@ long double AlternativePoints[360 ][3] ={
 354.9750,355.0250,92};
 
 
-long double ModelCoef;// = SlS->GM[j]/ GM_MODEL;
+
 
 #ifdef USE_MODEL_3
 long double ClmNN[MAX_COEF_J][MAX_COEF_J] = {
@@ -473,9 +457,6 @@ long double Slm[MAX_COEF_J][MAX_COEF_J] = {
 
 #endif
 // just for convinience to proper orbit clculation
-double EngCoeff = 1.0;
-
-long double dStartGreenwichA = 0.0;
 
 
 
@@ -593,68 +574,6 @@ typedef struct Long_Double_Intergal_Var4
 } LONG_DOUBLE_INT_VAR4, *PLONG_DOUBLE_INT_VAR4;
 
 
-#define MAX_IMPULSE_LINES 100
-
-
-typedef struct TraImplObj
-{
-    int iLine;
-    int iEngineOnSatellite;
-    int EngineOn;
-    int EngineDone;
-    int ImplsPointer;
-    int iCalculate;
-    long double TotalImpulse;
-    long double Weight;
-    long double DeltaTime;
-    int IteraPerSec;
-    long double FireTime;
-    long double Ang1;
-    long double Ang2;
-    long double XVec;
-    long double YVec;
-    long double ZVec;
-    long double ValImpl[MAX_IMPULSE_LINES];
-    int NearBody;
-    long double TotalWeight;
-    int AngleType;
-    int AngleOnBody;
-    long double OptimizationInitialStep;
-    long double OptimizationDecCoef;
-    long double OptimizationInitialStepCopy;
-    long double OptimizationDecCoefCopy;
-    long double OptimizationStop;
-    int OptimizationFirstDirectionSwitch;
-    long double SeartchForPeriod;
-    int iCountApogPerig;
-} TRAIMPLOBJ, *PTRAIMPLOBJ;
-
-typedef struct TraOptimObj
-{
-    long double FireTime; // firing time of an engine
-    long double Ang1; // first angle
-    long double Ang2; // second angle
-    long double XVec; // direction firing vector (X component)
-    long double YVec; // direction (Y component)
-    long double ZVec; // direction (Z component)
-    int NearBody; 
-    int AngleType;
-    int AngleOnBody;
-    //int OptimizationFirstDirectionSwitch;
-    int EngineToOptimize;
-    int TrajectoryOptimizationType;
-    int LastEngine;
-    int Calculate;
-    long double OptimizationInitialStep;
-    long double OptimizationDecCoef;
-    long double OptimizationStop;
-    int iNumberOfTryValues;
-#define _VAL_TRY 30*24
-    long double dValTry[_VAL_TRY]; 
-    long double dValTryMaxMin[_VAL_TRY]; 
-    //long double SeartchForPeriod;
-    long double Period;
-}TRAOPTIMOBJ, *PTRAOPTIMOBJ;
 
 #define MINIMUM_BY_TIME 1
 #define MAXIMUM_BY_TIME 2
@@ -689,8 +608,6 @@ long double GMEarthMoon;
 long double AUcalc;
 long double EarthSmAxAU;
 
-TRAOPTIMOBJ Opt[MAX_OPTIM];
-int iOptPtr = 0;
 
 
 int iFirstMinMax = 0;
@@ -734,20 +651,6 @@ char szMoonKeplerLine1[1024];
 char szMoonKeplerLine2[1024];
 char szMoonKeplerLine3[1024];
 
-char UseSatData[1024] = {"SGP4"};  // allowed initial data:
-                                   // SGP - use SGP from Space Track Report 3 to calculate position and velocity based on TLE
-                                   // SGP4 - use SPG4 to calulate initial position and velocity from TLE
-                                   // SGP8 - use SGP8
-                                   // KEPLER - use internal "kepler" function to calculate position
-                                   // INTERNAL use of internal data
-                                   // ProbTime=<time>, ProbC=<count of integral iterations>, ProbT=<delta time of iterations>
-                                   // ProbX0=<X0>, ProbY0=<Y0>, ProbZ0=<Z0>, ProbVX0=<VX0>, ProbVY0=<VY0>, ProbVZ0=<VZ0>, 
-                                   //   ProbIFX1=<integral Fx>, ProbIFY1=<integral Fy>, ProbIFZ1=<integral Fz>
-                                   //   ProbIFX2=<integral Fx>, ProbIFY2=<integral Fy>, ProbIFZ2=<integral Fz>
-                                   //   ProbIFX3=<integral Fx>, ProbIFY3=<integral Fy>, ProbIFZ3=<integral Fz>
-                                   //   ProbIVX1=<integral VX>, ProbIVY1=<integral VY>, ProbIVZ1=<integral VZ>
-                                   //   ProbIVX2=<integral VX>, ProbIVY2=<integral VY>, ProbIVZ2=<integral VZ>
-                                   //   ProbIVX3=<integral VX>, ProbIVY3=<integral VY>, ProbIVZ3=<integral VZ>
 
 
 
@@ -757,16 +660,7 @@ char SimulationTempOutputFile[1024]={"@trasimoutput.xml"};
 
 char CalulationTempOutputFile[1024]={"@tracalc.xml"}; // in CALC mode the output file with 
  
-
 char szCalcinfoFileName[256];
-
-
-int EnginesCount = 0;
-#define MAX_ENGINES 6
-TRAIMPLOBJ Engine[MAX_ENGINES];
-int iItaration = 0;
-
-
 
 
 void CalcPlanetForces(TRAOBJ * SlS)
@@ -935,8 +829,6 @@ void CalcSatForces(TRAOBJ * SlS, TRAOBJ * Sat, long double TimeOfCalc)
             {
                 *Sat_ForceDD_i_j = *SlS_GM_j / *Sat_Distance2_i_j; // to get real force need to multiply on mass of the satellite
             }
-
-
 #else
 #endif
         }
@@ -1265,30 +1157,6 @@ long double GetRadius(TRAOBJ * SlS, int iBody, TRAOBJ * Sat, int iSat)
     }
     return dR;
 }
-long double Targetlongitude = -15.0; // dolgota
-long double Targetlatitude = -2.0; // shirota
-// view from north pole to equator plane 
-/// x to right
-//  y to up
-//  z perpendicular xy and to north
-// x to west (negative axe to east) 
-// y to grinvich meridian ( 0 longitude) west is a negative angle, east positive
-// z to north
-//   LAT = latitude * pi/180    // shirota
-//   LON = longitude * pi/180   // dolgota
-//   Y =  R * cos(LAT) * cos(LON)
-//   Z =  R * sin(LAT) 
-//   X = -R * cos(LAT) * sin(LON)
-//
-// (1) sin(LAT) = z/R  => LAT = arcsin(z/R)
-//
-// (2) sin(LON) = - X / (R * cos(LAT))
-//     LON = arcsin(- X / (R * cos(LAT)))
-//     cos(LON) = Y / (R * cos(LAT))
-//                                             AY
-//      0-> PI/2     sin(LON)<0 cos(LON)>0     | sin(LON) >0 cos(LON) >0      0 -> -PI/2
-//      -------------------------------------------------------------------------------> X
-//      PI/2->PI     sin(LON)<0 cos(LON)<0     | sin(LON)>0 cos(LON) <0    -PI/2 -> -PI
 
 void getLongLatiMoon(double &LongOnMoon,double &LatiOnMoon, TRAOBJ *SlS, int iRefMOON,int iRefEARTH, TRAOBJ *Sat, int iSat)
 {
@@ -1388,13 +1256,9 @@ void GetXYZfromLatLong(double Long,double Lat,double &PosX,double &PosY,double &
 
 #ifdef _DO_VISUALIZATION
 
-
 unsigned char bRGBImage[IMAGE_W*IMAGE_H*3];
 
-
 int iCounterToSkip = 0;
-
-
                                   // mer      ven       ear      mar      jup         sat       urn      nep       plt       moon        sun
 unsigned char PlanetColors[16*3] ={50,50,50, 0,255,0, 0,0,255, 127,0,0, 127,127,0, 127,0,127, 0,127,127, 0,64,64, 64,0,64, 127,127,127, 255,0,0};
 unsigned char SatColors[16*3] ={0,0,0, 20,20,20, 30,30,30,};

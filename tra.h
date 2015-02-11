@@ -65,6 +65,10 @@ void ParamEarth(char *szString);
 void ParamMoon(char *szString);
 void ParamProb(char *szString);
 
+void SUN_08 (int IYEAR,int IDAY,int IHOUR,int MIN,int ISEC,	long double &GST,long double &SLONG,long double &SRASN,long double &SDEC);
+long double GreenwichAscensionFromTLEEpoch(long double EP, long double &preEps, long double &preTetta, long double &preZ, long double &nutEpsilon, long double &nutDFeta);
+
+
 
 GLOBAL_VARIABLE long double C_S_nk[(TOTAL_COEF+3)*(TOTAL_COEF+3)][2];
 
@@ -99,6 +103,8 @@ GLOBAL_VARIABLE int EarthModelCoefs;
 GLOBAL_VARIABLE long double GM_MODEL;
 GLOBAL_VARIABLE long double R0_MODEL;
 
+GLOBAL_VARIABLE long double dStartGreenwichA;
+
 typedef struct Measurement
 {
     int NearBody;
@@ -114,7 +120,7 @@ typedef struct Measurement
     long double P1,P2,P3; // period measured by pulsar obrevation
 } MEASUREMENT, *PMEASUREMENT;
 
-MEASUREMENT measures[MAX_MEASURES];
+GLOBAL_VARIABLE MEASUREMENT measures[MAX_MEASURES];
 
 typedef struct tagPulsars
 {
@@ -704,13 +710,6 @@ typedef struct TraObj
     long double fsinY[PLANET_COUNT];
     long double fsinZ[PLANET_COUNT];
 
-#ifdef _BETTER_BUT_MANY_ITERATIONS
-#else
-
-
-    
-#endif
-
     long double GM[PLANET_COUNT];
     long double M[PLANET_COUNT];
     long double GMxM[PLANET_COUNT][PLANET_COUNT];
@@ -886,7 +885,6 @@ typedef struct CpuMemory {
 #define CONTINUE_TO_WAIT goto WAIT_AGAIN;
 #endif
 
-
     static DWORD WINAPI CallbackThread_Proc(LPVOID lParm)
     {   
         UINT uResult = 0;
@@ -982,9 +980,7 @@ typedef struct CpuMemory {
                 //SetThreadPriority(Callback_Thread[i],THREAD_PRIORITY_IDLE);
                 DWORD err = GetLastError();
             }
-            
         }
-
     }
     void StopThreads(void)
     {
@@ -3770,8 +3766,8 @@ typedef struct CpuMemory {
 
 void AssignFromNASAData(TRAOBJ * SlS, double JDSec);
 
-TRAOBJ SolarSystem;
-TRAOBJ Sat;
+GLOBAL_VARIABLE TRAOBJ SolarSystem;
+GLOBAL_VARIABLE TRAOBJ Sat;
 
 GLOBAL_VARIABLE long double SunX;
 GLOBAL_VARIABLE long double SunY;
@@ -3935,3 +3931,122 @@ GLOBAL_VARIABLE long double MinH;
 GLOBAL_VARIABLE long double MaxH;
 
 GLOBAL_VARIABLE long double GST,SLONG,SRASN, SDEC;
+
+void AssignAllSatelites(TRAOBJ * SlS, int iBody, TRAOBJ * sat, double JDSec);
+GLOBAL_VARIABLE  long double ModelCoef;
+
+GLOBAL_VARIABLE int iCounter_nk_lm_Numbers;
+GLOBAL_VARIABLE char UseSatData[1024];         // allowed initial data:
+                                   // SGP - use SGP from Space Track Report 3 to calculate position and velocity based on TLE
+                                   // SGP4 - use SPG4 to calulate initial position and velocity from TLE
+                                   // SGP8 - use SGP8
+                                   // KEPLER - use internal "kepler" function to calculate position
+                                   // INTERNAL use of internal data
+                                   // ProbTime=<time>, ProbC=<count of integral iterations>, ProbT=<delta time of iterations>
+                                   // ProbX0=<X0>, ProbY0=<Y0>, ProbZ0=<Z0>, ProbVX0=<VX0>, ProbVY0=<VY0>, ProbVZ0=<VZ0>, 
+                                   //   ProbIFX1=<integral Fx>, ProbIFY1=<integral Fy>, ProbIFZ1=<integral Fz>
+                                   //   ProbIFX2=<integral Fx>, ProbIFY2=<integral Fy>, ProbIFZ2=<integral Fz>
+                                   //   ProbIFX3=<integral Fx>, ProbIFY3=<integral Fy>, ProbIFZ3=<integral Fz>
+                                   //   ProbIVX1=<integral VX>, ProbIVY1=<integral VY>, ProbIVZ1=<integral VZ>
+                                   //   ProbIVX2=<integral VX>, ProbIVY2=<integral VY>, ProbIVZ2=<integral VZ>
+                                   //   ProbIVX3=<integral VX>, ProbIVY3=<integral VY>, ProbIVZ3=<integral VZ>
+GLOBAL_VARIABLE long double Targetlongitude; // dolgota
+GLOBAL_VARIABLE long double Targetlatitude; // shirota
+// view from north pole to equator plane 
+/// x to right
+//  y to up
+//  z perpendicular xy and to north
+// x to west (negative axe to east) 
+// y to grinvich meridian ( 0 longitude) west is a negative angle, east positive
+// z to north
+//   LAT = latitude * pi/180    // shirota
+//   LON = longitude * pi/180   // dolgota
+//   Y =  R * cos(LAT) * cos(LON)
+//   Z =  R * sin(LAT) 
+//   X = -R * cos(LAT) * sin(LON)
+//
+// (1) sin(LAT) = z/R  => LAT = arcsin(z/R)
+//
+// (2) sin(LON) = - X / (R * cos(LAT))
+//     LON = arcsin(- X / (R * cos(LAT)))
+//     cos(LON) = Y / (R * cos(LAT))
+//                                             AY
+//      0-> PI/2     sin(LON)<0 cos(LON)>0     | sin(LON) >0 cos(LON) >0      0 -> -PI/2
+//      -------------------------------------------------------------------------------> X
+//      PI/2->PI     sin(LON)<0 cos(LON)<0     | sin(LON)>0 cos(LON) <0    -PI/2 -> -PI
+
+GLOBAL_VARIABLE int EnginesCount;
+GLOBAL_VARIABLE double EngCoeff;
+
+
+#define MAX_ENGINES 6
+#define MAX_IMPULSE_LINES 100
+
+
+typedef struct TraImplObj
+{
+    int iLine;
+    int iEngineOnSatellite;
+    int EngineOn;
+    int EngineDone;
+    int ImplsPointer;
+    int iCalculate;
+    long double TotalImpulse;
+    long double Weight;
+    long double DeltaTime;
+    int IteraPerSec;
+    long double FireTime;
+    long double Ang1;
+    long double Ang2;
+    long double XVec;
+    long double YVec;
+    long double ZVec;
+    long double ValImpl[MAX_IMPULSE_LINES];
+    int NearBody;
+    long double TotalWeight;
+    int AngleType;
+    int AngleOnBody;
+    long double OptimizationInitialStep;
+    long double OptimizationDecCoef;
+    long double OptimizationInitialStepCopy;
+    long double OptimizationDecCoefCopy;
+    long double OptimizationStop;
+    int OptimizationFirstDirectionSwitch;
+    long double SeartchForPeriod;
+    int iCountApogPerig;
+} TRAIMPLOBJ, *PTRAIMPLOBJ;
+
+typedef struct TraOptimObj
+{
+    long double FireTime; // firing time of an engine
+    long double Ang1; // first angle
+    long double Ang2; // second angle
+    long double XVec; // direction firing vector (X component)
+    long double YVec; // direction (Y component)
+    long double ZVec; // direction (Z component)
+    int NearBody; 
+    int AngleType;
+    int AngleOnBody;
+    //int OptimizationFirstDirectionSwitch;
+    int EngineToOptimize;
+    int TrajectoryOptimizationType;
+    int LastEngine;
+    int Calculate;
+    long double OptimizationInitialStep;
+    long double OptimizationDecCoef;
+    long double OptimizationStop;
+    int iNumberOfTryValues;
+#define _VAL_TRY 30*24
+    long double dValTry[_VAL_TRY]; 
+    long double dValTryMaxMin[_VAL_TRY]; 
+    //long double SeartchForPeriod;
+    long double Period;
+}TRAOPTIMOBJ, *PTRAOPTIMOBJ;
+
+GLOBAL_VARIABLE TRAIMPLOBJ Engine[MAX_ENGINES];
+GLOBAL_VARIABLE int iItaration;
+
+GLOBAL_VARIABLE TRAOPTIMOBJ Opt[MAX_OPTIM];
+GLOBAL_VARIABLE int iOptPtr;
+
+
