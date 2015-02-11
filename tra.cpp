@@ -2366,9 +2366,27 @@ void AssignAllSatelites(TRAOBJ * SlS, int iBody, TRAOBJ * sat, double JDSec)
 }
 BOOL SwitchWas = FALSE;
 long double OldTperiod;
-long long nX0_Sls[PLANET_COUNT];
-long long nX0_Sat[PLANET_COUNT];
 long long SetiMayTimes;
+LONG_DOUBLE_INT_VAR Store_velosity_sls[PLANET_COUNT];
+LONG_DOUBLE_INT_VAR Store_position_sls[PLANET_COUNT];
+LONG_DOUBLE_INT_VAR Store_velosity_sat[PLANET_COUNT];
+LONG_DOUBLE_INT_VAR Store_position_sat[PLANET_COUNT];
+
+long double Store_X0divDt2_sls[PLANET_COUNT];
+long double Store_Y0divDt2_sls[PLANET_COUNT];
+long double Store_Z0divDt2_sls[PLANET_COUNT];
+long double Store_VX0divDt_sls[PLANET_COUNT];
+long double Store_VY0divDt_sls[PLANET_COUNT];
+long double Store_VZ0divDt_sls[PLANET_COUNT];
+
+long double Store_X0divDt2_sat[PLANET_COUNT];
+long double Store_Y0divDt2_sat[PLANET_COUNT];
+long double Store_Z0divDt2_sat[PLANET_COUNT];
+long double Store_VX0divDt_sat[PLANET_COUNT];
+long double Store_VY0divDt_sat[PLANET_COUNT];
+long double Store_VZ0divDt_sat[PLANET_COUNT];
+
+
 BOOL SwitchCalcTimePeriod(TRAOBJ * SlS, TRAOBJ * sat, long long iMayTimes)
 {
     int i;
@@ -2378,45 +2396,58 @@ BOOL SwitchCalcTimePeriod(TRAOBJ * SlS, TRAOBJ * sat, long long iMayTimes)
     SetiMayTimes = iMayTimes;
     OldTperiod = SlS->TimeSl;
     long double OldTperiod2 = SlS->TimeSl_2;
-    long double NewTimePeriod = OldTperiod / (long double)iMayTimes;
+    long double NewTimePeriod = OldTperiod / iMayTimes;
     SlS->TimeSl = NewTimePeriod;
     SlS->TimeSl_2 = NewTimePeriod*NewTimePeriod;
+    sat->TimeSl = SlS->TimeSl;
+    sat->TimeSl_2 = SlS->TimeSl_2;
+    long double MayTimes2 = (long double)(iMayTimes * iMayTimes);
 
     for (i = 0; i <SlS->Elem; i++)
     {
-        SlS->X0divDt2[i]=(OldTperiod2*SlS->X0divDt2[i]) /SlS->TimeSl_2;
-        SlS->Y0divDt2[i]=(OldTperiod2*SlS->Y0divDt2[i]) /SlS->TimeSl_2;
-        SlS->Z0divDt2[i]=(OldTperiod2*SlS->Z0divDt2[i]) /SlS->TimeSl_2;
+        Store_X0divDt2_sls[i] = SlS->X0divDt2[i];  Store_Y0divDt2_sls[i] = SlS->Y0divDt2[i];   Store_Z0divDt2_sls[i] = SlS->Z0divDt2[i];
+        Store_VX0divDt_sls[i] = SlS->VX0divDt[i];  Store_VY0divDt_sls[i] = SlS->VY0divDt[i];   Store_VZ0divDt_sls[i] = SlS->VZ0divDt[i];
 
-        SlS->VX0divDt[i]=(OldTperiod*SlS->VX0divDt[i]) /SlS->TimeSl;
-        SlS->VY0divDt[i]=(OldTperiod*SlS->VY0divDt[i]) /SlS->TimeSl;
-        SlS->VZ0divDt[i]=(OldTperiod*SlS->VZ0divDt[i]) /SlS->TimeSl;
+        SlS->X0divDt2[i]=(MayTimes2 * SlS->X0divDt2[i]);
+        SlS->Y0divDt2[i]=(MayTimes2 * SlS->Y0divDt2[i]);
+        SlS->Z0divDt2[i]=(MayTimes2 * SlS->Z0divDt2[i]);
+
+        SlS->VX0divDt[i]=((long double)iMayTimes*SlS->VX0divDt[i]);
+        SlS->VY0divDt[i]=((long double)iMayTimes*SlS->VY0divDt[i]);
+        SlS->VZ0divDt[i]=((long double)iMayTimes*SlS->VZ0divDt[i]);
 
 #ifdef NO_SEPARATION_VEL_POS
-        SlS->_position_[i].X0 = SlS->X0divDt2[i]+ SlS->VX0divDt[i];
-        SlS->_position_[i].Y0 = SlS->Y0divDt2[i]+ SlS->VY0divDt[i];
-        SlS->_position_[i].Z0 = SlS->Z0divDt2[i]+ SlS->VZ0divDt[i];
+        Store_position_sls[i].X0 = SlS->_position_[i].X0;  Store_position_sls[i].Y0 = SlS->_position_[i].Y0;  Store_position_sls[i].Z0 = SlS->_position_[i].Z0;
+        SlS->_position_[i].X0 = (SlS->X0divDt2[i]+ SlS->VX0divDt[i])/SlS->M[i] ;
+        SlS->_position_[i].Y0 = (SlS->Y0divDt2[i]+ SlS->VY0divDt[i])/SlS->M[i] ;
+        SlS->_position_[i].Z0 = (SlS->Z0divDt2[i]+ SlS->VZ0divDt[i])/SlS->M[i] ;
 #else
-        SlS->_position_[i].X0 = SlS->X0divDt2[i]; SlS->_position_[i].VX0 = SlS->VX0divDt[i];
-        SlS->_position_[i].Y0 = SlS->Y0divDt2[i]; SlS->_position_[i].VY0 = SlS->VY0divDt[i];
-        SlS->_position_[i].Z0 = SlS->Z0divDt2[i]; SlS->_position_[i].VZ0 = SlS->VZ0divDt[i];
+        Store_position_sls[i].X0 = SlS->_position_[i].X0;    Store_position_sls[i].Y0 = SlS->_position_[i].Y0;    Store_position_sls[i].Z0 = SlS->_position_[i].Z0;
+        Store_position_sls[i].VX0 = SlS->_position_[i].VX0;  Store_position_sls[i].XY0 = SlS->_position_[i].VY0;  Store_position_sls[i].VZ0 = SlS->_position_[i].VZ0;
+        SlS->_position_[i].X0 = SlS->X0divDt2[i]/SlS->M[i]; SlS->_position_[i].VX0 = SlS->VX0divDt[i]/SlS->M[i];
+        SlS->_position_[i].Y0 = SlS->Y0divDt2[i]/SlS->M[i]; SlS->_position_[i].VY0 = SlS->VY0divDt[i]/SlS->M[i];
+        SlS->_position_[i].Z0 = SlS->Z0divDt2[i]/SlS->M[i]; SlS->_position_[i].VZ0 = SlS->VZ0divDt[i]/SlS->M[i];
 #endif
-        SlS->_velosity_[i].X0 = SlS->VX0divDt[i];
-        SlS->_velosity_[i].Y0 = SlS->VY0divDt[i];
-        SlS->_velosity_[i].Z0 = SlS->VZ0divDt[i];
-        nX0_Sls[i] = SlS->_velosity_[i].nX0;
+        Store_velosity_sls[i].X0 = SlS->_velosity_[i].X0;  Store_velosity_sls[i].Y0 = SlS->_velosity_[i].Y0;  Store_velosity_sls[i].Z0 = SlS->_velosity_[i].Z0;
+        SlS->_velosity_[i].X0 = SlS->VX0divDt[i]/SlS->M[i] ;
+        SlS->_velosity_[i].Y0 = SlS->VY0divDt[i]/SlS->M[i] ;
+        SlS->_velosity_[i].Z0 = SlS->VZ0divDt[i]/SlS->M[i] ;
+        SlS->_position_[i].nX0 *= iMayTimes;
         SlS->_velosity_[i].nX0 *= iMayTimes;
     }
 
     for (i = 0; i <sat->Elem; i++)
     {
-        sat->X0divDt2[i] = (OldTperiod2* sat->X0divDt2[i])/SlS->TimeSl_2;
-        sat->Y0divDt2[i] = (OldTperiod2* sat->Y0divDt2[i])/SlS->TimeSl_2;
-        sat->Z0divDt2[i] = (OldTperiod2* sat->Z0divDt2[i])/SlS->TimeSl_2;
+        Store_X0divDt2_sat[i] = sat->X0divDt2[i];  Store_Y0divDt2_sat[i] = sat->Y0divDt2[i];   Store_Z0divDt2_sat[i] = sat->Z0divDt2[i];
+        Store_VX0divDt_sat[i] = sat->VX0divDt[i];  Store_VY0divDt_sat[i] = sat->VY0divDt[i];   Store_VZ0divDt_sat[i] = sat->VZ0divDt[i];
 
-        sat->VX0divDt[i] = (OldTperiod*sat->VX0divDt[i])/SlS->TimeSl;
-        sat->VY0divDt[i] = (OldTperiod*sat->VY0divDt[i])/SlS->TimeSl;
-        sat->VZ0divDt[i] = (OldTperiod*sat->VZ0divDt[i])/SlS->TimeSl;
+        sat->X0divDt2[i] = (MayTimes2 * sat->X0divDt2[i]);
+        sat->Y0divDt2[i] = (MayTimes2 * sat->Y0divDt2[i]);
+        sat->Z0divDt2[i] = (MayTimes2 * sat->Z0divDt2[i]);
+
+        sat->VX0divDt[i] = ((long double)iMayTimes * sat->VX0divDt[i]);
+        sat->VY0divDt[i] = ((long double)iMayTimes * sat->VY0divDt[i]);
+        sat->VZ0divDt[i] = ((long double)iMayTimes * sat->VZ0divDt[i]);
          
         //Sat->X[i] = (Sat->X[i]+ Sat->_velosity_[i].X0 *Sat->_velosity_[i].nX0)* SlS->TimeSl_2;   
         //Sat->Y[i] = (Sat->Y[i]+ Sat->_velosity_[i].Y0 *Sat->_velosity_[i].nX0)* SlS->TimeSl_2;   
@@ -2424,18 +2455,22 @@ BOOL SwitchCalcTimePeriod(TRAOBJ * SlS, TRAOBJ * sat, long long iMayTimes)
         //Sat->_velosity_[i].getIntegral(Sat->VX[i], Sat->VY[i], Sat->VZ[i]);
         //Sat->VX[i] *= SlS->TimeSl; Sat->VY[i] *= SlS->TimeSl; Sat->VZ[i] *= SlS->TimeSl;
 #ifdef NO_SEPARATION_VEL_POS
+        Store_position_sat[i].X0 = sat->_position_[i].X0;  Store_position_sat[i].Y0 = sat->_position_[i].Y0;  Store_position_sat[i].Z0 = sat->_position_[i].Z0;
         sat->_position_[i].X0 = sat->X0divDt2[i] + sat->VX0divDt[i];
         sat->_position_[i].Y0 = sat->Y0divDt2[i] + sat->VY0divDt[i];
         sat->_position_[i].Z0 = sat->Z0divDt2[i] + sat->VZ0divDt[i];
 #else
+        Store_position_sat[i].X0 = sat->_position_[i].X0;    Store_position_sat[i].Y0 = sat->_position_[i].Y0;    Store_position_sat[i].Z0 = sat->_position_[i].Z0;
+        Store_position_sat[i].VX0 = sat->_position_[i].VX0;  Store_position_sat[i].XY0 = sat->_position_[i].VY0;  Store_position_sat[i].VZ0 = sat->_position_[i].VZ0;
         Sat->_position_[i].X0 = sat->X0divDt2[i]; Sat->_position_[i].VX0 = sat->VX0divDt[i];
         Sat->_position_[i].Y0 = sat->Y0divDt2[i]; Sat->_position_[i].VY0 = sat->VY0divDt[i];
         Sat->_position_[i].Z0 = sat->Z0divDt2[i]; Sat->_position_[i].VZ0 = sat->VZ0divDt[i];
 #endif
+        Store_velosity_sat[i].X0 = sat->_velosity_[i].X0;  Store_velosity_sat[i].Y0 = sat->_velosity_[i].Y0;  Store_velosity_sat[i].Z0 = sat->_velosity_[i].Z0;
         sat->_velosity_[i].X0 = sat->VX0divDt[i];
         sat->_velosity_[i].Y0 = sat->VY0divDt[i];
         sat->_velosity_[i].Z0 = sat->VZ0divDt[i];
-        nX0_Sat[i] = sat->_velosity_[i].nX0;
+        sat->_position_[i].nX0 *= iMayTimes;
         sat->_velosity_[i].nX0 *= iMayTimes;
     }
     return TRUE;
@@ -2459,65 +2494,68 @@ BOOL SwitchBackCalcTimePeriod(TRAOBJ * SlS, TRAOBJ * sat)
     }
     SwitchWas = FALSE;
     long double OldTperiod2 = SlS->TimeSl_2;
-    long double NewTimePeriod = OldTperiod * (long double)SetiMayTimes;
+    long double NewTimePeriod = OldTperiod;// * (long double)SetiMayTimes;
     SlS->TimeSl = NewTimePeriod;
     SlS->TimeSl_2 = NewTimePeriod*NewTimePeriod;
+    sat->TimeSl = SlS->TimeSl;
+    sat->TimeSl_2 = SlS->TimeSl_2;
+    long double MayTimes2 = (long double)(SetiMayTimes * SetiMayTimes);
 
     for (i = 0; i <SlS->Elem; i++)
     {
-        SlS->X0divDt2[i]=(OldTperiod2*SlS->X0divDt2[i]) /SlS->TimeSl_2;
-        SlS->Y0divDt2[i]=(OldTperiod2*SlS->Y0divDt2[i]) /SlS->TimeSl_2;
-        SlS->Z0divDt2[i]=(OldTperiod2*SlS->Z0divDt2[i]) /SlS->TimeSl_2;
+        SlS->X0divDt2[i] = Store_X0divDt2_sls[i];
+        SlS->Y0divDt2[i] = Store_Y0divDt2_sls[i];
+        SlS->Z0divDt2[i] = Store_Z0divDt2_sls[i];
 
-        SlS->VX0divDt[i]=(OldTperiod*SlS->VX0divDt[i]) /SlS->TimeSl;
-        SlS->VY0divDt[i]=(OldTperiod*SlS->VY0divDt[i]) /SlS->TimeSl;
-        SlS->VZ0divDt[i]=(OldTperiod*SlS->VZ0divDt[i]) /SlS->TimeSl;
+        SlS->VX0divDt[i] = Store_VX0divDt_sls[i];
+        SlS->VY0divDt[i] = Store_VY0divDt_sls[i];
+        SlS->VZ0divDt[i] = Store_VZ0divDt_sls[i];
 
 #ifdef NO_SEPARATION_VEL_POS
-        SlS->_position_[i].X0 = SlS->X0divDt2[i]+ SlS->VX0divDt[i];
-        SlS->_position_[i].Y0 = SlS->Y0divDt2[i]+ SlS->VY0divDt[i];
-        SlS->_position_[i].Z0 = SlS->Z0divDt2[i]+ SlS->VZ0divDt[i];
+        SlS->_position_[i].X0 = Store_position_sls[i].X0;
+        SlS->_position_[i].Y0 = Store_position_sls[i].Y0;
+        SlS->_position_[i].Z0 = Store_position_sls[i].Z0;
 #else
-        SlS->_position_[i].X0 = SlS->X0divDt2[i]; SlS->_position_[i].VX0 = SlS->VX0divDt[i];
-        SlS->_position_[i].Y0 = SlS->Y0divDt2[i]; SlS->_position_[i].VY0 = SlS->VY0divDt[i];
-        SlS->_position_[i].Z0 = SlS->Z0divDt2[i]; SlS->_position_[i].VZ0 = SlS->VZ0divDt[i];
+        SlS->_position_[i].X0 = Store_position_sls[i].X0;
+        SlS->_position_[i].Y0 = Store_position_sls[i].Y0;
+        SlS->_position_[i].Z0 = Store_position_sls[i].Z0;
+        SlS->_position_[i].VX0= Store_position_sls[i].VX0;
+        SlS->_position_[i].VY0= Store_position_sls[i].XY0;
+        SlS->_position_[i].VZ0= Store_position_sls[i].VZ0;
 #endif
-        SlS->_velosity_[i].X0 = SlS->VX0divDt[i];
-        SlS->_velosity_[i].Y0 = SlS->VY0divDt[i];
-        SlS->_velosity_[i].Z0 = SlS->VZ0divDt[i];
+        SlS->_velosity_[i].X0 = Store_velosity_sls[i].X0;
+        SlS->_velosity_[i].Y0 = Store_velosity_sls[i].Y0;
+        SlS->_velosity_[i].Z0 = Store_velosity_sls[i].Z0;
 
-        SlS->_velosity_[i].nX0 = nX0_Sls[i]/SetiMayTimes;
+        SlS->_position_[i].nX0 /= SetiMayTimes;
+        SlS->_velosity_[i].nX0 /= SetiMayTimes;
     }
 
     for (i = 0; i <sat->Elem; i++)
     {
-        sat->X0divDt2[i] = (OldTperiod2* sat->X0divDt2[i])/SlS->TimeSl_2;
-        sat->Y0divDt2[i] = (OldTperiod2* sat->Y0divDt2[i])/SlS->TimeSl_2;
-        sat->Z0divDt2[i] = (OldTperiod2* sat->Z0divDt2[i])/SlS->TimeSl_2;
-
-        sat->VX0divDt[i] = (OldTperiod*sat->VX0divDt[i])/SlS->TimeSl;
-        sat->VY0divDt[i] = (OldTperiod*sat->VY0divDt[i])/SlS->TimeSl;
-        sat->VZ0divDt[i] = (OldTperiod*sat->VZ0divDt[i])/SlS->TimeSl;
-         
-        //Sat->X[i] = (Sat->X[i]+ Sat->_velosity_[i].X0 *Sat->_velosity_[i].nX0)* SlS->TimeSl_2;   
-        //Sat->Y[i] = (Sat->Y[i]+ Sat->_velosity_[i].Y0 *Sat->_velosity_[i].nX0)* SlS->TimeSl_2;   
-        //Sat->Z[i] = (Sat->Z[i]+ Sat->_velosity_[i].Z0 *Sat->_velosity_[i].nX0)* SlS->TimeSl_2;
-        //Sat->_velosity_[i].getIntegral(Sat->VX[i], Sat->VY[i], Sat->VZ[i]);
-        //Sat->VX[i] *= SlS->TimeSl; Sat->VY[i] *= SlS->TimeSl; Sat->VZ[i] *= SlS->TimeSl;
+        sat->X0divDt2[i]= Store_X0divDt2_sat[i];  
+        sat->Y0divDt2[i]= Store_Y0divDt2_sat[i];
+        sat->Z0divDt2[i]= Store_Z0divDt2_sat[i];
+        sat->VX0divDt[i]= Store_VX0divDt_sat[i];
+        sat->VY0divDt[i]= Store_VY0divDt_sat[i];
+        sat->VZ0divDt[i]= Store_VZ0divDt_sat[i];
 #ifdef NO_SEPARATION_VEL_POS
-        sat->_position_[i].X0 = sat->X0divDt2[i] + sat->VX0divDt[i];
-        sat->_position_[i].Y0 = sat->Y0divDt2[i] + sat->VY0divDt[i];
-        sat->_position_[i].Z0 = sat->Z0divDt2[i] + sat->VZ0divDt[i];
+        sat->_position_[i].X0 = Store_position_sat[i].X0;
+        sat->_position_[i].Y0 = Store_position_sat[i].Y0;
+        sat->_position_[i].Z0 = Store_position_sat[i].Z0;
 #else
-        sat->_position_[i].X0 = sat->X0divDt2[i]; Sat->_position_[i].VX0 = sat->VX0divDt[i];
-        sat->_position_[i].Y0 = sat->Y0divDt2[i]; Sat->_position_[i].VY0 = sat->VY0divDt[i];
-        sat->_position_[i].Z0 = sat->Z0divDt2[i]; Sat->_position_[i].VZ0 = sat->VZ0divDt[i];
+        sat->_position_[i].X0 = Store_position_sat[i].X0;
+        sat->_position_[i].Y0 = Store_position_sat[i].Y0;
+        sat->_position_[i].Z0 = Store_position_sat[i].Z0;
+        sat->_position_[i].VX0= Store_position_sat[i].VX0;
+        sat->_position_[i].VY0= Store_position_sat[i].XY0;
+        sat->_position_[i].VZ0= Store_position_sat[i].VZ0;
 #endif
-        sat->_velosity_[i].X0 = sat->VX0divDt[i];
-        sat->_velosity_[i].Y0 = sat->VY0divDt[i];
-        sat->_velosity_[i].Z0 = sat->VZ0divDt[i];
-        nX0_Sat[i] = sat->_velosity_[i].nX0;
-        sat->_velosity_[i].nX0 = nX0_Sat[i] *SetiMayTimes;
+        sat->_velosity_[i].X0 = Store_velosity_sat[i].X0;
+        sat->_velosity_[i].Y0 = Store_velosity_sat[i].Y0;
+        sat->_velosity_[i].Z0 = Store_velosity_sat[i].Z0;
+        sat->_position_[i].nX0 /= SetiMayTimes;
+        sat->_velosity_[i].nX0 /= SetiMayTimes;
     }
     return TRUE;
 }
