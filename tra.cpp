@@ -31,6 +31,7 @@
 
 #define USE_GLOBAL
 
+
 #include "procXML.h"
 #include "tra.h"
 
@@ -43,10 +44,6 @@
 #include "JPEGLIB.H"
 void write_JPEG_file (char * filename, int quality, int SizeW, int SizeH, int SizeB, unsigned char *bArray, J_COLOR_SPACE ColorCode);
 #endif
-
-#define _NORMALIZED_COEF 1
-
-#define MAX_COEF_J 18
 
 
 

@@ -4,6 +4,8 @@
 #define GLOBAL_VARIABLE extern
 #endif
 
+#define _NORMALIZED_COEF 1
+
 #define MERCURY 0
 #define VENUS 1
 #define EARTH 2
