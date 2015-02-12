@@ -163,6 +163,10 @@ typedef struct XYZ_Split_Ponter_Var
     long double valZM;
 } XYZ_SPLIT_POINTER_VAR, *PXYZ_SPLIT_POINTER_VAR;
 
+// that is not workinh gor now:
+//#define SIMPSON_INTEGRAL
+
+
 typedef struct Long_Double_Intergal_Var
 {
     long long nX0;
@@ -178,7 +182,8 @@ typedef struct Long_Double_Intergal_Var
     long double VX0;
     long double VY0;
     long double VZ0;
-
+#ifndef SIMPSON_INTEGRAL
+#else
     long double X6[6];
     long double Y6[6];
     long double Z6[6];
@@ -199,7 +204,7 @@ typedef struct Long_Double_Intergal_Var
     long double X6_hhh[6];
     long double Y6_hhh[6];
     long double Z6_hhh[6];
-
+#endif
     long double X;
     long double Y;
     long double Z;
@@ -622,6 +627,8 @@ typedef struct Long_Double_Intergal_Var
 
         X0 = 0.0;      Y0 = 0.0;      Z0 = 0.0;
         VX0 = 0.0;      VY0 = 0.0;      VZ0 = 0.0;
+#ifndef SIMPSON_INTEGRAL
+#else
         for (int i = 0; i < 6; i++)
         {
             x6[i] = 0.0;      x6[i] = 0.0;      x6[i] = 0.0;
@@ -631,10 +638,61 @@ typedef struct Long_Double_Intergal_Var
             X6_hhh[i] = 0.0;  Y6_hhh[i] = 0.0;  Z6_hhh[i] = 0.0;
         }
         i6 = 0;
-
+#endif
         X_temp = 0.0; Y_temp = 0.0;   Z_temp = 0.0;
         VX_temp = 0.0; VY_temp = 0.0;   VZ_temp = 0.0;
     };
+    void SetIterationCoefMult(long long itercoef)
+    {
+        X *=itercoef;  X_temp  *=itercoef;   X0M  *=itercoef;
+        Y *=itercoef;  Y_temp  *=itercoef;   Y0M  *=itercoef;
+        Z *=itercoef;  Z_temp  *=itercoef;   Z0M  *=itercoef;
+        X_h *=itercoef;    Y_h *=itercoef;    Z_h *=itercoef;
+        X_hh *=itercoef;   Y_hh *=itercoef;   Z_hh *=itercoef;
+        X_hhh *=itercoef;   Y_hhh *=itercoef;   Z_hhh *=itercoef;
+        VX *=itercoef;      VY *=itercoef;      VZ *=itercoef;
+        VX_h *=itercoef;    VY_h *=itercoef;    VZ_h *=itercoef;
+        VX_hh *=itercoef;   VY_hh *=itercoef;   VZ_hh *=itercoef;
+        VX_hhh *=itercoef;   VY_hhh *=itercoef;   VZ_hhh *=itercoef;
+#ifndef SIMPSON_INTEGRAL
+#else
+        for (int i = 0; i < 6; i++)
+        {
+            x6[i] *=itercoef;      x6[i] *=itercoef;      x6[i] *=itercoef;
+            X6[i] *=itercoef;      Y6[i] *=itercoef;      Z6[i] *=itercoef;
+            X6_h[i] *=itercoef;    Y6_h[i] *=itercoef;    Z6_h[i] *=itercoef;
+            X6_hh[i] *=itercoef;   Y6_hh[i] *=itercoef;   Z6_hh[i] *=itercoef;
+            X6_hhh[i] *=itercoef;  Y6_hhh[i] *=itercoef;  Z6_hhh[i] *=itercoef;
+        }
+#endif
+        nX0 *=itercoef;
+    }
+    void SetIterationCoefDiv(long long itercoef)
+    {
+        X /=itercoef;  X_temp  /=itercoef;   X0M  /=itercoef;
+        Y /=itercoef;  Y_temp  /=itercoef;   Y0M  /=itercoef;
+        Z /=itercoef;  Z_temp  /=itercoef;   Z0M  /=itercoef;
+        X_h /=itercoef;    Y_h /=itercoef;    Z_h /=itercoef;
+        X_hh /=itercoef;   Y_hh /=itercoef;   Z_hh /=itercoef;
+        X_hhh /=itercoef;   Y_hhh /=itercoef;   Z_hhh /=itercoef;
+        VX /=itercoef;      VY /=itercoef;      VZ /=itercoef;
+        VX_h /=itercoef;    VY_h /=itercoef;    VZ_h /=itercoef;
+        VX_hh /=itercoef;   VY_hh /=itercoef;   VZ_hh /=itercoef;
+        VX_hhh /=itercoef;   VY_hhh /=itercoef;   VZ_hhh /=itercoef;
+#ifndef SIMPSON_INTEGRAL
+#else
+        for (int i = 0; i < 6; i++)
+        {
+            x6[i] /=itercoef;      x6[i] /=itercoef;      x6[i] /=itercoef;
+            X6[i] /=itercoef;      Y6[i] /=itercoef;      Z6[i] /=itercoef;
+            X6_h[i] /=itercoef;    Y6_h[i] /=itercoef;    Z6_h[i] /=itercoef;
+            X6_hh[i] /=itercoef;   Y6_hh[i] /=itercoef;   Z6_hh[i] /=itercoef;
+            X6_hhh[i] /=itercoef;  Y6_hhh[i] /=itercoef;  Z6_hhh[i] /=itercoef;
+        }
+#endif
+        nX0 /=itercoef;
+    }
+
 } LONG_DOUBLE_INT_VAR, *PLONG_DOUBLE_INT_VAR;
 
 typedef struct TraObj

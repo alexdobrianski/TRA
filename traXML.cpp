@@ -564,6 +564,7 @@ void ParamEarth(char *szString)
 
         //XML_READ(GMEarth);
         //XML_READ(MassRatioSunToEarthPlusMoon);
+/*
         IF_XML_READ(EarthCalcKepler)  
         {
             // not used - left for verification in debug mode only            
@@ -619,6 +620,7 @@ void ParamEarth(char *szString)
                 MoonVZ = tempCenterEarthMoonVZ + tempMoonVZ * (EarthM/(EarthM+MoonM));
             }
         }
+*/
     XML_SECTION_END;
     XML_END;
 }

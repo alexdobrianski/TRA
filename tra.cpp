@@ -382,7 +382,7 @@ long double Slm[MAX_COEF_J][MAX_COEF_J] = {
 
 
 
-
+/*
 typedef struct Long_Double_Intergal_Var4
 {
     long double X;
@@ -494,7 +494,7 @@ typedef struct Long_Double_Intergal_Var4
         CountNx_hh = 0; CountNy_hh = 0; CountNz_hh = 0;
     };
 } LONG_DOUBLE_INT_VAR4, *PLONG_DOUBLE_INT_VAR4;
-
+*/
 
 
 #define MINIMUM_BY_TIME 1
@@ -573,17 +573,11 @@ char szMoonKeplerLine1[1024];
 char szMoonKeplerLine2[1024];
 char szMoonKeplerLine3[1024];
 
-
-
-
-
-
 char SimulationTempOutputFile[1024]={"@trasimoutput.xml"};
 
 char CalulationTempOutputFile[1024]={"@tracalc.xml"}; // in CALC mode the output file with 
  
 char szCalcinfoFileName[256];
-
 
 void CalcPlanetForces(TRAOBJ * SlS)
 {
@@ -2218,8 +2212,8 @@ BOOL SwitchCalcTimePeriod(TRAOBJ * SlS, TRAOBJ * sat, long long iMayTimes)
         SlS->_velosity_[i].X0 = SlS->VX0divDt[i]/SlS->M[i] ;
         SlS->_velosity_[i].Y0 = SlS->VY0divDt[i]/SlS->M[i] ;
         SlS->_velosity_[i].Z0 = SlS->VZ0divDt[i]/SlS->M[i] ;
-        SlS->_position_[i].nX0 *= iMayTimes;
-        SlS->_velosity_[i].nX0 *= iMayTimes;
+        SlS->_position_[i].SetIterationCoefMult(iMayTimes);
+        SlS->_velosity_[i].SetIterationCoefMult(iMayTimes);
     }
 
     for (i = 0; i <sat->Elem; i++)
@@ -2256,8 +2250,8 @@ BOOL SwitchCalcTimePeriod(TRAOBJ * SlS, TRAOBJ * sat, long long iMayTimes)
         sat->_velosity_[i].X0 = sat->VX0divDt[i];
         sat->_velosity_[i].Y0 = sat->VY0divDt[i];
         sat->_velosity_[i].Z0 = sat->VZ0divDt[i];
-        sat->_position_[i].nX0 *= iMayTimes;
-        sat->_velosity_[i].nX0 *= iMayTimes;
+        sat->_position_[i].SetIterationCoefMult(iMayTimes);
+        sat->_velosity_[i].SetIterationCoefMult(iMayTimes);
     }
     return TRUE;
 }
@@ -2313,8 +2307,8 @@ BOOL SwitchBackCalcTimePeriod(TRAOBJ * SlS, TRAOBJ * sat)
         SlS->_velosity_[i].Y0 = Store_velosity_sls[i].Y0;
         SlS->_velosity_[i].Z0 = Store_velosity_sls[i].Z0;
 
-        SlS->_position_[i].nX0 /= SetiMayTimes;
-        SlS->_velosity_[i].nX0 /= SetiMayTimes;
+        SlS->_position_[i].SetIterationCoefDiv(SetiMayTimes);
+        SlS->_velosity_[i].SetIterationCoefDiv(SetiMayTimes);
     }
 
     for (i = 0; i <sat->Elem; i++)
@@ -2340,8 +2334,8 @@ BOOL SwitchBackCalcTimePeriod(TRAOBJ * SlS, TRAOBJ * sat)
         sat->_velosity_[i].X0 = Store_velosity_sat[i].X0;
         sat->_velosity_[i].Y0 = Store_velosity_sat[i].Y0;
         sat->_velosity_[i].Z0 = Store_velosity_sat[i].Z0;
-        sat->_position_[i].nX0 /= SetiMayTimes;
-        sat->_velosity_[i].nX0 /= SetiMayTimes;
+        sat->_position_[i].SetIterationCoefDiv(SetiMayTimes);
+        sat->_velosity_[i].SetIterationCoefDiv(SetiMayTimes);
     }
     return TRUE;
 }
@@ -4842,6 +4836,7 @@ int GetFileString(char *_szXMLFileName, char *_szLocalFileName, int FileStatusFl
             return 2;
         }
     }
+    return 66;
 }
 
 
