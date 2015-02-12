@@ -173,10 +173,9 @@ typedef struct Long_Double_Intergal_Var
 {
     long long nX0;
 
-    long double X0M;
-    long double Y0M;
-    long double Z0M;
-
+    long double Xm;
+    long double Ym;
+    long double Zm;
 
     long double X0;
     long double Y0;
@@ -263,15 +262,15 @@ typedef struct Long_Double_Intergal_Var
 
     long double x() 
     { 
-           return X+X_temp+X0M; 
+           return X+X_temp+Xm; 
     };
     long double y() 
     { 
-            return Y+Y_temp+Y0M; 
+            return Y+Y_temp+Ym; 
     };
     long double z() 
     { 
-            return Z+Z_temp+Z0M; 
+            return Z+Z_temp+Zm; 
     };
     long double vx() 
     { 
@@ -286,18 +285,18 @@ typedef struct Long_Double_Intergal_Var
             return VZ+VZ_temp; 
     };
 #ifndef SIMPSON_INTEGRAL
-    //void Addpos(XYZ_SPLIT_POINTER_VAR *XYZdata,XYZ_SPLIT_POINTER_VAR *XYZdataVel)
-    //{
-    //    X+=XYZdata->valX;  Y+=XYZdata->valY;   Z+=XYZdata->valZ;
-    //    X0M +=XYZdata->valXM; Y0M +=XYZdata->valYM; Z0M +=XYZdata->valZM;
-    //    X0S +=XYZdata->valXS; Y0S +=XYZdata->valYS; Z0S +=XYZdata->valZS;
-    //    VX+=XYZdataVel->valX;  VY+=XYZdataVel->valY;   VZ+=XYZdataVel->valZ;
-    //    
-    //}
+    void Addpos(XYZ_SPLIT_POINTER_VAR *XYZdata,XYZ_SPLIT_POINTER_VAR *XYZdataVel)
+    {
+        X+=XYZdata->valX;  Y+=XYZdata->valY;   Z+=XYZdata->valZ;
+        Xm +=XYZdata->valXM; Ym +=XYZdata->valYM; Zm +=XYZdata->valZM;
+        //X0S +=XYZdata->valXS; Y0S +=XYZdata->valYS; Z0S +=XYZdata->valZS;
+        //VX+=XYZdataVel->valX;  VY+=XYZdataVel->valY;   VZ+=XYZdataVel->valZ;
+        
+    }
     void Add(XYZ_SPLIT_POINTER_VAR *XYZdata)
     {
         X+=XYZdata->valX;  Y+=XYZdata->valY;  Z+=XYZdata->valZ;
-        X0M +=XYZdata->valXM; Y0M +=XYZdata->valYM; Z0M +=XYZdata->valZM;
+        Xm +=XYZdata->valXM; Ym +=XYZdata->valYM; Zm +=XYZdata->valZM;
     }
 #else
     void Add(XYZ_SPLIT_POINTER_VAR *XYZdata)
@@ -325,9 +324,9 @@ typedef struct Long_Double_Intergal_Var
     void getIntegralpos(long double &valVX, long double &valVY, long double &valVZ)
     {
 #ifndef SIMPSON_INTEGRAL
-            valVX = (x()+X0+vx()+VX0 + X0M);    
-            valVY = (y()+Y0+vy()+VY0 + Y0M);    
-            valVZ = (z()+Z0+vz()+VZ0 + Z0M);
+            valVX = (x()+X0+vx()+VX0);    
+            valVY = (y()+Y0+vy()+VY0);    
+            valVZ = (z()+Z0+vz()+VZ0);
 #else
             valVX = (X_temp + X + X0 + X0M + X0S);    
             valVY = (Y_temp + Y + Y0 + Y0M + Y0S);    
@@ -612,7 +611,7 @@ typedef struct Long_Double_Intergal_Var
 #endif
     void ZeroIntegral (void)
     {
-        X0M = 0.0; Y0M = 0.0; Z0M = 0.0;
+        Xm = 0.0; Ym = 0.0; Zm = 0.0;
         nX0 = 0;
         X = 0.0;      Y = 0.0;      Z = 0.0;
         X_h =0.0;    Y_h =0.0;    Z_h =0.0;
