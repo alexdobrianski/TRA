@@ -1,0 +1,13 @@
+PCB with photoresist FR-4
+h = 0.74 - 0.04 *2 = 0.66
+h=159.7
+w=230
+C=2189pF
+er= 4.97
+
+PCB from Express PCB 07/03/15
+h= 1.48
+w=2.5" =63.5
+h=3.6" = 91.44
+C=168pF
+er=  4.85
