@@ -1,35 +1,29 @@
 #
 # File:      C:\alexd\tra\second_strip.wc
-# Modified:  Sat Mar 14 16:54:14 2015
+# Modified:  Sat Mar 14 21:48:47 2015
 # Wcalc Version 1.1
 
 [wcalc]
 wcalc_file_version = 0.1
-model_name = coplanar
+model_name = microstrip
 
 
-[coplanar]
+[microstrip]
 
-# Coplanar waveguide file version
+# Microstrip file version
 file_version = 0.1
 
 # Length (meters)
-L = 1
+L = 0.084
 
 # Width (meters)
-W = 0.0029
-
-# Spacing (meters)
-S = 0.003
-
-# Include the bottom side ground?
-WithGround = 1
+W = 0.00127
 
 # Characteristic Impedance (ohms)
-Z0 = 30.5070253597517
+Z0 = 49.9209084269463
 
 # Electrical Length (degrees)
-Elen = 977.474451257754
+Elen = 77.0670340077032
 
 # Frequency of operation
 freq = 400000000
@@ -41,20 +35,20 @@ units_lwht = 2
 # [mm]
 
 # Incremental inductance units
-units_L = 1-6
-# [nH/inch]
+units_L = 1-2
+# [nH/mm]
 
 # Incremental resistance units
-units_R = 1-6
-# [mOhm/inch]
+units_R = 1-2
+# [mOhm/mm]
 
 # Incremental capacitance units
-units_C = 1-6
-# [pF/inch]
+units_C = 1-2
+# [pF/mm]
 
 # Incremental conductance units
-units_G = 0-6
-# [uMho/inch]
+units_G = 0-2
+# [uMho/mm]
 
 # Line physical length units
 units_len = 0
@@ -69,28 +63,28 @@ units_loss = 0
 # [dB]
 
 # Loss/length units
-units_losslen = 0-6
-# [dB/inch]
+units_losslen = 0-4
+# [dB/m]
 
 # Resistivity units
 units_rho = 2-4
 # [Ohm-m]
 
 # Surface roughness units (RMS)
-units_rough = 5
-# [mil]
+units_rough = 2
+# [mm]
 
 # Delay units
-units_delay = 3
-# [ns]
+units_delay = 2
+# [ps]
 
 # Skin depth units
-units_depth = 5
-# [mil]
+units_depth = 2
+# [mm]
 
 # End correction units
-units_deltal = 6
-# [inch]
+units_deltal = 2
+# [mm]
 
 
 [substrate]
@@ -102,13 +96,13 @@ H = 0.00074
 ER = 4.97
 
 # Metalization thickness (meters)
-TMET = 0.0014
+TMET = 2e-005
 
 # Metalization resistivity (ohm-meters)
 RHO = 3e-008
 
 # Metalization surface roughness (meters-RMS)
-ROUGH = 2.54e-008
+ROUGH = 1e-006
 
 # Dielectric loss tangent
 TAND = 0.01
