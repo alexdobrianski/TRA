@@ -1,6 +1,6 @@
 #
 # File:      C:\alexd\tra\main_strip.wc
-# Modified:  Sat Mar 14 16:53:09 2015
+# Modified:  Mon Mar 16 23:12:04 2015
 # Wcalc Version 1.1
 
 [wcalc]
@@ -14,7 +14,7 @@ model_name = microstrip
 file_version = 0.1
 
 # Length (meters)
-L = 0.0255
+L = 0.03078
 
 # Width (meters)
 W = 0.000762
@@ -23,7 +23,7 @@ W = 0.000762
 Z0 = 65.3386700940529
 
 # Electrical Length (degrees)
-Elen = 22.8759154376306
+Elen = 27.6125755753047
 
 # Frequency of operation
 freq = 400000000
@@ -43,8 +43,8 @@ units_R = 1-6
 # [mOhm/inch]
 
 # Incremental capacitance units
-units_C = 1-6
-# [pF/inch]
+units_C = 5-4
+# [F/m]
 
 # Incremental conductance units
 units_G = 0-6
@@ -63,8 +63,8 @@ units_loss = 0
 # [dB]
 
 # Loss/length units
-units_losslen = 0-6
-# [dB/inch]
+units_losslen = 0-4
+# [dB/m]
 
 # Resistivity units
 units_rho = 2-4

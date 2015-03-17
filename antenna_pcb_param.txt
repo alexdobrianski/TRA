@@ -4,6 +4,15 @@ h=159.7
 w=230
 C=2189pF
 er= 4.97
+impedance = 65.5634   El=27.6169 Pl= 30.68 w=0.762
+line      = 64.65     El=27.61   Pl= 30.69 w=0.762
+TXlin     = 65.34     El=27.61   Pl= 30.78 w=0.762
+
+impedance = 49.92     El=180   Pl= 196.2  w=1.27
+line      = 49.54     El=180   Pl= 195.7  w=1.27
+TXlin     = 50.068    El=1801  Pl= 195.65 w=1.27
+
+
 
 PCB from Express PCB 07/03/15
 h= 1.48

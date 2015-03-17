@@ -1,6 +1,6 @@
 #
 # File:      C:\alexd\tra\second_strip.wc
-# Modified:  Sat Mar 14 21:48:47 2015
+# Modified:  Mon Mar 16 23:12:08 2015
 # Wcalc Version 1.1
 
 [wcalc]
@@ -14,7 +14,7 @@ model_name = microstrip
 file_version = 0.1
 
 # Length (meters)
-L = 0.084
+L = 0.1962
 
 # Width (meters)
 W = 0.00127
@@ -23,7 +23,7 @@ W = 0.00127
 Z0 = 49.9209084269463
 
 # Electrical Length (degrees)
-Elen = 77.0670340077032
+Elen = 180.006572289421
 
 # Frequency of operation
 freq = 400000000
