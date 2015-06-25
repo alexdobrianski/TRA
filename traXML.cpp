@@ -450,6 +450,9 @@ void ParamCommon(char *szString)
         IF_XML_READ(Name)
         {
             strcpy(Pulsars[nPulsars].Name,pszQuo);
+            char * iQuot = strstr(Pulsars[nPulsars].Name,"\"");
+            if (iQuot)
+                *iQuot=0;
         }
         IF_XML_READ(ELONG)
         {
@@ -466,6 +469,54 @@ void ParamCommon(char *szString)
         IF_XML_READ(S400mJy)
         {
             Pulsars[nPulsars].S400mJy = atof(pszQuo);
+        }
+        IF_XML_READ(RAJD)
+        {
+            Pulsars[nPulsars].ELONG = atof(pszQuo);
+        }
+        IF_XML_READ(DECJD)
+        {
+            Pulsars[nPulsars].ELAT = atof(pszQuo);
+        }
+        IF_XML_READ(RAJ)
+        {
+            long double fRajH = atoi(pszQuo);
+            long double fRajM = atoi(pszQuo+3);
+            long double fRajS = atoi(pszQuo+6);
+            long double fRajMS = atoi(pszQuo+9);
+            int iLen = strlen(pszQuo+9);
+            int iLenQ = 0;
+            if (strchr(pszQuo+9,'\"') != NULL)
+            {
+                iLenQ = strlen(strchr(pszQuo+9,'\"'));
+            }
+            long double fLen = pow(10.0, iLen-iLenQ);
+            long double fsec = (fRajH * 60.0 + fRajM) * 60.0 + fRajS + fRajMS/fLen;
+            Pulsars[nPulsars].ELONG = 360.0*fsec/ (24*60*60); 
+
+        }
+        IF_XML_READ(DECJ)
+        {
+            BOOL flNegative = FALSE;
+            if (pszQuo[0] == '-')
+                flNegative = TRUE;
+            long double fDecjDeg =atoi(pszQuo);
+            long double fDecjMin =atoi(pszQuo+4);
+            long double fDecjSec =atoi(pszQuo+7);
+            long double fDecjMS =atoi(pszQuo+10);
+            int iLen = strlen(pszQuo+10);
+            int iLenQ = 0;
+            if (strchr(pszQuo+10,'\"') != NULL)
+            {
+                iLenQ = strlen(strchr(pszQuo+10,'\"'));
+            }
+            long double fLen = pow(10.0, iLen-iLenQ);
+            long double fDec = 0;
+            if (flNegative)
+                fDec = fDecjDeg - fDecjMin/60 - (fDecjSec+fDecjMS/fLen)/(60*60);
+            else
+                fDec = fDecjDeg + fDecjMin/60 + (fDecjSec+fDecjMS/fLen)/(60*60);
+            Pulsars[nPulsars].ELAT =fDec;
             if (++nPulsars >= NPULSARS)
                 nPulsars = NPULSARS-1;
         }

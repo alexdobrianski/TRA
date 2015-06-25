@@ -210,6 +210,10 @@ typedef struct Long_Double_Intergal_Var
     long double Y;
     long double Z;
 
+    long double X0M;
+    long double Y0M;
+    long double Z0M;
+
     long double X_h;
     long double Y_h;
     long double Z_h;

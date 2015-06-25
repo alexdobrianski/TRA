@@ -6368,11 +6368,17 @@ void RunSim(TRAOBJ *SlS, TRAOBJ *Sat,TRAIMPLOBJ *Eng, long double ldFrom,long do
     int i,j,k;
     stateType  StateBS;
     stateType  StateMoon;
+
+    stateType  StateBSDeltaError;
+    stateType  StateMoonDeltaError;
     double dEMRAT = Find_DataInHeader("EMRAT ");
     double dAU = Find_DataInHeader("AU    ")*1000.0;
     double BSX;
     double BSY;
     double BSZ;
+    double BSXDeltaError;
+    double BSYDeltaError;
+    double BSZDeltaError;
     long double Lat;
     long double Long;
     long double Height;
@@ -6560,38 +6566,75 @@ void RunSim(TRAOBJ *SlS, TRAOBJ *Sat,TRAIMPLOBJ *Eng, long double ldFrom,long do
                         long double Xnorm = PosX / Dnorm;
                         long double Ynorm = PosY / Dnorm;
                         long double Znorm = PosZ / Dnorm;
-
+#define AMOUNT_OF_PERIODS   120
+                        long double RealT[AMOUNT_OF_PERIODS][AMOUNT_OF_PERIODS];
+                        int PulsNumber[AMOUNT_OF_PERIODS];
+                        for (int nnn = 0; nnn < AMOUNT_OF_PERIODS; nnn++)
+                        {
+                            PulsNumber[nnn] =0;
+                        }
+                        
+                        int iPulsList = 0;
                         for (k =0; k < nPulsars; k++)
                         {
+                            BOOL PulsarOverOurHead = FALSE;
                             long double Xpulsar, Ypulsar, Zpulsar;
                             SlS->LatLongToTRS(Pulsars[k].ELONG,Pulsars[k].ELAT,0.0, 1.0, 1.0, Xpulsar,Ypulsar,Zpulsar);
                             long double AngleFromNormal = AngleBtwNorm(Xnorm,Ynorm,Znorm,Xpulsar,Ypulsar,Zpulsar) * 180/ M_PI;
                             if (fabs(AngleFromNormal) < 45.0)
                             {
+                                PulsNumber[iPulsList] = k;
                                 // now needs to find the point for the time
                                 long double tperiod = Pulsars[k].P0;
-                                long double stepP = 0.001;
+                                long double tperiodInitVal = Pulsars[k].P0;
+                                //long double stepP = 0.001;
                                 long double AngleFromNormal2;
                                 long double realD;
+                                BOOL realDSet = FALSE;
+                                long double realDprev;
+                                BOOL realDprevSet = FALSE;
                                 long double dTLEtime2;
+                                long double dTLEtime2Error;
                                 long double PosX2,PosY2,PosZ2, norm2;
+                                long double PosX2DeltaError,PosY2DeltaError,PosZ2DeltaError, norm2DeltaError;
                                 long double realT = 0;
-                                long double RealT[3];
                                 long double DIfEX;
                                 long double DifEY;
                                 long double DifEZ;
-                                for (int n = 0; n < 3; n++)
+                                long double DIfEXDeltaError;
+                                long double DifEYDeltaError;
+                                long double DifEZDeltaError;
+                                PulsarOverOurHead = TRUE;
+                                for (int n = 0; n < AMOUNT_OF_PERIODS; n++)
                                 {
                                     tperiod = (n+1)*Pulsars[k].P0;
-                                    BOOL directionPlus = TRUE;
-                                    stepP = 0.001;
+                                    tperiodInitVal = (n+1)*Pulsars[k].P0;
+                                    realDprevSet = FALSE;
                                     realT = 0;
-                                    while(fabs(realT - (n+1)*Pulsars[k].P0) > 1.0e-12)
+                                    realDSet = FALSE;
+                                    int iCpount1M = 100;
+                                    int iCpount2M = 100;
+                                    int iCpount3M = 100;
+                                    while(1)
                                     {
-                                        dTLEtime2 = ConvertJulianDayToDateAndTime(SimulationOutputTime[i]+tperiod/(24.0*60.0*60.0), &ThatTime);
+                                        //dTLEtime2 = ConvertJulianDayToDateAndTime(SimulationOutputTime[i]+tperiod/(24.0*60.0*60.0), &ThatTime);
+                                        dTLEtime2 = dTLEtime + tperiod/(24.0*60.0*60.0);
+                                        long double Digits = log10(dTLEtime2);
+                                        long double DigitsError = 16.0-Digits;
+                                        long double DigitsErrorVal = pow((long double)10.0, -DigitsError);
+                                        long iCorrection;
+                                        long double fCorrection;
+                                        dTLEtime2Error  = dTLEtime2+DigitsErrorVal;
                                         if (iEM == EARTH)
                                         {
                                             SlS->LatLongToCRS(Long,Lat,Height, AXBig, AXSmall, dTLEtime2, PosX2,PosY2,PosZ2);
+                                            SlS->LatLongToCRS(Long,Lat,Height, AXBig, AXSmall, dTLEtime2Error, PosX2DeltaError,PosY2DeltaError,PosZ2DeltaError);
+                                            iCorrection = tperiod/(24.0*60.0*60.0)*pow((long double)10.0, DigitsError);
+                                            fCorrection = (tperiod/(24.0*60.0*60.0)*pow((long double)10.0, DigitsError) - (long double)iCorrection)/pow((long double)10.0, DigitsError);
+                                            fCorrection /= DigitsErrorVal;
+                                            PosX2 += fCorrection * (PosX2DeltaError-PosX2);
+                                            PosY2 += fCorrection * (PosY2DeltaError-PosY2);
+                                            PosZ2 += fCorrection * (PosZ2DeltaError-PosZ2);
                                         }
                                         else
                                         {
@@ -6620,11 +6663,35 @@ void RunSim(TRAOBJ *SlS, TRAOBJ *Sat,TRAIMPLOBJ *Eng, long double ldFrom,long do
                                         BSX = StateBS.Position[0]*1000.0 ;
                                         BSY = StateBS.Position[1]*1000.0 ;
                                         BSZ = StateBS.Position[2]*1000.0 ;
+
+                                        long double DigitsJD = log10(SimulationOutputTime[i]+tperiod/(24.0*60.0*60.0));
+                                        long double DigitsErrorJD = 16.0-DigitsJD;
+                                        long double DigitsErrorValJD = pow((long double)10.0, -DigitsErrorJD);
+                                        long double JDTime2Error  = SimulationOutputTime[i]+tperiod/(24.0*60.0*60.0)+DigitsErrorValJD;
+
+                                        Interpolate_State( JDTime2Error, EARTH , &StateBSDeltaError );
+                                        Interpolate_State( JDTime2Error, MOON , &StateMoonDeltaError );
+
+                                        BSXDeltaError = StateBSDeltaError.Position[0]*1000.0 ;
+                                        BSYDeltaError = StateBSDeltaError.Position[1]*1000.0 ;
+                                        BSZDeltaError = StateBSDeltaError.Position[2]*1000.0 ;
                                         if (iEM == EARTH)
                                         {
                                             DIfEX = BSX - (StateMoon.Position[0]*1000.0/(dEMRAT+1)) - SlS->X[iEM];
                                             DifEY = BSY - (StateMoon.Position[1]*1000.0/(dEMRAT+1)) - SlS->Y[iEM];
                                             DifEZ = BSZ - (StateMoon.Position[2]*1000.0/(dEMRAT+1)) - SlS->Z[iEM];
+
+                                            DIfEXDeltaError = BSXDeltaError - (StateMoonDeltaError.Position[0]*1000.0/(dEMRAT+1)) - SlS->X[iEM];
+                                            DifEYDeltaError = BSYDeltaError - (StateMoonDeltaError.Position[1]*1000.0/(dEMRAT+1)) - SlS->Y[iEM];
+                                            DifEZDeltaError = BSZDeltaError - (StateMoonDeltaError.Position[2]*1000.0/(dEMRAT+1)) - SlS->Z[iEM];
+                                            iCorrection = tperiod/(24.0*60.0*60.0)*pow((long double)10.0, DigitsErrorJD);
+                                            fCorrection = (tperiod/(24.0*60.0*60.0)*pow((long double)10.0, DigitsErrorJD) - (long double)iCorrection)/pow((long double)10.0, DigitsErrorJD);
+                                            fCorrection /= DigitsErrorValJD;
+
+                                            DIfEX += fCorrection * (DIfEXDeltaError-DIfEX);
+                                            DifEY += fCorrection * (DifEYDeltaError-DifEY);
+                                            DifEZ += fCorrection * (DifEZDeltaError-DifEZ);
+
                                         }
                                         else
                                         {
@@ -6634,44 +6701,106 @@ void RunSim(TRAOBJ *SlS, TRAOBJ *Sat,TRAIMPLOBJ *Eng, long double ldFrom,long do
                                         }
 
                                         // vector from XYZ2 to XYZ
-                                        PosX2 = PosX -(PosX2+DIfEX); PosY2 = PosY -(PosY2+DifEY); PosZ2 = PosZ -(PosZ2+DifEZ);
-                                        norm2 = sqrt(PosX2*PosX2 +PosY2*PosY2 +PosZ2*PosZ2);
-                                        PosX2 = PosX2/norm2; PosY2 = PosY2/norm2; PosZ2 = PosZ2/norm2;
-                                        AngleFromNormal2 = AngleBtwNorm(PosX2,PosZ2,PosZ2,Xpulsar,Ypulsar,Zpulsar);
-                                        realD = norm2*cos(AngleFromNormal2);
-                                        realT = tperiod+ realD/299792458.0;
-                                        if (realT < (n+1)*Pulsars[k].P0)
+                                        long double PosX2dif = PosX -(PosX2+DIfEX); 
+                                        long double PosY2dif = PosY -(PosY2+DifEY); 
+                                        long double PosZ2dif = PosZ -(PosZ2+DifEZ);
+                                        norm2 = sqrt(PosX2dif*PosX2dif +PosY2dif*PosY2dif +PosZ2dif*PosZ2dif);
+                                        long double PosX2norm = PosX2dif/norm2; 
+                                        long double PosY2norm = PosY2dif/norm2; 
+                                        long double PosZ2norm = PosZ2dif/norm2;
+                                        AngleFromNormal2 = AngleBtwNorm(PosX2norm,PosZ2norm,PosZ2norm,Xpulsar,Ypulsar,Zpulsar);
+                                        
+                                        
+                                        if ( (realDSet) && (realDprevSet))
                                         {
-                                            if (directionPlus)
-                                                ;
-                                            else
+                                            realDprev = realD;
+                                            realD = norm2*cos(AngleFromNormal2);
+                                            realT = tperiodInitVal  + realD/299792458.0;
+                                            tperiod= tperiodInitVal + realD/299792458.0;
+                                            if (fabs(realDprev - realD) < 1.0)
+                                                break;
+                                            else if (fabs(realDprev - realD) < 2.0)
                                             {
-                                                directionPlus = TRUE;
-                                                stepP = - stepP/2;
+                                                iCpount2M = 100;
+                                                iCpount3M = 100;
+                                                if (--iCpount1M <0)
+                                                    break;
                                             }
+                                            else if (fabs(realDprev - realD) < 3.0)
+                                            {
+                                                iCpount1M = 100;
+                                                if (--iCpount2M<0)
+                                                    break;
+                                            }
+                                            else if (fabs(realDprev - realD) < 4.0)
+                                            {
+                                                iCpount1M = 100;
+                                                iCpount2M = 100;
+                                                iCpount3M = 100;
+                                            }
+
                                         }
                                         else
                                         {
-                                            if (directionPlus)
+                                            if (realDprevSet == FALSE)
                                             {
-                                                directionPlus = FALSE;
-                                                stepP = - stepP/2;
+                                                realDprevSet = TRUE;
+                                                realDprev = norm2*cos(AngleFromNormal2);
+                                                realD = norm2*cos(AngleFromNormal2);
+                                                realT = tperiodInitVal  + realD/299792458.0;
+                                                tperiod= tperiodInitVal + realD/299792458.0;
                                             }
                                             else
-                                                ;
+                                            {
+                                                realDSet = TRUE;
+                                                realD = norm2*cos(AngleFromNormal2);
+                                                realT = tperiodInitVal  + realD/299792458.0;
+                                                tperiod= tperiodInitVal + realD/299792458.0;
+                                                if (fabs(realDprev - realD) < 1.0)
+                                                    break;
+                                            }
                                         }
-                                        tperiod +=stepP;
+                                        
                                     }
-                                    RealT[n] = realT;
+                                    RealT[iPulsList][n] = realT;
                                 }
 
 
                                 fprintf(FileOut,"\n\t<hPULSARmeasure>");
                                 fprintf(FileOut,"\n\t <M>%d</M>",iEM); // for earth
-                                
-                                fprintf(FileOut,"\n\t\t<T>%+25.17Le</T>\n\t\t<P1>%+25.17Le</P1>\n\t\t<P2>%+25.17Le</P2>\n\t\t<P3>%+25.17Le</P3>", SimulationOutputTime[i],RealT[0],RealT[1]-RealT[0], RealT[2]-RealT[1]);
+                                fprintf(FileOut,"\n\t\t<T>%+25.17Le</T>", SimulationOutputTime[i]);
+                                fprintf(FileOut,"\n\t\t<N>%s</N>", Pulsars[k].Name);
+                                fprintf(FileOut,"\n\t\t<px>%+25.17Le</px>", Pulsars[k].P0);
+                                fprintf(FileOut,"\n\t\t<jy>%f</jy>", Pulsars[k].S400mJy);
+                                fprintf(FileOut,"\n\t\t<na>%f</na>",AngleFromNormal);
+                                for (int nn = 0; nn < AMOUNT_OF_PERIODS; nn++)
+                                {
+                                    if ((nn == 0) || (nn == AMOUNT_OF_PERIODS-1))
+                                        fprintf(FileOut,"\n\t\t<P%d>%+25.17LE</P%d>", nn,RealT[iPulsList][nn],nn);
+                                }
                                 fprintf(FileOut,"\n\t <E>%+25.17Le</E>",ErrorTime); // for earth
                                 fprintf(FileOut,"\n\t</hPULSARmeasure>");
+                            }
+                            if (PulsarOverOurHead)
+                                iPulsList++;
+                            if ((iPulsList >1) && PulsarOverOurHead)
+                            {
+                                for (int kk = 0; kk < iPulsList-1; kk ++)
+                                {
+                                    fprintf(FileOut,"\n\t<hPULSARmeasureCross>");
+                                    fprintf(FileOut,"\n\t <M>%d</M>",iEM); // for earth
+                                    fprintf(FileOut,"\n\t\t<N_N>%s %s</N_N>", Pulsars[PulsNumber[iPulsList-1]].Name, Pulsars[PulsNumber[kk]].Name);
+                                    fprintf(FileOut,"\n\t\t<px_x>%+25.17Le %+25.17Le</px_x>", Pulsars[PulsNumber[0]].P0, Pulsars[PulsNumber[kk]].P0);
+                                
+                                    fprintf(FileOut,"\n\t\t<T_x>%+25.17Le</T_x>", SimulationOutputTime[i]);
+                                    for (int nn = 0; nn < AMOUNT_OF_PERIODS; nn++)
+                                    {
+                                        if ((nn == 0) || (nn == AMOUNT_OF_PERIODS-1))
+                                            fprintf(FileOut,"\n\t\t<P%d_x>%+25.17LE</P%d_x>", nn,RealT[kk][nn]-RealT[iPulsList-1][nn],nn);
+                                    }
+                                    fprintf(FileOut,"\n\t <E>%+25.17Le</E>",ErrorTime); // for earth
+                                    fprintf(FileOut,"\n\t</hPULSARmeasureCross>");
+                                }
                             }
                         }
                     }
