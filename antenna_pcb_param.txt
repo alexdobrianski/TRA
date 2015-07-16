@@ -10,7 +10,19 @@ h= 1.48
 w=2.5" =63.5
 h=3.6" = 91.44
 C=168pF
+  168pF  25.0C
 er=  4.85
+
+PCB for antenna
+h=1.48
+w=7" 30/32    = 201.6125
+h=11" 27.5/32 = 301.228125
+
+   1900pF (35C)  er=5.2318956354
+   1840pF (29C)  er=5.0666778785
+C= 1810pF (26C)  er=4.984069
+   1765pF (19C)  er=4.8601556823
+   1745pF (17C)  er=4.8050830967
 
 0.1524= 0.006"  103.5 98.379
 0.1778= 0.007"  99.04 94.4735
@@ -29,3 +41,7 @@ er=  4.85
 3.048 = 0.12"   35.86 35.5626
 clearance      0.012
                0.3048
+
+56nH http://www.digikey.ca/product-detail/en/LQW15AN56NG00D/490-6830-1-ND/3846027
+61pF http://www.digikey.ca/product-search/en?pv16=4&k=CAP+CER+62PF&mnonly=0&newproducts=0&ColumnSort=0&page=1&stock=1&quantity=0&ptm=0&fid=0&pageSize=25
+     http://www.digikey.ca/product-detail/en/600S620FT250XT/1284-1236-1-ND/3905550
